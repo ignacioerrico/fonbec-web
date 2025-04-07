@@ -2,18 +2,20 @@ using Fonbec.Web.DataAccess;
 using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.Ui.Account;
 using Fonbec.Web.Ui.Components;
-using MudBlazor.Services;
-using Microsoft.EntityFrameworkCore;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
+using Fonbec.Web.Ui.Configuration;
 
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
+
+ConfigureServices.RegisterOptions(builder.Services, builder.Configuration);
+
+ConfigureServices.RegisterServices(builder.Services);
+
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
-
-builder.Services.AddMudServices();
 
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
@@ -27,22 +29,20 @@ builder.Services.AddAuthentication(options =>
     })
     .AddIdentityCookies();
 
-var connectionString = builder.Configuration.GetConnectionString("FonbecWebDbContextConnection") ??
-                       throw new InvalidOperationException("Connection string 'FonbecWebDbContextConnection' not found.");
+ConfigureServices.RegisterEntityFrameworkCore(builder.Services, builder.Configuration);
 
-builder.Services.AddDbContext<FonbecWebDbContext>(options => options.UseSqlServer(connectionString));
-builder.Services.AddDatabaseDeveloperPageExceptionFilter();
-
-builder.Services.AddIdentityCore<FonbecWebUser>(options => options.SignIn.RequireConfirmedAccount = true)
+builder.Services.AddIdentityCore<FonbecWebUser>(options =>
+    {
+    })
+    .AddRoles<IdentityRole>()
     .AddEntityFrameworkStores<FonbecWebDbContext>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
 
-builder.Services.AddSingleton<IEmailSender<FonbecWebUser>, IdentityNoOpEmailSender>();
-
 var app = builder.Build();
 
 // Configure the HTTP request pipeline.
+
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();

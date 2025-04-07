@@ -40,8 +40,56 @@ Throughout the year, there are designated dates for grantees to send letters to
 their benefactors. A team of _volunteers_ reviews these letters to identify any
 needs or concerns the students may have. We then forward the letters to the
 appropriate benefactor. This process has been done manually, which not only
-makes it time-consuming but also prone to errors (such as undelivered letters
-or letters sent to the wrong recipient).
+makes it time-consuming but also prone to errors (such as undelivered letters or
+letters sent to the wrong recipient).
 
 A key objective of this project is to automate this process, enabling everyone
 involved to focus more effectively on their specific roles.
+
+## Setting up your development environment
+
+The solution is implemented with ASP.NET Core Blazor 9, so the [.NET 9.0
+SDK](https://dotnet.microsoft.com/en-us/download) is required. If you're using
+[Visual Studio 2022](https://visualstudio.microsoft.com/) you should be all set.
+
+It uses Entity Framework Core with a code-first approach and is configured to
+use **SQL Server**. If you use Visual Studio, just make sure the _Data storage
+and processing_ workload is enabled. (Visual Studio Installer → Modify →
+Workloads → Data storage and processing). Otherwise, install [SQL Server
+2022](https://www.microsoft.com/en-us/sql-server/sql-server-downloads).
+
+In `appsettings.json`, set `Server` in the `FonbecWebDbContextConnection`
+connection string to a SQL Server instance that exists on your machine. To list
+the SQL Server instances on your machine, execute this command:
+
+`sqllocaldb i`
+
+You may also use a different database name.
+
+**Don't commit any changes you make to the connection string.**
+
+In the _Package Manager Console_, execute this command to update the database:
+
+`Update-Database`
+
+The following data is seeded in the corresponding tables following the [official
+recommendations](https://learn.microsoft.com/en-us/ef/core/modeling/data-seeding):
+- Roles
+- Default user (admin)
+
+The different roles are hard-coded, since they respond to a business
+requirement.
+
+The default user, which has a role of Admin, is created based on a configurable
+username and password. For security reasons, those should be set as a secrets
+and never exposed in version control. Add them as user secrets (right-click on
+the UI project, `Fonbec.Web.Ui` &rarr; Manage User Secrets) with this format:
+
+```
+"AdminUser": {
+  "UserName": "",
+  "Password": ""
+}
+```
+
+Assign a value to each field.
