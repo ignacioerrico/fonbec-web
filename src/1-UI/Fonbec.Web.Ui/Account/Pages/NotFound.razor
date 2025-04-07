@@ -1,0 +1,14 @@
+﻿@page "/not-found"
+
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [AllowAnonymous]
+
+<PageTitle>Not Found</PageTitle>
+
+<MudText Typo="Typo.h3">No se encontró la página</MudText>
+
+<MudAlert Severity="Severity.Error" Variant="Variant.Filled">
+    Lo que estás buscando no está.
+    <strong>Por favor, reportá el error.</strong>
+</MudAlert>
