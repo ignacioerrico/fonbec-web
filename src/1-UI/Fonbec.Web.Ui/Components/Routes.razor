@@ -1,4 +1,6 @@
-﻿<Router AppAssembly="typeof(Program).Assembly">
+﻿@using Fonbec.Web.Ui.Account.Shared
+
+<Router AppAssembly="typeof(Program).Assembly">
     <Found Context="routeData">
         <AuthorizeRouteView RouteData="routeData" DefaultLayout="typeof(Layout.MainLayout)">
             <NotAuthorized>
