@@ -21,9 +21,9 @@
 <StatusMessage Message="@_message" />
 <h1>Register</h1>
 <h2>Associate your @ProviderDisplayName account.</h2>
-<hr />
+<MudDivider />
 
-<div  class="alert alert-info">
+<div class="alert alert-info">
     You've successfully authenticated with <strong>@ProviderDisplayName</strong>.
     Please enter an email address for this site below and click the Register button to finish
     logging in.
@@ -105,8 +105,8 @@
 
         // Sign in the user with this external login provider if the user already has a login.
         var result = await SignInManager.ExternalLoginSignInAsync(
-            _externalLoginInfo.LoginProvider,
-            _externalLoginInfo.ProviderKey,
+            _externalLoginInfo!.LoginProvider,
+            _externalLoginInfo!.ProviderKey,
             isPersistent: false,
             bypassTwoFactor: true);
 
@@ -174,7 +174,7 @@
         _message = $"Error: {string.Join(",", result.Errors.Select(error => error.Description))}";
     }
 
-    private FonbecWebUser CreateUser()
+    private static FonbecWebUser CreateUser()
     {
         try
         {
