@@ -1,0 +1,17 @@
+﻿@inject NavigationManager NavigationManager
+
+<AuthorizeView>
+    <NotAuthorized>
+        <MudButton ButtonType="ButtonType.Button" Variant="Variant.Filled" Color="Color.Success" Class="mr-4"
+                   OnClick="@(() => NavigateTo("Account/Login"))">
+            Iniciar sesión
+        </MudButton>
+    </NotAuthorized>
+</AuthorizeView>
+
+@code {
+    private void NavigateTo(string path)
+    {
+        NavigationManager.NavigateTo(path, new NavigationOptions { ForceLoad = true });
+    }
+}
