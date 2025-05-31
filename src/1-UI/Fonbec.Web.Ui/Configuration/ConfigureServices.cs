@@ -58,7 +58,7 @@ public static class ConfigureServices
                                            ?? throw new NullReferenceException("AdminUserOptions could not be instantiated.");
 
                     // Set in user secrets.
-                    var email = adminUserOptions.Email;
+                    var email = adminUserOptions.Username;
                     var password = adminUserOptions.Password;
 
                     if (email is null || password is null)
@@ -123,7 +123,7 @@ public static class ConfigureServices
                        ?? throw new NullReferenceException("AdminUserOptions could not be instantiated.");
 
                     // Set in user secrets.
-                    var email = adminUserOptions.Email;
+                    var email = adminUserOptions.Username;
                     var password = adminUserOptions.Password;
 
                     if (email is null || password is null)

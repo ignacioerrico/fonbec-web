@@ -2,9 +2,10 @@ using Fonbec.Web.DataAccess;
 using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.Ui.Account;
 using Fonbec.Web.Ui.Components;
+using Fonbec.Web.Ui.Configuration;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Fonbec.Web.Ui.Configuration;
+using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -41,6 +42,12 @@ builder.Services.AddIdentityCore<FonbecWebUser>(options =>
 
 var app = builder.Build();
 
+// Ensure database is created and seeded
+using (var scope = app.Services.CreateScope())
+{
+    var db = scope.ServiceProvider.GetRequiredService<FonbecWebDbContext>();
+    db.Database.Migrate();
+}
 // Configure the HTTP request pipeline.
 
 if (app.Environment.IsDevelopment())
