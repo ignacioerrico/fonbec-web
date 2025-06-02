@@ -45,11 +45,7 @@ else
 
             <MudAlert Variant="Variant.Text" Severity="Severity.Info" Icon="@Icons.Material.Filled.Key">@_sharedKey</MudAlert>
 
-            <MudText Typo="Typo.body2">
-                Learn how to <MudLink Target="_blank" Href="https://go.microsoft.com/fwlink/?Linkid=852423">enable QR code generation</MudLink>.
-            </MudText>
-
-            <div data-url="@_authenticatorUri"></div>
+            <MudExtensions.MudBarcode Value="@_authenticatorUri" BarcodeFormat="ZXing.BarcodeFormat.QR_CODE" Width="150" Height="150" />
         </li>
         <li>
             <MudText Typo="Typo.body2">
@@ -162,7 +158,7 @@ else
         return string.Format(
             CultureInfo.InvariantCulture,
             AuthenticatorUriFormat,
-            UrlEncoder.Encode("Microsoft.AspNetCore.Identity.UI"),
+            UrlEncoder.Encode("FONBEC Web"),
             UrlEncoder.Encode(email),
             unformattedKey);
     }
