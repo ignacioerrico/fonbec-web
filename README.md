@@ -87,7 +87,7 @@ the UI project, `Fonbec.Web.Ui` &rarr; Manage User Secrets) with this format:
 
 ```
 "AdminUser": {
-  "UserName": "",
+  "Username": "",
   "Password": ""
 }
 ```

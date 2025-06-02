@@ -58,25 +58,25 @@ public static class ConfigureServices
                                            ?? throw new NullReferenceException("AdminUserOptions could not be instantiated.");
 
                     // Set in user secrets.
-                    var email = adminUserOptions.Username;
+                    var username = adminUserOptions.Username;
                     var password = adminUserOptions.Password;
 
-                    if (email is null || password is null)
+                    if (username is null || password is null)
                     {
-                        throw new ValidationException("Either email or password has not been set as a secret.");
+                        throw new ValidationException("Either username or password has not been set as a secret.");
                     }
 
                     var userManager = context.GetService<UserManager<FonbecWebUser>>();
 
-                    if (userManager.FindByNameAsync(email).Result is not null)
+                    if (userManager.FindByNameAsync(username).Result is not null)
                     {
                         return;
                     }
 
                     var adminUser = new FonbecWebUser
                     {
-                        UserName = email,
-                        Email = email,
+                        UserName = username,
+                        Email = username,
                     };
 
                     var userCreationResult = userManager.CreateAsync(adminUser, password).Result;
@@ -123,25 +123,25 @@ public static class ConfigureServices
                        ?? throw new NullReferenceException("AdminUserOptions could not be instantiated.");
 
                     // Set in user secrets.
-                    var email = adminUserOptions.Username;
+                    var username = adminUserOptions.Username;
                     var password = adminUserOptions.Password;
 
-                    if (email is null || password is null)
+                    if (username is null || password is null)
                     {
-                        throw new ValidationException("Either email or password has not been set as a secret.");
+                        throw new ValidationException("Either username or password has not been set as a secret.");
                     }
 
                     var userManager = context.GetService<UserManager<FonbecWebUser>>();
 
-                    if (await userManager.FindByNameAsync(email) is not null)
+                    if (await userManager.FindByNameAsync(username) is not null)
                     {
                         return;
                     }
 
                     var adminUser = new FonbecWebUser
                     {
-                        UserName = email,
-                        Email = email,
+                        UserName = username,
+                        Email = username,
                     };
 
                     var userCreationResult = await userManager.CreateAsync(adminUser, password);
