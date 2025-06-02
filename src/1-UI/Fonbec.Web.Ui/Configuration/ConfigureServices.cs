@@ -10,6 +10,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Options;
 using MudBlazor.Services;
+using MudExtensions.Services;
 
 namespace Fonbec.Web.Ui.Configuration;
 
@@ -24,6 +25,8 @@ public static class ConfigureServices
     public static void RegisterServices(IServiceCollection services)
     {
         services.AddMudServices();
+
+        services.AddMudExtensions();
 
         services.AddSingleton<IEmailSender<FonbecWebUser>, IdentityNoOpEmailSender>();
     }
