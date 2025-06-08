@@ -42,18 +42,18 @@ public static class ConfigureServices
                 {
                     foreach (var role in FonbecRole.AllRoles)
                     {
-                        var roleDb = context.Set<IdentityRole>().FirstOrDefault(ir => ir.Name == role);
+                        var roleDb = context.Set<FonbecWebRole>().FirstOrDefault(ir => ir.Name == role);
                         if (roleDb is not null)
                         {
                             continue;
                         }
 
-                        var identityRole = new IdentityRole
+                        var identityRole = new FonbecWebRole
                         {
                             Name = role,
                             NormalizedName = role.ToUpper()
                         };
-                        context.Set<IdentityRole>().Add(identityRole);
+                        context.Set<FonbecWebRole>().Add(identityRole);
                         context.SaveChanges();
                     }
 
@@ -78,6 +78,10 @@ public static class ConfigureServices
 
                     var adminUser = new FonbecWebUser
                     {
+                        FirstName = adminUserOptions.FirstName ?? string.Empty,
+                        LastName = adminUserOptions.LastName ?? string.Empty,
+                        NickName = adminUserOptions.NickName,
+                        Gender = adminUserOptions.Gender,
                         UserName = username,
                         Email = username,
                     };
@@ -107,18 +111,18 @@ public static class ConfigureServices
                 {
                     foreach (var role in FonbecRole.AllRoles)
                     {
-                        var roleDb = await context.Set<IdentityRole>().FirstOrDefaultAsync(ir => ir.Name == role, cancellationToken);
+                        var roleDb = await context.Set<FonbecWebRole>().FirstOrDefaultAsync(ir => ir.Name == role, cancellationToken);
                         if (roleDb is not null)
                         {
                             continue;
                         }
 
-                        var identityRole = new IdentityRole
+                        var identityRole = new FonbecWebRole
                         {
                             Name = role,
                             NormalizedName = role.ToUpper()
                         };
-                        context.Set<IdentityRole>().Add(identityRole);
+                        context.Set<FonbecWebRole>().Add(identityRole);
                         await context.SaveChangesAsync(cancellationToken);
                     }
 
@@ -143,6 +147,10 @@ public static class ConfigureServices
 
                     var adminUser = new FonbecWebUser
                     {
+                        FirstName = adminUserOptions.FirstName ?? string.Empty,
+                        LastName = adminUserOptions.LastName ?? string.Empty,
+                        NickName = adminUserOptions.NickName,
+                        Gender = adminUserOptions.Gender,
                         UserName = username,
                         Email = username,
                     };

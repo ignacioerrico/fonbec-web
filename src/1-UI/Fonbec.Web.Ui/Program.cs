@@ -35,7 +35,7 @@ ConfigureServices.RegisterEntityFrameworkCore(builder.Services, builder.Configur
 builder.Services.AddIdentityCore<FonbecWebUser>(options =>
     {
     })
-    .AddRoles<IdentityRole>()
+    .AddRoles<FonbecWebRole>()
     .AddEntityFrameworkStores<FonbecWebDbContext>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
