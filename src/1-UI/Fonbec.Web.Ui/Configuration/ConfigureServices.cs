@@ -3,6 +3,7 @@ using System.Text;
 using Fonbec.Web.DataAccess;
 using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.Entities;
+using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Ui.Account;
 using Fonbec.Web.Ui.Options;
 using Microsoft.AspNetCore.Identity;
@@ -29,6 +30,8 @@ public static class ConfigureServices
         services.AddMudExtensions();
 
         services.AddSingleton<IEmailSender<FonbecWebUser>, IdentityNoOpEmailSender>();
+
+        services.AddScoped<IListChaptersService, ListChaptersService>();
     }
 
     public static void RegisterEntityFrameworkCore(IServiceCollection services, IConfiguration configuration)

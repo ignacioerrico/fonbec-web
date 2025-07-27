@@ -1,0 +1,18 @@
+﻿@page "/filiales"
+
+@using Microsoft.AspNetCore.Authorization
+
+@attribute [Authorize]
+
+<PageTitle>Filiales</PageTitle>
+
+<MudText Typo="Typo.h3" GutterBottom="true">Filiales</MudText>
+
+<MudTable Items="_chapters" Hover="true" Striped="true" Dense="true">
+    <HeaderContent>
+        <MudTh>Nombre</MudTh>
+    </HeaderContent>
+    <RowTemplate>
+        <MudTd DataLabel="Nombre">@context.Name</MudTd>
+    </RowTemplate>
+</MudTable>
