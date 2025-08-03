@@ -1,8 +1,7 @@
-﻿using System.ComponentModel.DataAnnotations;
-using System.Text;
 using Fonbec.Web.DataAccess;
 using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.Entities;
+using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Ui.Account;
 using Fonbec.Web.Ui.Options;
@@ -12,6 +11,8 @@ using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.Extensions.Options;
 using MudBlazor.Services;
 using MudExtensions.Services;
+using System.ComponentModel.DataAnnotations;
+using System.Text;
 
 namespace Fonbec.Web.Ui.Configuration;
 
@@ -32,6 +33,8 @@ public static class ConfigureServices
         services.AddSingleton<IEmailSender<FonbecWebUser>, IdentityNoOpEmailSender>();
 
         services.AddScoped<IChaptersListService, ChaptersListService>();
+
+        services.AddScoped<IChaptersListRepository, ChaptersListRepository>();
     }
 
     public static void RegisterEntityFrameworkCore(IServiceCollection services, IConfiguration configuration)

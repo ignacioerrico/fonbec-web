@@ -7,6 +7,8 @@ namespace Fonbec.Web.DataAccess;
 public class FonbecWebDbContext(DbContextOptions<FonbecWebDbContext> options)
     : IdentityDbContext<FonbecWebUser, FonbecWebRole, int>(options)
 {
+    public DbSet<Chapter> Chapters { get; set; }
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         // The keys of Identity tables are mapped in the `OnModelCreating` method of `IdentityDbContext`.

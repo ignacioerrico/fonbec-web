@@ -1,21 +1,28 @@
-﻿using Fonbec.Web.Logic.ViewModels.Chapters;
+﻿using Fonbec.Web.DataAccess.Repositories;
+using Fonbec.Web.Logic.ViewModels.Chapters;
 
 namespace Fonbec.Web.Logic.Services;
 
 public interface IChaptersListService
 {
-    IEnumerable<ChaptersListViewModel> GetAllChapters();
+    Task<IEnumerable<ChaptersListViewModel>> GetAllChaptersAsync();
 }
 
 public class ChaptersListService : IChaptersListService
 {
-    public IEnumerable<ChaptersListViewModel> GetAllChapters()
+    private readonly IChaptersListRepository _chaptersListRepository;
+
+    public ChaptersListService(IChaptersListRepository chaptersListRepository)
     {
-        return new List<ChaptersListViewModel>
+        _chaptersListRepository = chaptersListRepository;
+    }
+
+    public async Task<IEnumerable<ChaptersListViewModel>> GetAllChaptersAsync()
+    {
+        var allChapters = await _chaptersListRepository.GetAllChaptersAsync();
+        return allChapters.Select(chapter => new ChaptersListViewModel
         {
-            new() { ChapterName = "Buenos Aires" },
-            new() { ChapterName = "Mendoza" },
-            new() { ChapterName = "Córdoba" }
-        };
+            ChapterName = chapter.Name
+        });
     }
 }

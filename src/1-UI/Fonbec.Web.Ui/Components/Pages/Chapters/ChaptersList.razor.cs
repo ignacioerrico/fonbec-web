@@ -11,8 +11,8 @@ public partial class ChaptersList
     [Inject]
     public IChaptersListService ChaptersListService { get; set; } = null!;
 
-    protected override void OnInitialized()
+    protected override async Task OnInitializedAsync()
     {
-        _chapters = ChaptersListService.GetAllChapters().ToList();
+        _chapters = (await ChaptersListService.GetAllChaptersAsync()).ToList();
     }
 }
