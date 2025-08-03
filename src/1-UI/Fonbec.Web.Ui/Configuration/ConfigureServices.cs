@@ -31,7 +31,7 @@ public static class ConfigureServices
 
         services.AddSingleton<IEmailSender<FonbecWebUser>, IdentityNoOpEmailSender>();
 
-        services.AddScoped<IListChaptersService, ListChaptersService>();
+        services.AddScoped<IChaptersListService, ChaptersListService>();
     }
 
     public static void RegisterEntityFrameworkCore(IServiceCollection services, IConfiguration configuration)
