@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Fonbec.Web.DataAccess.Configurations;
 
-public class ChapterConfiguration : IEntityTypeConfiguration<Chapter>
+internal class ChapterConfiguration : IEntityTypeConfiguration<Chapter>
 {
     public void Configure(EntityTypeBuilder<Chapter> builder)
     {

@@ -5,7 +5,7 @@ using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Fonbec.Web.DataAccess.Configurations;
 
-public class FonbecUserConfiguration : IEntityTypeConfiguration<FonbecWebUser>
+internal class FonbecUserConfiguration : IEntityTypeConfiguration<FonbecWebUser>
 {
     public void Configure(EntityTypeBuilder<FonbecWebUser> builder)
     {
