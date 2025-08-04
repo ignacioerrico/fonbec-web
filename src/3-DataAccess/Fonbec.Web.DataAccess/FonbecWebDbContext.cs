@@ -7,7 +7,7 @@ namespace Fonbec.Web.DataAccess;
 public class FonbecWebDbContext(DbContextOptions<FonbecWebDbContext> options)
     : IdentityDbContext<FonbecWebUser, FonbecWebRole, int>(options)
 {
-    public DbSet<Chapter> Chapters { get; set; }
+    public DbSet<Chapter> Chapters => Set<Chapter>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

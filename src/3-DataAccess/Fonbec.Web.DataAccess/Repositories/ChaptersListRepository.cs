@@ -1,26 +1,27 @@
-﻿using Fonbec.Web.DataAccess.Entities;
+﻿using Fonbec.Web.DataAccess.DataModels.Chapters;
 using Microsoft.EntityFrameworkCore;
 
 namespace Fonbec.Web.DataAccess.Repositories;
 
 public interface IChaptersListRepository
 {
-    Task<List<Chapter>> GetAllChaptersAsync();
+    Task<List<ChaptersListDataModel>> GetAllChaptersAsync();
 }
 
-public class ChaptersListRepository : IChaptersListRepository
+public class ChaptersListRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : IChaptersListRepository
 {
-    private readonly FonbecWebDbContext _dbContext;
-
-    public ChaptersListRepository(FonbecWebDbContext dbContext)
+    public async Task<List<ChaptersListDataModel>> GetAllChaptersAsync()
     {
-        _dbContext = dbContext;
-    }
+        await using var db = await dbContext.CreateDbContextAsync();
 
-    public async Task<List<Chapter>> GetAllChaptersAsync()
-    {
-        return await _dbContext.Chapters
+        var allChapters = await db.Chapters
             .OrderBy(ch => ch.Name)
+            .Select(ch => new ChaptersListDataModel
+            {
+                ChapterName = ch.Name
+            })
             .ToListAsync();
+        
+        return allChapters;
     }
 }

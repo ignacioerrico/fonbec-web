@@ -9,4 +9,9 @@ public static class MaxLength
         public const int LastName = 40;
         public const int NickName = 20;
     }
+
+    public static class Chapter
+    {
+        public const int Name = 30;
+    }
 }

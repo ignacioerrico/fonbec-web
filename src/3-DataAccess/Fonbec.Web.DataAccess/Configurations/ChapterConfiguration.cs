@@ -1,4 +1,5 @@
-﻿using Fonbec.Web.DataAccess.Entities;
+﻿using Fonbec.Web.DataAccess.Constants;
+using Fonbec.Web.DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -12,6 +13,6 @@ public class ChapterConfiguration : IEntityTypeConfiguration<Chapter>
 
         builder.Property(ch => ch.Name)
             .IsRequired()
-            .HasMaxLength(30);
+            .HasMaxLength(MaxLength.Chapter.Name);
     }
 }

@@ -3,6 +3,7 @@ using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.Ui.Account;
 using Fonbec.Web.Ui.Components;
 using Fonbec.Web.Ui.Configuration;
+using Mapster;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -10,10 +11,6 @@ using Microsoft.EntityFrameworkCore;
 var builder = WebApplication.CreateBuilder(args);
 
 // Add services to the container.
-
-ConfigureServices.RegisterOptions(builder.Services, builder.Configuration);
-
-ConfigureServices.RegisterServices(builder.Services);
 
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
@@ -30,8 +27,6 @@ builder.Services.AddAuthentication(options =>
     })
     .AddIdentityCookies();
 
-ConfigureServices.RegisterEntityFrameworkCore(builder.Services, builder.Configuration);
-
 builder.Services.AddIdentityCore<FonbecWebUser>(options =>
     {
     })
@@ -39,6 +34,16 @@ builder.Services.AddIdentityCore<FonbecWebUser>(options =>
     .AddEntityFrameworkStores<FonbecWebDbContext>()
     .AddSignInManager()
     .AddDefaultTokenProviders();
+
+ConfigureServices.RegisterOptions(builder.Services, builder.Configuration);
+
+ConfigureServices.RegisterServices(builder.Services);
+
+ConfigureServices.RegisterEntityFrameworkCore(builder.Services, builder.Configuration);
+
+// Mapster (each business Model declares its own mapping)
+var logicAssembly = System.Reflection.Assembly.Load("Fonbec.Web.Logic");
+TypeAdapterConfig.GlobalSettings.Scan(logicAssembly);
 
 var app = builder.Build();
 
@@ -48,6 +53,7 @@ using (var scope = app.Services.CreateScope())
     var db = scope.ServiceProvider.GetRequiredService<FonbecWebDbContext>();
     db.Database.Migrate();
 }
+
 // Configure the HTTP request pipeline.
 
 if (app.Environment.IsDevelopment())
@@ -57,6 +63,7 @@ if (app.Environment.IsDevelopment())
 else
 {
     app.UseExceptionHandler("/Error", createScopeForErrors: true);
+
     // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
     app.UseHsts();
 }
