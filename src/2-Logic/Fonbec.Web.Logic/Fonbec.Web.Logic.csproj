@@ -1,6 +1,10 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk">
 
   <ItemGroup>
+    <PackageReference Include="Mapster" Version="7.4.0" />
+  </ItemGroup>
+
+  <ItemGroup>
     <ProjectReference Include="..\..\3-DataAccess\Fonbec.Web.DataAccess\Fonbec.Web.DataAccess.csproj" />
   </ItemGroup>
 
