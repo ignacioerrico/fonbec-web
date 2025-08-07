@@ -35,6 +35,10 @@ public static class ConfigureServices
         services.AddScoped<IChaptersListService, ChaptersListService>();
 
         services.AddScoped<IChaptersListRepository, ChaptersListRepository>();
+
+        services.AddScoped<ICreateChapterService, CreateChapterService>();
+
+        services.AddScoped<ICreateChapterRepository, CreateChapterRepository>();
     }
 
     public static void RegisterEntityFrameworkCore(IServiceCollection services, IConfiguration configuration)
