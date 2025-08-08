@@ -14,17 +14,20 @@ namespace Fonbec.Web.Ui.Components.Pages.Chapters
 
         [Inject]
         public ICreateChapterService CreateChapterService { get; set; } = null!;
-        private async Task CrearFilial()
+        [Parameter]
+        public EventCallback OnChapterCreated { get; set; }
+        private async Task CreateAChapter()
         {
-            if (_form.IsValid) //Sino esta vacio
+            if (_form.IsValid) //Si no esta vacío
             {
                 var chapter = new Chapter(_nombre);
                 await CreateChapterService.CreateChapterAsync(chapter);
+                await OnChapterCreated.InvokeAsync(); // Notificar al ChapterList
                 _nombre = string.Empty;
             }
         }
 
-        private void Cancelar()
+        private void Cancel()
         {
             _nombre = string.Empty;
         }

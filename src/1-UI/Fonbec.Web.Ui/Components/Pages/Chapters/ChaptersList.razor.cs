@@ -15,4 +15,8 @@ public partial class ChaptersList
     {
         _chapters = await ChaptersListService.GetAllChaptersAsync();
     }
+    public async Task RefreshChapters()
+    {
+        _chapters = await ChaptersListService.GetAllChaptersAsync();
+    }
 }
