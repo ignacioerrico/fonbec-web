@@ -21,6 +21,7 @@ public class ChapterRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             .OrderBy(ch => ch.Name)
             .Select(ch => new AllChaptersDataModel(ch)
             {
+                ChapterId = ch.Id,
                 ChapterName = ch.Name
             })
             .ToListAsync();
