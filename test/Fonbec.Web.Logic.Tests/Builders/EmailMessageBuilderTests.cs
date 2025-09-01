@@ -61,7 +61,7 @@ public class EmailMessageBuilderTests
         {
             emailMessage.SenderAddress.Should().Be("from@email.com");
 
-            emailMessage.Recipients.To.Should().HaveCount(1);
+            emailMessage.Recipients.To.Should().ContainSingle();
             emailMessage.Recipients.To.Single().Address.Should().Be("<john@doe.com>");
             emailMessage.Recipients.To.Single().DisplayName.Should().Be("\"John Doe\"");
 
@@ -108,11 +108,11 @@ public class EmailMessageBuilderTests
         {
             emailMessage.SenderAddress.Should().Be("from@email.com");
 
-            emailMessage.Recipients.To.Should().HaveCount(1);
+            emailMessage.Recipients.To.Should().ContainSingle();
             emailMessage.Recipients.To.Single().Address.Should().Be("<john@doe.com>");
             emailMessage.Recipients.To.Single().DisplayName.Should().Be("\"John Doe\"");
 
-            emailMessage.ReplyTo.Should().HaveCount(1);
+            emailMessage.ReplyTo.Should().ContainSingle();
             emailMessage.ReplyTo.Single().Address.Should().Be("<reply-to@email.com>");
             emailMessage.ReplyTo.Single().DisplayName.Should().Be("reply-to@email.com");
 
@@ -165,11 +165,11 @@ public class EmailMessageBuilderTests
         {
             emailMessage.SenderAddress.Should().Be("from@email.com");
 
-            emailMessage.Recipients.To.Should().HaveCount(1);
+            emailMessage.Recipients.To.Should().ContainSingle();
             emailMessage.Recipients.To.Single().Address.Should().Be("<john@doe.com>");
             emailMessage.Recipients.To.Single().DisplayName.Should().Be("\"John Doe\"");
 
-            emailMessage.ReplyTo.Should().HaveCount(1);
+            emailMessage.ReplyTo.Should().ContainSingle();
             emailMessage.ReplyTo.Single().Address.Should().Be("<reply-to@email.com>");
             emailMessage.ReplyTo.Single().DisplayName.Should().Be("\"ReplyTo Display Name\"");
 
@@ -221,7 +221,7 @@ public class EmailMessageBuilderTests
         {
             emailMessage.SenderAddress.Should().Be("from@email.com");
 
-            emailMessage.Recipients.To.Should().HaveCount(1);
+            emailMessage.Recipients.To.Should().ContainSingle();
             emailMessage.Recipients.To.Single().Address.Should().Be("<john@doe.com>");
             emailMessage.Recipients.To.Single().DisplayName.Should().Be("\"John Doe\"");
 
@@ -274,7 +274,7 @@ public class EmailMessageBuilderTests
         {
             emailMessage.SenderAddress.Should().Be("from@email.com");
 
-            emailMessage.Recipients.To.Should().HaveCount(1);
+            emailMessage.Recipients.To.Should().ContainSingle();
             emailMessage.Recipients.To.Single().Address.Should().Be("<john@doe.com>");
             emailMessage.Recipients.To.Single().DisplayName.Should().Be("\"John Doe\"");
 
