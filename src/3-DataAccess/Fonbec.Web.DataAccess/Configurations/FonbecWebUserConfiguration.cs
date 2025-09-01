@@ -31,5 +31,38 @@ internal class FonbecUserConfiguration : IEntityTypeConfiguration<FonbecWebUser>
 
         builder.Property(u => u.NickName)
             .HasMaxLength(MaxLength.FonbecWebUser.NickName);
+
+        builder.Property(u => u.Notes)
+            .HasMaxLength(MaxLength.FonbecWebUser.Notes);
+
+        builder.HasOne(u => u.Chapter)
+            .WithMany()
+            .HasForeignKey(u => u.ChapterId)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        // Audit Properties
+
+        builder.HasOne(u => u.CreatedBy)
+            .WithOne()
+            .HasForeignKey<FonbecWebUser>(u => u.CreatedById)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.Property(u => u.CreatedOnUtc)
+            .HasDefaultValueSql("GETUTCDATE()");
+
+        builder.HasOne(u => u.LastUpdatedBy)
+            .WithOne()
+            .HasForeignKey<FonbecWebUser>(u => u.LastUpdatedById)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(u => u.DisabledBy)
+            .WithOne()
+            .HasForeignKey<FonbecWebUser>(u => u.DisabledById)
+            .OnDelete(DeleteBehavior.Restrict);
+
+        builder.HasOne(u => u.ReenabledBy)
+            .WithOne()
+            .HasForeignKey<FonbecWebUser>(u => u.ReenabledById)
+            .OnDelete(DeleteBehavior.Restrict);
     }
 }

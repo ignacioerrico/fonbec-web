@@ -6,7 +6,6 @@ using Fonbec.Web.Ui.Configuration;
 using Mapster;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.EntityFrameworkCore;
 
 var builder = WebApplication.CreateBuilder(args);
 
@@ -47,14 +46,11 @@ TypeAdapterConfig.GlobalSettings.Scan(logicAssembly);
 
 var app = builder.Build();
 
-// Ensure database is created and seeded
-using (var scope = app.Services.CreateScope())
-{
-    var db = scope.ServiceProvider.GetRequiredService<FonbecWebDbContext>();
-    db.Database.Migrate();
-}
-
 // Configure the HTTP request pipeline.
+
+await ConfigureMiddleware.ApplyMigrationsAndSeedingAsync(app, applySeeding: false);
+
+await ConfigureMiddleware.SeedRolesAndAdminUserAsync(app);
 
 if (app.Environment.IsDevelopment())
 {
