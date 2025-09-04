@@ -2,7 +2,7 @@ using Fonbec.Web.DataAccess.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 
-namespace Fonbec.Web.Ui.Account;
+namespace Fonbec.Web.Ui.Account.Communication;
 
 // Remove the "else if (EmailSender is IdentityNoOpEmailSender)" block from RegisterConfirmation.razor after updating with a real implementation.
 internal sealed class IdentityNoOpEmailSender : IEmailSender<FonbecWebUser>
