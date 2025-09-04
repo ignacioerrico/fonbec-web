@@ -1,6 +1,5 @@
 ﻿using Azure.Communication.Email;
 using Fonbec.Web.DataAccess;
-using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Services;
@@ -9,12 +8,8 @@ using Fonbec.Web.Ui.Options;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
-using Microsoft.EntityFrameworkCore.Infrastructure;
-using Microsoft.Extensions.Options;
 using MudBlazor.Services;
 using MudExtensions.Services;
-using System.ComponentModel.DataAnnotations;
-using System.Text;
 
 namespace Fonbec.Web.Ui.Configuration;
 
@@ -42,7 +37,7 @@ public static class ConfigureServices
 
         services.AddScoped<IChaptersListService, ChaptersListService>();
 
-        services.AddScoped<IChaptersListRepository, ChaptersListRepository>();
+        services.AddScoped<IChapterRepository, ChapterRepository>();
     }
 
     public static void RegisterEntityFrameworkCore(IServiceCollection services, IConfiguration configuration)
@@ -52,166 +47,10 @@ public static class ConfigureServices
                 var connectionString = configuration.GetConnectionString("FonbecWebDbContextConnection") ??
                                        throw new InvalidOperationException("Connection string 'FonbecWebDbContextConnection' not found.");
 
-                options.UseSqlServer(connectionString)
-                    .UseSeeding((context, _) =>
-                    {
-                        // Add roles.
-                        foreach (var role in FonbecRole.AllRoles)
-                        {
-                            var roleDb = context.Set<FonbecWebRole>().FirstOrDefault(ir => ir.Name == role);
-                            if (roleDb is not null)
-                            {
-                                continue;
-                            }
-
-                            var identityRole = new FonbecWebRole
-                            {
-                                Name = role,
-                                NormalizedName = role.ToUpper()
-                            };
-                            context.Set<FonbecWebRole>().Add(identityRole);
-                            context.SaveChanges();
-                        }
-
-                        var adminUserOptions = context.GetService<IOptions<AdminUserOptions>>().Value
-                                               ?? throw new NullReferenceException("AdminUserOptions could not be instantiated.");
-
-                        // Values set in user secrets.
-                        var username = adminUserOptions.Username;
-                        var password = adminUserOptions.Password;
-
-                        if (username is null || password is null)
-                        {
-                            throw new ValidationException("Either username or password has not been set as a secret.");
-                        }
-
-                        var userManager = services.BuildServiceProvider().GetService<UserManager<FonbecWebUser>>()
-                                          ?? throw new InvalidOperationException("Could not resolve UserManager<FonbecWebUser>.");
-
-                        if (userManager.FindByNameAsync(username).Result is not null)
-                        {
-                            return;
-                        }
-
-                        // Add admin user.
-                        var adminUser = new FonbecWebUser
-                        {
-                            FirstName = adminUserOptions.FirstName ?? string.Empty,
-                            LastName = adminUserOptions.LastName ?? string.Empty,
-                            NickName = adminUserOptions.NickName,
-                            Gender = adminUserOptions.Gender,
-                            UserName = username,
-                            Email = username,
-                        };
-
-                        var userCreationResult = userManager.CreateAsync(adminUser, password).Result;
-
-                        if (userCreationResult.Succeeded)
-                        {
-                            var roleAssignmentResult = userManager.AddToRoleAsync(adminUser, FonbecRole.Admin).Result;
-                            if (!roleAssignmentResult.Succeeded)
-                            {
-                                Halt("Could not add Admin role to Admin user.", roleAssignmentResult.Errors);
-                            }
-
-                            var removeLockoutResult = userManager.SetLockoutEnabledAsync(adminUser, false).Result;
-                            if (!removeLockoutResult.Succeeded)
-                            {
-                                Halt("Could not remove lockout from Admin user.", removeLockoutResult.Errors);
-                            }
-                        }
-                        else
-                        {
-                            Halt("Could not create admin user.", userCreationResult.Errors);
-                        }
-                    })
-                    .UseAsyncSeeding(async (context, _, cancellationToken) =>
-                    {
-                        // Add roles.
-                        foreach (var role in FonbecRole.AllRoles)
-                        {
-                            var roleDb = await context.Set<FonbecWebRole>().FirstOrDefaultAsync(ir => ir.Name == role, cancellationToken);
-                            if (roleDb is not null)
-                            {
-                                continue;
-                            }
-
-                            var identityRole = new FonbecWebRole
-                            {
-                                Name = role,
-                                NormalizedName = role.ToUpper()
-                            };
-                            context.Set<FonbecWebRole>().Add(identityRole);
-                            await context.SaveChangesAsync(cancellationToken);
-                        }
-
-                        var adminUserOptions = context.GetService<IOptions<AdminUserOptions>>().Value
-                                               ?? throw new NullReferenceException(
-                                                   "AdminUserOptions could not be instantiated.");
-
-                        // Values set in user secrets.
-                        var username = adminUserOptions.Username;
-                        var password = adminUserOptions.Password;
-
-                        if (username is null || password is null)
-                        {
-                            throw new ValidationException("Either username or password has not been set as a secret.");
-                        }
-
-                        var userManager = services.BuildServiceProvider().GetService<UserManager<FonbecWebUser>>()
-                                          ?? throw new InvalidOperationException("Could not resolve UserManager<FonbecWebUser>.");
-
-                        if (await userManager.FindByNameAsync(username) is not null)
-                        {
-                            return;
-                        }
-
-                        // Add admin user.
-                        var adminUser = new FonbecWebUser
-                        {
-                            FirstName = adminUserOptions.FirstName ?? string.Empty,
-                            LastName = adminUserOptions.LastName ?? string.Empty,
-                            NickName = adminUserOptions.NickName,
-                            Gender = adminUserOptions.Gender,
-                            UserName = username,
-                            Email = username,
-                        };
-
-                        var userCreationResult = await userManager.CreateAsync(adminUser, password);
-
-                        if (userCreationResult.Succeeded)
-                        {
-                            var roleAssignmentResult = await userManager.AddToRoleAsync(adminUser, FonbecRole.Admin);
-                            if (!roleAssignmentResult.Succeeded)
-                            {
-                                Halt("Could not add Admin role to Admin user.", roleAssignmentResult.Errors);
-                            }
-
-                            var removeLockoutResult = await userManager.SetLockoutEnabledAsync(adminUser, false);
-                            if (!removeLockoutResult.Succeeded)
-                            {
-                                Halt("Could not remove lockout from Admin user.", removeLockoutResult.Errors);
-                            }
-                        }
-                        else
-                        {
-                            Halt("Could not create admin user.", userCreationResult.Errors);
-                        }
-                    });
+                options.UseSqlServer(connectionString);
             }
         );
 
         services.AddDatabaseDeveloperPageExceptionFilter();
-    }
-
-    private static void Halt(string errorMessage, IEnumerable<IdentityError> errors)
-    {
-        var sb = new StringBuilder(errorMessage);
-        foreach (var error in errors)
-        {
-            sb.AppendLine(error.Description);
-        }
-
-        throw new ValidationException(sb.ToString());
     }
 }

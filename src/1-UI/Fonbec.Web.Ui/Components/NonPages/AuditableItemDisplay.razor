@@ -1,0 +1,34 @@
+﻿@using Fonbec.Web.Logic.ExtensionMethods
+@using Fonbec.Web.Ui.Components.NonPages.Buttons
+
+<MudStack Row="true">
+    <MudTooltip Delay="500" Arrow="true" Placement="Placement.Bottom" Color="Color.Dark">
+        <ChildContent>
+            <MudText Color="@Color">
+                <strong>@ItemName</strong>
+            </MudText>
+        </ChildContent>
+        <TooltipContent>
+            <MudText Align="Align.Left" Typo="Typo.body1">
+                @ItemName (ID: @Id)
+            </MudText>
+            <MudText Align="Align.Left" Typo="Typo.body2">
+                Creado por: @AuditableViewModel.CreatedBy el @AuditableViewModel.CreatedOnUtc.ToLocalizedDateTime()
+            </MudText>
+            @if (AuditableViewModel.LastUpdatedBy is not null)
+            {
+                <MudText Align="Align.Left" Typo="Typo.body2">
+                    Última actualización por: @AuditableViewModel.CreatedBy el @AuditableViewModel.CreatedOnUtc.ToLocalizedDateTime()
+                </MudText>
+            }
+            @if (AuditableViewModel.DisabledBy is not null)
+            {
+                <MudText Align="Align.Left" Typo="Typo.body2">
+                    Desabilitado por: @AuditableViewModel.CreatedBy el @AuditableViewModel.CreatedOnUtc.ToLocalizedDateTime()
+                </MudText>
+            }
+        </TooltipContent>
+    </MudTooltip>
+
+    <EmailIconButton EmailAddress="@Email" />
+</MudStack>

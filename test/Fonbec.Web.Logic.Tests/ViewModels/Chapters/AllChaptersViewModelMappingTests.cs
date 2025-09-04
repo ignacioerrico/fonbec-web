@@ -5,21 +5,23 @@ using Mapster;
 
 namespace Fonbec.Web.Logic.Tests.ViewModels.Chapters;
 
-public class ChaptersListViewModelMappingTests : MappingTestBase
+public class AllChaptersViewModelMappingTests : MappingTestBase
 {
     [Fact]
     public void Maps_ChapterName_From_DataModel_To_ViewModel()
     {
         // Arrange
-        var dataModel = new ChaptersListDataModel
+        var dataModel = new AllChaptersDataModel(Auditable)
         {
+            ChapterId = 314,
             ChapterName = "Test Chapter"
         };
 
         // Act
-        var viewModel = dataModel.Adapt<ChaptersListViewModel>(Config);
+        var viewModel = dataModel.Adapt<AllChaptersViewModel>(Config);
 
         // Assert
+        viewModel.ChapterId.Should().Be(314);
         viewModel.ChapterName.Should().Be("Test Chapter");
     }
 }
