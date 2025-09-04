@@ -93,3 +93,34 @@ the UI project, `Fonbec.Web.Ui` &rarr; Manage User Secrets) with this format:
 ```
 
 Assign a value to each field.
+
+ASP.NET Core Identity relies on classes that send emails.  For that purpose,
+this needs to be set in the user secrets too:
+
+```
+"Email": {
+  "From": "",
+  "ReplyToEmail": "",
+  "ReplyToDisplayName": ""
+}
+```
+
+`From` is the email address that emails are sent from.  It must be an address
+from a verified domain (by default in the domain `azurecomm.net`).  The other
+two fields are optional.
+
+The email sender service has `EmailClient` as a dependency, which is defined in
+the `Azure.Communications.Email` namespace.  Its instantiation requires a
+connection string, so this must be added to the secrets as well:
+
+```
+"ConnectionStrings": {
+  "CommunicationServiceConnectionString": ""
+}
+```
+
+Ask a colleague for the connection string to Azure Communication Service.
+Alternatively, you can use the `IdentityNoOpEmailSender` in the IoC container
+registration for `IEmailSender<FonbecWebUser>` (but you'll have to get back
+code in the `RegisterConfirmation.razor`; check git history for that, for
+example in commit 934513470a789143bd45f295c400a4e82852ae18).

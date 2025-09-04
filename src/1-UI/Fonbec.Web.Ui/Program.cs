@@ -36,7 +36,7 @@ builder.Services.AddIdentityCore<FonbecWebUser>(options =>
 
 ConfigureServices.RegisterOptions(builder.Services, builder.Configuration);
 
-ConfigureServices.RegisterServices(builder.Services);
+ConfigureServices.RegisterServices(builder.Services, builder.Configuration);
 
 ConfigureServices.RegisterEntityFrameworkCore(builder.Services, builder.Configuration);
 
