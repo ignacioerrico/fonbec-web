@@ -1,4 +1,4 @@
-﻿using Fonbec.Web.Logic.ViewModels.Abstract;
+﻿using Fonbec.Web.Logic.Models;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 

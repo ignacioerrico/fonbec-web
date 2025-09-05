@@ -1,5 +1,5 @@
-﻿using Fonbec.Web.Logic.Services;
-using Fonbec.Web.Logic.ViewModels.Chapters;
+﻿using Fonbec.Web.Logic.Models.Chapters;
+using Fonbec.Web.Logic.Services;
 using Microsoft.AspNetCore.Components;
 
 namespace Fonbec.Web.Ui.Components.Pages.Chapters;

@@ -1,5 +1,4 @@
-﻿using Fonbec.Web.DataAccess.DataModels.Abstract;
-using Fonbec.Web.DataAccess.Entities.Abstract;
+﻿using Fonbec.Web.DataAccess.Entities;
 
 namespace Fonbec.Web.DataAccess.DataModels.Chapters;
 

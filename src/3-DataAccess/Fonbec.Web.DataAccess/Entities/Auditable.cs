@@ -1,4 +1,4 @@
-﻿namespace Fonbec.Web.DataAccess.Entities.Abstract;
+﻿namespace Fonbec.Web.DataAccess.Entities;
 
 public abstract class Auditable
 {
@@ -44,5 +44,5 @@ public abstract class Auditable
     /// </summary>
     public bool IsActive =>
         DisabledById is null
-        || (ReenabledById is not null && ReenabledOnUtc is not null);
+        || ReenabledById is not null && ReenabledOnUtc is not null;
 }

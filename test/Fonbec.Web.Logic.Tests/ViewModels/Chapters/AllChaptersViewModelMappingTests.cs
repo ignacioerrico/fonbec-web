@@ -1,6 +1,6 @@
 ﻿using FluentAssertions;
 using Fonbec.Web.DataAccess.DataModels.Chapters;
-using Fonbec.Web.Logic.ViewModels.Chapters;
+using Fonbec.Web.Logic.Models.Chapters;
 using Mapster;
 
 namespace Fonbec.Web.Logic.Tests.ViewModels.Chapters;

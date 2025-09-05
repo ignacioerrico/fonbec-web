@@ -1,7 +1,7 @@
-﻿using Fonbec.Web.DataAccess.DataModels.Abstract;
+﻿using Fonbec.Web.DataAccess.DataModels;
 using Mapster;
 
-namespace Fonbec.Web.Logic.ViewModels.Abstract;
+namespace Fonbec.Web.Logic.Models;
 
 public abstract class AuditableViewModel
 {

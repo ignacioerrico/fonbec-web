@@ -1,5 +1,4 @@
 ﻿using Fonbec.Web.DataAccess.Entities;
-using Fonbec.Web.DataAccess.Entities.Abstract;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;

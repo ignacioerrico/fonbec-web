@@ -1,5 +1,5 @@
 ﻿using Fonbec.Web.DataAccess.Repositories;
-using Fonbec.Web.Logic.ViewModels.Chapters;
+using Fonbec.Web.Logic.Models.Chapters;
 using Mapster;
 
 namespace Fonbec.Web.Logic.Services;

@@ -1,8 +1,8 @@
 ﻿using Fonbec.Web.DataAccess.DataModels.Chapters;
-using Fonbec.Web.Logic.ViewModels.Abstract;
+using Fonbec.Web.Logic.Models;
 using Mapster;
 
-namespace Fonbec.Web.Logic.ViewModels.Chapters;
+namespace Fonbec.Web.Logic.Models.Chapters;
 
 public class AllChaptersViewModel : AuditableViewModel
 {
