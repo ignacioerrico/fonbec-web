@@ -2,5 +2,9 @@
 
 public static class NavRoutes
 {
+    public const string Home = "/";
+
     public const string Chapters = "/filiales";
+
+    public const string Users = "/usuarios";
 }

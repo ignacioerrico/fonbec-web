@@ -36,8 +36,10 @@ public static class ConfigureServices
         services.AddSingleton(_ => new EmailClient(communicationServiceConnectionString));
 
         services.AddScoped<IChaptersListService, ChaptersListService>();
+        services.AddScoped<IUserService, UserService>();
 
         services.AddScoped<IChapterRepository, ChapterRepository>();
+        services.AddScoped<IUserRepository, UserRepository>();
     }
 
     public static void RegisterEntityFrameworkCore(IServiceCollection services, IConfiguration configuration)
