@@ -3,12 +3,12 @@ using Fonbec.Web.DataAccess.DataModels.Chapters;
 using Fonbec.Web.Logic.Models.Chapters;
 using Mapster;
 
-namespace Fonbec.Web.Logic.Tests.ViewModels.Chapters;
+namespace Fonbec.Web.Logic.Tests.Models.Chapters;
 
 public class AllChaptersViewModelMappingTests : MappingTestBase
 {
     [Fact]
-    public void Maps_ChapterName_From_DataModel_To_ViewModel()
+    public void Maps_Chapter_From_DataModel_To_ViewModel()
     {
         // Arrange
         var dataModel = new AllChaptersDataModel(Auditable)

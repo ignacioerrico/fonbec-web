@@ -51,7 +51,7 @@ public static class ConfigureMiddleware
         using var scope = app.Services.CreateScope();
         var userManager = scope.ServiceProvider.GetRequiredService<UserManager<FonbecWebUser>>();
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<FonbecWebRole>>();
-        var options = scope.ServiceProvider.GetRequiredService<IOptions<AdminUserOptions>>().Value;
+        var adminUserOptions = scope.ServiceProvider.GetRequiredService<IOptions<AdminUserOptions>>().Value;
 
         // Ensure roles exist
         foreach (var roleName in FonbecRole.AllRoles)
@@ -70,8 +70,8 @@ public static class ConfigureMiddleware
         }
 
         // Ensure admin user exists
-        var username = options.Username;
-        var password = options.Password;
+        var username = adminUserOptions.Username;
+        var password = adminUserOptions.Password;
         
         if (username is null || password is null)
         {
@@ -86,10 +86,10 @@ public static class ConfigureMiddleware
 
         adminUser = new FonbecWebUser
         {
-            FirstName = options.FirstName ?? string.Empty,
-            LastName = options.LastName ?? string.Empty,
-            NickName = options.NickName,
-            Gender = options.Gender,
+            FirstName = adminUserOptions.FirstName ?? string.Empty,
+            LastName = adminUserOptions.LastName ?? string.Empty,
+            NickName = adminUserOptions.NickName,
+            Gender = adminUserOptions.Gender,
             UserName = username,
             Email = username,
         };

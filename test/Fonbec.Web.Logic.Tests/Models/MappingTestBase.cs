@@ -2,7 +2,7 @@
 using Mapster;
 using NSubstitute;
 
-namespace Fonbec.Web.Logic.Tests.ViewModels;
+namespace Fonbec.Web.Logic.Tests.Models;
 
 public abstract class MappingTestBase
 {
