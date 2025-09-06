@@ -3,7 +3,6 @@ using Fonbec.Web.DataAccess.DataModels.Users;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.Logic.Models.Users;
 using Mapster;
-using System.Data;
 
 namespace Fonbec.Web.Logic.Tests.Models.Users;
 
@@ -12,14 +11,15 @@ namespace Fonbec.Web.Logic.Tests.Models.Users;
 /// - All fields mapped directly.
 /// - Null handling for UserNickName, UserEmail, and UserPhoneNumber.
 /// - Both branches for IsUserActive logic.
+/// - Roles property default value.
 /// </summary>
 public class AllUsersViewModelMappingDefinitionsTests : MappingTestBase
 {
     [Fact]
-    public void Maps_User_From_DataModel_To_ViewModel()
+    public void Maps_User_From_UserDataModel_To_ViewModel()
     {
         var now = DateTimeOffset.Now;
-        var dataModel = new AllUsersDataModel
+        var userDataModel = new AllUsersUserDataModel
         {
             UserId = 1,
             UserFirstName = "John",
@@ -32,7 +32,7 @@ public class AllUsersViewModelMappingDefinitionsTests : MappingTestBase
             UserLockOutEndsOnUtc = now.AddMinutes(-1)
         };
 
-        var viewModel = dataModel.Adapt<AllUsersViewModel>(Config);
+        var viewModel = userDataModel.Adapt<AllUsersViewModel>(Config);
 
         viewModel.UserId.Should().Be(1);
         viewModel.UserFirstName.Should().Be("John");
@@ -42,18 +42,19 @@ public class AllUsersViewModelMappingDefinitionsTests : MappingTestBase
         viewModel.UserEmail.Should().Be("john.doe@example.com");
         viewModel.UserPhoneNumber.Should().Be("1234567890");
         viewModel.IsUserActive.Should().BeTrue();
+        viewModel.Roles.Should().BeNull(); // Not mapped by default
     }
 
     [Fact]
     public void Sets_UserNickName_Empty_When_Null()
     {
-        var dataModel = new AllUsersDataModel
+        var userDataModel = new AllUsersUserDataModel
         {
             UserNickName = null,
             UserLockOutEndsOnUtc = null
         };
 
-        var viewModel = dataModel.Adapt<AllUsersViewModel>(Config);
+        var viewModel = userDataModel.Adapt<AllUsersViewModel>(Config);
 
         viewModel.UserNickName.Should().BeEmpty();
     }
@@ -61,13 +62,13 @@ public class AllUsersViewModelMappingDefinitionsTests : MappingTestBase
     [Fact]
     public void Sets_UserEmail_Empty_When_Null()
     {
-        var dataModel = new AllUsersDataModel
+        var userDataModel = new AllUsersUserDataModel
         {
             UserEmail = null,
             UserLockOutEndsOnUtc = null
         };
 
-        var viewModel = dataModel.Adapt<AllUsersViewModel>(Config);
+        var viewModel = userDataModel.Adapt<AllUsersViewModel>(Config);
 
         viewModel.UserEmail.Should().BeEmpty();
     }
@@ -75,13 +76,13 @@ public class AllUsersViewModelMappingDefinitionsTests : MappingTestBase
     [Fact]
     public void Sets_UserPhoneNumber_Empty_When_Null()
     {
-        var dataModel = new AllUsersDataModel
+        var userDataModel = new AllUsersUserDataModel
         {
             UserPhoneNumber = null,
             UserLockOutEndsOnUtc = null
         };
 
-        var viewModel = dataModel.Adapt<AllUsersViewModel>(Config);
+        var viewModel = userDataModel.Adapt<AllUsersViewModel>(Config);
 
         viewModel.UserPhoneNumber.Should().BeEmpty();
     }
@@ -89,13 +90,13 @@ public class AllUsersViewModelMappingDefinitionsTests : MappingTestBase
     [Fact]
     public void IsUserActive_True_When_NotLockedOut_And_LockoutEndsInPast()
     {
-        var dataModel = new AllUsersDataModel
+        var userDataModel = new AllUsersUserDataModel
         {
             IsUserLockedOut = false,
             UserLockOutEndsOnUtc = DateTimeOffset.Now.AddMinutes(-5)
         };
 
-        var viewModel = dataModel.Adapt<AllUsersViewModel>(Config);
+        var viewModel = userDataModel.Adapt<AllUsersViewModel>(Config);
 
         viewModel.IsUserActive.Should().BeTrue();
     }
@@ -103,13 +104,13 @@ public class AllUsersViewModelMappingDefinitionsTests : MappingTestBase
     [Fact]
     public void IsUserActive_False_When_LockedOut()
     {
-        var dataModel = new AllUsersDataModel
+        var userDataModel = new AllUsersUserDataModel
         {
             IsUserLockedOut = true,
             UserLockOutEndsOnUtc = DateTimeOffset.Now.AddMinutes(-5)
         };
 
-        var viewModel = dataModel.Adapt<AllUsersViewModel>(Config);
+        var viewModel = userDataModel.Adapt<AllUsersViewModel>(Config);
 
         viewModel.IsUserActive.Should().BeFalse();
     }
@@ -117,13 +118,13 @@ public class AllUsersViewModelMappingDefinitionsTests : MappingTestBase
     [Fact]
     public void IsUserActive_True_When_LockoutEndsOnUtc_Is_Null_And_NotLockedOut()
     {
-        var dataModel = new AllUsersDataModel
+        var userDataModel = new AllUsersUserDataModel
         {
             IsUserLockedOut = false,
             UserLockOutEndsOnUtc = null
         };
 
-        var viewModel = dataModel.Adapt<AllUsersViewModel>(Config);
+        var viewModel = userDataModel.Adapt<AllUsersViewModel>(Config);
 
         viewModel.IsUserActive.Should().BeTrue();
     }
@@ -131,13 +132,13 @@ public class AllUsersViewModelMappingDefinitionsTests : MappingTestBase
     [Fact]
     public void IsUserActive_False_When_LockoutEndsOnUtc_Is_Null_And_LockedOut()
     {
-        var dataModel = new AllUsersDataModel
+        var userDataModel = new AllUsersUserDataModel
         {
             IsUserLockedOut = true,
             UserLockOutEndsOnUtc = null
         };
 
-        var viewModel = dataModel.Adapt<AllUsersViewModel>(Config);
+        var viewModel = userDataModel.Adapt<AllUsersViewModel>(Config);
 
         viewModel.IsUserActive.Should().BeFalse();
     }

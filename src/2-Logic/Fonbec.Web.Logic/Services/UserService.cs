@@ -3,14 +3,13 @@ using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Models.Users;
 using Fonbec.Web.Logic.Models.Users.Input;
 using Mapster;
-using Microsoft.AspNetCore.Identity;
 
 namespace Fonbec.Web.Logic.Services;
 
 public interface IUserService
 {
     Task<List<AllUsersViewModel>> GetAllUsersAsync();
-    Task<IdentityResult> UpdateUserAsync(UpdateUserInputModel model);
+    Task<bool> UpdateUserAsync(UpdateUserInputModel model);
 }
 
 public class UserService(IUserRepository userRepository) : IUserService
@@ -18,10 +17,19 @@ public class UserService(IUserRepository userRepository) : IUserService
     public async Task<List<AllUsersViewModel>> GetAllUsersAsync()
     {
         var allUsersDataModel = await userRepository.GetAllUsersAsync();
-        return allUsersDataModel.Adapt<List<AllUsersViewModel>>();
+        var allUsers = allUsersDataModel.Users.Adapt<List<AllUsersViewModel>>();
+
+        foreach (var user in allUsers)
+        {
+            user.Roles = allUsersDataModel.UsersInRoles
+                .Where(usersInRole => usersInRole.UserIdsInRole.Contains(user.UserId))
+                .Select(usersInRole => usersInRole.Role);
+        }
+
+        return allUsers;
     }
 
-    public async Task<IdentityResult> UpdateUserAsync(UpdateUserInputModel model)
+    public async Task<bool> UpdateUserAsync(UpdateUserInputModel model)
     {
         var updateUserInputDataModel = model.Adapt<UpdateUserInputDataModel>();
         return await userRepository.UpdateUserAsync(updateUserInputDataModel);

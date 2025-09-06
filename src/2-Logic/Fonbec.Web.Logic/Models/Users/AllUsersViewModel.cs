@@ -20,6 +20,8 @@ public class AllUsersViewModel
 
     public string UserPhoneNumber { get; set; } = null!;
 
+    public IEnumerable<string> Roles { get; set; } = null!;
+
     public bool IsUserActive { get; set; }
 }
 
@@ -27,7 +29,7 @@ public class AllUsersViewModelMappingDefinitions : IRegister
 {
     public void Register(TypeAdapterConfig config)
     {
-        config.NewConfig<AllUsersDataModel, AllUsersViewModel>()
+        config.NewConfig<AllUsersUserDataModel, AllUsersViewModel>()
             .Map(dest => dest.UserId, src => src.UserId)
             .Map(dest => dest.UserFirstName, src => src.UserFirstName)
             .Map(dest => dest.UserLastName, src => src.UserLastName)

@@ -21,7 +21,7 @@
                  EditTrigger="DataGridEditTrigger.Manual"
                  QuickFilter="Filter"
                  Filterable="true"
-                 FilterMode="DataGridFilterMode.ColumnFilterMenu"
+                 FilterMode="DataGridFilterMode.ColumnFilterRow"
                  FilterCaseSensitivity="DataGridFilterCaseSensitivity.CaseInsensitive"
                  SortMode="SortMode.Multiple"
                  Class="mt-4">
@@ -32,7 +32,26 @@
                           Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
         </ToolBarContent>
         <Columns>
-            <PropertyColumn Property="@(x => $"{x.UserFirstName} {x.UserLastName}")" Title="Nombre">
+            <PropertyColumn Property="@(x => _sortByLastName ? x.UserLastName : x.UserFirstName)" Title="Nombre">
+                <CellTemplate>
+                    <MudText Typo="Typo.body1">
+                        @if (_sortByLastName)
+                        {
+                            <span>@context.Item.UserLastName, @context.Item.UserFirstName</span>
+                        }
+                        else
+                        {
+                            <span>@context.Item.UserFirstName @context.Item.UserLastName</span>
+                        }
+
+                        @if (context.Item.UserId == _userId)
+                        {
+                            <MudChip Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" Class="ml-3">
+                                YO
+                            </MudChip>
+                        }
+                    </MudText>
+                </CellTemplate>
                 <EditTemplate>
                     <MudTextField T="string" @bind-Value="@context.Item.UserFirstName" Immediate="true"
                                   Required="true" RequiredError="Este es un campo requerido"
@@ -43,6 +62,52 @@
                                   Label="Apellido" Variant="Variant.Outlined" Margin="Margin.Dense"
                                   MaxLength="MaxLength.FonbecWebUser.FirstName" />
                 </EditTemplate>
+            </PropertyColumn>
+            <PropertyColumn Property="x => x.Roles.FirstOrDefault()" Title="Roles">
+                <CellTemplate>
+                    @foreach (var role in context.Item.Roles)
+                    {
+                        var color = role switch
+                        {
+                            FonbecRole.Admin => Color.Secondary,
+                            FonbecRole.Manager => Color.Warning,
+                            FonbecRole.Uploader => Color.Info,
+                            FonbecRole.Reviewer => Color.Primary,
+                            _ => Color.Default
+                        };
+                        <MudChip Variant="Variant.Outlined" Color="@color">
+                            @role
+                        </MudChip>
+                    }
+                </CellTemplate>
+                <EditTemplate>
+                </EditTemplate>
+                <FilterTemplate>
+                    <MudIconButton OnClick="@(() => _isRolesFilterOpen = true)" Icon="@_rolesFilterIcon" Size="@Size.Small" />
+                    <MudOverlay OnClick="@(() => _isRolesFilterOpen = false)" Visible="@_isRolesFilterOpen" />
+                    <MudPopover Open="@_isRolesFilterOpen" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter"
+                                Style="width:200px">
+                        <MudStack Spacing="0">
+                            <MudCheckBox T="bool" Label="Seleccionar todos" Size="@Size.Small" Value="@_areAllRolesSelected" ValueChanged="OnSelectAllRolesChanged" />
+                            <MudStack Spacing="0" Style="overflow-y:auto;max-height:250px">
+                                @foreach (var role in FonbecRole.AllRoles)
+                                {
+                                    <MudCheckBox T="bool" Label="@role" Size="@Size.Small"
+                                                 Value="@(_selectedRoles.Contains(role))"
+                                                 ValueChanged="@(isSelected => SelectedChanged(role, isSelected))" />
+                                }
+                            </MudStack>
+                            <MudStack Row="true" Class="d-flex justify-space-between ma-2">
+                                <MudButton OnClick="@(() => ClearFilterAsync(context))" Color="Color.Default">
+                                    Limpiar
+                                </MudButton>
+                                <MudButton OnClick="@(() => ApplyFilterAsync(context))" Color="Color.Primary" Variant="Variant.Filled">
+                                    Filtrar
+                                </MudButton>
+                            </MudStack>
+                        </MudStack>
+                    </MudPopover>
+                </FilterTemplate>
             </PropertyColumn>
             <PropertyColumn Property="x => x.UserNickName" Title="Apodo" Hidden="true" Required="false" />
             <PropertyColumn Property="x => x.UserGender" Title="Sexo" Hidden="true">
@@ -56,7 +121,7 @@
             </PropertyColumn>
             <PropertyColumn Property="x => x.UserEmail" Title="Correo electrónico">
                 <CellTemplate>
-                    <MudLink Href="@($"mailto:{context.Item.UserEmail}")" Typo="Typo.body2">
+                    <MudLink Href="@($"mailto:{context.Item.UserEmail}")">
                         @context.Item.UserEmail
                     </MudLink>
                 </CellTemplate>
@@ -90,4 +155,8 @@
             <MudDataGridPager T="AllUsersViewModel" RowsPerPageString="Filas por página:" InfoFormat="{first_item}-{last_item} of {all_items}" />
         </PagerContent>
     </MudDataGrid>
+
+    <MudSwitch @bind-Value="_sortByLastName">
+        @(_sortByLastName ? "Ordenar por apellido" : "Ordenar por nombre")
+    </MudSwitch>
 }
