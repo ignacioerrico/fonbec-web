@@ -10,7 +10,11 @@
         <MudTh>Nombre</MudTh>
     </HeaderContent>
     <RowTemplate>
-        <MudTd DataLabel="Nombre">@context.ChapterName</MudTd>
+        <MudTd DataLabel="Nombre">
+            <AuditableItemDisplay Id="@context.ChapterId"
+                                  ItemName="@context.ChapterName"
+                                  AuditableViewModel="@context" />
+        </MudTd>
     </RowTemplate>
 </MudTable>
 

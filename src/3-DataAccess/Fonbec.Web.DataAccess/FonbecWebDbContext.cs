@@ -1,13 +1,19 @@
 ﻿using Fonbec.Web.DataAccess.Entities;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.EntityFrameworkCore.ChangeTracking;
 
 namespace Fonbec.Web.DataAccess;
 
-public class FonbecWebDbContext(DbContextOptions<FonbecWebDbContext> options)
-    : IdentityDbContext<FonbecWebUser, FonbecWebRole, int>(options)
+public sealed class FonbecWebDbContext : IdentityDbContext<FonbecWebUser, FonbecWebRole, int>
 {
-    public DbSet<Chapter> Chapters => Set<Chapter>();
+    public FonbecWebDbContext(DbContextOptions<FonbecWebDbContext> options) : base(options)
+    {
+        ChangeTracker.StateChanged += UpdateTimestamps;
+        ChangeTracker.Tracked += UpdateTimestamps;
+    }
+
+    internal DbSet<Chapter> Chapters => Set<Chapter>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -21,5 +27,39 @@ public class FonbecWebDbContext(DbContextOptions<FonbecWebDbContext> options)
         base.OnModelCreating(builder);
 
         builder.ApplyConfigurationsFromAssembly(typeof(FonbecWebDbContext).Assembly);
+    }
+
+    private static void UpdateTimestamps(object? sender, EntityEntryEventArgs e)
+    {
+        if (e.Entry.Entity is not Auditable auditable)
+        {
+            return;
+        }
+
+        switch (e.Entry.State)
+        {
+            case EntityState.Added:
+                auditable.CreatedOnUtc = DateTime.UtcNow;
+                break;
+            case EntityState.Modified:
+                // If the entity is active, set the LastUpdatedOn timestamp.
+                // If the entity is reenabled, set the ReenabledOn timestamp.
+                // If the entity is disabled, set the DisabledOn timestamp.
+                // If the entity is not active, make sure to check if it is being re-enabled first, because we know it is already disabled.
+                // Once an Auditable entity is disabled, it cannot be "un-disabled".
+                if (auditable.IsActive)
+                {
+                    auditable.LastUpdatedOnUtc = DateTime.UtcNow;
+                }
+                else if (auditable.ReenabledById is not null)
+                {
+                    auditable.ReenabledOnUtc = DateTime.UtcNow;
+                }
+                else if (auditable.DisabledById is not null)
+                {
+                    auditable.DisabledOnUtc = DateTime.UtcNow;
+                }
+                break;
+        }
     }
 }

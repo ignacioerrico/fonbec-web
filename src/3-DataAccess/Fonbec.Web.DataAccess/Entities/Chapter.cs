@@ -1,6 +1,6 @@
 ﻿namespace Fonbec.Web.DataAccess.Entities;
 
-public class Chapter
+public class Chapter : Auditable
 {
     public int Id { get; set; }
 
