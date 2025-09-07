@@ -10,4 +10,8 @@ public class Chapter
     {
         Name = name;
     }
+    public Chapter(string name, int id) {
+        Name = name;
+        Id = id;
+    }
 }

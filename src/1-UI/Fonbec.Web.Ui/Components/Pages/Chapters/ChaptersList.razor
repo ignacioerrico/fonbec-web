@@ -8,10 +8,17 @@
 <MudTable Items="_chapters" Hover="true" Striped="true" Dense="true">
     <HeaderContent>
         <MudTh>Nombre</MudTh>
+		<MudTh></MudTh>
     </HeaderContent>
     <RowTemplate>
         <MudTd DataLabel="Nombre">@context.ChapterName</MudTd>
+        <MudTd>
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" OnClick="EditarChapter(context)">
+                Editar
+            </MudButton>
+        </MudTd>
     </RowTemplate>
 </MudTable>
 
 <CreateChapter OnChapterCreated="RefreshChapters"/>
+<EditChapter @ref="_editChapter" ChapterToEdit="_chapterToEdit" />
