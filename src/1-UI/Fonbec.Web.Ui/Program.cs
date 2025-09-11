@@ -28,6 +28,12 @@ builder.Services.AddAuthentication(options =>
 
 builder.Services.AddIdentityCore<FonbecWebUser>(options =>
     {
+        options.User.RequireUniqueEmail = true;
+        options.Password.RequiredLength = builder.Configuration.GetValue<int>("Identity:Password:RequiredLength");
+        options.Password.RequireUppercase = builder.Configuration.GetValue<bool>("Identity:Password:RequireUppercase");
+        options.Password.RequireLowercase = builder.Configuration.GetValue<bool>("Identity:Password:RequireLowercase");
+        options.Password.RequireDigit = builder.Configuration.GetValue<bool>("Identity:Password:RequireDigit");
+        options.Password.RequireNonAlphanumeric = builder.Configuration.GetValue<bool>("Identity:Password:RequireNonAlphanumeric");
     })
     .AddRoles<FonbecWebRole>()
     .AddEntityFrameworkStores<FonbecWebDbContext>()

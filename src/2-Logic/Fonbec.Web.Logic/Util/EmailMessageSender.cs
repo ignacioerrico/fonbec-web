@@ -1,23 +1,30 @@
 ﻿using Azure;
 using Azure.Communication.Email;
+using Fonbec.Web.Logic.Builders;
+using Fonbec.Web.Logic.Models;
+using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
 
-namespace Fonbec.Web.Logic.Services;
+namespace Fonbec.Web.Logic.Util;
 
-public interface IEmailSenderService
+public interface IEmailMessageSender
 {
-    Task SendEmailAsync(EmailMessage emailMessage);
+    Task SendEmailAsync(string email, string subject, string htmlMessage);
 }
 
-public class EmailSenderService(ILogger<EmailSenderService> logger, EmailClient emailClient) : IEmailSenderService
+public class EmailMessageSender(
+    IConfiguration configuration,
+    ILogger<EmailMessageSender> logger,
+    EmailClient emailClient)
+    : IEmailMessageSender
 {
-    public async Task SendEmailAsync(EmailMessage emailMessage)
+    public async Task SendEmailAsync(string email, string subject, string htmlMessage)
     {
-        if (emailMessage is null)
-        {
-            logger.LogError("EmailMessage parameter is null.");
-            throw new ArgumentNullException(nameof(emailMessage));
-        }
+        List<Recipient> recipients = [new(email)];
+
+        var emailMessageBuilder = new EmailMessageBuilder(configuration, recipients, subject, htmlMessage);
+
+        var emailMessage = emailMessageBuilder.Build();
 
         try
         {

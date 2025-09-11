@@ -1,0 +1,11 @@
+﻿@using Fonbec.Web.DataAccess.Constants
+
+<MudSelect T="string" Label="Roles" SelectedValues="_selectedRoles" SelectedValuesChanged="OnSelectedValuesChanged"
+           Required="@(Required ?? false)" RequiredError="Este es un campo obligatorio."
+           MultiSelection="true"
+           Variant="Variant.Filled" AnchorOrigin="Origin.BottomLeft">
+    @foreach (var role in FonbecRole.AllRoles)
+    {
+        <MudSelectItem Value="@role">@FonbecRole.Translator[role]</MudSelectItem>
+    }
+</MudSelect>

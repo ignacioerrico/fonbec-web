@@ -8,6 +8,20 @@
 
 <PageHeader Title="Usuarios" />
 
+<MudStack StretchItems="StretchItems.Middle" Row>
+    <MudTooltip Text="Alta de usuario"
+                Arrow="true" Placement="Placement.Right"
+                Color="Color.Primary">
+        <MudFab Href="@NavRoutes.UserCreate"
+                StartIcon="@Icons.Material.Filled.Add"
+                Color="Color.Primary" />
+    </MudTooltip>
+    <MudSpacer />
+    <MudSwitch @bind-Value="_sortByLastName" LabelPlacement="Placement.Left">
+        @(_sortByLastName ? "Ordenar por apellido" : "Ordenar por nombre")
+    </MudSwitch>
+</MudStack>
+
 <LoadingIndicator Loading="Loading" />
 
 @if (_allUsers.Any())
@@ -145,7 +159,7 @@
                     {
                         <MudTooltip Text="Habilitar" Arrow="true" Placement="Placement.Bottom" Color="Color.Success" Delay="500">
                             <MudIconButton OnClick="@context.Actions.StartEditingItemAsync"
-                                           Icon="@Icons.Material.Outlined.Restore" Size="@Size.Small" Color="Color.Success" />
+                                           Icon="@Icons.Material.Outlined.RestoreFromTrash" Size="@Size.Small" Color="Color.Success" />
                         </MudTooltip>
                     }
                 </CellTemplate>
@@ -155,8 +169,4 @@
             <MudDataGridPager T="AllUsersViewModel" RowsPerPageString="Filas por página:" InfoFormat="{first_item}-{last_item} of {all_items}" />
         </PagerContent>
     </MudDataGrid>
-
-    <MudSwitch @bind-Value="_sortByLastName">
-        @(_sortByLastName ? "Ordenar por apellido" : "Ordenar por nombre")
-    </MudSwitch>
 }
