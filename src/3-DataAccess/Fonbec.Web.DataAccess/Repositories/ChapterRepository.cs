@@ -1,4 +1,6 @@
 ﻿using Fonbec.Web.DataAccess.DataModels.Chapters;
+using Fonbec.Web.DataAccess.DataModels.Chapters.Input;
+using Fonbec.Web.DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Fonbec.Web.DataAccess.Repositories;
@@ -6,6 +8,7 @@ namespace Fonbec.Web.DataAccess.Repositories;
 public interface IChapterRepository
 {
     Task<List<AllChaptersDataModel>> GetAllChaptersAsync();
+    Task<int> CreateChapterAsync(CreateChapterInputDataModel dataModel);
 }
 
 public class ChapterRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : IChapterRepository
@@ -25,7 +28,21 @@ public class ChapterRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
                 ChapterName = ch.Name
             })
             .ToListAsync();
-        
+
         return allChapters;
+    }
+
+    public async Task<int> CreateChapterAsync(CreateChapterInputDataModel dataModel)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var chapter = new Chapter
+        {
+            Name = dataModel.ChapterName,
+            CreatedById = dataModel.ChapterCreatedById,
+        };
+        db.Chapters.Add(chapter);
+
+        return await db.SaveChangesAsync();
     }
 }

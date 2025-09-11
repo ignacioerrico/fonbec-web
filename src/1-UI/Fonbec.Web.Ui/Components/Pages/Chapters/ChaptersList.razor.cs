@@ -9,14 +9,15 @@ public partial class ChaptersList
     private List<AllChaptersViewModel> _chapters = [];
 
     [Inject]
-    public IChaptersListService ChaptersListService { get; set; } = null!;
+    public IChapterService ChapterService { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
-        _chapters = await ChaptersListService.GetAllChaptersAsync();
+        _chapters = await ChapterService.GetAllChaptersAsync();
     }
+
     public async Task RefreshChapters()
     {
-        _chapters = await ChaptersListService.GetAllChaptersAsync();
+        _chapters = await ChapterService.GetAllChaptersAsync();
     }
 }

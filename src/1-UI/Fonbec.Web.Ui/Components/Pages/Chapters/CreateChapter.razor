@@ -1,16 +1,17 @@
 ﻿@attribute [Authorize]
+@inherits AuthenticationRequiredComponentBase
 
 <div style="width: fit-content;">
     <MudText Typo="Typo.h3" GutterBottom="true">Alta de Filial</MudText>
 
     <MudForm @ref="_form">
-        <MudTextField @bind-Value="_nombre" Label="Nombre" Required="true" RequiredError="Se debe específicar el nombre." Margin="Margin.Normal" Variant="Variant.Text" Immediate="true" Class="mb-4" />
+        <MudTextField @bind-Value="_name" Label="Nombre" Required="true" RequiredError="Se debe específicar el nombre." Margin="Margin.Normal" Variant="Variant.Text" Immediate="true" Class="mb-4" />
         <div style="flex-direction: row;">
-            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateAChapter" Disabled="@(string.IsNullOrWhiteSpace(_nombre))" Style="width: fit-content;">
-                CREAR
+            <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="CreateAChapter" Disabled="@IsCreateButtonDisabled" Style="width: fit-content;">
+                Crear
             </MudButton>
             <MudButton Variant="Variant.Filled" Color="Color.Default" OnClick="Cancel" Style="width: fit-content;">
-                CANCELAR
+                Cancelar
             </MudButton>
         </div>
     </MudForm>
