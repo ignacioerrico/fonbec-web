@@ -35,7 +35,7 @@ public static class ConfigureServices
             configuration.GetConnectionString("CommunicationServiceConnectionString");
         services.AddSingleton(_ => new EmailClient(communicationServiceConnectionString));
 
-        services.AddScoped<IChaptersListService, ChaptersListService>();
+        services.AddScoped<IChapterService, ChapterService>();
         services.AddScoped<IUserService, UserService>();
 
         services.AddScoped<IChapterRepository, ChapterRepository>();
