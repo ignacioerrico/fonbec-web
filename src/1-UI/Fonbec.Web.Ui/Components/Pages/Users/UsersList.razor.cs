@@ -28,6 +28,9 @@ public partial class UsersList : AuthenticationRequiredComponentBase
     [Inject]
     public IUserService UserService { get; set; } = null!;
 
+    [Inject]
+    public IDialogService DialogService { get; set; } = null!;
+
     protected override async Task OnInitializedAsync()
     {
         Loading = true;
@@ -72,11 +75,6 @@ public partial class UsersList : AuthenticationRequiredComponentBase
         {
             Snackbar.Add("No se pudo actualizar el usuario.", Severity.Error);
         }
-    }
-
-    private async Task OpenDisableDialogAsync(AllUsersViewModel viewModel)
-    {
-
     }
 
     private void OnSelectAllRolesChanged(bool areAllRolesSelected)
@@ -125,5 +123,98 @@ public partial class UsersList : AuthenticationRequiredComponentBase
             : Icons.Material.Filled.FilterAlt;
         await context.Actions.ApplyFilterAsync(_filterDefinition);
         _isRolesFilterOpen = false;
+    }
+
+    private async Task DisableUserAsync(AllUsersViewModel? viewModel)
+    {
+        if (viewModel is null)
+        {
+            return;
+        }
+
+        var message = $"¿Estás seguro de que querés deshabilitar al usuario {viewModel.UserFirstName} {viewModel.UserLastName}?";
+        var dialogResult = await DialogService.ShowMessageBox(
+            "¡Atención",
+            message,
+            yesText: "Sí",
+            cancelText: "Cancelar");
+
+        if (dialogResult is null)
+        {
+            return;
+        }
+
+        var errors = await UserService.DisableUserAsync(viewModel.UserId, disable: true);
+
+        if (errors.Count > 0)
+        {
+            foreach (var error in errors)
+            {
+                Snackbar.Add(error, Severity.Error);
+            }
+
+            return;
+        }
+
+        viewModel.IsUserActive = false;
+    }
+
+    private async Task ReenableUserAsync(AllUsersViewModel? viewModel)
+    {
+        if (viewModel is null)
+        {
+            return;
+        }
+
+        var errors = await UserService.DisableUserAsync(viewModel.UserId, disable: false);
+
+        if (errors.Count > 0)
+        {
+            foreach (var error in errors)
+            {
+                Snackbar.Add(error, Severity.Error);
+            }
+
+            return;
+        }
+
+        viewModel.IsUserActive = true;
+    }
+
+    private async Task DeleteForeverAsync(AllUsersViewModel? viewModel)
+    {
+        if (viewModel is null)
+        {
+            return;
+        }
+
+        var message = string.Format("¿Estás seguro de que querés eliminar al usuario {0} (ID {1})? Este cambio es irreversible.",
+            $"{viewModel.UserFirstName} {viewModel.UserLastName}",
+            viewModel.UserId);
+        var dialogResult = await DialogService.ShowMessageBox(
+            "¡Atención!",
+            message,
+            yesText: "Sí",
+            cancelText: "Cancelar");
+
+        if (dialogResult is null)
+        {
+            return;
+        }
+
+        var identityResult = await UserService.DeleteForeverAsync(viewModel.UserId);
+        if (!identityResult.Succeeded)
+        {
+            Snackbar.Add("No se pudo eliminar al usuario.", Severity.Error);
+
+            foreach (var error in identityResult.Errors.Where(e => !string.IsNullOrWhiteSpace(e.Description)))
+            {
+                Snackbar.Add(error.Description, Severity.Error);
+            }
+
+            return;
+        }
+
+        _allUsers.Remove(viewModel);
     }
 }
