@@ -52,6 +52,8 @@ The solution is implemented with ASP.NET Core Blazor 9, so the [.NET 9.0
 SDK](https://dotnet.microsoft.com/en-us/download) is required. If you're using
 [Visual Studio 2022](https://visualstudio.microsoft.com/) you should be all set.
 
+### Database
+
 It uses Entity Framework Core with a code-first approach and is configured to
 use **SQL Server**. If you use Visual Studio, just make sure the _Data storage
 and processing_ workload is enabled. (Visual Studio Installer → Modify →
@@ -87,12 +89,20 @@ the UI project, `Fonbec.Web.Ui` &rarr; Manage User Secrets) with this format:
 
 ```
 "AdminUser": {
+  "FirstName": "",
+  "LastName": "",
+  "NickName": "",
+  "Gender": "Unknown|Male|Female",
   "Username": "",
   "Password": ""
 }
 ```
 
 Assign a value to each field.
+- `NickName` is optional.
+- Not setting `Gender` will set the value `Unknown`.
+
+### Sending emails
 
 ASP.NET Core Identity relies on classes that send emails.  For that purpose,
 this needs to be set in the user secrets too:
@@ -124,3 +134,23 @@ Alternatively, you can use the `IdentityNoOpEmailSender` in the IoC container
 registration for `IEmailSender<FonbecWebUser>` (but you'll have to get back
 code in the `RegisterConfirmation.razor`; check git history for that, for
 example in commit 934513470a789143bd45f295c400a4e82852ae18).
+
+### Password requirements
+
+Password requirements must be configured in settings.  This is normally part of
+the user secrets for local development.
+
+```
+"Identity": {
+  "Password": {
+    "RequiredLength": 20,
+    "RequireUppercase": true|false,
+    "RequireLowercase": true|false,
+    "RequireDigit": true|false,
+    "RequireNonAlphanumeric": true|false
+  }
+}
+```
+
+Use values that make sense to you when developing locally.  In production,
+strong requirements must be set.

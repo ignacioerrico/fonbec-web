@@ -2,18 +2,48 @@
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Models.Users;
 using Fonbec.Web.Logic.Models.Users.Input;
+using Fonbec.Web.Logic.Models.Users.Output;
+using Fonbec.Web.Logic.Util;
 using Mapster;
 
 namespace Fonbec.Web.Logic.Services;
 
 public interface IUserService
 {
+    Task<ValidateUniqueEmailOutputModel> ValidateUniqueEmailAsync(string userEmail);
+    Task<ValidateUniqueFullNameOutputModel> ValidateUniqueFullNameAsync(string firstName, string lastName);
     Task<List<AllUsersViewModel>> GetAllUsersAsync();
+    Task<(int userId, List<string> errors)> CreateUserAsync(CreateUserInputModel model);
     Task<bool> UpdateUserAsync(UpdateUserInputModel model);
 }
 
-public class UserService(IUserRepository userRepository) : IUserService
+public class UserService(
+    IUserRepository userRepository,
+    IPasswordGeneratorWrapper passwordGenerator,
+    IEmailMessageSender emailMessageSender)
+    : IUserService
 {
+    public async Task<ValidateUniqueEmailOutputModel> ValidateUniqueEmailAsync(string userEmail)
+    {
+        var normalizedEmail = userEmail.Trim().ToLower();
+        var fonbecUser = await userRepository.ValidateUniqueEmailAsync(normalizedEmail);
+
+        // Email is unique if no user is found with the given email
+        var isEmailUnique = fonbecUser is null;
+        return new ValidateUniqueEmailOutputModel(isEmailUnique, fonbecUser?.FullName());
+    }
+
+    public async Task<ValidateUniqueFullNameOutputModel> ValidateUniqueFullNameAsync(string firstName, string lastName)
+    {
+        var normalizedFirstName = firstName;
+        var normalizedLastName = lastName;
+        var fonbecUser = await userRepository.ValidateUniqueFullNameAsync(normalizedFirstName, normalizedLastName);
+
+        // Full name is unique if no user is found with the given full name
+        var isFullNameUnique = fonbecUser is null;
+        return new ValidateUniqueFullNameOutputModel(isFullNameUnique);
+    }
+
     public async Task<List<AllUsersViewModel>> GetAllUsersAsync()
     {
         var allUsersDataModel = await userRepository.GetAllUsersAsync();
@@ -27,6 +57,27 @@ public class UserService(IUserRepository userRepository) : IUserService
         }
 
         return allUsers;
+    }
+
+    public async Task<(int userId, List<string> errors)> CreateUserAsync(CreateUserInputModel model)
+    {
+        var generatedPassword = await passwordGenerator.GeneratePassword();
+        var createUserInputDataModel = model
+            .BuildAdapter()
+            .AddParameters("generatedPassword", generatedPassword)
+            .AdaptToType<CreateUserInputDataModel>();
+
+        var (userId, errors) = await userRepository.CreateUserAsync(createUserInputDataModel);
+
+        if (userId > 0 && errors.Count == 0)
+        {
+            // TODO: Use a nice email template
+            await emailMessageSender.SendEmailAsync(model.UserEmail,
+                "FONBEC | Tu nueva cuenta",
+                $"<p>Usuario: {model.UserEmail}</p><p>Contraseña: {generatedPassword}</p>");
+        }
+
+        return (userId, errors);
     }
 
     public async Task<bool> UpdateUserAsync(UpdateUserInputModel model)

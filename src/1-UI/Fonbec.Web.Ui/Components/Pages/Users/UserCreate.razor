@@ -1,0 +1,46 @@
+﻿@attribute [Route(NavRoutes.UserCreate)]
+@attribute [Authorize]
+@inherits AuthenticationRequiredComponentBase
+
+@using Fonbec.Web.DataAccess.Constants
+
+<PageHeader Title="Alta de usuario" />
+
+<LoadingIndicator Loading="Loading" />
+
+<MudForm @bind-IsValid="@_formValidationSucceeded">
+    <MudTextField T="string" Label="Nombre" @ref="_mudTextFieldFirstName" @bind-Value="_viewModel.UserFirstName" Immediate="true"
+                  Required="true" RequiredError="Este es un campo obligatorio."
+                  MaxLength="MaxLength.FonbecWebUser.FirstName" />
+
+    <MudTextField T="string" Label="Apellido" @bind-Value="_viewModel.UserLastName" Immediate="true"
+                  Required="true" RequiredError="Este es un campo obligatorio."
+                  MaxLength="MaxLength.FonbecWebUser.LastName" />
+
+    <MudTextField T="string" Label="Apodo" @bind-Value="_viewModel.UserNickName" Immediate="true"
+                  MaxLength="MaxLength.FonbecWebUser.NickName" />
+                  
+    <RolesSelector @bind-SelectedRoles="_viewModel.UserRoles" Required="true" />
+
+    <GenderSelector @bind-SelectedGender="_viewModel.UserGender" />
+
+    <MudTextField T="string" Label="Correo electrónico" @bind-Value="_viewModel.UserEmail" Immediate="true"
+                  Required="true" RequiredError="Este es un campo obligatorio."
+                  MaxLength="MaxLength.FonbecWebUser.Email" />
+
+    <MudTextField T="string" Label="Teléfono" @bind-Value="_viewModel.UserPhoneNumber" Immediate="true"
+                  MaxLength="MaxLength.FonbecWebUser.PhoneNumber" />
+
+    <MudStack Row="true" Class="pt-4">
+        <MudButton OnClick="SaveAsync" Disabled="SaveButtonDisabled"
+                   Variant="Variant.Filled" Color="Color.Primary">
+            Crear
+        </MudButton>
+        <MudButton Href="@NavRoutes.Users"
+                   Variant="Variant.Filled" Color="Color.Default" Class="ms-4">
+            Cancelar
+        </MudButton>
+    </MudStack>
+    
+    <LoadingIndicator Loading="_saving" LoadingText="Guardando los datos" />
+</MudForm>
