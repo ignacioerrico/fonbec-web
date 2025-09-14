@@ -1,11 +1,12 @@
 ﻿@attribute [Route(NavRoutes.Chapters)]
 @attribute [Authorize]
+@using Fonbec.Web.Logic.ViewModels.Chapters
 
 <PageTitle>Filiales</PageTitle>
 
 <MudText Typo="Typo.h3" GutterBottom="true">Filiales</MudText>
 
-<MudTable Items="_chapters" Hover="true" Striped="true" Dense="true">
+<MudTable T="ChaptersListViewModel" Items="_chapters" Hover="true" Striped="true" Dense="true">
     <HeaderContent>
         <MudTh>Nombre</MudTh>
 		<MudTh></MudTh>
@@ -13,12 +14,12 @@
     <RowTemplate>
         <MudTd DataLabel="Nombre">@context.ChapterName</MudTd>
         <MudTd>
-            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" OnClick="EditarChapter(context)">
+            <MudButton Variant="Variant.Outlined" Color="Color.Primary" Size="Size.Small" OnClick="@(() => EditChapter(context))">
                 Editar
             </MudButton>
         </MudTd>
     </RowTemplate>
 </MudTable>
 
-<CreateChapter OnChapterCreated="RefreshChapters"/>
-<EditChapter @ref="_editChapter" ChapterToEdit="_chapterToEdit" />
+<CreateChapter OnChapterCreated="RefreshChapters" />
+<EditChapter @ref="_editChapter" ChapterToEdit="_chapterToEdit" OnChapterEdited="RefreshChapters"/>

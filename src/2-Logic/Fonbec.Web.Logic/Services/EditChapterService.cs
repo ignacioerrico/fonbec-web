@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
+using Fonbec.Web.DataAccess.DataModels.Chapters;
 using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.ViewModels.Chapters;
@@ -12,16 +13,17 @@ namespace Fonbec.Web.Logic.Services
 {
     public interface IEditChapterService
     {
-        Task<EditChapterViewModel> EditChapterAsync(Chapter chapter);
+        Task<EditChapterInputModel> EditChapterAsync(EditChapterInputModel chapter);
     }
     public class EditChapterService(IEditChapterRepository editChapterRepository) : IEditChapterService
     {
-        public async Task<EditChapterViewModel> EditChapterAsync(Chapter chapter)
+        public async Task<EditChapterInputModel> EditChapterAsync(EditChapterInputModel chapter)
         {
-            var result = await editChapterRepository.EditChapterAsync(chapter);
-            var viewModel = result.Adapt<EditChapterViewModel>();
+            var dataModel = chapter.Adapt<EditChapterInputDataModel>();
+            var result = await editChapterRepository.EditChapterAsync(dataModel);
 
-            return viewModel;
+            return result.Adapt<EditChapterInputModel>();
+
         }
     }
 }

@@ -36,6 +36,10 @@ public static class ConfigureServices
 
         services.AddScoped<IChaptersListRepository, ChaptersListRepository>();
 
+        services.AddScoped<IEditChapterService, EditChapterService>();
+
+        services.AddScoped<IEditChapterRepository, EditChapterRepository>();
+
         services.AddScoped<ICreateChapterService, CreateChapterService>();
 
         services.AddScoped<ICreateChapterRepository, CreateChapterRepository>();

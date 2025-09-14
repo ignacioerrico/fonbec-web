@@ -9,7 +9,7 @@ public partial class ChaptersList
 {
     private List<ChaptersListViewModel> _chapters = [];
     private EditChapter _editChapter;
-    private ChaptersListViewModel _chapterToEdit;
+    private EditChapterInputModel _chapterToEdit = new();
 
     [Inject]
     public IChaptersListService ChaptersListService { get; set; } = null!;
@@ -23,9 +23,9 @@ public partial class ChaptersList
         _chapters = await ChaptersListService.GetAllChaptersAsync();
     }
 
-    private void EditarChapter(ChaptersListViewModel chapter)
+    private void EditChapter(ChaptersListViewModel chapter)
     {
-        _chapterToEdit = chapter;
-
+        _chapterToEdit.ChapterID = 1;
+        _chapterToEdit.ChapterName = chapter.ChapterName;
     }
 }

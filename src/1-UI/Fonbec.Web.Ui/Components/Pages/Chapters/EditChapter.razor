@@ -1,20 +1,18 @@
 ﻿@attribute [Authorize]
 
-@if (_nombre != null)
-{
-    <div style="width: fit-content;">
-        <MudText Typo="Typo.h3" GutterBottom="true">Editar filial</MudText>
+<div style="width: fit-content;">
+	<MudText Typo="Typo.h3" GutterBottom="true">Editar filial</MudText>
 
-        <MudForm @ref="_form">
-            <MudTextField @bind-Value="_nombre" Label="Nombre" Required="true" RequiredError="Se debe específicar el nombre." Margin="Margin.Normal" Variant="Variant.Text" Immediate="true" Class="mb-4" />
-            <div style="flex-direction: row;">
-                <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="EditAChapter" Disabled="@(string.IsNullOrWhiteSpace(_nombre))" Style="width: fit-content;">
-                    ACTUALIZAR
-                </MudButton>
-                <MudButton Variant="Variant.Filled" Color="Color.Default" OnClick="Cancel" Style="width: fit-content;">
-                    CANCELAR
-                </MudButton>
-            </div>
-        </MudForm>
-    </div>
-}
+	<MudForm @ref="_form">
+		<MudTextField @bind-Value="_nombre" Label="Nombre" Required="true" RequiredError="Se debe específicar el nombre." Margin="Margin.Normal" Variant="Variant.Text" Immediate="true" Class="mb-4" />
+		<div style="flex-direction: row;">
+			<MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="EditAChapter" Disabled="@(string.IsNullOrWhiteSpace(_nombre))" Style="width: fit-content;">
+				ACTUALIZAR
+			</MudButton>
+			<MudButton Variant="Variant.Filled" Color="Color.Default" OnClick="Cancel" Style="width: fit-content;">
+				CANCELAR
+			</MudButton>
+		</div>
+	</MudForm>
+</div>
+
