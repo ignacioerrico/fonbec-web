@@ -5,6 +5,7 @@ using Fonbec.Web.Logic.Models.Users.Input;
 using Fonbec.Web.Logic.Models.Users.Output;
 using Fonbec.Web.Logic.Util;
 using Mapster;
+using Microsoft.AspNetCore.Identity;
 
 namespace Fonbec.Web.Logic.Services;
 
@@ -15,6 +16,8 @@ public interface IUserService
     Task<List<AllUsersViewModel>> GetAllUsersAsync();
     Task<(int userId, List<string> errors)> CreateUserAsync(CreateUserInputModel model);
     Task<bool> UpdateUserAsync(UpdateUserInputModel model);
+    Task<List<string>> DisableUserAsync(int userId, bool disable);
+    Task<IdentityResult> DeleteForeverAsync(int userId);
 }
 
 public class UserService(
@@ -84,5 +87,17 @@ public class UserService(
     {
         var updateUserInputDataModel = model.Adapt<UpdateUserInputDataModel>();
         return await userRepository.UpdateUserAsync(updateUserInputDataModel);
+    }
+
+    public async Task<List<string>> DisableUserAsync(int userId, bool disable)
+    {
+        var userIdString = userId.Adapt<string>();
+        return await userRepository.DisableUserAsync(userIdString, disable);
+    }
+
+    public async Task<IdentityResult> DeleteForeverAsync(int userId)
+    {
+        var userIdString = userId.Adapt<string>();
+        return await userRepository.DeleteForeverAsync(userIdString);
     }
 }

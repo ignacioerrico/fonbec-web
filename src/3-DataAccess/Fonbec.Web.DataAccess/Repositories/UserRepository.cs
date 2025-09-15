@@ -15,6 +15,8 @@ public interface IUserRepository
     Task<AllUsersDataModel> GetAllUsersAsync();
     Task<(int userId, List<string> errors)> CreateUserAsync(CreateUserInputDataModel model);
     Task<bool> UpdateUserAsync(UpdateUserInputDataModel model);
+    Task<List<string>> DisableUserAsync(string userId, bool disable);
+    Task<IdentityResult> DeleteForeverAsync(string userId);
 }
 
 public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<FonbecWebUser> userStore) : IUserRepository
@@ -172,5 +174,38 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
 
         var identityResult = await userManager.UpdateAsync(fonbecUserDb);
         return identityResult.Succeeded;
+    }
+
+    public async Task<List<string>> DisableUserAsync(string userId, bool disable)
+    {
+        var errors = new List<string>();
+
+        var fonbecUser = await userManager.FindByIdAsync(userId);
+        if (fonbecUser is null)
+        {
+            errors.Add("User not found.");
+            return errors;
+        }
+
+        var identityResult = await userManager.SetLockoutEnabledAsync(fonbecUser, disable);
+
+        if (!identityResult.Succeeded)
+        {
+            errors.AddRange(identityResult.Errors.Select(e => e.Description));
+        }
+
+        return errors;
+    }
+
+    public async Task<IdentityResult> DeleteForeverAsync(string userId)
+    {
+        var fonbecUser = await userManager.FindByIdAsync(userId);
+        if (fonbecUser is null)
+        {
+            return IdentityResult.Failed();
+        }
+
+        var identityResult = await userManager.DeleteAsync(fonbecUser);
+        return identityResult;
     }
 }
