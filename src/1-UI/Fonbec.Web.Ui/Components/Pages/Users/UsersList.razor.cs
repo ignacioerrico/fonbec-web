@@ -134,7 +134,7 @@ public partial class UsersList : AuthenticationRequiredComponentBase
 
         var message = $"¿Estás seguro de que querés deshabilitar al usuario {viewModel.UserFirstName} {viewModel.UserLastName}?";
         var dialogResult = await DialogService.ShowMessageBox(
-            "¡Atención",
+            "¡Atención!",
             message,
             yesText: "Sí",
             cancelText: "Cancelar");
