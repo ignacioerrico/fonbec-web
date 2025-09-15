@@ -13,7 +13,7 @@ namespace Fonbec.Web.Logic.Tests.Models.Users;
 /// - Both branches for IsUserActive logic.
 /// - Roles property default value.
 /// </summary>
-public class AllUsersViewModelMappingDefinitionsTests : MappingTestBase
+public class UsersListViewModelMappingDefinitionsTests : MappingTestBase
 {
     [Fact]
     public void Maps_User_From_UserDataModel_To_ViewModel()
@@ -32,7 +32,7 @@ public class AllUsersViewModelMappingDefinitionsTests : MappingTestBase
             UserLockOutEndsOnUtc = now.AddMinutes(-1)
         };
 
-        var viewModel = userDataModel.Adapt<AllUsersViewModel>(Config);
+        var viewModel = userDataModel.Adapt<UsersListViewModel>(Config);
 
         viewModel.UserId.Should().Be(1);
         viewModel.UserFirstName.Should().Be("John");
@@ -54,7 +54,7 @@ public class AllUsersViewModelMappingDefinitionsTests : MappingTestBase
             UserLockOutEndsOnUtc = null
         };
 
-        var viewModel = userDataModel.Adapt<AllUsersViewModel>(Config);
+        var viewModel = userDataModel.Adapt<UsersListViewModel>(Config);
 
         viewModel.UserNickName.Should().BeEmpty();
     }
@@ -68,7 +68,7 @@ public class AllUsersViewModelMappingDefinitionsTests : MappingTestBase
             UserLockOutEndsOnUtc = null
         };
 
-        var viewModel = userDataModel.Adapt<AllUsersViewModel>(Config);
+        var viewModel = userDataModel.Adapt<UsersListViewModel>(Config);
 
         viewModel.UserEmail.Should().BeEmpty();
     }
@@ -82,7 +82,7 @@ public class AllUsersViewModelMappingDefinitionsTests : MappingTestBase
             UserLockOutEndsOnUtc = null
         };
 
-        var viewModel = userDataModel.Adapt<AllUsersViewModel>(Config);
+        var viewModel = userDataModel.Adapt<UsersListViewModel>(Config);
 
         viewModel.UserPhoneNumber.Should().BeEmpty();
     }
@@ -96,7 +96,7 @@ public class AllUsersViewModelMappingDefinitionsTests : MappingTestBase
             UserLockOutEndsOnUtc = DateTimeOffset.Now.AddMinutes(-5)
         };
 
-        var viewModel = userDataModel.Adapt<AllUsersViewModel>(Config);
+        var viewModel = userDataModel.Adapt<UsersListViewModel>(Config);
 
         viewModel.IsUserActive.Should().BeTrue();
     }
@@ -110,7 +110,7 @@ public class AllUsersViewModelMappingDefinitionsTests : MappingTestBase
             UserLockOutEndsOnUtc = DateTimeOffset.Now.AddMinutes(-5)
         };
 
-        var viewModel = userDataModel.Adapt<AllUsersViewModel>(Config);
+        var viewModel = userDataModel.Adapt<UsersListViewModel>(Config);
 
         viewModel.IsUserActive.Should().BeFalse();
     }
@@ -124,7 +124,7 @@ public class AllUsersViewModelMappingDefinitionsTests : MappingTestBase
             UserLockOutEndsOnUtc = null
         };
 
-        var viewModel = userDataModel.Adapt<AllUsersViewModel>(Config);
+        var viewModel = userDataModel.Adapt<UsersListViewModel>(Config);
 
         viewModel.IsUserActive.Should().BeTrue();
     }
@@ -138,7 +138,7 @@ public class AllUsersViewModelMappingDefinitionsTests : MappingTestBase
             UserLockOutEndsOnUtc = null
         };
 
-        var viewModel = userDataModel.Adapt<AllUsersViewModel>(Config);
+        var viewModel = userDataModel.Adapt<UsersListViewModel>(Config);
 
         viewModel.IsUserActive.Should().BeFalse();
     }

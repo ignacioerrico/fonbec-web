@@ -6,18 +6,18 @@ namespace Fonbec.Web.Ui.Components.Pages.Chapters;
 
 public partial class ChaptersList
 {
-    private List<AllChaptersViewModel> _chapters = [];
+    private List<ChaptersListViewModel> _viewModel = [];
 
     [Inject]
     public IChapterService ChapterService { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
-        _chapters = await ChapterService.GetAllChaptersAsync();
+        _viewModel = await ChapterService.GetAllChaptersAsync();
     }
 
     public async Task RefreshChapters()
     {
-        _chapters = await ChapterService.GetAllChaptersAsync();
+        _viewModel = await ChapterService.GetAllChaptersAsync();
     }
 }

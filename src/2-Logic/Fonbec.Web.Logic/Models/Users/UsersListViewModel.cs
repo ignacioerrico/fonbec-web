@@ -4,7 +4,7 @@ using Mapster;
 
 namespace Fonbec.Web.Logic.Models.Users;
 
-public class AllUsersViewModel
+public class UsersListViewModel
 {
     public int UserId { get; set; }
 
@@ -25,11 +25,11 @@ public class AllUsersViewModel
     public bool IsUserActive { get; set; }
 }
 
-public class AllUsersViewModelMappingDefinitions : IRegister
+public class UsersListViewModelMappingDefinitions : IRegister
 {
     public void Register(TypeAdapterConfig config)
     {
-        config.NewConfig<AllUsersUserDataModel, AllUsersViewModel>()
+        config.NewConfig<AllUsersUserDataModel, UsersListViewModel>()
             .Map(dest => dest.UserId, src => src.UserId)
             .Map(dest => dest.UserFirstName, src => src.UserFirstName)
             .Map(dest => dest.UserLastName, src => src.UserLastName)

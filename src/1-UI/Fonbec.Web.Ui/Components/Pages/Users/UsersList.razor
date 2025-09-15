@@ -24,10 +24,10 @@
 
 <LoadingIndicator Loading="Loading" />
 
-@if (_allUsers.Any())
+@if (_viewModel.Any())
 {
-    <MudDataGrid T="AllUsersViewModel"
-                 Items="_allUsers"
+    <MudDataGrid T="UsersListViewModel"
+                 Items="_viewModel"
                  Dense="true" Hover="true" Striped="true" Bordered="true"
                  ReadOnly="false"
                  CommittedItemChanges="@(async viewModel => await CommittedItemChangesAsync(viewModel))"
@@ -172,7 +172,7 @@
             </TemplateColumn>
         </Columns>
         <PagerContent>
-            <MudDataGridPager T="AllUsersViewModel" RowsPerPageString="Filas por página:" InfoFormat="{first_item}-{last_item} of {all_items}" />
+            <MudDataGridPager T="UsersListViewModel" RowsPerPageString="Filas por página:" InfoFormat="{first_item}-{last_item} of {all_items}" />
         </PagerContent>
     </MudDataGrid>
 }

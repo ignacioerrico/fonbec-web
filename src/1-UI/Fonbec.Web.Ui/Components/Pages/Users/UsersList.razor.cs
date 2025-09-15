@@ -10,7 +10,7 @@ namespace Fonbec.Web.Ui.Components.Pages.Users;
 
 public partial class UsersList : AuthenticationRequiredComponentBase
 {
-    private List<AllUsersViewModel> _allUsers = [];
+    private List<UsersListViewModel> _viewModel = [];
 
     private int _userId;
 
@@ -23,7 +23,7 @@ public partial class UsersList : AuthenticationRequiredComponentBase
     private bool _areAllRolesSelected = true;
     private HashSet<string> _selectedRoles = [];
     private HashSet<string> _selectedRolesBeforeFilter = [];
-    private FilterDefinition<AllUsersViewModel> _filterDefinition = null!;
+    private FilterDefinition<UsersListViewModel> _filterDefinition = null!;
 
     [Inject]
     public IUserService UserService { get; set; } = null!;
@@ -37,12 +37,12 @@ public partial class UsersList : AuthenticationRequiredComponentBase
 
         _userId = await GetAuthenticatedUserIdAsync();
 
-        _allUsers = await UserService.GetAllUsersAsync();
+        _viewModel = await UserService.GetAllUsersAsync();
 
         _selectedRoles = FonbecRole.AllRoles.ToHashSet();
         _selectedRolesBeforeFilter = _selectedRoles.ToHashSet();
 
-        _filterDefinition = new FilterDefinition<AllUsersViewModel>
+        _filterDefinition = new FilterDefinition<UsersListViewModel>
         {
             FilterFunction = vm => vm.Roles.Any(r => _selectedRolesBeforeFilter.Contains(r))
         };
@@ -50,14 +50,14 @@ public partial class UsersList : AuthenticationRequiredComponentBase
         Loading = false;
     }
 
-    private bool Filter(AllUsersViewModel viewModel) =>
+    private bool Filter(UsersListViewModel viewModel) =>
         string.IsNullOrWhiteSpace(_searchString)
         || $"{viewModel.UserFirstName} {viewModel.UserLastName}".ContainsIgnoringAccents(_searchString)
         || $"{viewModel.UserNickName} {viewModel.UserLastName}".ContainsIgnoringAccents(_searchString)
         || viewModel.UserEmail.ContainsIgnoringAccents(_searchString)
         || viewModel.UserPhoneNumber.ContainsIgnoringAccents(_searchString);
 
-    private async Task CommittedItemChangesAsync(AllUsersViewModel viewModel)
+    private async Task CommittedItemChangesAsync(UsersListViewModel viewModel)
     {
         var updateUserInputModel = new UpdateUserInputModel(
             viewModel.UserId,
@@ -105,7 +105,7 @@ public partial class UsersList : AuthenticationRequiredComponentBase
         _areAllRolesSelected = _selectedRoles.Count == FonbecRole.AllRoles.Length;
     }
 
-    private async Task ClearFilterAsync(FilterContext<AllUsersViewModel> context)
+    private async Task ClearFilterAsync(FilterContext<UsersListViewModel> context)
     {
         _areAllRolesSelected = true;
         _selectedRoles = FonbecRole.AllRoles.ToHashSet();
@@ -115,7 +115,7 @@ public partial class UsersList : AuthenticationRequiredComponentBase
         _isRolesFilterOpen = false;
     }
 
-    private async Task ApplyFilterAsync(FilterContext<AllUsersViewModel> context)
+    private async Task ApplyFilterAsync(FilterContext<UsersListViewModel> context)
     {
         _selectedRolesBeforeFilter = _selectedRoles.ToHashSet();
         _rolesFilterIcon = _selectedRolesBeforeFilter.Count == FonbecRole.AllRoles.Length
@@ -125,7 +125,7 @@ public partial class UsersList : AuthenticationRequiredComponentBase
         _isRolesFilterOpen = false;
     }
 
-    private async Task DisableUserAsync(AllUsersViewModel? viewModel)
+    private async Task DisableUserAsync(UsersListViewModel? viewModel)
     {
         if (viewModel is null)
         {
@@ -159,7 +159,7 @@ public partial class UsersList : AuthenticationRequiredComponentBase
         viewModel.IsUserActive = false;
     }
 
-    private async Task ReenableUserAsync(AllUsersViewModel? viewModel)
+    private async Task ReenableUserAsync(UsersListViewModel? viewModel)
     {
         if (viewModel is null)
         {
@@ -181,7 +181,7 @@ public partial class UsersList : AuthenticationRequiredComponentBase
         viewModel.IsUserActive = true;
     }
 
-    private async Task DeleteForeverAsync(AllUsersViewModel? viewModel)
+    private async Task DeleteForeverAsync(UsersListViewModel? viewModel)
     {
         if (viewModel is null)
         {
@@ -215,6 +215,6 @@ public partial class UsersList : AuthenticationRequiredComponentBase
             return;
         }
 
-        _allUsers.Remove(viewModel);
+        _viewModel.Remove(viewModel);
     }
 }

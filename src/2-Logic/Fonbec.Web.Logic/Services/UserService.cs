@@ -13,7 +13,7 @@ public interface IUserService
 {
     Task<ValidateUniqueEmailOutputModel> ValidateUniqueEmailAsync(string userEmail);
     Task<ValidateUniqueFullNameOutputModel> ValidateUniqueFullNameAsync(string firstName, string lastName);
-    Task<List<AllUsersViewModel>> GetAllUsersAsync();
+    Task<List<UsersListViewModel>> GetAllUsersAsync();
     Task<(int userId, List<string> errors)> CreateUserAsync(CreateUserInputModel model);
     Task<bool> UpdateUserAsync(UpdateUserInputModel model);
     Task<List<string>> DisableUserAsync(int userId, bool disable);
@@ -47,10 +47,10 @@ public class UserService(
         return new ValidateUniqueFullNameOutputModel(isFullNameUnique);
     }
 
-    public async Task<List<AllUsersViewModel>> GetAllUsersAsync()
+    public async Task<List<UsersListViewModel>> GetAllUsersAsync()
     {
         var allUsersDataModel = await userRepository.GetAllUsersAsync();
-        var allUsers = allUsersDataModel.Users.Adapt<List<AllUsersViewModel>>();
+        var allUsers = allUsersDataModel.Users.Adapt<List<UsersListViewModel>>();
 
         foreach (var user in allUsers)
         {

@@ -8,16 +8,17 @@ namespace Fonbec.Web.Logic.Services;
 
 public interface IChapterService
 {
-    Task<List<AllChaptersViewModel>> GetAllChaptersAsync();
+    Task<List<ChaptersListViewModel>> GetAllChaptersAsync();
     Task<int> CreateChapterAsync(CreateChapterInputModel inputModel);
 }
 
 public class ChapterService(IChapterRepository chapterRepository) : IChapterService
 {
-    public async Task<List<AllChaptersViewModel>> GetAllChaptersAsync()
+    public async Task<List<ChaptersListViewModel>> GetAllChaptersAsync()
     {
-        var allChapters = await chapterRepository.GetAllChaptersAsync();
-        return allChapters.Adapt<List<AllChaptersViewModel>>();
+        var allChaptersDataModel = await chapterRepository.GetAllChaptersAsync();
+        var chaptersListViewModel = allChaptersDataModel.Adapt<List<ChaptersListViewModel>>();
+        return chaptersListViewModel;
     }
 
     public async Task<int> CreateChapterAsync(CreateChapterInputModel inputModel)
