@@ -14,7 +14,7 @@ public abstract class MappingTestBase
     protected MappingTestBase()
     {
         // Mapster configuration
-        Config = TypeAdapterConfig.GlobalSettings;
+        Config = new TypeAdapterConfig();
         var assembly = System.Reflection.Assembly.Load("Fonbec.Web.Logic");
         
         Config.Scan(assembly);
@@ -22,5 +22,6 @@ public abstract class MappingTestBase
         // Auditable mock
         Auditable = Substitute.For<Auditable>();
         Auditable.CreatedBy = new FonbecWebUser { FirstName = "FirstName", LastName = "LastName" };
+        Auditable.CreatedOnUtc = new DateTime(1996, 3, 14);
     }
 }
