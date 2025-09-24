@@ -1,4 +1,5 @@
 ﻿using Fonbec.Web.DataAccess.Constants;
+using Fonbec.Web.DataAccess.DataModels;
 using Fonbec.Web.DataAccess.DataModels.Users;
 using Fonbec.Web.DataAccess.DataModels.Users.Input;
 using Fonbec.Web.DataAccess.Entities;
@@ -13,6 +14,7 @@ public interface IUserRepository
     Task<FonbecWebUser?> ValidateUniqueFullNameAsync(string firstName, string lastName);
     Task<(bool isPasswordValid, List<string> errors)> ValidatePasswordAsync(string password);
     Task<AllUsersDataModel> GetAllUsersAsync();
+    Task<IEnumerable<SelectableDataModel<int>>> GetAllUsersInRoleForSelectionAsync(string role);
     Task<(int userId, List<string> errors)> CreateUserAsync(CreateUserInputDataModel model);
     Task<bool> UpdateUserAsync(UpdateUserInputDataModel model);
     Task<List<string>> DisableUserAsync(string userId, bool disable);
@@ -92,6 +94,20 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
         return result;
     }
 
+    public async Task<IEnumerable<SelectableDataModel<int>>> GetAllUsersInRoleForSelectionAsync(string role)
+    {
+        var usersInRole = await userManager.GetUsersInRoleAsync(role);
+
+        var activeUsers = usersInRole
+            .Where(user => !user.LockoutEnabled
+                           || user.LockoutEnd == null
+                           || user.LockoutEnd <= DateTimeOffset.UtcNow)
+            .Select(u => new SelectableDataModel<int>(u.Id, u.FullName()))
+            .OrderBy(u => u.Value);
+
+        return activeUsers;
+    }
+
     public async Task<(int userId, List<string> errors)> CreateUserAsync(CreateUserInputDataModel model)
     {
         var userId = 0;
@@ -117,8 +133,8 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
             return (userId, errors);
         }
 
-        // Add roles
-        identityResult = await userManager.AddToRolesAsync(fonbecUser, model.UserRoles);
+        // Add role
+        identityResult = await userManager.AddToRoleAsync(fonbecUser, model.UserRole);
 
         if (!identityResult.Succeeded)
         {
@@ -166,6 +182,7 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
             fonbecUserDb.Email = newEmail;
         }
 
+        // Update user properties
         fonbecUserDb.FirstName = model.UserFirstName;
         fonbecUserDb.LastName = model.UserLastName;
         fonbecUserDb.NickName = model.UserNickName;

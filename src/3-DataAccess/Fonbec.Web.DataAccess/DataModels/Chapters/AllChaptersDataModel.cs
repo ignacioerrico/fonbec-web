@@ -1,4 +1,4 @@
-﻿using Fonbec.Web.DataAccess.Entities;
+﻿using Fonbec.Web.DataAccess.Entities.Abstract;
 
 namespace Fonbec.Web.DataAccess.DataModels.Chapters;
 
@@ -7,4 +7,6 @@ public class AllChaptersDataModel(Auditable auditable) : AuditableDataModel(audi
     public int ChapterId { get; set; }
 
     public string ChapterName { get; set; } = string.Empty;
+
+    public bool IsChapterActive { get; set; }
 }

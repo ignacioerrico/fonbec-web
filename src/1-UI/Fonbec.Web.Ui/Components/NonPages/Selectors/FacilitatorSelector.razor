@@ -1,0 +1,14 @@
+﻿@using Fonbec.Web.Logic.Models
+
+<LoadingIndicator Loading="!_dataLoaded" LoadingText="Cargando datos" />
+
+<MudSelect Label="Mediador" T="SelectableModel<int>"
+		   Value="_selectedFacilitator" ValueChanged="@((SelectableModel<int> f) => OnSelectedValueChanged(f))"
+		   Disabled="!_dataLoaded"
+		   Required="true" RequiredError="Este es un campo obligatorio."
+           Variant="Variant.Filled" AnchorOrigin="Origin.BottomLeft">
+	@foreach (var facilitator in _facilitators)
+	{
+		<MudSelectItem T="SelectableModel<int>" Value="@facilitator">@facilitator.DisplayName</MudSelectItem>
+	}
+</MudSelect>

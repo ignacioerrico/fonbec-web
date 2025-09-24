@@ -9,26 +9,26 @@
 <LoadingIndicator Loading="Loading" />
 
 <MudForm @bind-IsValid="@_formValidationSucceeded">
-    <MudTextField T="string" Label="Nombre" @ref="_mudTextFieldFirstName" @bind-Value="_viewModel.UserFirstName" Immediate="true"
+    <MudTextField T="string" Label="Nombre" @ref="_mudTextFieldFirstName" @bind-Value="_bindModel.UserFirstName" Immediate="true"
                   Required="true" RequiredError="Este es un campo obligatorio."
                   MaxLength="MaxLength.FonbecWebUser.FirstName" />
 
-    <MudTextField T="string" Label="Apellido" @bind-Value="_viewModel.UserLastName" Immediate="true"
+    <MudTextField T="string" Label="Apellido" @bind-Value="_bindModel.UserLastName" Immediate="true"
                   Required="true" RequiredError="Este es un campo obligatorio."
                   MaxLength="MaxLength.FonbecWebUser.LastName" />
 
-    <MudTextField T="string" Label="Apodo" @bind-Value="_viewModel.UserNickName" Immediate="true"
+    <MudTextField T="string" Label="Apodo" @bind-Value="_bindModel.UserNickName" Immediate="true"
                   MaxLength="MaxLength.FonbecWebUser.NickName" />
                   
-    <RolesSelector @bind-SelectedRoles="_viewModel.UserRoles" Required="true" />
+    <RoleSelector @bind-SelectedRole="_bindModel.UserRole" />
 
-    <GenderSelector @bind-SelectedGender="_viewModel.UserGender" />
+    <GenderSelector @bind-SelectedGender="_bindModel.UserGender" />
 
-    <MudTextField T="string" Label="Correo electrónico" @bind-Value="_viewModel.UserEmail" Immediate="true"
+    <MudTextField T="string" Label="Correo electrónico" @bind-Value="_bindModel.UserEmail" Immediate="true"
                   Required="true" RequiredError="Este es un campo obligatorio."
                   MaxLength="MaxLength.FonbecWebUser.Email" />
 
-    <MudTextField T="string" Label="Teléfono" @bind-Value="_viewModel.UserPhoneNumber" Immediate="true"
+    <MudTextField T="string" Label="Teléfono" @bind-Value="_bindModel.UserPhoneNumber" Immediate="true"
                   MaxLength="MaxLength.FonbecWebUser.PhoneNumber" />
 
     <MudStack Row="true" Class="pt-4">

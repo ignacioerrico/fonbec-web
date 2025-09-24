@@ -10,7 +10,7 @@ public class CreateUserInputDataModel
 
     public string? UserNickName { get; set; }
 
-    public string[] UserRoles { get; set; } = null!;
+    public string UserRole { get; set; } = null!;
 
     public Gender UserGender { get; set; }
 

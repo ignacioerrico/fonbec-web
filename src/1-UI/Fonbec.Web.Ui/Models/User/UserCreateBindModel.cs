@@ -1,8 +1,8 @@
 ﻿using Fonbec.Web.DataAccess.Entities.Enums;
 
-namespace Fonbec.Web.Logic.Models.Users;
+namespace Fonbec.Web.Ui.Models.User;
 
-public class UserCreateViewModel
+public class UserCreateBindModel
 {
     public string UserFirstName { get; set; } = null!;
 
@@ -10,7 +10,7 @@ public class UserCreateViewModel
 
     public string UserNickName { get; set; } = null!;
 
-    public List<string> UserRoles { get; set; } = [];
+    public string? UserRole { get; set; }
 
     public Gender UserGender { get; set; } = default!;
 

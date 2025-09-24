@@ -8,10 +8,10 @@ public record CreateUserInputModel(
     string UserFirstName,
     string UserLastName,
     string UserNickName,
-    List<string> UserRoles,
     Gender UserGender,
     string UserEmail,
     string UserPhoneNumber,
+    string UserRole,
     int CreatedById
 );
 
@@ -24,11 +24,11 @@ public class CreateUserInputModelMappingDefinitions : IRegister
             .Map(dest => dest.UserLastName, src => src.UserLastName)
             .Map(dest => dest.UserNickName, src => src.UserNickName,
                 src => !string.IsNullOrWhiteSpace(src.UserNickName))
-            .Map(dest => dest.UserRoles, src => src.UserRoles)
             .Map(dest => dest.UserGender, src => src.UserGender)
             .Map(dest => dest.UserEmail, src => src.UserEmail.Trim().ToLower())
             .Map(dest => dest.UserPhoneNumber, src => src.UserPhoneNumber.Trim(),
                 src => !string.IsNullOrWhiteSpace(src.UserPhoneNumber))
+            .Map(dest => dest.UserRole, src => src.UserRole)
             .Map(dest => dest.CreatedById, src => src.CreatedById)
             .Map(dest => dest.GeneratedPassword, src => MapContext.Current!.Parameters["generatedPassword"],
                 src => MapContext.Current != null && MapContext.Current.Parameters.ContainsKey("generatedPassword"));

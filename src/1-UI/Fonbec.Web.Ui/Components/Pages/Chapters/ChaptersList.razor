@@ -13,6 +13,7 @@
         <MudTd DataLabel="Nombre">
             <AuditableItemDisplay Id="@context.ChapterId"
                                   ItemName="@context.ChapterName"
+								  IsActive="@context.IsChapterActive"
                                   AuditableViewModel="@context" />
         </MudTd>
     </RowTemplate>

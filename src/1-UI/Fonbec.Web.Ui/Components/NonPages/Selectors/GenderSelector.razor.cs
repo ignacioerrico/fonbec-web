@@ -1,25 +1,20 @@
 ﻿using Fonbec.Web.DataAccess.Entities.Enums;
-using Fonbec.Web.Logic.Models;
 using Microsoft.AspNetCore.Components;
 
-namespace Fonbec.Web.Ui.Components.NonPages;
+namespace Fonbec.Web.Ui.Components.NonPages.Selectors;
 
 public partial class GenderSelector
 {
-    private readonly SelectableModel<Gender> _male = new(Gender.Male, "Masculino");
-    private readonly SelectableModel<Gender> _female = new(Gender.Female, "Femenino");
-
-    private SelectableModel<Gender> _selectedGender = null!;
-
     [Parameter]
     public Gender SelectedGender { get; set; }
 
     [Parameter]
     public EventCallback<Gender> SelectedGenderChanged { get; set; }
 
-    private async Task OnSelectedValuesChanged(IEnumerable<SelectableModel<Gender>?>? selectedGenders)
+    private async Task OnSelectedValueChanged(Gender selectedGender)
     {
-        await SelectedGenderChanged.InvokeAsync(selectedGenders!.Single()!.Key);
+        SelectedGender = selectedGender;
+        await SelectedGenderChanged.InvokeAsync(SelectedGender);
     }
 
     protected override async Task OnParametersSetAsync()
@@ -28,14 +23,14 @@ public partial class GenderSelector
         {
             case Gender.Unknown:
                 // If no gender is selected at invocation time, set it to a default (either male or female).
-                _selectedGender = _male;
-                await SelectedGenderChanged.InvokeAsync(_selectedGender.Key);
+                SelectedGender = Gender.Male;
+                await SelectedGenderChanged.InvokeAsync(SelectedGender);
                 break;
             case Gender.Male:
-                _selectedGender = _male;
+                SelectedGender = Gender.Male;
                 break;
             case Gender.Female:
-                _selectedGender = _female;
+                SelectedGender = Gender.Female;
                 break;
             default:
                 throw new ArgumentOutOfRangeException();

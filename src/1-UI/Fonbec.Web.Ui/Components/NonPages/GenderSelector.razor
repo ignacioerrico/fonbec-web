@@ -1,8 +1,0 @@
-﻿@using Fonbec.Web.DataAccess.Entities.Enums
-@using Fonbec.Web.Logic.Models
-
-<MudSelect T="SelectableModel<Gender>" Label="Sexo" @bind-Value="_selectedGender" SelectedValuesChanged="OnSelectedValuesChanged"
-           Variant="Variant.Filled" AnchorOrigin="Origin.BottomLeft">
-    <MudSelectItem Value="_male" />
-    <MudSelectItem Value="_female" />
-</MudSelect>

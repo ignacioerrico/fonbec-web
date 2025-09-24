@@ -4,10 +4,18 @@
 <MudStack Row="true">
     <MudTooltip Delay="500" Arrow="true" Placement="Placement.Bottom" Color="Color.Dark">
         <ChildContent>
-            <MudText Color="@Color">
-                <strong>@ItemName</strong>
-            </MudText>
-        </ChildContent>
+	        @if (@IsActive)
+	        {
+		        <MudText Color="@Color">
+	                <strong>@ItemName</strong>
+	            </MudText>
+            }
+	        else
+	        {
+		        <MudText>
+			        <em>@ItemName</em>
+		        </MudText>
+	        }        </ChildContent>
         <TooltipContent>
             <MudText Align="Align.Left" Typo="Typo.body1">
                 @ItemName (ID: @Id)

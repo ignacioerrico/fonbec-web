@@ -1,8 +1,8 @@
 ﻿@using Fonbec.Web.DataAccess.Constants
 
-<MudSelect T="string" Label="Roles" SelectedValues="_selectedRoles" SelectedValuesChanged="OnSelectedValuesChanged"
-           Required="@(Required ?? false)" RequiredError="Este es un campo obligatorio."
-           MultiSelection="true"
+<MudSelect T="string" Label="Rol"
+           Value="SelectedRole" ValueChanged="OnSelectedValueChanged"
+           Required="true" RequiredError="Este es un campo obligatorio."
            Variant="Variant.Filled" AnchorOrigin="Origin.BottomLeft">
     @foreach (var role in FonbecRole.AllRoles)
     {

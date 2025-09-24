@@ -1,5 +1,6 @@
 ﻿using Fonbec.Web.DataAccess.DataModels.Users.Input;
 using Fonbec.Web.DataAccess.Repositories;
+using Fonbec.Web.Logic.Models;
 using Fonbec.Web.Logic.Models.Users;
 using Fonbec.Web.Logic.Models.Users.Input;
 using Fonbec.Web.Logic.Models.Users.Output;
@@ -14,6 +15,7 @@ public interface IUserService
     Task<ValidateUniqueEmailOutputModel> ValidateUniqueEmailAsync(string userEmail);
     Task<ValidateUniqueFullNameOutputModel> ValidateUniqueFullNameAsync(string firstName, string lastName);
     Task<List<UsersListViewModel>> GetAllUsersAsync();
+    Task<List<SelectableModel<int>>> GetAllUsersInRoleForSelectionAsync(string role);
     Task<(int userId, List<string> errors)> CreateUserAsync(CreateUserInputModel model);
     Task<bool> UpdateUserAsync(UpdateUserInputModel model);
     Task<List<string>> DisableUserAsync(int userId, bool disable);
@@ -56,10 +58,17 @@ public class UserService(
         {
             user.Roles = allUsersDataModel.UsersInRoles
                 .Where(usersInRole => usersInRole.UserIdsInRole.Contains(user.UserId))
-                .Select(usersInRole => usersInRole.Role);
+                .Select(usersInRole => usersInRole.Role)
+                .ToHashSet();
         }
 
         return allUsers;
+    }
+
+    public async Task<List<SelectableModel<int>>> GetAllUsersInRoleForSelectionAsync(string role)
+    {
+        var usersInRole = await userRepository.GetAllUsersInRoleForSelectionAsync(role);
+        return usersInRole.Select(u => new SelectableModel<int>(u.Key, u.Value)).ToList();
     }
 
     public async Task<(int userId, List<string> errors)> CreateUserAsync(CreateUserInputModel model)

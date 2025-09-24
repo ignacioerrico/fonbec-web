@@ -1,4 +1,5 @@
 ﻿using Fonbec.Web.DataAccess.Entities;
+using Fonbec.Web.DataAccess.Entities.Abstract;
 using Mapster;
 using NSubstitute;
 

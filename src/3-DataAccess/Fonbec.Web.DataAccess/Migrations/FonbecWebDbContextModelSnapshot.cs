@@ -17,7 +17,7 @@ namespace Fonbec.Web.DataAccess.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "9.0.8")
+                .HasAnnotation("ProductVersion", "9.0.9")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -41,6 +41,9 @@ namespace Fonbec.Web.DataAccess.Migrations
 
                     b.Property<DateTime?>("DisabledOnUtc")
                         .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
 
                     b.Property<int?>("LastUpdatedById")
                         .HasColumnType("int");
@@ -238,6 +241,104 @@ namespace Fonbec.Web.DataAccess.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.Student", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ChapterId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CreatedById")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("DisabledById")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DisabledOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Email")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<int>("FacilitatorId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("FirstName")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<byte>("Gender")
+                        .HasColumnType("tinyint");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<bool>("IsDeleted")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
+                    b.Property<string>("LastName")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<int?>("LastUpdatedById")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("LastUpdatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("NickName")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<string>("Notes")
+                        .HasMaxLength(128)
+                        .HasColumnType("nvarchar(128)");
+
+                    b.Property<string>("PhoneNumber")
+                        .HasMaxLength(20)
+                        .HasColumnType("nvarchar(20)");
+
+                    b.Property<int?>("ReenabledById")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ReenabledOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("SecondarySchoolStartYear")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("UniversityStartYear")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChapterId");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("DisabledById");
+
+                    b.HasIndex("FacilitatorId");
+
+                    b.HasIndex("LastUpdatedById");
+
+                    b.HasIndex("ReenabledById");
+
+                    b.ToTable("Students");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
                 {
                     b.Property<int>("Id")
@@ -408,6 +509,51 @@ namespace Fonbec.Web.DataAccess.Migrations
                     b.Navigation("ReenabledBy");
                 });
 
+            modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.Student", b =>
+                {
+                    b.HasOne("Fonbec.Web.DataAccess.Entities.Chapter", "Chapter")
+                        .WithMany()
+                        .HasForeignKey("ChapterId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Fonbec.Web.DataAccess.Entities.FonbecWebUser", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Fonbec.Web.DataAccess.Entities.FonbecWebUser", "DisabledBy")
+                        .WithMany()
+                        .HasForeignKey("DisabledById");
+
+                    b.HasOne("Fonbec.Web.DataAccess.Entities.FonbecWebUser", "Facilitator")
+                        .WithMany("Students")
+                        .HasForeignKey("FacilitatorId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Fonbec.Web.DataAccess.Entities.FonbecWebUser", "LastUpdatedBy")
+                        .WithMany()
+                        .HasForeignKey("LastUpdatedById");
+
+                    b.HasOne("Fonbec.Web.DataAccess.Entities.FonbecWebUser", "ReenabledBy")
+                        .WithMany()
+                        .HasForeignKey("ReenabledById");
+
+                    b.Navigation("Chapter");
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("DisabledBy");
+
+                    b.Navigation("Facilitator");
+
+                    b.Navigation("LastUpdatedBy");
+
+                    b.Navigation("ReenabledBy");
+                });
+
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
                 {
                     b.HasOne("Fonbec.Web.DataAccess.Entities.FonbecWebRole", null)
@@ -457,6 +603,11 @@ namespace Fonbec.Web.DataAccess.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.FonbecWebUser", b =>
+                {
+                    b.Navigation("Students");
                 });
 #pragma warning restore 612, 618
         }

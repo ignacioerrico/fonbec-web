@@ -1,0 +1,139 @@
+﻿@attribute [Route(NavRoutes.Students)]
+@inherits AuthenticationRequiredComponentBase
+
+@using Fonbec.Web.DataAccess.Constants
+@using Fonbec.Web.DataAccess.Entities.Enums
+@using Fonbec.Web.Logic.Models.Students
+
+<PageHeader Title="Becarios" />
+
+<MudStack StretchItems="StretchItems.Middle" Row="true">
+	<MudTooltip Text="Alta de becario"
+	            Arrow="true" Placement="Placement.Right"
+	            Color="Color.Primary">
+		<MudFab Href="@NavRoutes.StudentCreate"
+		        StartIcon="@Icons.Material.Filled.Add"
+		        Color="Color.Primary" />
+	</MudTooltip>
+	<MudSpacer />
+	<MudSwitch @bind-Value="_sortByLastName" LabelPlacement="Placement.Left">
+		@(_sortByLastName ? "Apellido, Nombre" : "Nombre Apellido")
+	</MudSwitch>
+</MudStack>
+
+<LoadingIndicator Loading="Loading"
+                  If="!_viewModels.Any()"
+                  ThenDisplay="No hay becarios." />
+
+@if (_viewModels.Any())
+{
+	<MudDataGrid T="StudentsListViewModel"
+	             Items="_viewModels"
+	             Dense="true" Hover="true" Striped="true" Bordered="true"
+	             ReadOnly="false"
+	             CommittedItemChanges="@(async viewModel => await CommittedItemChangesAsync(viewModel))"
+	             EditMode="DataGridEditMode.Form"
+	             EditTrigger="DataGridEditTrigger.Manual"
+	             QuickFilter="Filter"
+	             Filterable="true"
+	             FilterMode="DataGridFilterMode.ColumnFilterMenu"
+	             FilterCaseSensitivity="DataGridFilterCaseSensitivity.CaseInsensitive"
+	             SortMode="SortMode.Multiple"
+	             Class="mt-4">
+		<ToolBarContent>
+			<MudTextField T="string" @bind-Value="_searchString"
+			              Placeholder="Buscar"
+			              Clearable="true" Immediate="true"
+			              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"/>
+		</ToolBarContent>
+        <Columns>
+	        <PropertyColumn Property="@(vm => _sortByLastName ? vm.StudentLastName : vm.StudentFirstName)" Title="Nombre">
+		        <CellTemplate>
+			        <AuditableItemDisplay Id="@context.Item.StudentId"
+			                              ItemName="@StudentFullName(context.Item)"
+			                              IsActive="@context.Item.IsStudentActive"
+			                              AuditableViewModel="@context.Item" />
+					@if (!string.IsNullOrWhiteSpace(context.Item.StundentNickName))
+			        {
+						<span>(<em>@context.Item.StundentNickName</em>)</span>
+			        }
+		        </CellTemplate>
+		        <EditTemplate>
+			        <MudTextField T="string" @bind-Value="@context.Item.StudentFirstName" Immediate="true"
+			                      Required="true" RequiredError="Este es un campo requerido"
+			                      Label="Nombre" Variant="Variant.Outlined" Margin="Margin.Dense"
+			                      MaxLength="MaxLength.FonbecWebUser.FirstName" />
+			        <MudTextField T="string" @bind-Value="@context.Item.StudentLastName" Immediate="true" Class="mt-4"
+			                      Required="true" RequiredError="Este es un campo requerido"
+			                      Label="Apellido" Variant="Variant.Outlined" Margin="Margin.Dense"
+			                      MaxLength="MaxLength.FonbecWebUser.LastName" />
+		        </EditTemplate>
+	        </PropertyColumn>
+	        <PropertyColumn Property="vm => vm.StundentNickName" Title="Apodo" Hidden="true" Required="false">
+		        <EditTemplate>
+			        <MudTextField T="string" @bind-Value="context.Item.StundentNickName" Immediate="true"
+			                      Label="Apodo" Variant="Variant.Outlined" Margin="Margin.Dense"
+			                      MaxLength="MaxLength.FonbecWebUser.NickName" />
+		        </EditTemplate>
+	        </PropertyColumn>
+	        <PropertyColumn Property="vm => vm.StudentGender" Title="Sexo" Hidden="true">
+		        <EditTemplate>
+			        <MudSelect T="Gender" @bind-Value="context.Item.StudentGender" Class="mt-4"
+			                   Label="Sexo" Variant="Variant.Outlined" Margin="@Margin.Dense">
+				        <MudSelectItem Value="Gender.Male">Masculino</MudSelectItem>
+				        <MudSelectItem Value="Gender.Female">Femenino</MudSelectItem>
+			        </MudSelect>
+		        </EditTemplate>
+	        </PropertyColumn>
+            <PropertyColumn Property="vm => vm.FacilitatorFullName" Title="Mediador">
+	            <EditTemplate>
+		            <FacilitatorSelector @bind-SelectedFacilitatorId="context.Item.FacilitatorId" />
+	            </EditTemplate>
+            </PropertyColumn>
+	        <PropertyColumn Property="vm => vm.StudentCurrentEducationLevel" Title="Nivel">
+		        <EditTemplate>
+			        <EducationLevelSelector @bind-SecondarySchoolStartYear="context.Item.StudentSecondarySchoolStartYear"
+			                                @bind-UniversityStartYear="context.Item.StudentUniversityStartYear" />
+		        </EditTemplate>
+	        </PropertyColumn>
+			<PropertyColumn Property="vm => vm.StudentEmail" Title="Correo electrónico" Required="false">
+				<CellTemplate>
+					<MudLink Href="@($"mailto:{context.Item.StudentEmail}")">
+						@context.Item.StudentEmail
+					</MudLink>
+				</CellTemplate>
+				<EditTemplate>
+					<MudTextField T="string" @bind-Value="context.Item.StudentEmail" Immediate="true"
+					              Label="Correo electrónico" Variant="Variant.Outlined" Margin="Margin.Dense"
+					              MaxLength="MaxLength.FonbecWebUser.Email" />
+				</EditTemplate>
+	        </PropertyColumn>
+	        <PropertyColumn Property="vm => vm.StudentPhoneNumber" Title="Teléfono" Required="false">
+				<EditTemplate>
+					<MudTextField T="string" @bind-Value="context.Item.StudentPhoneNumber" Immediate="true"
+								  Label="Teléfono" Variant="Variant.Outlined" Margin="Margin.Dense"
+								  MaxLength="MaxLength.FonbecWebUser.PhoneNumber" />
+				</EditTemplate>
+	        </PropertyColumn>
+	        <PropertyColumn Property="vm => vm.StudentNotes" Title="Notas personales" Hidden="true" Required="false">
+		        <EditTemplate>
+			        <MudTextField T="string" @bind-Value="context.Item.StudentNotes" Immediate="true"
+			                      Label="Notas personales" Variant="Variant.Outlined" Margin="Margin.Dense"
+			                      MaxLength="MaxLength.FonbecWebUser.Notes" />
+		        </EditTemplate>
+	        </PropertyColumn>
+	        <TemplateColumn Title="Acciones" Filterable="false" Sortable="false">
+	            <CellTemplate>
+		            <MudTooltip Text="Editar" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
+			            <MudIconButton OnClick="@context.Actions.StartEditingItemAsync"
+			                           Disabled="@(!context.Item.IsStudentActive)"
+			                           Icon="@Icons.Material.Outlined.Edit" Size="@Size.Small" Color="Color.Primary" />
+		            </MudTooltip>
+	            </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="StudentsListViewModel" RowsPerPageString="Filas por página:" InfoFormat="{first_item}-{last_item} of {all_items}" />
+        </PagerContent>
+	</MudDataGrid>
+}

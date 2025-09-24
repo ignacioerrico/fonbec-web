@@ -1,0 +1,56 @@
+﻿@attribute [Route(NavRoutes.StudentCreate)]
+@inherits AuthenticationRequiredComponentBase
+
+@using Fonbec.Web.DataAccess.Constants
+
+<PageHeader Title="Alta de becario" />
+
+@if (_isFormDisabled)
+{
+	<MudAlert Severity="Severity.Error">No hay mediadores. Para dar de alta becarios se requiere al menos un mediador.</MudAlert>
+}
+
+<LoadingIndicator Loading="Loading" />
+
+<MudForm @bind-IsValid="@_formValidationSucceeded" Disabled="_isFormDisabled">
+	<ChapterSelector @bind-SelectedChapterId="_bindModel.ChapterId" />
+	
+	<MudTextField T="string" Label="Nombre" @ref="_mudTextFieldName" @bind-Value="_bindModel.StudentFirstName" Immediate="true"
+	              Required="true" RequiredError="Este es un campo obligatorio."
+	              MaxLength="MaxLength.FonbecWebUser.FirstName" />
+
+	<MudTextField T="string" Label="Apellido" @bind-Value="_bindModel.StudentLastName" Immediate="true"
+	              Required="true" RequiredError="Este es un campo obligatorio."
+	              MaxLength="MaxLength.FonbecWebUser.LastName" />
+
+	<MudTextField T="string" Label="Apodo" @bind-Value="_bindModel.StudentNickName" Immediate="true"
+	              MaxLength="MaxLength.FonbecWebUser.NickName" />
+				  
+	<GenderSelector @bind-SelectedGender="_bindModel.StudentGender" />
+	
+	<EducationLevelSelector @bind-SecondarySchoolStartYear="_bindModel.StudentSecondarySchoolStartYear"
+	                        @bind-UniversityStartYear="_bindModel.StudentUniversityStartYear" />
+
+	<FacilitatorSelector @bind-SelectedFacilitatorId="_bindModel.FacilitatorId"
+	                     OnFacilitatorsLoaded="OnFacilitatorsLoaded" />
+
+	<MudTextField T="string" Label="Correo electrónico" @bind-Value="_bindModel.StudentEmail" Immediate="true"
+	              MaxLength="MaxLength.FonbecWebUser.Email" />
+
+	<MudTextField T="string" Label="Teléfono" @bind-Value="_bindModel.StudentPhoneNumber" Immediate="true"
+	              MaxLength="MaxLength.FonbecWebUser.PhoneNumber" />
+
+	<MudTextField T="string" Label="Notas personales" @bind-Value="_bindModel.StudentNotes" Immediate="true"
+	              MaxLength="MaxLength.FonbecWebUser.Notes" />
+</MudForm>
+
+<MudStack Row="true" Class="pt-4">
+	<MudButton OnClick="Save" Disabled="SaveButtonDisabled"
+	           Variant="Variant.Filled" Color="Color.Primary">
+		Crear
+	</MudButton>
+	<MudButton Href="@NavRoutes.Students"
+	           Variant="Variant.Filled" Color="Color.Default" Class="ms-4">
+		Cancelar
+	</MudButton>
+</MudStack>

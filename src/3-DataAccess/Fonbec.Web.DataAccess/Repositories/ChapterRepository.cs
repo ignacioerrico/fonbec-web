@@ -21,12 +21,15 @@ public class ChapterRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             .Include(ch => ch.CreatedBy)
             .Include(ch => ch.LastUpdatedBy)
             .Include(ch => ch.DisabledBy)
-            .OrderBy(ch => ch.Name)
+            .Include(ch => ch.ReenabledBy)
+            .Where(ch => ch.IsActive)
             .Select(ch => new AllChaptersDataModel(ch)
             {
                 ChapterId = ch.Id,
-                ChapterName = ch.Name
+                ChapterName = ch.Name,
+                IsChapterActive = ch.IsActive
             })
+            .OrderBy(ch => ch.ChapterName)
             .ToListAsync();
 
         return allChapters;

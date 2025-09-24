@@ -26,6 +26,11 @@ public class FonbecWebUser : IdentityUser<int>
     public int? ChapterId { get; set; }
     public Chapter? Chapter { get; set; }
 
+    /// <summary>
+    /// Users with role of 'Uploader' who are responsible for students will be linked to students as their facilitators.
+    /// </summary>
+    public List<Student>? Students { get; set; }
+
     public string FullName() => $"{FirstName} {LastName}";
 
     #region Audit Properties

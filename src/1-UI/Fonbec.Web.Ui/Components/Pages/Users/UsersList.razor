@@ -17,8 +17,8 @@
                 Color="Color.Primary" />
     </MudTooltip>
     <MudSpacer />
-    <MudSwitch @bind-Value="_sortByLastName" LabelPlacement="Placement.Left">
-        @(_sortByLastName ? "Apellido, Nombre" : "Nombre Apellido")
+    <MudSwitch @bind-Value="_isLastNameFirst" LabelPlacement="Placement.Left">
+        @(_isLastNameFirst ? "Apellido, Nombre" : "Nombre Apellido")
     </MudSwitch>
 </MudStack>
 
@@ -46,17 +46,12 @@
                           Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
         </ToolBarContent>
         <Columns>
-            <PropertyColumn Property="@(x => _sortByLastName ? x.UserLastName : x.UserFirstName)" Title="Nombre">
+            <PropertyColumn Property="@(vm => _isLastNameFirst ? vm.UserLastName : vm.UserFirstName)" Title="Nombre">
                 <CellTemplate>
                     <MudText Typo="Typo.body1">
-                        @if (_sortByLastName)
-                        {
-                            <span>@context.Item.UserLastName, @context.Item.UserFirstName</span>
-                        }
-                        else
-                        {
-                            <span>@context.Item.UserFirstName @context.Item.UserLastName</span>
-                        }
+	                    <FullNameDisplay FirstName="@context.Item.UserFirstName"
+	                                     LastName="@context.Item.UserLastName"
+	                                     IsLastNameFirst="_isLastNameFirst" />
 
                         @if (context.Item.UserId == _userId)
                         {
@@ -74,28 +69,20 @@
                     <MudTextField T="string" @bind-Value="@context.Item.UserLastName" Immediate="true" Class="mt-4"
                                   Required="true" RequiredError="Este es un campo requerido"
                                   Label="Apellido" Variant="Variant.Outlined" Margin="Margin.Dense"
-                                  MaxLength="MaxLength.FonbecWebUser.FirstName" />
+                                  MaxLength="MaxLength.FonbecWebUser.LastName" />
                 </EditTemplate>
             </PropertyColumn>
-            <PropertyColumn Property="x => x.Roles.FirstOrDefault()" Title="Roles">
+            <PropertyColumn Property="vm => vm.Roles.FirstOrDefault()" Title="Roles">
                 <CellTemplate>
                     @foreach (var role in context.Item.Roles)
                     {
-                        var color = role switch
-                        {
-                            FonbecRole.Admin => Color.Secondary,
-                            FonbecRole.Manager => Color.Warning,
-                            FonbecRole.Uploader => Color.Info,
-                            FonbecRole.Reviewer => Color.Primary,
-                            _ => Color.Default
-                        };
-                        <MudChip Variant="Variant.Outlined" Color="@color">
-                            @role
+                        <MudChip Variant="Variant.Outlined" Color="MudChipColorForRole(role)">
+                            @FonbecRole.Translator[role]
                         </MudChip>
                     }
                 </CellTemplate>
                 <EditTemplate>
-                </EditTemplate>
+	            </EditTemplate>
                 <FilterTemplate>
                     <MudIconButton OnClick="@(() => _isRolesFilterOpen = true)" Icon="@_rolesFilterIcon" Size="@Size.Small" />
                     <MudOverlay OnClick="@(() => _isRolesFilterOpen = false)" Visible="@_isRolesFilterOpen" />
@@ -106,7 +93,7 @@
                             <MudStack Spacing="0" Style="overflow-y:auto;max-height:250px">
                                 @foreach (var role in FonbecRole.AllRoles)
                                 {
-                                    <MudCheckBox T="bool" Label="@role" Size="@Size.Small"
+                                    <MudCheckBox T="bool" Label="@FonbecRole.Translator[role]" Size="@Size.Small"
                                                  Value="@(_selectedRoles.Contains(role))"
                                                  ValueChanged="@(isSelected => SelectedChanged(role, isSelected))" />
                                 }
@@ -123,8 +110,14 @@
                     </MudPopover>
                 </FilterTemplate>
             </PropertyColumn>
-            <PropertyColumn Property="x => x.UserNickName" Title="Apodo" Hidden="true" Required="false" />
-            <PropertyColumn Property="x => x.UserGender" Title="Sexo" Hidden="true">
+            <PropertyColumn Property="vm => vm.UserNickName" Title="Apodo" Hidden="true" Required="false">
+                <EditTemplate>
+                    <MudTextField T="string" @bind-Value="@context.Item.UserNickName" Immediate="true"
+                                  Label="Apodo" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                  MaxLength="MaxLength.FonbecWebUser.NickName" />
+				</EditTemplate>
+            </PropertyColumn>
+            <PropertyColumn Property="vm => vm.UserGender" Title="Sexo" Hidden="true">
                 <EditTemplate>
                     <MudSelect T="Gender" @bind-Value="context.Item.UserGender" Class="mt-4"
                                Label="Sexo" Variant="Variant.Outlined" Margin="@Margin.Dense">
@@ -133,14 +126,25 @@
                     </MudSelect>
                 </EditTemplate>
             </PropertyColumn>
-            <PropertyColumn Property="x => x.UserEmail" Title="Correo electrónico">
-                <CellTemplate>
-                    <MudLink Href="@($"mailto:{context.Item.UserEmail}")">
-                        @context.Item.UserEmail
-                    </MudLink>
-                </CellTemplate>
+            <PropertyColumn Property="vm => vm.UserEmail" Title="Correo electrónico">
+	            <CellTemplate>
+		            <MudLink Href="@($"mailto:{context.Item.UserEmail}")">
+			            @context.Item.UserEmail
+		            </MudLink>
+	            </CellTemplate>
+                <EditTemplate>
+		            <MudTextField T="string" @bind-Value="context.Item.UserEmail" Immediate="true"
+		                          Label="Correo electrónico" Variant="Variant.Outlined" Margin="Margin.Dense"
+		                          MaxLength="MaxLength.FonbecWebUser.Email" />
+                </EditTemplate>
             </PropertyColumn>
-            <PropertyColumn Property="x => x.UserPhoneNumber" Title="Teléfono" Required="false" />
+            <PropertyColumn Property="vm => vm.UserPhoneNumber" Title="Teléfono" Required="false">
+                <EditTemplate>
+                    <MudTextField T="string" @bind-Value="context.Item.UserPhoneNumber" Immediate="true"
+                                  Label="Teléfono" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                  MaxLength="MaxLength.FonbecWebUser.PhoneNumber" />
+				</EditTemplate>
+            </PropertyColumn>
             <TemplateColumn Title="Acciones" Filterable="false" Sortable="false">
                 <CellTemplate>
                     <MudTooltip Text="Editar" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
