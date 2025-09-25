@@ -1,4 +1,5 @@
 ﻿using Fonbec.Web.DataAccess.Entities;
+using Fonbec.Web.DataAccess.Entities.Abstract;
 using Microsoft.AspNetCore.Identity.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.ChangeTracking;
@@ -14,6 +15,8 @@ public sealed class FonbecWebDbContext : IdentityDbContext<FonbecWebUser, Fonbec
     }
 
     internal DbSet<Chapter> Chapters => Set<Chapter>();
+
+    internal DbSet<Student> Students => Set<Student>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
@@ -39,9 +42,14 @@ public sealed class FonbecWebDbContext : IdentityDbContext<FonbecWebUser, Fonbec
         switch (e.Entry.State)
         {
             case EntityState.Added:
+                auditable.IsActive = true;
                 auditable.CreatedOnUtc = DateTime.UtcNow;
                 break;
             case EntityState.Modified:
+                // An Auditable entity is considered active if it has not been disabled or if it has been reenabled.
+                auditable.IsActive = auditable.DisabledById is null
+                                     || (auditable.ReenabledById is not null && auditable.ReenabledOnUtc is not null);
+
                 // If the entity is active, set the LastUpdatedOn timestamp.
                 // If the entity is reenabled, set the ReenabledOn timestamp.
                 // If the entity is disabled, set the DisabledOn timestamp.

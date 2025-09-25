@@ -1,0 +1,49 @@
+﻿@using Fonbec.Web.DataAccess.Entities.Enums
+@using Fonbec.Web.Ui.Models
+
+<MudSelect T="EducationLevel" Label="Nivel de estudio"
+           Value="_selectedLevel"
+		   ValueChanged="OnSelectedLevelChanged"
+		   Required="true" RequiredError="Debe seleccionar un nivel de estudio."
+           Variant="Variant.Filled" AnchorOrigin="Origin.BottomLeft">
+		<MudSelectItem T="EducationLevel" Value="EducationLevel.PrimarySchool">Primario</MudSelectItem>
+		<MudSelectItem T="EducationLevel" Value="EducationLevel.SecondarySchool">Secundario</MudSelectItem>
+		<MudSelectItem T="EducationLevel" Value="EducationLevel.University">Universitario</MudSelectItem>
+</MudSelect>
+
+@if (_selectedLevel is EducationLevel.PrimarySchool)
+{
+	<MudStack Row="true" StretchItems="StretchItems.End" AlignItems="AlignItems.Center">
+		<MudCheckBox T="bool" Label="Sé cuándo va a empezar el secundario"
+		             Value="_isSecondarySchoolStartYearKnown"
+		             ValueChanged="OnIsSecondarySchoolStartYearKnownChanged"/>
+
+		@if (_isSecondarySchoolStartYearKnown)
+		{
+			<MudNumericField T="int?" Label="Año de comienzo del secundario"
+			                 Required="_isSecondarySchoolStartYearKnown" RequiredError="Si el año es conocido, se debe especificar."
+			                 Value="SecondarySchoolStartYear?.Year"
+			                 ValueChanged="OnSecondarySchoolStartYearChanged"
+			                 Min="_currentYear" Max="@(_currentYear + 30)"/>
+		}
+	</MudStack>
+}
+
+@if ((_selectedLevel is EducationLevel.PrimarySchool && _isSecondarySchoolStartYearKnown && SecondarySchoolStartYear.HasValue)
+     || _selectedLevel is EducationLevel.SecondarySchool)
+{
+	<MudStack Row="true" StretchItems="StretchItems.End" AlignItems="AlignItems.Center">
+		<MudCheckBox T="bool" Label="Sé cuándo va a empezar la facultad"
+		Value="_isUniversityStartYearKnown"
+		ValueChanged="OnIsUniversityStartYearKnownChanged"/>
+
+		@if (_isUniversityStartYearKnown)
+		{
+			<MudNumericField T="int?" Label="Año de comienzo de la facultad"
+			Required="_isUniversityStartYearKnown" RequiredError="Si el año es conocido, se debe especificar."
+			Value="UniversityStartYear?.Year"
+			ValueChanged="OnUniversityStartYearChanged"
+			Min="_currentYear" Max="@(_currentYear + 30)"/>
+		}
+	</MudStack>
+}

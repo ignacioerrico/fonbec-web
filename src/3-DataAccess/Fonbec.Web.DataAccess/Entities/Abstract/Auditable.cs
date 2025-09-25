@@ -1,4 +1,4 @@
-﻿namespace Fonbec.Web.DataAccess.Entities;
+﻿namespace Fonbec.Web.DataAccess.Entities.Abstract;
 
 public abstract class Auditable
 {
@@ -39,10 +39,5 @@ public abstract class Auditable
     public FonbecWebUser? ReenabledBy { get; set; } = null!;
     public DateTime? ReenabledOnUtc { get; set; }
 
-    /// <summary>
-    /// An Auditable entity is considered active if it has not been disabled or if it has been reenabled.
-    /// </summary>
-    public bool IsActive =>
-        DisabledById is null
-        || ReenabledById is not null && ReenabledOnUtc is not null;
+    public bool IsActive { get; set; }
 }

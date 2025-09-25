@@ -40,9 +40,11 @@ public static class ConfigureServices
 
         services.AddScoped<IChapterService, ChapterService>();
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IStudentService, StudentService>();
 
         services.AddScoped<IChapterRepository, ChapterRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IStudentRepository, StudentRepository>();
     }
 
     public static void RegisterEntityFrameworkCore(IServiceCollection services, IConfiguration configuration)

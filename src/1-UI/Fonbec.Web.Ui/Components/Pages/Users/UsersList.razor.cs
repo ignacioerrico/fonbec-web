@@ -16,7 +16,7 @@ public partial class UsersList : AuthenticationRequiredComponentBase
 
     private string _searchString = string.Empty;
 
-    private bool _sortByLastName;
+    private bool _isLastNameFirst;
 
     private string _rolesFilterIcon = Icons.Material.Outlined.FilterAlt;
     private bool _isRolesFilterOpen;
@@ -76,6 +76,16 @@ public partial class UsersList : AuthenticationRequiredComponentBase
             Snackbar.Add("No se pudo actualizar el usuario.", Severity.Error);
         }
     }
+
+    private static Color MudChipColorForRole(string role) =>
+        role switch
+        {
+            FonbecRole.Admin => Color.Secondary,
+            FonbecRole.Manager => Color.Warning,
+            FonbecRole.Uploader => Color.Info,
+            FonbecRole.Reviewer => Color.Primary,
+            _ => Color.Default
+        };
 
     private void OnSelectAllRolesChanged(bool areAllRolesSelected)
     {

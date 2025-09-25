@@ -1,4 +1,6 @@
-﻿namespace Fonbec.Web.DataAccess.Entities;
+﻿using Fonbec.Web.DataAccess.Entities.Abstract;
+
+namespace Fonbec.Web.DataAccess.Entities;
 
 public class Chapter : Auditable
 {

@@ -1,0 +1,9 @@
+﻿@using Fonbec.Web.DataAccess.Entities.Enums
+
+<MudSelect T="Gender" Label="Sexo"
+           Value="SelectedGender"
+           ValueChanged="OnSelectedValueChanged"
+           Variant="Variant.Filled" AnchorOrigin="Origin.BottomLeft">
+	<MudSelectItem T="Gender" Value="Gender.Male">Masculino</MudSelectItem>
+	<MudSelectItem T="Gender" Value="Gender.Female">Femenino</MudSelectItem>
+</MudSelect>

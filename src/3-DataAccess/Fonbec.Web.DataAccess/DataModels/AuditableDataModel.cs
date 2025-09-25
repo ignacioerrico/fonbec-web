@@ -1,10 +1,11 @@
 ﻿using Fonbec.Web.DataAccess.Entities;
+using Fonbec.Web.DataAccess.Entities.Abstract;
 
 namespace Fonbec.Web.DataAccess.DataModels;
 
 public abstract class AuditableDataModel
 {
-    private protected AuditableDataModel(Auditable auditable)
+    protected internal AuditableDataModel(Auditable auditable)
     {
         CreatedBy = auditable.CreatedBy;
         CreatedOnUtc = auditable.CreatedOnUtc;

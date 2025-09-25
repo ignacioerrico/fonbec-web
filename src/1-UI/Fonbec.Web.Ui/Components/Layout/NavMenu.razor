@@ -9,6 +9,7 @@
         <Authorized>
             <MudNavLink Href="@NavRoutes.Chapters" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Place">Filiales</MudNavLink>
             <MudNavLink Href="@NavRoutes.Users" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AccountBox">Usuarios</MudNavLink>
+            <MudNavLink Href="@NavRoutes.Students" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Face">Becarios</MudNavLink>
             <MudNavLink Href="Account/Manage" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Person">@context.User.Identity?.Name</MudNavLink>
             <form action="Account/Logout" method="post">
                 <AntiforgeryToken />

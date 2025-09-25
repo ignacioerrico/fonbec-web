@@ -9,4 +9,8 @@ public static class NavRoutes
     public const string Users = "/usuarios";
 
     public const string UserCreate = $"{Users}/alta";
+    
+    public const string Students = "/becarios";
+
+    public const string StudentCreate = $"{Students}/alta";
 }

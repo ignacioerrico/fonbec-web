@@ -1,7 +1,7 @@
-﻿using Fonbec.Web.Logic.Models.Users;
-using Fonbec.Web.Logic.Models.Users.Input;
+﻿using Fonbec.Web.Logic.Models.Users.Input;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Ui.Constants;
+using Fonbec.Web.Ui.Models.User;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
@@ -9,9 +9,7 @@ namespace Fonbec.Web.Ui.Components.Pages.Users;
 
 public partial class UserCreate : AuthenticationRequiredComponentBase
 {
-    private readonly UserCreateViewModel _viewModel = new();
-
-    private int _userId;
+    private readonly UserCreateBindModel _bindModel = new();
 
     private bool _formValidationSucceeded;
 
@@ -39,29 +37,24 @@ public partial class UserCreate : AuthenticationRequiredComponentBase
         await base.OnAfterRenderAsync(firstRender);
     }
 
-    protected override async Task OnInitializedAsync()
-    {
-        _userId = await GetAuthenticatedUserIdAsync();
-    }
-
     private async Task SaveAsync()
     {
         _saving = true;
 
-        var (isEmailUnique, userFullNameOrNull) = await UserService.ValidateUniqueEmailAsync(_viewModel.UserEmail);
+        var (isEmailUnique, userFullNameOrNull) = await UserService.ValidateUniqueEmailAsync(_bindModel.UserEmail);
         if (!isEmailUnique)
         {
-            var message = $"La dirección de correo {_viewModel.UserEmail} ya la tiene el usuario {userFullNameOrNull}.";
+            var message = $"La dirección de correo {_bindModel.UserEmail} ya la tiene el usuario {userFullNameOrNull}.";
 
             Snackbar.Add(message, Severity.Error);
             _saving = false;
             return;
         }
 
-        var validateUniqueFullNameOutputModel = await UserService.ValidateUniqueFullNameAsync(_viewModel.UserFirstName, _viewModel.UserLastName);
+        var validateUniqueFullNameOutputModel = await UserService.ValidateUniqueFullNameAsync(_bindModel.UserFirstName, _bindModel.UserLastName);
         if (!validateUniqueFullNameOutputModel.IsFullNameUnique)
         {
-            var message = $"Ya existe un usuario que se llama {_viewModel.UserFirstName} {_viewModel.UserLastName}. ¿Querés crear este de todas formas?";
+            var message = $"Ya existe un usuario que se llama {_bindModel.UserFirstName} {_bindModel.UserLastName}. ¿Querés crear este de todas formas?";
             
             var dialogResult = await DialogService.ShowMessageBox(
                 "¡Atención!",
@@ -76,19 +69,28 @@ public partial class UserCreate : AuthenticationRequiredComponentBase
             }
         }
 
+        if (_bindModel.UserRole is null)
+        {
+            Snackbar.Add("Se debe seleccionar un rol.", Severity.Error);
+            _saving = false;
+            return;
+        }
+
+        var authenticatedUserId = await GetAuthenticatedUserIdAsync();
+
         var createUserInputModel = new CreateUserInputModel
         (
-            _viewModel.UserFirstName,
-            _viewModel.UserLastName,
-            _viewModel.UserNickName,
-            _viewModel.UserRoles,
-            _viewModel.UserGender,
-            _viewModel.UserEmail,
-            _viewModel.UserPhoneNumber,
-            _userId
+            _bindModel.UserFirstName,
+            _bindModel.UserLastName,
+            _bindModel.UserNickName,
+            _bindModel.UserGender,
+            _bindModel.UserEmail,
+            _bindModel.UserPhoneNumber,
+            _bindModel.UserRole,
+            authenticatedUserId
         );
 
-        var (userId, errors) = await UserService.CreateUserAsync(createUserInputModel);
+        var (createdUserId, errors) = await UserService.CreateUserAsync(createUserInputModel);
         if (errors.Count > 0)
         {
             foreach (var error in errors)
@@ -96,13 +98,13 @@ public partial class UserCreate : AuthenticationRequiredComponentBase
                 Snackbar.Add(error, Severity.Error);
             }
         }
-        else if (userId <= 0)
+        else if (createdUserId <= 0)
         {
             Snackbar.Add("No se pudo crear el usuario.", Severity.Error);
         }
         else
         {
-            Snackbar.Add($"El usuario {_viewModel.UserFirstName} {_viewModel.UserLastName} (ID: {userId}) se creó exitosamente.", Severity.Success);
+            Snackbar.Add($"El usuario {_bindModel.UserFirstName} {_bindModel.UserLastName} (ID: {createdUserId}) se creó exitosamente.", Severity.Success);
         }
 
         _saving = false;
