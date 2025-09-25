@@ -56,10 +56,9 @@ public class UserService(
 
         foreach (var user in allUsers)
         {
-            user.Roles = allUsersDataModel.UsersInRoles
-                .Where(usersInRole => usersInRole.UserIdsInRole.Contains(user.UserId))
-                .Select(usersInRole => usersInRole.Role)
-                .ToHashSet();
+            user.UserRole = allUsersDataModel.UsersInRoles
+                .First(u => u.UserIdsInRole.Contains(user.UserId))
+                .Role;
         }
 
         return allUsers;

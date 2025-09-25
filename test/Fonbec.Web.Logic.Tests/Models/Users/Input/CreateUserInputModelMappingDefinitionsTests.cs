@@ -19,7 +19,8 @@ public class CreateUserInputModelMappingDefinitionsTests : MappingTestBase
             UserEmail: "John@Email.com ",
             UserPhoneNumber: " 555-1234 ",
             UserRole: "Admin",
-            CreatedById: 99
+            CreatedById: 99,
+            UserChapterId: 5
         );
         var result = input.BuildAdapter(Config)
             .AddParameters("generatedPassword", "secret")
@@ -33,6 +34,7 @@ public class CreateUserInputModelMappingDefinitionsTests : MappingTestBase
         result.UserPhoneNumber.Should().Be("555-1234");
         result.UserRole.Should().Be("Admin");
         result.CreatedById.Should().Be(99);
+        result.UserChapterId.Should().Be(5);
         result.GeneratedPassword.Should().Be("secret");
     }
 
@@ -50,7 +52,8 @@ public class CreateUserInputModelMappingDefinitionsTests : MappingTestBase
             UserEmail: "john@email.com",
             UserPhoneNumber: "555-1234",
             UserRole: "Admin",
-            CreatedById: 99
+            CreatedById: 99,
+            UserChapterId: 5
         );
         var result = input.BuildAdapter(Config)
             .AddParameters("generatedPassword", "secret")
@@ -73,7 +76,8 @@ public class CreateUserInputModelMappingDefinitionsTests : MappingTestBase
             UserEmail: "john@email.com",
             UserPhoneNumber: phone!,
             UserRole: "Admin",
-            CreatedById: 99
+            CreatedById: 99,
+            UserChapterId: 5
         );
         var result = input.BuildAdapter(Config)
             .AddParameters("generatedPassword", "secret")
@@ -93,7 +97,8 @@ public class CreateUserInputModelMappingDefinitionsTests : MappingTestBase
             UserEmail: "john@email.com",
             UserPhoneNumber: "555-1234",
             UserRole: "Admin",
-            CreatedById: 99
+            CreatedById: 99,
+            UserChapterId: 5
         );
         var result = input.Adapt<CreateUserInputDataModel>(Config);
 

@@ -70,6 +70,7 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
                     UserGender = u.Gender,
                     UserEmail = u.Email,
                     UserPhoneNumber = u.PhoneNumber,
+                    UserChapterName = u.Chapter == null ? null : u.Chapter.Name,
                     IsUserLockedOut = u.LockoutEnabled,
                     UserLockOutEndsOnUtc = u.LockoutEnd,
                 })
@@ -80,9 +81,10 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
 
         foreach (var role in FonbecRole.AllRoles)
         {
+            // This is the expensive call we want to minimize: it will be executed once per role.
             var usersInRole = await userManager.GetUsersInRoleAsync(role);
 
-            var usersInRoles = new AllUsersUsersInRolesDataModel
+            var usersInRoles = new AllUsersUsersInRoleDataModel
             {
                 Role = role,
                 UserIdsInRole = usersInRole.Select(u => u.Id),
@@ -115,6 +117,7 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
 
         var fonbecUser = new FonbecWebUser
         {
+            ChapterId = model.UserChapterId,
             FirstName = model.UserFirstName,
             LastName = model.UserLastName,
             NickName = model.UserNickName,

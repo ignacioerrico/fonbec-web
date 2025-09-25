@@ -10,13 +10,16 @@ public partial class ChapterSelector
 
     private readonly List<SelectableModel<int>> _chapters = new();
 
-    private SelectableModel<int> _selectedChapter = null!;
+    private int _selectedChapterId;
 
     [Parameter]
     public int SelectedChapterId { get; set; }
     
     [Parameter]
     public EventCallback<int> SelectedChapterIdChanged { get; set; }
+
+    [Parameter]
+    public EventCallback<int> OnChaptersLoaded { get; set; }
 
     [Inject]
     public IChapterService ChapterService { get; set; } = null!;
@@ -29,18 +32,20 @@ public partial class ChapterSelector
 
         _chapters.AddRange(chapters);
 
+        await OnChaptersLoaded.InvokeAsync(chapters.Count);
+
         if (chapters.Count > 0)
         {
-            _selectedChapter = chapters.First();
-            await OnSelectedValueChanged(_selectedChapter);
+            _selectedChapterId = chapters.First().Key;
+            await OnSelectedValueChanged(_selectedChapterId);
         }
 
         await base.OnInitializedAsync();
     }
 
-    private async Task OnSelectedValueChanged(SelectableModel<int> selectedChapter)
+    private async Task OnSelectedValueChanged(int selectedChapterId)
     {
-        SelectedChapterId = selectedChapter.Key;
+        SelectedChapterId = selectedChapterId;
         await SelectedChapterIdChanged.InvokeAsync(SelectedChapterId);
     }
 }

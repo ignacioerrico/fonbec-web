@@ -20,7 +20,9 @@ public class UsersListViewModel
 
     public string UserPhoneNumber { get; set; } = null!;
 
-    public IEnumerable<string> Roles { get; set; } = null!;
+    public string UserRole { get; set; } = null!;
+
+    public string UserChapterName { get; set; } = null!;
 
     public bool IsUserActive { get; set; }
 }
@@ -40,6 +42,8 @@ public class UsersListViewModelMappingDefinitions : IRegister
             .Map(dest => dest.UserEmail, src => string.Empty, src => src.UserEmail == null)
             .Map(dest => dest.UserPhoneNumber, src => src.UserPhoneNumber, src => src.UserPhoneNumber != null)
             .Map(dest => dest.UserPhoneNumber, src => string.Empty, src => src.UserPhoneNumber == null)
+            .Map(dest => dest.UserChapterName, src => src.UserChapterName, src => src.UserChapterName != null)
+            .Map(dest => dest.UserChapterName, src => "GLOBAL", src => src.UserChapterName == null)
             .Map(dest => dest.IsUserActive, src =>
                     !src.IsUserLockedOut
                     && src.UserLockOutEndsOnUtc!.Value < DateTimeOffset.Now,

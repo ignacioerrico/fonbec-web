@@ -6,41 +6,53 @@
 
 <PageHeader Title="Alta de usuario" />
 
+@if (_isFormDisabled)
+{
+    <MudAlert Severity="Severity.Error">No hay filiales. Para dar de alta usuarios se requiere al menos una filial.</MudAlert>
+}
+
 <LoadingIndicator Loading="Loading" />
 
-<MudForm @bind-IsValid="@_formValidationSucceeded">
-    <MudTextField T="string" Label="Nombre" @ref="_mudTextFieldFirstName" @bind-Value="_bindModel.UserFirstName" Immediate="true"
-                  Required="true" RequiredError="Este es un campo obligatorio."
-                  MaxLength="MaxLength.FonbecWebUser.FirstName" />
+<MudForm @bind-IsValid="@_formValidationSucceeded" Disabled="_isFormDisabled">
+	
+	@if (!_isFormDisabled)
+	{
+		<ChapterSelector @bind-SelectedChapterId="_bindModel.UserChapterId"
+		                 OnChaptersLoaded="OnChaptersLoaded" />
+	}
 
-    <MudTextField T="string" Label="Apellido" @bind-Value="_bindModel.UserLastName" Immediate="true"
-                  Required="true" RequiredError="Este es un campo obligatorio."
-                  MaxLength="MaxLength.FonbecWebUser.LastName" />
+	<MudTextField T="string" Label="Nombre" @ref="_mudTextFieldFirstName" @bind-Value="_bindModel.UserFirstName" Immediate="true"
+	              Required="true" RequiredError="Este es un campo obligatorio."
+	              MaxLength="MaxLength.FonbecWebUser.FirstName" />
 
-    <MudTextField T="string" Label="Apodo" @bind-Value="_bindModel.UserNickName" Immediate="true"
-                  MaxLength="MaxLength.FonbecWebUser.NickName" />
+	<MudTextField T="string" Label="Apellido" @bind-Value="_bindModel.UserLastName" Immediate="true"
+	              Required="true" RequiredError="Este es un campo obligatorio."
+	              MaxLength="MaxLength.FonbecWebUser.LastName" />
+
+	<MudTextField T="string" Label="Apodo" @bind-Value="_bindModel.UserNickName" Immediate="true"
+	              MaxLength="MaxLength.FonbecWebUser.NickName" />
                   
-    <RoleSelector @bind-SelectedRole="_bindModel.UserRole" />
+	<RoleSelector @bind-SelectedRole="_bindModel.UserRole" />
 
-    <GenderSelector @bind-SelectedGender="_bindModel.UserGender" />
+	<GenderSelector @bind-SelectedGender="_bindModel.UserGender" />
 
-    <MudTextField T="string" Label="Correo electrónico" @bind-Value="_bindModel.UserEmail" Immediate="true"
-                  Required="true" RequiredError="Este es un campo obligatorio."
-                  MaxLength="MaxLength.FonbecWebUser.Email" />
+	<MudTextField T="string" Label="Correo electrónico" @bind-Value="_bindModel.UserEmail" Immediate="true"
+	              Required="true" RequiredError="Este es un campo obligatorio."
+	              MaxLength="MaxLength.FonbecWebUser.Email" />
 
-    <MudTextField T="string" Label="Teléfono" @bind-Value="_bindModel.UserPhoneNumber" Immediate="true"
-                  MaxLength="MaxLength.FonbecWebUser.PhoneNumber" />
-
-    <MudStack Row="true" Class="pt-4">
-        <MudButton OnClick="SaveAsync" Disabled="SaveButtonDisabled"
-                   Variant="Variant.Filled" Color="Color.Primary">
-            Crear
-        </MudButton>
-        <MudButton Href="@NavRoutes.Users"
-                   Variant="Variant.Filled" Color="Color.Default" Class="ms-4">
-            Cancelar
-        </MudButton>
-    </MudStack>
-    
-    <LoadingIndicator Loading="_saving" LoadingText="Guardando los datos" />
+	<MudTextField T="string" Label="Teléfono" @bind-Value="_bindModel.UserPhoneNumber" Immediate="true"
+	              MaxLength="MaxLength.FonbecWebUser.PhoneNumber" />
 </MudForm>
+
+<MudStack Row="true" Class="pt-4">
+	<MudButton OnClick="SaveAsync" Disabled="SaveButtonDisabled"
+	           Variant="Variant.Filled" Color="Color.Primary">
+		Crear
+	</MudButton>
+	<MudButton Href="@NavRoutes.Users"
+	           Variant="Variant.Filled" Color="Color.Default" Class="ms-4">
+		Cancelar
+	</MudButton>
+</MudStack>
+    
+<LoadingIndicator Loading="_saving" LoadingText="Guardando los datos" />

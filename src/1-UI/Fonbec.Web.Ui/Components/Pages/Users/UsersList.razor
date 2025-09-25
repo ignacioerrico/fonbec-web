@@ -72,14 +72,11 @@
                                   MaxLength="MaxLength.FonbecWebUser.LastName" />
                 </EditTemplate>
             </PropertyColumn>
-            <PropertyColumn Property="vm => vm.Roles.FirstOrDefault()" Title="Roles">
+            <PropertyColumn Property="vm => vm.UserRole" Title="Rol">
                 <CellTemplate>
-                    @foreach (var role in context.Item.Roles)
-                    {
-                        <MudChip Variant="Variant.Outlined" Color="MudChipColorForRole(role)">
-                            @FonbecRole.Translator[role]
-                        </MudChip>
-                    }
+                    <MudChip Variant="Variant.Outlined" Color="MudChipColorForRole(context.Item.UserRole)">
+                        @FonbecRole.Translator[context.Item.UserRole]
+                    </MudChip>
                 </CellTemplate>
                 <EditTemplate>
 	            </EditTemplate>
@@ -103,6 +100,37 @@
                                     Limpiar
                                 </MudButton>
                                 <MudButton OnClick="@(() => ApplyFilterAsync(context))" Color="Color.Primary" Variant="Variant.Filled">
+                                    Filtrar
+                                </MudButton>
+                            </MudStack>
+                        </MudStack>
+                    </MudPopover>
+                </FilterTemplate>
+            </PropertyColumn>
+            <PropertyColumn Property="vm => vm.UserChapterName" Title="Filial">
+	            <EditTemplate>
+	            </EditTemplate>
+                <FilterTemplate>
+                    <MudIconButton OnClick="@(() => _isChapterFilterOpen = true)" Icon="@_chaptersFilterIcon" Size="@Size.Small" />
+                    <MudOverlay OnClick="@(() => _isChapterFilterOpen = false)" Visible="@_isChapterFilterOpen" />
+                    <MudPopover Open="@_isChapterFilterOpen" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter"
+                                Style="width:200px">
+                        <MudStack Spacing="0">
+                            <MudCheckBox T="bool" Label="Seleccionar todas" Size="@Size.Small" Value="@_areAllChaptersSelected" ValueChanged="OnSelectAllChaptersChanged" />
+                            <MudStack Spacing="0" Style="overflow-y:auto;max-height:250px">
+                                @foreach (var chapter in _allChapters)
+                                {
+                                    <MudCheckBox T="bool" Label="@chapter"
+                                                 Size="@Size.Small"
+                                                 Value="@(_selectedChapters.Contains(chapter))"
+                                                 ValueChanged="@(isSelected => SelectedChapterChanged(chapter, isSelected))" />
+                                }
+                            </MudStack>
+                            <MudStack Row="true" Class="d-flex justify-space-between ma-2">
+                                <MudButton OnClick="@(() => ClearChaptersFilterAsync(context))" Color="Color.Default">
+                                    Limpiar
+                                </MudButton>
+                                <MudButton OnClick="@(() => ApplyChaptersFilterAsync(context))" Color="Color.Primary" Variant="Variant.Filled">
                                     Filtrar
                                 </MudButton>
                             </MudStack>

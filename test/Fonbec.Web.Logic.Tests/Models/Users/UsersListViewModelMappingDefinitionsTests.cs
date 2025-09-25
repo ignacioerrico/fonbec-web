@@ -42,7 +42,7 @@ public class UsersListViewModelMappingDefinitionsTests : MappingTestBase
         viewModel.UserEmail.Should().Be("john.doe@example.com");
         viewModel.UserPhoneNumber.Should().Be("1234567890");
         viewModel.IsUserActive.Should().BeTrue();
-        viewModel.Roles.Should().BeNull(); // Not mapped by default
+        viewModel.UserRole.Should().BeNull(); // Not mapped by default
     }
 
     [Fact]

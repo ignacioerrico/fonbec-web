@@ -4,6 +4,8 @@ namespace Fonbec.Web.DataAccess.DataModels.Users.Input;
 
 public class CreateUserInputDataModel
 {
+    public int UserChapterId { get; set; }
+
     public string UserFirstName { get; set; } = null!;
 
     public string UserLastName { get; set; } = null!;

@@ -18,6 +18,14 @@ public partial class UsersList : AuthenticationRequiredComponentBase
 
     private bool _isLastNameFirst;
 
+    private string[] _allChapters = [];
+    private string _chaptersFilterIcon = Icons.Material.Outlined.FilterAlt;
+    private bool _isChapterFilterOpen;
+    private bool _areAllChaptersSelected = true;
+    private HashSet<string> _selectedChapters = new();
+    private HashSet<string> _selectedChaptersBeforeFilter = new();
+    private FilterDefinition<UsersListViewModel> _filterChaptersDefinition = null!;
+
     private string _rolesFilterIcon = Icons.Material.Outlined.FilterAlt;
     private bool _isRolesFilterOpen;
     private bool _areAllRolesSelected = true;
@@ -39,12 +47,22 @@ public partial class UsersList : AuthenticationRequiredComponentBase
 
         _viewModel = await UserService.GetAllUsersAsync();
 
+        _allChapters = _viewModel.Select(vm => vm.UserChapterName)
+            .Distinct()
+            .OrderBy(ch => ch)
+            .ToArray();
+        _selectedChapters = _allChapters.ToHashSet();
+        _selectedChaptersBeforeFilter = _selectedChapters.ToHashSet();
+        _filterChaptersDefinition = new FilterDefinition<UsersListViewModel>
+        {
+            FilterFunction = vm => _selectedChaptersBeforeFilter.Contains(vm.UserChapterName)
+        };
+
         _selectedRoles = FonbecRole.AllRoles.ToHashSet();
         _selectedRolesBeforeFilter = _selectedRoles.ToHashSet();
-
         _filterDefinition = new FilterDefinition<UsersListViewModel>
         {
-            FilterFunction = vm => vm.Roles.Any(r => _selectedRolesBeforeFilter.Contains(r))
+            FilterFunction = vm => _selectedRolesBeforeFilter.Contains(vm.UserRole)
         };
 
         Loading = false;
@@ -86,6 +104,54 @@ public partial class UsersList : AuthenticationRequiredComponentBase
             FonbecRole.Reviewer => Color.Primary,
             _ => Color.Default
         };
+
+    private void OnSelectAllChaptersChanged(bool areAllChaptersSelected)
+    {
+        _areAllChaptersSelected = areAllChaptersSelected;
+
+        if (areAllChaptersSelected)
+        {
+            _selectedChapters = _allChapters.ToHashSet();
+        }
+        else
+        {
+            _selectedChapters.Clear();
+        }
+    }
+
+    private void SelectedChapterChanged(string chapter, bool isSelected)
+    {
+        if (isSelected)
+        {
+            _selectedChapters.Add(chapter);
+        }
+        else
+        {
+            _selectedChapters.Remove(chapter);
+        }
+
+        _areAllChaptersSelected = _selectedChapters.Count == _allChapters.Length;
+    }
+
+    private async Task ClearChaptersFilterAsync(FilterContext<UsersListViewModel> context)
+    {
+        _areAllChaptersSelected = true;
+        _selectedChapters = _allChapters.ToHashSet();
+        _selectedChaptersBeforeFilter = _selectedChapters.ToHashSet();
+        _chaptersFilterIcon = Icons.Material.Outlined.FilterAlt;
+        await context.Actions.ClearFilterAsync(_filterChaptersDefinition);
+        _isChapterFilterOpen = false;
+    }
+
+    private async Task ApplyChaptersFilterAsync(FilterContext<UsersListViewModel> context)
+    {
+        _selectedChaptersBeforeFilter = _selectedChapters.ToHashSet();
+        _chaptersFilterIcon = _selectedChaptersBeforeFilter.Count == _allChapters.Length
+            ? Icons.Material.Outlined.FilterAlt
+            : Icons.Material.Filled.FilterAlt;
+        await context.Actions.ApplyFilterAsync(_filterChaptersDefinition);
+        _isChapterFilterOpen = false;
+    }
 
     private void OnSelectAllRolesChanged(bool areAllRolesSelected)
     {

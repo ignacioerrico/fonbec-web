@@ -6,7 +6,7 @@ public class AllUsersDataModel
 {
     public List<AllUsersUserDataModel> Users { get; set; } = null!;
 
-    public List<AllUsersUsersInRolesDataModel> UsersInRoles { get; set; } = new();
+    public List<AllUsersUsersInRoleDataModel> UsersInRoles { get; set; } = new();
 }
 
 public class AllUsersUserDataModel
@@ -25,12 +25,14 @@ public class AllUsersUserDataModel
 
     public string? UserPhoneNumber { get; set; }
 
+    public string? UserChapterName { get; set; }
+
     public bool IsUserLockedOut { get; set; }
 
     public DateTimeOffset? UserLockOutEndsOnUtc { get; set; }
 }
 
-public class AllUsersUsersInRolesDataModel
+public class AllUsersUsersInRoleDataModel
 {
     public string Role { get; set; } = null!;
 

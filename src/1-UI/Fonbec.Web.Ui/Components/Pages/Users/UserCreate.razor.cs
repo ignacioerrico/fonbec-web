@@ -13,12 +13,15 @@ public partial class UserCreate : AuthenticationRequiredComponentBase
 
     private bool _formValidationSucceeded;
 
+    private bool _isFormDisabled;
+
     private MudTextField<string> _mudTextFieldFirstName = null!;
 
     private bool _saving;
 
     private bool SaveButtonDisabled => Loading
                                        || _saving
+                                       || _isFormDisabled
                                        || !_formValidationSucceeded;
 
     [Inject]
@@ -27,14 +30,14 @@ public partial class UserCreate : AuthenticationRequiredComponentBase
     [Inject]
     public IDialogService DialogService { get; set; } = null!;
 
-    protected override async Task OnAfterRenderAsync(bool firstRender)
+    private async Task OnChaptersLoaded(int chaptersCount)
     {
-        if (firstRender)
+        _isFormDisabled = chaptersCount == 0;
+
+        if (!_isFormDisabled)
         {
             await _mudTextFieldFirstName.FocusAsync();
         }
-
-        await base.OnAfterRenderAsync(firstRender);
     }
 
     private async Task SaveAsync()
@@ -69,17 +72,11 @@ public partial class UserCreate : AuthenticationRequiredComponentBase
             }
         }
 
-        if (_bindModel.UserRole is null)
-        {
-            Snackbar.Add("Se debe seleccionar un rol.", Severity.Error);
-            _saving = false;
-            return;
-        }
-
         var authenticatedUserId = await GetAuthenticatedUserIdAsync();
 
         var createUserInputModel = new CreateUserInputModel
         (
+            _bindModel.UserChapterId,
             _bindModel.UserFirstName,
             _bindModel.UserLastName,
             _bindModel.UserNickName,

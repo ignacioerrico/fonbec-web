@@ -17,7 +17,10 @@ public partial class StudentCreate : AuthenticationRequiredComponentBase
 
     private MudTextField<string> _mudTextFieldName = null!;
 
+    private bool _saving;
+
     private bool SaveButtonDisabled => Loading
+                                       || _saving
                                        || _isFormDisabled
                                        || !_formValidationSucceeded;
 
@@ -36,6 +39,8 @@ public partial class StudentCreate : AuthenticationRequiredComponentBase
 
     private async Task Save()
     {
+        _saving = true;
+
         var userId = await GetAuthenticatedUserIdAsync();
 
         var createStudentInputModel = new CreateStudentInputModel(
@@ -57,6 +62,8 @@ public partial class StudentCreate : AuthenticationRequiredComponentBase
         {
             Snackbar.Add("No se pudo crear el becario.", Severity.Error);
         }
+
+        _saving = false;
 
         NavigationManager.NavigateTo(NavRoutes.Students);
     }
