@@ -10,7 +10,7 @@ namespace Fonbec.Web.Logic.Tests.Models.Users;
 /// The tests cover:
 /// - All fields mapped directly.
 /// - Null handling for UserNickName, UserEmail, and UserPhoneNumber.
-/// - Both branches for IsUserActive logic.
+/// - IsUserActive logic as per mapping definition.
 /// - Roles property default value.
 /// </summary>
 public class UsersListViewModelMappingDefinitionsTests : MappingTestBase
@@ -28,7 +28,7 @@ public class UsersListViewModelMappingDefinitionsTests : MappingTestBase
             UserGender = Gender.Male,
             UserEmail = "john.doe@example.com",
             UserPhoneNumber = "1234567890",
-            IsUserLockedOut = false,
+            CanUserBeLockedOut = false,
             UserLockOutEndsOnUtc = now.AddMinutes(-1)
         };
 
@@ -88,12 +88,12 @@ public class UsersListViewModelMappingDefinitionsTests : MappingTestBase
     }
 
     [Fact]
-    public void IsUserActive_True_When_NotLockedOut_And_LockoutEndsInPast()
+    public void IsUserActive_True_When_CannotBeLockedOut()
     {
         var userDataModel = new AllUsersUserDataModel
         {
-            IsUserLockedOut = false,
-            UserLockOutEndsOnUtc = DateTimeOffset.Now.AddMinutes(-5)
+            CanUserBeLockedOut = false,
+            UserLockOutEndsOnUtc = DateTimeOffset.Now.AddMinutes(10)
         };
 
         var viewModel = userDataModel.Adapt<UsersListViewModel>(Config);
@@ -102,25 +102,11 @@ public class UsersListViewModelMappingDefinitionsTests : MappingTestBase
     }
 
     [Fact]
-    public void IsUserActive_False_When_LockedOut()
+    public void IsUserActive_True_When_LockoutEndsOnUtc_Is_Null()
     {
         var userDataModel = new AllUsersUserDataModel
         {
-            IsUserLockedOut = true,
-            UserLockOutEndsOnUtc = DateTimeOffset.Now.AddMinutes(-5)
-        };
-
-        var viewModel = userDataModel.Adapt<UsersListViewModel>(Config);
-
-        viewModel.IsUserActive.Should().BeFalse();
-    }
-
-    [Fact]
-    public void IsUserActive_True_When_LockoutEndsOnUtc_Is_Null_And_NotLockedOut()
-    {
-        var userDataModel = new AllUsersUserDataModel
-        {
-            IsUserLockedOut = false,
+            CanUserBeLockedOut = true,
             UserLockOutEndsOnUtc = null
         };
 
@@ -130,12 +116,26 @@ public class UsersListViewModelMappingDefinitionsTests : MappingTestBase
     }
 
     [Fact]
-    public void IsUserActive_False_When_LockoutEndsOnUtc_Is_Null_And_LockedOut()
+    public void IsUserActive_True_When_LockoutEndsOnUtc_Is_In_The_Past()
     {
         var userDataModel = new AllUsersUserDataModel
         {
-            IsUserLockedOut = true,
-            UserLockOutEndsOnUtc = null
+            CanUserBeLockedOut = true,
+            UserLockOutEndsOnUtc = DateTimeOffset.Now.AddMinutes(-5)
+        };
+
+        var viewModel = userDataModel.Adapt<UsersListViewModel>(Config);
+
+        viewModel.IsUserActive.Should().BeTrue();
+    }
+
+    [Fact]
+    public void IsUserActive_False_When_CanBeLockedOut_And_LockoutEndsOnUtc_Is_In_The_Future()
+    {
+        var userDataModel = new AllUsersUserDataModel
+        {
+            CanUserBeLockedOut = true,
+            UserLockOutEndsOnUtc = DateTimeOffset.Now.AddMinutes(5)
         };
 
         var viewModel = userDataModel.Adapt<UsersListViewModel>(Config);

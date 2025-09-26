@@ -98,7 +98,9 @@ public partial class UsersList : AuthenticationRequiredComponentBase
             return;
         }
 
-        var errors = await UserService.DisableUserAsync(viewModel.UserId, disable: true);
+        var disableUserInputModel = new DisableUserInputModel(viewModel.UserId, DisableUser: true, _userId);
+
+        var errors = await UserService.DisableUserAsync(disableUserInputModel);
 
         if (errors.Count > 0)
         {
@@ -120,7 +122,9 @@ public partial class UsersList : AuthenticationRequiredComponentBase
             return;
         }
 
-        var errors = await UserService.DisableUserAsync(viewModel.UserId, disable: false);
+        var disableUserInputModel = new DisableUserInputModel(viewModel.UserId, DisableUser: false, _userId);
+        
+        var errors = await UserService.DisableUserAsync(disableUserInputModel);
 
         if (errors.Count > 0)
         {

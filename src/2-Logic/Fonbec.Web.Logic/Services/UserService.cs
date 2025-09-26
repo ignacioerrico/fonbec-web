@@ -18,7 +18,7 @@ public interface IUserService
     Task<List<SelectableModel<int>>> GetAllUsersInRoleForSelectionAsync(string role);
     Task<(int userId, List<string> errors)> CreateUserAsync(CreateUserInputModel model);
     Task<bool> UpdateUserAsync(UpdateUserInputModel model);
-    Task<List<string>> DisableUserAsync(int userId, bool disable);
+    Task<List<string>> DisableUserAsync(DisableUserInputModel model);
     Task<IdentityResult> DeleteForeverAsync(int userId);
 }
 
@@ -97,10 +97,10 @@ public class UserService(
         return await userRepository.UpdateUserAsync(updateUserInputDataModel);
     }
 
-    public async Task<List<string>> DisableUserAsync(int userId, bool disable)
+    public async Task<List<string>> DisableUserAsync(DisableUserInputModel model)
     {
-        var userIdString = userId.Adapt<string>();
-        return await userRepository.DisableUserAsync(userIdString, disable);
+        var disableUserInputDataModel = model.Adapt<DisableUserInputDataModel>();
+        return await userRepository.DisableUserAsync(disableUserInputDataModel);
     }
 
     public async Task<IdentityResult> DeleteForeverAsync(int userId)

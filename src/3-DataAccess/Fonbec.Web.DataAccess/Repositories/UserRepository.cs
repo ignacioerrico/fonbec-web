@@ -17,7 +17,7 @@ public interface IUserRepository
     Task<IEnumerable<SelectableDataModel<int>>> GetAllUsersInRoleForSelectionAsync(string role);
     Task<(int userId, List<string> errors)> CreateUserAsync(CreateUserInputDataModel model);
     Task<bool> UpdateUserAsync(UpdateUserInputDataModel model);
-    Task<List<string>> DisableUserAsync(string userId, bool disable);
+    Task<List<string>> DisableUserAsync(DisableUserInputDataModel model);
     Task<IdentityResult> DeleteForeverAsync(string userId);
 }
 
@@ -123,6 +123,8 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
             NickName = model.UserNickName,
             Gender = model.UserGender,
             PhoneNumber = model.UserPhoneNumber,
+
+            // Audit
             CreatedById = model.CreatedById,
         };
         await userStore.SetUserNameAsync(fonbecUser, model.UserEmail, CancellationToken.None);
@@ -202,26 +204,30 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
         fonbecUserDb.NickName = model.UserNickName;
         fonbecUserDb.Gender = model.Gender;
         fonbecUserDb.PhoneNumber = model.UserPhoneNumber;
+
+        // Audit
         fonbecUserDb.LastUpdatedById = model.UpdatedById;
+        fonbecUserDb.LastUpdatedOnUtc = DateTime.UtcNow;
 
         var identityResult = await userManager.UpdateAsync(fonbecUserDb);
         return identityResult.Succeeded;
     }
 
-    public async Task<List<string>> DisableUserAsync(string userId, bool disable)
+    public async Task<List<string>> DisableUserAsync(DisableUserInputDataModel model)
     {
         var errors = new List<string>();
 
-        var fonbecUser = await userManager.FindByIdAsync(userId);
+        var fonbecUser = await userManager.FindByIdAsync(model.UserIdToDisable);
         if (fonbecUser is null)
         {
             errors.Add("User not found.");
             return errors;
         }
 
-        var lockoutEndsOn = disable
+        var lockoutEndsOn = model.DisableUser
             ? DateTimeOffset.MaxValue
             : (DateTimeOffset?)null;
+        
         var identityResult = await userManager.SetLockoutEndDateAsync(fonbecUser, lockoutEndsOn);
 
         if (!identityResult.Succeeded)
@@ -229,6 +235,32 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
             errors.AddRange(identityResult.Errors.Select(e => e.Description));
         }
 
+        // Audit
+
+        if (model.DisableUser)
+        {
+            // Set disable audit properties (timestamps must be updated, because the change tracker in FonbecWebDbContext does not take effect in IdentityDbContext)
+            fonbecUser.DisabledById = model.ModifiedByUserId;
+            fonbecUser.DisabledOnUtc = DateTime.UtcNow;
+
+            // Reset reenable audit properties
+            fonbecUser.ReenabledById = null;
+            fonbecUser.ReenabledOnUtc = null;
+        }
+        else
+        {
+            // Set reenable audit properties
+            fonbecUser.ReenabledById = model.ModifiedByUserId;
+            fonbecUser.ReenabledOnUtc = DateTime.UtcNow;
+        }
+
+        identityResult = await userManager.UpdateAsync(fonbecUser);
+
+        if (!identityResult.Succeeded)
+        {
+            errors.AddRange(identityResult.Errors.Select(e => e.Description));
+        }
+        
         return errors;
     }
 
