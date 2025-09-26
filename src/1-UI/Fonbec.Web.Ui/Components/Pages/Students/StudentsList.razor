@@ -36,7 +36,7 @@
 	             EditTrigger="DataGridEditTrigger.Manual"
 	             QuickFilter="Filter"
 	             Filterable="true"
-	             FilterMode="DataGridFilterMode.ColumnFilterMenu"
+	             FilterMode="DataGridFilterMode.ColumnFilterRow"
 	             FilterCaseSensitivity="DataGridFilterCaseSensitivity.CaseInsensitive"
 	             SortMode="SortMode.Multiple"
 	             Class="mt-4">
@@ -89,12 +89,24 @@
 	            <EditTemplate>
 		            <FacilitatorSelector @bind-SelectedFacilitatorId="context.Item.FacilitatorId" />
 	            </EditTemplate>
+	            <FilterTemplate>
+		            <FilterByList T="StudentsListViewModel"
+		                          AllItems="_allFacilitators"
+		                          FilterContext="context"
+		                          FilterBy="@(vm => vm.FacilitatorFullName)" />
+	            </FilterTemplate>
             </PropertyColumn>
 	        <PropertyColumn Property="vm => vm.StudentCurrentEducationLevel" Title="Nivel">
 		        <EditTemplate>
 			        <EducationLevelSelector @bind-SecondarySchoolStartYear="context.Item.StudentSecondarySchoolStartYear"
 			                                @bind-UniversityStartYear="context.Item.StudentUniversityStartYear" />
 		        </EditTemplate>
+		        <FilterTemplate>
+			        <FilterByList T="StudentsListViewModel"
+			                      AllItems="_allEducationLevels"
+			                      FilterContext="context"
+								  FilterBy="@(vm => vm.StudentCurrentEducationLevel)" />
+		        </FilterTemplate>
 	        </PropertyColumn>
 			<PropertyColumn Property="vm => vm.StudentEmail" Title="Correo electrónico" Required="false">
 				<CellTemplate>

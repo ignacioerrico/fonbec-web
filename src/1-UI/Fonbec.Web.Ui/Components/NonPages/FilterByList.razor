@@ -1,0 +1,27 @@
+﻿@typeparam T
+
+<MudIconButton OnClick="@(() => _isFilterOpen = true)" Icon="@_filterIcon" Size="@Size.Small" />
+<MudOverlay OnClick="@(() => _isFilterOpen = false)" Visible="@_isFilterOpen" />
+<MudPopover Open="@_isFilterOpen" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter"
+            Style="width:200px">
+	<MudStack Spacing="0">
+		<MudCheckBox T="bool" Label="Seleccionar todas" Size="@Size.Small" Value="@_areAllItemsSelected" ValueChanged="OnSelectAllItemsChanged" />
+		<MudStack Spacing="0" Style="overflow-y:auto;max-height:250px">
+			@foreach (var chapter in AllItems)
+			{
+				<MudCheckBox T="bool" Label="@TranslateUsing(chapter)"
+				             Size="@Size.Small"
+				             Value="@(_selectedItems.Contains(chapter))"
+				             ValueChanged="@(isSelected => SelectedItemChanged(chapter, isSelected))" />
+			}
+		</MudStack>
+		<MudStack Row="true" Class="d-flex justify-space-between ma-2">
+			<MudButton OnClick="@(() => ClearItemsFilterAsync(FilterContext))" Color="Color.Default">
+				Limpiar
+			</MudButton>
+			<MudButton OnClick="@(() => ApplyItemsFilterAsync(FilterContext))" Color="Color.Primary" Variant="Variant.Filled">
+				Filtrar
+			</MudButton>
+		</MudStack>
+	</MudStack>
+</MudPopover>

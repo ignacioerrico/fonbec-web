@@ -1,4 +1,5 @@
-﻿using Fonbec.Web.Logic.ExtensionMethods;
+﻿using Fonbec.Web.DataAccess.Entities.Enums;
+using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models.Students;
 using Fonbec.Web.Logic.Models.Students.Input;
 using Fonbec.Web.Logic.Services;
@@ -10,6 +11,9 @@ namespace Fonbec.Web.Ui.Components.Pages.Students;
 public partial class StudentsList : AuthenticationRequiredComponentBase
 {
     private List<StudentsListViewModel> _viewModels = [];
+
+    private string[] _allEducationLevels = [];
+    private string[] _allFacilitators = [];
 
     private string _searchString = string.Empty;
 
@@ -25,6 +29,15 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
         Loading = true;
 
         _viewModels = await StudentService.GetAllStudentsAsync();
+
+        _allEducationLevels = Enum.GetValues<EducationLevel>()
+            .Select(el => el.EnumToString())
+            .ToArray();
+
+        _allFacilitators = _viewModels.Select(vm => vm.FacilitatorFullName)
+            .Distinct()
+            .OrderBy(fn => fn)
+            .ToArray();
 
         Loading = false;
     }

@@ -81,61 +81,21 @@
                 <EditTemplate>
 	            </EditTemplate>
                 <FilterTemplate>
-                    <MudIconButton OnClick="@(() => _isRolesFilterOpen = true)" Icon="@_rolesFilterIcon" Size="@Size.Small" />
-                    <MudOverlay OnClick="@(() => _isRolesFilterOpen = false)" Visible="@_isRolesFilterOpen" />
-                    <MudPopover Open="@_isRolesFilterOpen" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter"
-                                Style="width:200px">
-                        <MudStack Spacing="0">
-                            <MudCheckBox T="bool" Label="Seleccionar todos" Size="@Size.Small" Value="@_areAllRolesSelected" ValueChanged="OnSelectAllRolesChanged" />
-                            <MudStack Spacing="0" Style="overflow-y:auto;max-height:250px">
-                                @foreach (var role in FonbecRole.AllRoles)
-                                {
-                                    <MudCheckBox T="bool" Label="@FonbecRole.Translator[role]" Size="@Size.Small"
-                                                 Value="@(_selectedRoles.Contains(role))"
-                                                 ValueChanged="@(isSelected => SelectedChanged(role, isSelected))" />
-                                }
-                            </MudStack>
-                            <MudStack Row="true" Class="d-flex justify-space-between ma-2">
-                                <MudButton OnClick="@(() => ClearFilterAsync(context))" Color="Color.Default">
-                                    Limpiar
-                                </MudButton>
-                                <MudButton OnClick="@(() => ApplyFilterAsync(context))" Color="Color.Primary" Variant="Variant.Filled">
-                                    Filtrar
-                                </MudButton>
-                            </MudStack>
-                        </MudStack>
-                    </MudPopover>
+	                <FilterByList T="UsersListViewModel"
+	                              AllItems="FonbecRole.AllRoles"
+                                  TranslateUsing="@(s => FonbecRole.Translator[s])"
+	                              FilterContext="context"
+	                              FilterBy="@(vm => vm.UserRole)" />
                 </FilterTemplate>
             </PropertyColumn>
             <PropertyColumn Property="vm => vm.UserChapterName" Title="Filial">
 	            <EditTemplate>
 	            </EditTemplate>
                 <FilterTemplate>
-                    <MudIconButton OnClick="@(() => _isChapterFilterOpen = true)" Icon="@_chaptersFilterIcon" Size="@Size.Small" />
-                    <MudOverlay OnClick="@(() => _isChapterFilterOpen = false)" Visible="@_isChapterFilterOpen" />
-                    <MudPopover Open="@_isChapterFilterOpen" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter"
-                                Style="width:200px">
-                        <MudStack Spacing="0">
-                            <MudCheckBox T="bool" Label="Seleccionar todas" Size="@Size.Small" Value="@_areAllChaptersSelected" ValueChanged="OnSelectAllChaptersChanged" />
-                            <MudStack Spacing="0" Style="overflow-y:auto;max-height:250px">
-                                @foreach (var chapter in _allChapters)
-                                {
-                                    <MudCheckBox T="bool" Label="@chapter"
-                                                 Size="@Size.Small"
-                                                 Value="@(_selectedChapters.Contains(chapter))"
-                                                 ValueChanged="@(isSelected => SelectedChapterChanged(chapter, isSelected))" />
-                                }
-                            </MudStack>
-                            <MudStack Row="true" Class="d-flex justify-space-between ma-2">
-                                <MudButton OnClick="@(() => ClearChaptersFilterAsync(context))" Color="Color.Default">
-                                    Limpiar
-                                </MudButton>
-                                <MudButton OnClick="@(() => ApplyChaptersFilterAsync(context))" Color="Color.Primary" Variant="Variant.Filled">
-                                    Filtrar
-                                </MudButton>
-                            </MudStack>
-                        </MudStack>
-                    </MudPopover>
+	                <FilterByList T="UsersListViewModel"
+	                              AllItems="_allChapters"
+                                  FilterContext="context"
+                                  FilterBy="@(vm => vm.UserChapterName)" />
                 </FilterTemplate>
             </PropertyColumn>
             <PropertyColumn Property="vm => vm.UserNickName" Title="Apodo" Hidden="true" Required="false">
