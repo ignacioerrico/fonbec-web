@@ -71,7 +71,7 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
                     UserEmail = u.Email,
                     UserPhoneNumber = u.PhoneNumber,
                     UserChapterName = u.Chapter == null ? null : u.Chapter.Name,
-                    IsUserLockedOut = u.LockoutEnabled,
+                    CanUserBeLockedOut = u.LockoutEnabled,
                     UserLockOutEndsOnUtc = u.LockoutEnd,
                 })
             .OrderBy(dm => dm.UserFirstName)
@@ -123,6 +123,7 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
             NickName = model.UserNickName,
             Gender = model.UserGender,
             PhoneNumber = model.UserPhoneNumber,
+            CreatedById = model.CreatedById,
         };
         await userStore.SetUserNameAsync(fonbecUser, model.UserEmail, CancellationToken.None);
         await ((IUserEmailStore<FonbecWebUser>)userStore).SetEmailAsync(fonbecUser, model.UserEmail, CancellationToken.None);
@@ -136,6 +137,25 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
             return (userId, errors);
         }
 
+        // Confirm email
+        var emailConfirmationToken = await userManager.GenerateEmailConfirmationTokenAsync(fonbecUser);
+        identityResult = await userManager.ConfirmEmailAsync(fonbecUser, emailConfirmationToken);
+
+        if (!identityResult.Succeeded)
+        {
+            errors.AddRange(identityResult.Errors.Select(e => e.Description));
+            return (userId, errors);
+        }
+
+        // User can be locked out
+        identityResult = await userManager.SetLockoutEnabledAsync(fonbecUser, enabled: true);
+
+        if (!identityResult.Succeeded)
+        {
+            errors.AddRange(identityResult.Errors.Select(e => e.Description));
+            return (userId, errors);
+        }
+        
         // Add role
         identityResult = await userManager.AddToRoleAsync(fonbecUser, model.UserRole);
 
@@ -146,15 +166,6 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
         }
 
         // TODO: Add claims
-
-        // Enable user
-        identityResult = await userManager.SetLockoutEnabledAsync(fonbecUser, false);
-
-        if (!identityResult.Succeeded)
-        {
-            errors.AddRange(identityResult.Errors.Select(e => e.Description));
-            return (userId, errors);
-        }
 
         // Get user ID
         var userIdString = await userManager.GetUserIdAsync(fonbecUser);
@@ -191,6 +202,7 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
         fonbecUserDb.NickName = model.UserNickName;
         fonbecUserDb.Gender = model.Gender;
         fonbecUserDb.PhoneNumber = model.UserPhoneNumber;
+        fonbecUserDb.LastUpdatedById = model.UpdatedById;
 
         var identityResult = await userManager.UpdateAsync(fonbecUserDb);
         return identityResult.Succeeded;
@@ -207,7 +219,10 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
             return errors;
         }
 
-        var identityResult = await userManager.SetLockoutEnabledAsync(fonbecUser, disable);
+        var lockoutEndsOn = disable
+            ? DateTimeOffset.MaxValue
+            : (DateTimeOffset?)null;
+        var identityResult = await userManager.SetLockoutEndDateAsync(fonbecUser, lockoutEndsOn);
 
         if (!identityResult.Succeeded)
         {

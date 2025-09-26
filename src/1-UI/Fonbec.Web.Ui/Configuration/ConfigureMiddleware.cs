@@ -79,8 +79,10 @@ public static class ConfigureMiddleware
         }
 
         var adminUser = await userManager.FindByNameAsync(username);
+
         if (adminUser is not null)
         {
+            // Admin user already exists
             return;
         }
 
@@ -94,23 +96,36 @@ public static class ConfigureMiddleware
             Email = username,
         };
 
+        // Create admin user
         var userCreationResult = await userManager.CreateAsync(adminUser, password);
         if (!userCreationResult.Succeeded)
         {
             Halt("Could not create admin user: ", userCreationResult.Errors);
         }
 
+        // Ensure that the admin user's email is marked as confirmed in the database, so that no manual confirmation via email is required
+        var emailConfirmationToken = await userManager.GenerateEmailConfirmationTokenAsync(adminUser);
+        var emailConfirmationResult = await userManager.ConfirmEmailAsync(adminUser, emailConfirmationToken);
+        if (!emailConfirmationResult.Succeeded)
+        {
+            Halt("Could not confirm email for Admin user.", emailConfirmationResult.Errors);
+        }
+
+        // Admin user cannot be locked out
+        var lockoutDisabled = await userManager.SetLockoutEnabledAsync(adminUser, false);
+        if (!lockoutDisabled.Succeeded)
+        {
+            Halt("Could not disable lockout for admin user: ", lockoutDisabled.Errors);
+        }
+
+        // Add Admin role
         var roleAssignmentResult = await userManager.AddToRoleAsync(adminUser, FonbecRole.Admin);
         if (!roleAssignmentResult.Succeeded)
         {
             Halt("Could not add Admin role to admin user: ", roleAssignmentResult.Errors);
         }
 
-        var lockoutDisabled = await userManager.SetLockoutEnabledAsync(adminUser, false);
-        if (!lockoutDisabled.Succeeded)
-        {
-            Halt("Could not disable lockout for admin user: ", lockoutDisabled.Errors);
-        }
+        // TODO: Add claims
     }
 
     private static void Halt(string errorMessage, IEnumerable<IdentityError> errors)

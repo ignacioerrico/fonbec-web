@@ -137,7 +137,6 @@
                 <CellTemplate>
                     <MudTooltip Text="Editar" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
                         <MudIconButton OnClick="@context.Actions.StartEditingItemAsync"
-                                       Disabled="@(!context.Item.IsUserActive)"
                                        Icon="@Icons.Material.Outlined.Edit" Size="@Size.Small" Color="Color.Primary" />
                     </MudTooltip>
                     @if (context.Item.IsUserActive)
@@ -145,7 +144,7 @@
                         <MudTooltip Text="Deshabilitar" Arrow="true" Placement="Placement.Bottom" Color="Color.Warning" Delay="500">
                             <MudIconButton OnClick="@(async _ => await DisableUserAsync(context.Item))"
                                            Icon="@Icons.Material.Outlined.Delete" Size="@Size.Small" Color="Color.Warning"
-                                           Disabled="@(context.Item.UserId == _userId)" />
+                                           Disabled="@(context.Item.UserId == _userId || !context.Item.CanUserBeLockedOut)" />
                         </MudTooltip>
                     }
                     else
@@ -158,7 +157,7 @@
                     <MudTooltip Text="Eliminar" Arrow="true" Placement="Placement.Bottom" Color="Color.Error" Delay="500">
                         <MudIconButton OnClick="@(async _ => await DeleteForeverAsync(context.Item))"
                                        Icon="@Icons.Material.Outlined.DeleteForever" Size="@Size.Small" Color="Color.Error"
-                                       Disabled="@(context.Item.UserId == _userId)" />
+                                       Disabled="@(context.Item.UserId == _userId || !context.Item.CanUserBeLockedOut)" />
                     </MudTooltip>
                 </CellTemplate>
             </TemplateColumn>

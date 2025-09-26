@@ -24,6 +24,8 @@ public class UsersListViewModel
 
     public string UserChapterName { get; set; } = null!;
 
+    public bool CanUserBeLockedOut { get; set; }
+    
     public bool IsUserActive { get; set; }
 }
 
@@ -42,13 +44,11 @@ public class UsersListViewModelMappingDefinitions : IRegister
             .Map(dest => dest.UserEmail, src => string.Empty, src => src.UserEmail == null)
             .Map(dest => dest.UserPhoneNumber, src => src.UserPhoneNumber, src => src.UserPhoneNumber != null)
             .Map(dest => dest.UserPhoneNumber, src => string.Empty, src => src.UserPhoneNumber == null)
+            .Map(dest => dest.CanUserBeLockedOut, src => src.CanUserBeLockedOut)
             .Map(dest => dest.UserChapterName, src => src.UserChapterName, src => src.UserChapterName != null)
             .Map(dest => dest.UserChapterName, src => "GLOBAL", src => src.UserChapterName == null)
-            .Map(dest => dest.IsUserActive, src =>
-                    !src.IsUserLockedOut
-                    && src.UserLockOutEndsOnUtc!.Value < DateTimeOffset.Now,
-                src => src.UserLockOutEndsOnUtc != null)
-            .Map(dest => dest.IsUserActive, src => !src.IsUserLockedOut,
-                src => src.UserLockOutEndsOnUtc == null);
+            .Map(dest => dest.IsUserActive, src => !src.CanUserBeLockedOut
+                                                   || src.UserLockOutEndsOnUtc == null
+                                                   || src.UserLockOutEndsOnUtc.Value < DateTimeOffset.Now);
     }
 }

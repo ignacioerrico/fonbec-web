@@ -26,9 +26,19 @@ builder.Services.AddAuthentication(options =>
     })
     .AddIdentityCookies();
 
+var defaultLockoutTimeSpanInMinutes = builder.Configuration.GetValue<int>("Identity:Lockout:DefaultLockoutTimeSpanInMinutes");
+
 builder.Services.AddIdentityCore<FonbecWebUser>(options =>
     {
+        // Only unique email addresses
         options.User.RequireUniqueEmail = true;
+
+        // Protect against brute force attacks
+        options.Lockout.AllowedForNewUsers = true;
+        options.Lockout.DefaultLockoutTimeSpan = TimeSpan.FromMinutes(defaultLockoutTimeSpanInMinutes);
+        options.Lockout.MaxFailedAccessAttempts = builder.Configuration.GetValue<int>("Identity:Lockout:MaxFailedAccessAttempts");
+
+        // Password requirements
         options.Password.RequiredLength = builder.Configuration.GetValue<int>("Identity:Password:RequiredLength");
         options.Password.RequireUppercase = builder.Configuration.GetValue<bool>("Identity:Password:RequireUppercase");
         options.Password.RequireLowercase = builder.Configuration.GetValue<bool>("Identity:Password:RequireLowercase");

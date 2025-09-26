@@ -27,7 +27,7 @@ public class AllUsersUserDataModel
 
     public string? UserChapterName { get; set; }
 
-    public bool IsUserLockedOut { get; set; }
+    public bool CanUserBeLockedOut { get; set; }
 
     public DateTimeOffset? UserLockOutEndsOnUtc { get; set; }
 }

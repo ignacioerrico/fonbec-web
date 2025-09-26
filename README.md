@@ -87,7 +87,7 @@ username and password. For security reasons, those should be set as a secrets
 and never exposed in version control. Add them as user secrets (right-click on
 the UI project, `Fonbec.Web.Ui` &rarr; Manage User Secrets) with this format:
 
-```
+```json
 "AdminUser": {
   "FirstName": "",
   "LastName": "",
@@ -107,7 +107,7 @@ Assign a value to each field.
 ASP.NET Core Identity relies on classes that send emails.  For that purpose,
 this needs to be set in the user secrets too:
 
-```
+```json
 "Email": {
   "From": "",
   "ReplyToEmail": "",
@@ -123,7 +123,7 @@ The email sender service has `EmailClient` as a dependency, which is defined in
 the `Azure.Communications.Email` namespace.  Its instantiation requires a
 connection string, so this must be added to the secrets as well:
 
-```
+```json
 "ConnectionStrings": {
   "CommunicationServiceConnectionString": ""
 }
@@ -140,7 +140,7 @@ example in commit 934513470a789143bd45f295c400a4e82852ae18).
 Password requirements must be configured in settings.  This is normally part of
 the user secrets for local development.
 
-```
+```json
 "Identity": {
   "Password": {
     "RequiredLength": 20,
@@ -154,3 +154,19 @@ the user secrets for local development.
 
 Use values that make sense to you when developing locally.  In production,
 strong requirements must be set.
+
+### Lockout requirements
+
+In order to protect against brute force attacks, these two values must be set.
+
+```json
+"Identity": {
+  "Lockout": {
+    "DefaultLockoutTimeSpanInMinutes": 5,
+    "MaxFailedAccessAttempts": 5
+  }
+}
+```
+
+The values above correspond to the default values used by ASP.NET Core
+Indentity.
