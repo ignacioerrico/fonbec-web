@@ -1,0 +1,104 @@
+﻿@using Fonbec.Web.Logic.ExtensionMethods
+
+<MudTooltip Delay="500" Arrow="true" Placement="Placement.Bottom" Color="Color.Dark">
+	<ChildContent>
+		@if (UsersListViewModel.IsUserActive)
+		{
+			<MudText Typo="Typo.body1" Color="Color.Primary">
+				<strong>
+					<FullNameDisplay FirstName="@UsersListViewModel.UserFirstName"
+					                 LastName="@UsersListViewModel.UserLastName"
+					                 IsLastNameFirst="IsLastNameFirst"/>
+				</strong>
+
+				@if (UsersListViewModel.UserId == CurrentUserId)
+				{
+					<MudChip T="string" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" Class="ml-3">
+						YO
+					</MudChip>
+				}
+			</MudText>
+		}
+		else
+		{
+			<MudText Typo="Typo.body1">
+				<em>
+					<FullNameDisplay FirstName="@UsersListViewModel.UserFirstName"
+					                 LastName="@UsersListViewModel.UserLastName"
+					                 IsLastNameFirst="IsLastNameFirst"/>
+				</em>
+			</MudText>
+		}
+	</ChildContent>
+	<TooltipContent>
+		<MudText Align="Align.Left" Typo="Typo.body1">
+			<strong>@UsersListViewModel.UserFirstName @UsersListViewModel.UserLastName</strong>
+		</MudText>
+		@if (!string.IsNullOrWhiteSpace(UsersListViewModel.UserNickName))
+		{
+			<MudText Align="Align.Left" Typo="Typo.body2">
+				<strong>Apodo</strong>: @UsersListViewModel.UserNickName
+			</MudText>
+		}
+		<MudText Align="Align.Left" Typo="Typo.body2">
+			<strong>ID</strong>: @UsersListViewModel.UserId
+		</MudText>
+		<MudText Align="Align.Left" Typo="Typo.body2">
+			<span>
+				<span>
+					<strong>Creado</strong>:
+					@if (@UsersListViewModel.CreatedByFullName is null)
+					{
+						<span>durante la inicialización del sistema</span>
+					}
+					else
+					{
+						<span>por @UsersListViewModel.CreatedByFullName</span>
+					}
+				</span>
+
+				<span>el @UsersListViewModel.CreatedOnUtc.ToLocalizedDateTime()</span>
+			</span>
+		</MudText>
+		@if (UsersListViewModel.LastUpdatedByFullName is not null && UsersListViewModel.LastUpdatedOnUtc is not null)
+		{
+			<MudText Align="Align.Left" Typo="Typo.body2">
+				<strong>Actualizado</strong>:
+				por @UsersListViewModel.LastUpdatedByFullName
+				el @UsersListViewModel.LastUpdatedOnUtc.Value.ToLocalizedDateTime()
+			</MudText>
+		}
+		@if (UsersListViewModel.DisabledByFullName is not null && UsersListViewModel.DisabledOnUtc is not null)
+		{
+			<MudText Align="Align.Left" Typo="Typo.body2">
+				<strong>Deshabilitado</strong>:
+				por @UsersListViewModel.DisabledByFullName
+				el @UsersListViewModel.DisabledOnUtc.Value.ToLocalizedDateTime()
+			</MudText>
+		}
+		@if (UsersListViewModel.DisabledUntilUtc is not null)
+		{
+			<MudText Align="Align.Left" Typo="Typo.body2">
+				@if (UsersListViewModel.DisabledUntilUtc.Value == DateTime.MaxValue)
+				{
+					<strong>Deshabilitado de forma permanente.</strong>
+				}
+				else
+				{
+					<span>
+						<strong>Deshabilitado hasta</strong>:
+						@UsersListViewModel.DisabledUntilUtc.Value.ToLocalizedDateTime()
+					</span>
+				}
+			</MudText>
+		}
+		@if (UsersListViewModel.ReenabledByFullName is not null && UsersListViewModel.ReenabledOnUtc is not null)
+		{
+			<MudText Align="Align.Left" Typo="Typo.body2">
+				<strong>Rehabilitado</strong>:
+				por @UsersListViewModel.ReenabledByFullName
+				el @UsersListViewModel.ReenabledOnUtc.Value.ToLocalizedDateTime()
+			</MudText>
+		}
+	</TooltipContent>
+</MudTooltip>

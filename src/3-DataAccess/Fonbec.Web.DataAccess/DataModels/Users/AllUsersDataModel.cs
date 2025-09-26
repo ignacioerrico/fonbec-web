@@ -30,6 +30,18 @@ public class AllUsersUserDataModel
     public bool CanUserBeLockedOut { get; set; }
 
     public DateTimeOffset? UserLockOutEndsOnUtc { get; set; }
+
+    public string? CreatedByFullName { get; set; }
+    public DateTime CreatedOnUtc { get; set; }
+
+    public string? LastUpdatedByFullName { get; set; }
+    public DateTime? LastUpdatedOnUtc { get; set; }
+
+    public string? DisabledByFullName { get; set; }
+    public DateTime? DisabledOnUtc { get; set; }
+
+    public string? ReenabledByFullName { get; set; }
+    public DateTime? ReenabledOnUtc { get; set; }
 }
 
 public class AllUsersUsersInRoleDataModel

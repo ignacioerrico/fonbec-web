@@ -60,6 +60,10 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
         var result = new AllUsersDataModel();
 
         var users = await userManager.Users
+            .Include(u => u.CreatedBy)
+            .Include(u => u.LastUpdatedBy)
+            .Include(u => u.DisabledBy)
+            .Include(u => u.ReenabledBy)
             .Select(u =>
                 new AllUsersUserDataModel
                 {
@@ -73,6 +77,17 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
                     UserChapterName = u.Chapter == null ? null : u.Chapter.Name,
                     CanUserBeLockedOut = u.LockoutEnabled,
                     UserLockOutEndsOnUtc = u.LockoutEnd,
+
+                    // Audit
+                    CreatedByFullName = u.CreatedBy == null ? null : u.CreatedBy.FullName(),
+                    LastUpdatedByFullName = u.LastUpdatedBy == null ? null : u.LastUpdatedBy.FullName(),
+                    DisabledByFullName = u.DisabledBy == null ? null : u.DisabledBy.FullName(),
+                    ReenabledByFullName = u.ReenabledBy == null ? null : u.ReenabledBy.FullName(),
+
+                    CreatedOnUtc = u.CreatedOnUtc,
+                    LastUpdatedOnUtc = u.LastUpdatedOnUtc,
+                    DisabledOnUtc = u.DisabledOnUtc,
+                    ReenabledOnUtc = u.ReenabledOnUtc,
                 })
             .OrderBy(dm => dm.UserFirstName)
             .ToListAsync();

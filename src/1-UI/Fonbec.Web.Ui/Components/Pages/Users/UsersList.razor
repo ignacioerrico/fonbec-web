@@ -48,18 +48,9 @@
         <Columns>
             <PropertyColumn Property="@(vm => _isLastNameFirst ? vm.UserLastName : vm.UserFirstName)" Title="Nombre">
                 <CellTemplate>
-                    <MudText Typo="Typo.body1">
-	                    <FullNameDisplay FirstName="@context.Item.UserFirstName"
-	                                     LastName="@context.Item.UserLastName"
-	                                     IsLastNameFirst="_isLastNameFirst" />
-
-                        @if (context.Item.UserId == _userId)
-                        {
-                            <MudChip Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" Class="ml-3">
-                                YO
-                            </MudChip>
-                        }
-                    </MudText>
+	                <AuditableUserDisplay UsersListViewModel="context.Item"
+	                                      IsLastNameFirst="_isLastNameFirst"
+	                                      CurrentUserId="_userId" />
                 </CellTemplate>
                 <EditTemplate>
                     <MudTextField T="string" @bind-Value="@context.Item.UserFirstName" Immediate="true"
