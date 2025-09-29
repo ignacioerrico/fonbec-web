@@ -1,5 +1,5 @@
 ﻿@attribute [Route(NavRoutes.Chapters)]
-@attribute [Authorize]
+@attribute [Authorize(Policy = nameof(ChaptersList))]
 
 <PageTitle>Filiales</PageTitle>
 
@@ -19,4 +19,6 @@
     </RowTemplate>
 </MudTable>
 
-<CreateChapter OnChapterCreated="RefreshChapters"/>
+<AuthorizeView Policy="@nameof(CreateChapter)">
+	<CreateChapter OnChapterCreated="RefreshChapters"/>
+</AuthorizeView>

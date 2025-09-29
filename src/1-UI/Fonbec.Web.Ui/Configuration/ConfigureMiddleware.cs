@@ -1,11 +1,14 @@
-﻿using System.ComponentModel.DataAnnotations;
-using Fonbec.Web.DataAccess;
+﻿using Fonbec.Web.DataAccess;
 using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.Ui.Options;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
+using System.ComponentModel.DataAnnotations;
+using System.Security.Claims;
+using Fonbec.Web.Logic.Constants;
+using Fonbec.Web.Ui.Authorization;
 
 namespace Fonbec.Web.Ui.Configuration;
 
@@ -125,7 +128,18 @@ public static class ConfigureMiddleware
             Halt("Could not add Admin role to admin user: ", roleAssignmentResult.Errors);
         }
 
-        // TODO: Add claims
+        // Add all existing permissions to the custom claim of type "FonbecAuth".
+        // The value of the claim is a comma-separated list of page names the user has access to.
+        var allPages = scope.ServiceProvider.GetRequiredService<List<PageAccessInfo>>();
+        var claimValues = allPages.Select(c => c.Codename);
+        var claimValue = string.Join(',', claimValues);
+        var claim = new Claim(FonbecAuth.ClaimType, claimValue);
+
+        var addClaimResult = await userManager.AddClaimAsync(adminUser, claim);
+        if (!addClaimResult.Succeeded)
+        {
+            Halt("Could not add permissions to Admin user.", addClaimResult.Errors);
+        }
     }
 
     private static void Halt(string errorMessage, IEnumerable<IdentityError> errors)

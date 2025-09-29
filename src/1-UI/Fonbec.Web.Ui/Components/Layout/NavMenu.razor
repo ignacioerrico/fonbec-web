@@ -2,23 +2,33 @@
 
 @inject NavigationManager NavigationManager
 
+@using Fonbec.Web.Ui.Components.Pages.Chapters
+@using Fonbec.Web.Ui.Components.Pages.Students
+@using Fonbec.Web.Ui.Components.Pages.Users
+
 <MudNavMenu>
     <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
 
-    <AuthorizeView>
-        <Authorized>
-            <MudNavLink Href="@NavRoutes.Chapters" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Place">Filiales</MudNavLink>
-            <MudNavLink Href="@NavRoutes.Users" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AccountBox">Usuarios</MudNavLink>
-            <MudNavLink Href="@NavRoutes.Students" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Face">Becarios</MudNavLink>
-            <MudNavLink Href="Account/Manage" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Person">@context.User.Identity?.Name</MudNavLink>
-            <form action="Account/Logout" method="post">
-                <AntiforgeryToken />
-                <input type="hidden" name="ReturnUrl" value="@_currentUrl" />
-                <button type="submit" class="mud-nav-link mud-ripple">
-                    <MudIcon Icon="@Icons.Material.Filled.Logout" Color="Color.Info" Class="mr-3"></MudIcon> Logout
-                </button>
-            </form>
-        </Authorized>
+    <AuthorizeView Context="outerContext">
+	    <Authorized>
+		    <AuthorizeView Policy="@nameof(ChaptersList)">
+				<MudNavLink Href="@NavRoutes.Chapters" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Place">Filiales</MudNavLink>
+            </AuthorizeView>
+		    <AuthorizeView Policy="@nameof(UsersList)">
+			    <MudNavLink Href="@NavRoutes.Users" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AccountBox">Usuarios</MudNavLink>
+		    </AuthorizeView>
+		    <AuthorizeView Policy="@nameof(StudentsList)">
+				<MudNavLink Href="@NavRoutes.Students" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Face">Becarios</MudNavLink>
+		    </AuthorizeView>
+		    <MudNavLink Href="Account/Manage" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Person">@outerContext.User.Identity?.Name</MudNavLink>
+		    <form action="Account/Logout" method="post">
+			    <AntiforgeryToken />
+			    <input type="hidden" name="ReturnUrl" value="@_currentUrl" />
+			    <button type="submit" class="mud-nav-link mud-ripple">
+				    <MudIcon Icon="@Icons.Material.Filled.Logout" Color="Color.Info" Class="mr-3"></MudIcon> Logout
+			    </button>
+		    </form>
+	    </Authorized>
         <NotAuthorized>
             <MudNavLink Href="/Account/Login" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Password">Login</MudNavLink>
         </NotAuthorized>

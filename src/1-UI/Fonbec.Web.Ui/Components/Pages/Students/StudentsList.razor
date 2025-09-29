@@ -1,4 +1,5 @@
 ﻿@attribute [Route(NavRoutes.Students)]
+@attribute [Authorize(Policy = nameof(StudentsList))]
 @inherits AuthenticationRequiredComponentBase
 
 @using Fonbec.Web.DataAccess.Constants
@@ -8,13 +9,15 @@
 <PageHeader Title="Becarios" />
 
 <MudStack StretchItems="StretchItems.Middle" Row="true">
-	<MudTooltip Text="Alta de becario"
-	            Arrow="true" Placement="Placement.Right"
-	            Color="Color.Primary">
-		<MudFab Href="@NavRoutes.StudentCreate"
-		        StartIcon="@Icons.Material.Filled.Add"
-		        Color="Color.Primary" />
-	</MudTooltip>
+	<AuthorizeView Policy="@nameof(StudentCreate)">
+		<MudTooltip Text="Alta de becario"
+		            Arrow="true" Placement="Placement.Right"
+		            Color="Color.Primary">
+			<MudFab Href="@NavRoutes.StudentCreate"
+			        StartIcon="@Icons.Material.Filled.Add"
+			        Color="Color.Primary" />
+		</MudTooltip>
+	</AuthorizeView>
 	<MudSpacer />
 	<MudSwitch @bind-Value="_sortByLastName" LabelPlacement="Placement.Left">
 		@(_sortByLastName ? "Apellido, Nombre" : "Nombre Apellido")
@@ -136,11 +139,13 @@
 	        </PropertyColumn>
 	        <TemplateColumn Title="Acciones" Filterable="false" Sortable="false">
 	            <CellTemplate>
-		            <MudTooltip Text="Editar" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
-			            <MudIconButton OnClick="@context.Actions.StartEditingItemAsync"
-			                           Disabled="@(!context.Item.IsStudentActive)"
-			                           Icon="@Icons.Material.Outlined.Edit" Size="@Size.Small" Color="Color.Primary" />
-		            </MudTooltip>
+		            <AuthorizeView Policy="@nameof(StudentCreate)" Context="innerContext">
+			            <MudTooltip Text="Editar" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
+				            <MudIconButton OnClick="@context.Actions.StartEditingItemAsync"
+				                           Disabled="@(!context.Item.IsStudentActive)"
+				                           Icon="@Icons.Material.Outlined.Edit" Size="@Size.Small" Color="Color.Primary" />
+			            </MudTooltip>
+		            </AuthorizeView>
 	            </CellTemplate>
             </TemplateColumn>
         </Columns>

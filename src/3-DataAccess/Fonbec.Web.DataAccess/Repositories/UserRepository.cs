@@ -5,6 +5,7 @@ using Fonbec.Web.DataAccess.DataModels.Users.Input;
 using Fonbec.Web.DataAccess.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
+using System.Security.Claims;
 
 namespace Fonbec.Web.DataAccess.Repositories;
 
@@ -19,6 +20,8 @@ public interface IUserRepository
     Task<bool> UpdateUserAsync(UpdateUserInputDataModel model);
     Task<List<string>> DisableUserAsync(DisableUserInputDataModel model);
     Task<IdentityResult> DeleteForeverAsync(string userId);
+    Task<string?> GetUserClaim(string userId, string claimType);
+    Task SetUserClaim(string userId, string claimType, string claimValue);
 }
 
 public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<FonbecWebUser> userStore) : IUserRepository
@@ -289,5 +292,45 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
 
         var identityResult = await userManager.DeleteAsync(fonbecUser);
         return identityResult;
+    }
+
+    public async Task<string?> GetUserClaim(string userId, string claimType)
+    {
+        var fonbecUser = await userManager.FindByIdAsync(userId);
+
+        if (fonbecUser is null)
+        {
+            return null;
+        }
+
+        var claims = await userManager.GetClaimsAsync(fonbecUser);
+
+        var claimValue = claims.FirstOrDefault(c => c.Type == claimType)?.Value
+                         ?? null;
+
+        return claimValue;
+    }
+
+    public async Task SetUserClaim(string userId, string claimType, string claimValue)
+    {
+        var fonbecUser = await userManager.FindByIdAsync(userId);
+
+        if (fonbecUser is null)
+        {
+            return;
+        }
+
+        var claims = await userManager.GetClaimsAsync(fonbecUser);
+
+        var claim = claims.FirstOrDefault(c => c.Type == claimType);
+
+        if (claim is null)
+        {
+            await userManager.AddClaimAsync(fonbecUser, new Claim(claimType, claimValue));
+        }
+        else
+        {
+            await userManager.ReplaceClaimAsync(fonbecUser, claim, new Claim(claimType, claimValue));
+        }
     }
 }

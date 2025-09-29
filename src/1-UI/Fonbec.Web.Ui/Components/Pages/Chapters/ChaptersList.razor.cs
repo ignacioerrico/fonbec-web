@@ -4,6 +4,7 @@ using Microsoft.AspNetCore.Components;
 
 namespace Fonbec.Web.Ui.Components.Pages.Chapters;
 
+[PageMetadata(nameof(ChaptersList), "Lista de filiales")]
 public partial class ChaptersList
 {
     private List<ChaptersListViewModel> _viewModel = [];

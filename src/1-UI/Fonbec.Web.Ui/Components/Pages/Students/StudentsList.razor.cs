@@ -8,12 +8,13 @@ using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.Pages.Students;
 
+[PageMetadata(nameof(StudentsList), "Lista de becarios")]
 public partial class StudentsList : AuthenticationRequiredComponentBase
 {
     private List<StudentsListViewModel> _viewModels = [];
 
-    private string[] _allEducationLevels = [];
-    private string[] _allFacilitators = [];
+    private IEnumerable<string> _allEducationLevels = [];
+    private IEnumerable<string> _allFacilitators = [];
 
     private string _searchString = string.Empty;
 
@@ -31,13 +32,11 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
         _viewModels = await StudentService.GetAllStudentsAsync();
 
         _allEducationLevels = Enum.GetValues<EducationLevel>()
-            .Select(el => el.EnumToString())
-            .ToArray();
+            .Select(el => el.EnumToString());
 
         _allFacilitators = _viewModels.Select(vm => vm.FacilitatorFullName)
             .Distinct()
-            .OrderBy(fn => fn)
-            .ToArray();
+            .OrderBy(fn => fn);
 
         Loading = false;
     }

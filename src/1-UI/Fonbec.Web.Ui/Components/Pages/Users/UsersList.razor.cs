@@ -8,17 +8,16 @@ using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.Pages.Users;
 
+[PageMetadata(nameof(UsersList), "Lista de usuarios")]
 public partial class UsersList : AuthenticationRequiredComponentBase
 {
     private List<UsersListViewModel> _viewModel = [];
-
-    private int _userId;
 
     private string _searchString = string.Empty;
 
     private bool _isLastNameFirst;
 
-    private string[] _allChapters = [];
+    private IEnumerable<string> _allChapters = [];
 
     [Inject]
     public IUserService UserService { get; set; } = null!;
@@ -28,16 +27,15 @@ public partial class UsersList : AuthenticationRequiredComponentBase
 
     protected override async Task OnInitializedAsync()
     {
-        Loading = true;
+        await base.OnInitializedAsync();
 
-        _userId = await GetAuthenticatedUserIdAsync();
+        Loading = true;
 
         _viewModel = await UserService.GetAllUsersAsync();
 
         _allChapters = _viewModel.Select(vm => vm.UserChapterName)
             .Distinct()
-            .OrderBy(ch => ch)
-            .ToArray();
+            .OrderBy(ch => ch);
 
         Loading = false;
     }
@@ -59,7 +57,7 @@ public partial class UsersList : AuthenticationRequiredComponentBase
             viewModel.UserGender,
             viewModel.UserEmail,
             viewModel.UserPhoneNumber,
-            _userId
+            CurrentUserId
         );
 
         var userUpdatedSuccessfully = await UserService.UpdateUserAsync(updateUserInputModel);
@@ -98,7 +96,7 @@ public partial class UsersList : AuthenticationRequiredComponentBase
             return;
         }
 
-        var disableUserInputModel = new DisableUserInputModel(viewModel.UserId, DisableUser: true, _userId);
+        var disableUserInputModel = new DisableUserInputModel(viewModel.UserId, DisableUser: true, CurrentUserId);
 
         var errors = await UserService.DisableUserAsync(disableUserInputModel);
 
@@ -122,7 +120,7 @@ public partial class UsersList : AuthenticationRequiredComponentBase
             return;
         }
 
-        var disableUserInputModel = new DisableUserInputModel(viewModel.UserId, DisableUser: false, _userId);
+        var disableUserInputModel = new DisableUserInputModel(viewModel.UserId, DisableUser: false, CurrentUserId);
         
         var errors = await UserService.DisableUserAsync(disableUserInputModel);
 

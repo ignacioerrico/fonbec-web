@@ -1,5 +1,7 @@
-﻿using Fonbec.Web.DataAccess.DataModels.Users.Input;
+﻿using System.Security.Claims;
+using Fonbec.Web.DataAccess.DataModels.Users.Input;
 using Fonbec.Web.DataAccess.Repositories;
+using Fonbec.Web.Logic.Constants;
 using Fonbec.Web.Logic.Models;
 using Fonbec.Web.Logic.Models.Users;
 using Fonbec.Web.Logic.Models.Users.Input;
@@ -20,6 +22,12 @@ public interface IUserService
     Task<bool> UpdateUserAsync(UpdateUserInputModel model);
     Task<List<string>> DisableUserAsync(DisableUserInputModel model);
     Task<IdentityResult> DeleteForeverAsync(int userId);
+    string? GetFonbecAuthClaim(ClaimsPrincipal principal);
+    Task<string> GetFonbecAuthClaim(int userId);
+    Task<string> GetUserClaim(int userId, string claimType);
+    Task SetFonbecAuthClaim(int userId, IEnumerable<string> pages);
+    Task SetUserClaim(int userId, string claimType, string claimValue);
+    bool HasPermission(string fonbecAuthValue, string page);
 }
 
 public class UserService(
@@ -108,4 +116,46 @@ public class UserService(
         var userIdString = userId.Adapt<string>();
         return await userRepository.DeleteForeverAsync(userIdString);
     }
+
+    public string? GetFonbecAuthClaim(ClaimsPrincipal principal)
+    {
+        return principal.FindFirstValue(FonbecAuth.ClaimType);
+    }
+
+    public async Task<string> GetFonbecAuthClaim(int userId)
+    {
+        return await GetUserClaim(userId, FonbecAuth.ClaimType);
+    }
+
+    public async Task<string> GetUserClaim(int userId, string claimType)
+    {
+        var userIdString = userId.Adapt<string>();
+        var userClaim = await userRepository.GetUserClaim(userIdString, claimType);
+        return userClaim ?? string.Empty;
+    }
+
+    public async Task SetFonbecAuthClaim(int userId, IEnumerable<string> pages)
+    {
+        var orderedPages = pages.OrderBy(page => page);
+        var claimValue = string.Join(",", orderedPages);
+        await SetUserClaim(userId, FonbecAuth.ClaimType, claimValue);
+    }
+
+    public async Task SetUserClaim(int userId, string claimType, string claimValue)
+    {
+        var userIdString = userId.Adapt<string>();
+        await userRepository.SetUserClaim(userIdString, claimType, claimValue);
+    }
+
+    /// <summary>
+    /// All permissions are stored in a single claim, "FonbecAuth".
+    /// It contains a comma-separated list of page names the user has access to.
+    /// </summary>
+    /// <param name="fonbecAuthValue">The value of the FonbecAuth claim</param>
+    /// <param name="page">The page to check access to</param>
+    /// <returns>True if the page is contained in the claim; otherwise, false</returns>
+    public bool HasPermission(string fonbecAuthValue, string page)
+        => fonbecAuthValue.Split(',')
+            .Select(p => p.Trim())
+            .Contains(page);
 }

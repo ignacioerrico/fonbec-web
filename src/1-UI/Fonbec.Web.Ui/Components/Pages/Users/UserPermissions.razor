@@ -1,0 +1,33 @@
+﻿@page "/usuarios/{userId:int}/permisos"
+@attribute [Authorize(Policy = nameof(UserPermissions))]
+@inherits AuthenticationRequiredComponentBase
+
+<PageHeader Title="Permisos" />
+
+<MudStack Row="true">
+	<MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => SetAllTo(true))">
+		Todos
+	</MudButton>
+	<MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => SetAllTo(false))">
+		Ninguno
+	</MudButton>
+	<MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ResetChanges">
+		Deshacer cambios
+	</MudButton>
+</MudStack>
+
+@foreach (var claim in CheckBoxItems)
+{
+	<MudCheckBox T="bool" @bind-Value="claim.IsChecked" Label="@claim.Description" />
+}
+
+<MudStack Row="true" Class="mt-4">
+	<MudButton OnClick="Save"
+	           Variant="Variant.Filled" Color="Color.Primary">
+		Guardar
+	</MudButton>
+	<MudButton Href="@NavRoutes.Users"
+	           Variant="Variant.Filled" Color="Color.Default" Class="ml-2">
+		Cancelar
+	</MudButton>
+</MudStack>

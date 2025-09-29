@@ -5,16 +5,17 @@ using Fonbec.Web.Logic.Services;
 
 namespace Fonbec.Web.Ui.Components.Pages.Chapters;
 
+[PageMetadata(nameof(CreateChapter), "Crear filial")]
 public partial class CreateChapter : AuthenticationRequiredComponentBase
 {
     private MudForm? _form;
     private string? _name;
 
-    [Inject]
-    public IChapterService ChapterService { get; set; } = null!;
-
     [Parameter]
     public EventCallback OnChapterCreated { get; set; }
+
+    [Inject]
+    public IChapterService ChapterService { get; set; } = null!;
 
     private bool IsCreateButtonDisabled => string.IsNullOrWhiteSpace(_name);
 
@@ -25,8 +26,7 @@ public partial class CreateChapter : AuthenticationRequiredComponentBase
             return;
         }
 
-        var userId = await GetAuthenticatedUserIdAsync();
-        var inputModel = new CreateChapterInputModel(_name, userId);
+        var inputModel = new CreateChapterInputModel(_name, CurrentUserId);
         await ChapterService.CreateChapterAsync(inputModel);
         await OnChapterCreated.InvokeAsync(); // Notufy parent component (ChaptersList)
         _name = string.Empty;

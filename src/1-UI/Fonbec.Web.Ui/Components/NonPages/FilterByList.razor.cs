@@ -8,12 +8,12 @@ public partial class FilterByList<T>
     private string _filterIcon = Icons.Material.Outlined.FilterAlt;
     private bool _isFilterOpen;
     private bool _areAllItemsSelected = true;
-    private HashSet<string> _selectedItems = new();
-    private HashSet<string> _selectedItemsBeforeFilter = new();
+    private HashSet<string> _selectedItems = [];
+    private HashSet<string> _selectedItemsBeforeFilter = [];
     private FilterDefinition<T> _filterItemsDefinition = null!;
 
     [Parameter, EditorRequired]
-    public string[] AllItems { get; set; } = null!;
+    public IEnumerable<string> AllItems { get; set; } = null!;
 
     [Parameter, EditorRequired]
     public FilterContext<T> FilterContext { get; set; } = null!;
@@ -61,7 +61,7 @@ public partial class FilterByList<T>
             _selectedItems.Remove(chapter);
         }
 
-        _areAllItemsSelected = _selectedItems.Count == AllItems.Length;
+        _areAllItemsSelected = _selectedItems.Count == AllItems.Count();
     }
 
     private async Task ClearItemsFilterAsync(FilterContext<T> context)
@@ -77,7 +77,7 @@ public partial class FilterByList<T>
     private async Task ApplyItemsFilterAsync(FilterContext<T> context)
     {
         _selectedItemsBeforeFilter = _selectedItems.ToHashSet();
-        _filterIcon = _selectedItemsBeforeFilter.Count == AllItems.Length
+        _filterIcon = _selectedItemsBeforeFilter.Count == AllItems.Count()
             ? Icons.Material.Outlined.FilterAlt
             : Icons.Material.Filled.FilterAlt;
         await context.Actions.ApplyFilterAsync(_filterItemsDefinition);

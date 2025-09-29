@@ -7,6 +7,7 @@ using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.Pages.Students;
 
+[PageMetadata(nameof(StudentCreate), "Alta y modificación de becario")]
 public partial class StudentCreate : AuthenticationRequiredComponentBase
 {
     private readonly StudentCreateBindModel _bindModel = new();
@@ -41,8 +42,6 @@ public partial class StudentCreate : AuthenticationRequiredComponentBase
     {
         _saving = true;
 
-        var userId = await GetAuthenticatedUserIdAsync();
-
         var createStudentInputModel = new CreateStudentInputModel(
             _bindModel.ChapterId,
             _bindModel.StudentFirstName,
@@ -55,7 +54,7 @@ public partial class StudentCreate : AuthenticationRequiredComponentBase
             _bindModel.StudentSecondarySchoolStartYear,
             _bindModel.StudentUniversityStartYear,
             _bindModel.FacilitatorId,
-            userId);
+            CurrentUserId);
 
         var result = await StudentService.CreateStudentAsync(createStudentInputModel);
         if (!result.AnyAffectedRows)

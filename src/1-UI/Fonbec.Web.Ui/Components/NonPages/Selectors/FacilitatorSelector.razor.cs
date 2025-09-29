@@ -9,7 +9,7 @@ public partial class FacilitatorSelector
 {
     private bool _dataLoaded;
 
-    private readonly List<SelectableModel<int>> _facilitators = new();
+    private readonly List<SelectableModel<int>> _facilitators = [];
 
     private SelectableModel<int> _selectedFacilitator = null!;
 

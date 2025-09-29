@@ -5,7 +5,9 @@ using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Logic.Util;
 using Fonbec.Web.Ui.Account.Communication;
+using Fonbec.Web.Ui.Authorization;
 using Fonbec.Web.Ui.Options;
+using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.AspNetCore.Identity.UI.Services;
 using Microsoft.EntityFrameworkCore;
@@ -28,6 +30,9 @@ public static class ConfigureServices
 
         services.AddMudExtensions();
 
+        services.AddScoped<IAuthorizationHandler, FonbecPermissionHandler>();
+        services.AddSingleton(_ => PageAccessDiscovery.DiscoverPages());
+
         services.AddScoped<IPasswordGeneratorWrapper, PasswordGeneratorWrapper>();
 
         services.AddSingleton<IEmailMessageSender, EmailMessageSender>(); // Sends email messages using Azure Communication Services
@@ -45,6 +50,21 @@ public static class ConfigureServices
         services.AddScoped<IChapterRepository, ChapterRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IStudentRepository, StudentRepository>();
+    }
+
+    public static void RegisterPolicies(IServiceCollection services)
+    {
+        var allPages = services.BuildServiceProvider().GetService<List<PageAccessInfo>>()
+                       ?? throw new NullReferenceException("Could not resolve List<PageAccessInfo>.");
+
+        services.AddAuthorization(options =>
+        {
+            foreach (var claim in allPages)
+            {
+                options.AddPolicy(claim.Codename,
+                    policy => policy.Requirements.Add(new FonbecPermissionRequirement(claim.Codename)));
+            }
+        });
     }
 
     public static void RegisterEntityFrameworkCore(IServiceCollection services, IConfiguration configuration)
