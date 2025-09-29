@@ -2,6 +2,7 @@
 using Fonbec.Web.DataAccess;
 using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.DataAccess.Repositories;
+using Fonbec.Web.Logic.Authorization;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Logic.Util;
 using Fonbec.Web.Ui.Account.Communication;

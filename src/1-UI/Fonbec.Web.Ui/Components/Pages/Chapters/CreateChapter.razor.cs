@@ -1,11 +1,12 @@
-﻿using MudBlazor;
-using Microsoft.AspNetCore.Components;
+﻿using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.Logic.Models.Chapters.Input;
 using Fonbec.Web.Logic.Services;
+using Microsoft.AspNetCore.Components;
+using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.Pages.Chapters;
 
-[PageMetadata(nameof(CreateChapter), "Crear filial")]
+[PageMetadata(nameof(CreateChapter), "Crear filial", [FonbecRole.Admin])]
 public partial class CreateChapter : AuthenticationRequiredComponentBase
 {
     private MudForm? _form;

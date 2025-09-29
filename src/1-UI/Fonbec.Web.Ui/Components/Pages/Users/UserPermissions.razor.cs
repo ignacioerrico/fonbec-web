@@ -1,12 +1,13 @@
-﻿using Fonbec.Web.Logic.Services;
-using Fonbec.Web.Ui.Authorization;
+﻿using Fonbec.Web.DataAccess.Constants;
+using Fonbec.Web.Logic.Authorization;
+using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Ui.Constants;
 using Fonbec.Web.Ui.Models.User;
 using Microsoft.AspNetCore.Components;
 
 namespace Fonbec.Web.Ui.Components.Pages.Users;
 
-[PageMetadata(nameof(UserPermissions), "Permisos de usuario")]
+[PageMetadata(nameof(UserPermissions), "Permisos de usuario", [FonbecRole.Admin])]
 public partial class UserPermissions : AuthenticationRequiredComponentBase
 {
     private List<UserPermissionsBindModel> CheckBoxItems { get; } = [];

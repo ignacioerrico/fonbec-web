@@ -1,4 +1,5 @@
-﻿using Fonbec.Web.DataAccess.Entities.Enums;
+﻿using Fonbec.Web.DataAccess.Constants;
+using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models.Students;
 using Fonbec.Web.Logic.Models.Students.Input;
@@ -8,7 +9,7 @@ using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.Pages.Students;
 
-[PageMetadata(nameof(StudentsList), "Lista de becarios")]
+[PageMetadata(nameof(StudentsList), "Lista de becarios", [FonbecRole.Manager])]
 public partial class StudentsList : AuthenticationRequiredComponentBase
 {
     private List<StudentsListViewModel> _viewModels = [];

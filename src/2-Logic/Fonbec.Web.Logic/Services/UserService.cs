@@ -1,6 +1,7 @@
 ﻿using System.Security.Claims;
 using Fonbec.Web.DataAccess.DataModels.Users.Input;
 using Fonbec.Web.DataAccess.Repositories;
+using Fonbec.Web.Logic.Authorization;
 using Fonbec.Web.Logic.Constants;
 using Fonbec.Web.Logic.Models;
 using Fonbec.Web.Logic.Models.Users;
@@ -33,7 +34,8 @@ public interface IUserService
 public class UserService(
     IUserRepository userRepository,
     IPasswordGeneratorWrapper passwordGenerator,
-    IEmailMessageSender emailMessageSender)
+    IEmailMessageSender emailMessageSender,
+    List<PageAccessInfo> allPages)
     : IUserService
 {
     public async Task<ValidateUniqueEmailOutputModel> ValidateUniqueEmailAsync(string userEmail)
@@ -87,6 +89,11 @@ public class UserService(
             .AdaptToType<CreateUserInputDataModel>();
 
         var (userId, errors) = await userRepository.CreateUserAsync(createUserInputDataModel);
+
+        var pages = allPages.Where(p => p.Roles.Contains(model.UserRole))
+            .Select(p => p.Codename);
+
+        await SetFonbecAuthClaim(userId, pages);
 
         if (userId > 0 && errors.Count == 0)
         {

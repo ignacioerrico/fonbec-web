@@ -7,8 +7,8 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
+using Fonbec.Web.Logic.Authorization;
 using Fonbec.Web.Logic.Constants;
-using Fonbec.Web.Ui.Authorization;
 
 namespace Fonbec.Web.Ui.Configuration;
 

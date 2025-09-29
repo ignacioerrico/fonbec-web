@@ -1,4 +1,5 @@
-﻿using Fonbec.Web.Logic.Models.Students.Input;
+﻿using Fonbec.Web.DataAccess.Constants;
+using Fonbec.Web.Logic.Models.Students.Input;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Ui.Constants;
 using Fonbec.Web.Ui.Models.Student;
@@ -7,7 +8,7 @@ using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.Pages.Students;
 
-[PageMetadata(nameof(StudentCreate), "Alta y modificación de becario")]
+[PageMetadata(nameof(StudentCreate), "Crear y actualizar becario", [FonbecRole.Manager])]
 public partial class StudentCreate : AuthenticationRequiredComponentBase
 {
     private readonly StudentCreateBindModel _bindModel = new();

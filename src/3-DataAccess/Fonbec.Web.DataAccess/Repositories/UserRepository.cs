@@ -185,8 +185,6 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
             return (userId, errors);
         }
 
-        // TODO: Add claims
-
         // Get user ID
         var userIdString = await userManager.GetUserIdAsync(fonbecUser);
 

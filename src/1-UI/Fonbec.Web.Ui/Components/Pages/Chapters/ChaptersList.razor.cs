@@ -1,10 +1,11 @@
-﻿using Fonbec.Web.Logic.Models.Chapters;
+﻿using Fonbec.Web.DataAccess.Constants;
+using Fonbec.Web.Logic.Models.Chapters;
 using Fonbec.Web.Logic.Services;
 using Microsoft.AspNetCore.Components;
 
 namespace Fonbec.Web.Ui.Components.Pages.Chapters;
 
-[PageMetadata(nameof(ChaptersList), "Lista de filiales")]
+[PageMetadata(nameof(ChaptersList), "Lista de filiales", [FonbecRole.Admin])]
 public partial class ChaptersList
 {
     private List<ChaptersListViewModel> _viewModel = [];

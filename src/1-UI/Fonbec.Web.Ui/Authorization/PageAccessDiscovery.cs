@@ -2,6 +2,7 @@
 using Fonbec.Web.Ui.Components.Pages;
 using Microsoft.AspNetCore.Components;
 using System.Reflection;
+using Fonbec.Web.Logic.Authorization;
 
 namespace Fonbec.Web.Ui.Authorization;
 
@@ -16,7 +17,9 @@ public static class PageAccessDiscovery
             .Where(pageMetadata => pageMetadata is not null);
 
         var results = pageMetadataAttributes.Select(pageMetadata =>
-            new PageAccessInfo(pageMetadata!.Codename, pageMetadata.Description))
+            new PageAccessInfo(pageMetadata!.Codename,
+                pageMetadata.Description,
+                pageMetadata.Roles))
             .OrderBy(pai => pai.Codename)
             .ToList();
 
