@@ -34,6 +34,8 @@ public static class ConfigureServices
         services.AddScoped<IAuthorizationHandler, FonbecPermissionHandler>();
         services.AddSingleton(_ => PageAccessDiscovery.DiscoverPages());
 
+        services.AddScoped<IUserClaimsPrincipalFactory<FonbecWebUser>, FonbecUserClaimsPrincipalFactory>(); // Overrides registration done internally by AddIdentityCore
+
         services.AddScoped<IPasswordGeneratorWrapper, PasswordGeneratorWrapper>();
 
         services.AddSingleton<IEmailMessageSender, EmailMessageSender>(); // Sends email messages using Azure Communication Services

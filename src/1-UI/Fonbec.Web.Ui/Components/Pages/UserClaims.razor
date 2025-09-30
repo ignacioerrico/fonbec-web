@@ -1,0 +1,25 @@
+﻿@page "/user-claims"
+@attribute [Authorize]
+
+<PageHeader Title="User Claims" />
+
+<AuthorizeView>
+	<Authorized>
+		<MudTable Items="context.User.Claims" Hover="true">
+			<HeaderContent>
+				<MudTh>Type</MudTh>
+				<MudTh>Value</MudTh>
+				<MudTh>ValueType</MudTh>
+				<MudTh>Issuer</MudTh>
+				<MudTh>OriginalIssuer</MudTh>
+			</HeaderContent>
+			<RowTemplate Context="claim">
+				<MudTd DataLabel="Type">@claim.Type</MudTd>
+				<MudTd DataLabel="Value">@claim.Value</MudTd>
+				<MudTd DataLabel="ValueType">@claim.ValueType</MudTd>
+				<MudTd DataLabel="Issuer">@claim.Issuer</MudTd>
+				<MudTd DataLabel="OriginalIssuer">@claim.OriginalIssuer</MudTd>
+			</RowTemplate>
+		</MudTable>
+	</Authorized>
+</AuthorizeView>

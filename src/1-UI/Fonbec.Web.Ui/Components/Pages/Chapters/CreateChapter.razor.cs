@@ -27,7 +27,7 @@ public partial class CreateChapter : AuthenticationRequiredComponentBase
             return;
         }
 
-        var inputModel = new CreateChapterInputModel(_name, CurrentUserId);
+        var inputModel = new CreateChapterInputModel(_name, FonbecClaim.UserId);
         await ChapterService.CreateChapterAsync(inputModel);
         await OnChapterCreated.InvokeAsync(); // Notufy parent component (ChaptersList)
         _name = string.Empty;

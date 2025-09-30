@@ -52,7 +52,7 @@
                 <CellTemplate>
 	                <AuditableUserDisplay UsersListViewModel="context.Item"
 	                                      IsLastNameFirst="_isLastNameFirst"
-	                                      CurrentUserId="CurrentUserId" />
+	                                      CurrentUserId="FonbecClaim.UserId" />
                 </CellTemplate>
                 <EditTemplate>
                     <MudTextField T="string" @bind-Value="@context.Item.UserFirstName" Immediate="true"
@@ -146,7 +146,7 @@
 	                        <MudTooltip Text="Deshabilitar" Arrow="true" Placement="Placement.Bottom" Color="Color.Warning" Delay="500">
 	                            <MudIconButton OnClick="@(async _ => await DisableUserAsync(context.Item))"
 	                                           Icon="@Icons.Material.Outlined.Delete" Size="@Size.Small" Color="Color.Warning"
-	                                           Disabled="@(context.Item.UserId == CurrentUserId || !context.Item.CanUserBeLockedOut)" />
+	                                           Disabled="@(context.Item.UserId == FonbecClaim.UserId || !context.Item.CanUserBeLockedOut)" />
 	                        </MudTooltip>
 	                    }
 	                    else
@@ -159,7 +159,7 @@
 	                    <MudTooltip Text="Eliminar" Arrow="true" Placement="Placement.Bottom" Color="Color.Error" Delay="500">
 		                    <MudIconButton OnClick="@(async _ => await DeleteForeverAsync(context.Item))"
 		                                   Icon="@Icons.Material.Outlined.DeleteForever" Size="@Size.Small" Color="Color.Error"
-		                                   Disabled="@(context.Item.UserId == CurrentUserId || !context.Item.CanUserBeLockedOut)" />
+                                           Disabled="@(context.Item.UserId == FonbecClaim.UserId || !context.Item.CanUserBeLockedOut)" />
 	                    </MudTooltip>
 	                </AuthorizeView>
                 </CellTemplate>
