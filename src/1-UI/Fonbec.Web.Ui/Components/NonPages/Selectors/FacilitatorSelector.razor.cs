@@ -11,14 +11,15 @@ public partial class FacilitatorSelector
 
     private readonly List<SelectableModel<int>> _facilitators = [];
 
-    private SelectableModel<int> _selectedFacilitator = null!;
-
     [Parameter]
     public int SelectedFacilitatorId { get; set; }
 
     [Parameter]
     public EventCallback<int> SelectedFacilitatorIdChanged { get; set; }
 
+    /// <summary>
+    /// Callback invoked when facilitators are loaded. The int parameter indicates the number of facilitators loaded.
+    /// </summary>
     [Parameter]
     public EventCallback<int> OnFacilitatorsLoaded { get; set; }
 
@@ -33,20 +34,19 @@ public partial class FacilitatorSelector
 
         _facilitators.AddRange(facilitators);
 
+        await OnFacilitatorsLoaded.InvokeAsync(facilitators.Count);
+
         if (facilitators.Count > 0)
         {
-            _selectedFacilitator = facilitators.First();
-            await OnSelectedValueChanged(_selectedFacilitator);
+            SelectedFacilitatorId = facilitators.First().Key;
+            await OnSelectedValueChanged(SelectedFacilitatorId);
         }
-
-        await OnFacilitatorsLoaded.InvokeAsync(facilitators.Count);
 
         await base.OnInitializedAsync();
     }
 
-    private async Task OnSelectedValueChanged(SelectableModel<int> selectedFacilitator)
+    private async Task OnSelectedValueChanged(int selectedFacilitatorId)
     {
-        SelectedFacilitatorId = selectedFacilitator.Key;
-        await SelectedFacilitatorIdChanged.InvokeAsync(SelectedFacilitatorId);
+        await SelectedFacilitatorIdChanged.InvokeAsync(selectedFacilitatorId);
     }
 }

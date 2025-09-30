@@ -13,8 +13,7 @@ public partial class GenderSelector
 
     private async Task OnSelectedValueChanged(Gender selectedGender)
     {
-        SelectedGender = selectedGender;
-        await SelectedGenderChanged.InvokeAsync(SelectedGender);
+        await SelectedGenderChanged.InvokeAsync(selectedGender);
     }
 
     protected override async Task OnParametersSetAsync()

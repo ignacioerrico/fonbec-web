@@ -8,9 +8,7 @@ public partial class ChapterSelector
 {
     private bool _dataLoaded;
 
-    private readonly List<SelectableModel<int>> _chapters = new();
-
-    private int _selectedChapterId;
+    private readonly List<SelectableModel<int>> _chapters = [];
 
     [Parameter]
     public int SelectedChapterId { get; set; }
@@ -18,6 +16,9 @@ public partial class ChapterSelector
     [Parameter]
     public EventCallback<int> SelectedChapterIdChanged { get; set; }
 
+    /// <summary>
+    /// Callback invoked when chapters are loaded. The int parameter indicates the number of chapters loaded.
+    /// </summary>
     [Parameter]
     public EventCallback<int> OnChaptersLoaded { get; set; }
 
@@ -36,8 +37,8 @@ public partial class ChapterSelector
 
         if (chapters.Count > 0)
         {
-            _selectedChapterId = chapters.First().Key;
-            await OnSelectedValueChanged(_selectedChapterId);
+            SelectedChapterId = chapters.First().Key;
+            await OnSelectedValueChanged(SelectedChapterId);
         }
 
         await base.OnInitializedAsync();
@@ -45,7 +46,6 @@ public partial class ChapterSelector
 
     private async Task OnSelectedValueChanged(int selectedChapterId)
     {
-        SelectedChapterId = selectedChapterId;
-        await SelectedChapterIdChanged.InvokeAsync(SelectedChapterId);
+        await SelectedChapterIdChanged.InvokeAsync(selectedChapterId);
     }
 }
