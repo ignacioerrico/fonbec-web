@@ -1,4 +1,5 @@
 ﻿@attribute [Route(NavRoutes.StudentCreate)]
+@attribute [Authorize(Policy = nameof(StudentCreate))]
 @inherits AuthenticationRequiredComponentBase
 
 @using Fonbec.Web.DataAccess.Constants

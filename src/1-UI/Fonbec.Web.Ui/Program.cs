@@ -54,6 +54,8 @@ ConfigureServices.RegisterOptions(builder.Services, builder.Configuration);
 
 ConfigureServices.RegisterServices(builder.Services, builder.Configuration);
 
+ConfigureServices.RegisterPolicies(builder.Services);
+
 ConfigureServices.RegisterEntityFrameworkCore(builder.Services, builder.Configuration);
 
 // Mapster (each business Model declares its own mapping)

@@ -1,4 +1,5 @@
-﻿using Fonbec.Web.Logic.Models.Students.Input;
+﻿using Fonbec.Web.DataAccess.Constants;
+using Fonbec.Web.Logic.Models.Students.Input;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Ui.Constants;
 using Fonbec.Web.Ui.Models.Student;
@@ -7,6 +8,7 @@ using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.Pages.Students;
 
+[PageMetadata(nameof(StudentCreate), "Crear y actualizar becario", [FonbecRole.Manager])]
 public partial class StudentCreate : AuthenticationRequiredComponentBase
 {
     private readonly StudentCreateBindModel _bindModel = new();
@@ -41,8 +43,6 @@ public partial class StudentCreate : AuthenticationRequiredComponentBase
     {
         _saving = true;
 
-        var userId = await GetAuthenticatedUserIdAsync();
-
         var createStudentInputModel = new CreateStudentInputModel(
             _bindModel.ChapterId,
             _bindModel.StudentFirstName,
@@ -55,7 +55,7 @@ public partial class StudentCreate : AuthenticationRequiredComponentBase
             _bindModel.StudentSecondarySchoolStartYear,
             _bindModel.StudentUniversityStartYear,
             _bindModel.FacilitatorId,
-            userId);
+            CurrentUserId);
 
         var result = await StudentService.CreateStudentAsync(createStudentInputModel);
         if (!result.AnyAffectedRows)

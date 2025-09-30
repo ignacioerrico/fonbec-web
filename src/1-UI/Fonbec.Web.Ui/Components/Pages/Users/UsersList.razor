@@ -1,5 +1,5 @@
 ﻿@attribute [Route(NavRoutes.Users)]
-@attribute [Authorize]
+@attribute [Authorize(Policy = nameof(UsersList))]
 @inherits AuthenticationRequiredComponentBase
 
 @using Fonbec.Web.DataAccess.Constants
@@ -9,13 +9,15 @@
 <PageHeader Title="Usuarios" />
 
 <MudStack StretchItems="StretchItems.Middle" Row>
-    <MudTooltip Text="Alta de usuario"
-                Arrow="true" Placement="Placement.Right"
-                Color="Color.Primary">
-        <MudFab Href="@NavRoutes.UserCreate"
-                StartIcon="@Icons.Material.Filled.Add"
-                Color="Color.Primary" />
-    </MudTooltip>
+	<AuthorizeView Policy="@nameof(UserCreate)">
+		<MudTooltip Text="Alta de usuario"
+		            Arrow="true" Placement="Placement.Right"
+		            Color="Color.Primary">
+			<MudFab Href="@NavRoutes.UserCreate"
+			        StartIcon="@Icons.Material.Filled.Add"
+			        Color="Color.Primary" />
+		</MudTooltip>
+	</AuthorizeView>
     <MudSpacer />
     <MudSwitch @bind-Value="_isLastNameFirst" LabelPlacement="Placement.Left">
         @(_isLastNameFirst ? "Apellido, Nombre" : "Nombre Apellido")
@@ -50,7 +52,7 @@
                 <CellTemplate>
 	                <AuditableUserDisplay UsersListViewModel="context.Item"
 	                                      IsLastNameFirst="_isLastNameFirst"
-	                                      CurrentUserId="_userId" />
+	                                      CurrentUserId="CurrentUserId" />
                 </CellTemplate>
                 <EditTemplate>
                     <MudTextField T="string" @bind-Value="@context.Item.UserFirstName" Immediate="true"
@@ -126,30 +128,40 @@
             </PropertyColumn>
             <TemplateColumn Title="Acciones" Filterable="false" Sortable="false">
                 <CellTemplate>
-                    <MudTooltip Text="Editar" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
-                        <MudIconButton OnClick="@context.Actions.StartEditingItemAsync"
-                                       Icon="@Icons.Material.Outlined.Edit" Size="@Size.Small" Color="Color.Primary" />
-                    </MudTooltip>
-                    @if (context.Item.IsUserActive)
-                    {
-                        <MudTooltip Text="Deshabilitar" Arrow="true" Placement="Placement.Bottom" Color="Color.Warning" Delay="500">
-                            <MudIconButton OnClick="@(async _ => await DisableUserAsync(context.Item))"
-                                           Icon="@Icons.Material.Outlined.Delete" Size="@Size.Small" Color="Color.Warning"
-                                           Disabled="@(context.Item.UserId == _userId || !context.Item.CanUserBeLockedOut)" />
-                        </MudTooltip>
-                    }
-                    else
-                    {
-                        <MudTooltip Text="Habilitar" Arrow="true" Placement="Placement.Bottom" Color="Color.Success" Delay="500">
-                            <MudIconButton OnClick="@(async _ => await ReenableUserAsync(context.Item))"
-                                           Icon="@Icons.Material.Outlined.RestoreFromTrash" Size="@Size.Small" Color="Color.Success" />
-                        </MudTooltip>
-                    }
-                    <MudTooltip Text="Eliminar" Arrow="true" Placement="Placement.Bottom" Color="Color.Error" Delay="500">
-                        <MudIconButton OnClick="@(async _ => await DeleteForeverAsync(context.Item))"
-                                       Icon="@Icons.Material.Outlined.DeleteForever" Size="@Size.Small" Color="Color.Error"
-                                       Disabled="@(context.Item.UserId == _userId || !context.Item.CanUserBeLockedOut)" />
-                    </MudTooltip>
+	                <AuthorizeView Policy="@nameof(UserCreate)" Context="innerContext">
+		                <MudTooltip Text="Editar" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
+			                <MudIconButton OnClick="@context.Actions.StartEditingItemAsync"
+			                               Icon="@Icons.Material.Outlined.Edit" Size="@Size.Small" Color="Color.Primary" />
+		                </MudTooltip>
+	                </AuthorizeView>
+	                <AuthorizeView Policy="@nameof(UserPermissions)" Context="innerContext">
+		                <MudTooltip Text="Permisos" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
+			                <MudIconButton Href="@NavRoutes.UsersUserIdPermissions(context.Item.UserId)"
+			                               Icon="@Icons.Material.Outlined.Checklist" Size="@Size.Small" Color="Color.Primary" />
+		                </MudTooltip>
+	                </AuthorizeView>
+	                <AuthorizeView Policy="@nameof(UserCreate)" Context="innerContext">
+	                    @if (context.Item.IsUserActive)
+	                    {
+	                        <MudTooltip Text="Deshabilitar" Arrow="true" Placement="Placement.Bottom" Color="Color.Warning" Delay="500">
+	                            <MudIconButton OnClick="@(async _ => await DisableUserAsync(context.Item))"
+	                                           Icon="@Icons.Material.Outlined.Delete" Size="@Size.Small" Color="Color.Warning"
+	                                           Disabled="@(context.Item.UserId == CurrentUserId || !context.Item.CanUserBeLockedOut)" />
+	                        </MudTooltip>
+	                    }
+	                    else
+	                    {
+	                        <MudTooltip Text="Habilitar" Arrow="true" Placement="Placement.Bottom" Color="Color.Success" Delay="500">
+	                            <MudIconButton OnClick="@(async _ => await ReenableUserAsync(context.Item))"
+	                                           Icon="@Icons.Material.Outlined.RestoreFromTrash" Size="@Size.Small" Color="Color.Success" />
+	                        </MudTooltip>
+	                    }
+	                    <MudTooltip Text="Eliminar" Arrow="true" Placement="Placement.Bottom" Color="Color.Error" Delay="500">
+		                    <MudIconButton OnClick="@(async _ => await DeleteForeverAsync(context.Item))"
+		                                   Icon="@Icons.Material.Outlined.DeleteForever" Size="@Size.Small" Color="Color.Error"
+		                                   Disabled="@(context.Item.UserId == CurrentUserId || !context.Item.CanUserBeLockedOut)" />
+	                    </MudTooltip>
+	                </AuthorizeView>
                 </CellTemplate>
             </TemplateColumn>
         </Columns>

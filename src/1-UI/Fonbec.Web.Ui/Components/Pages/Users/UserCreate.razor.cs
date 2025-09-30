@@ -1,4 +1,5 @@
-﻿using Fonbec.Web.Logic.Models.Users.Input;
+﻿using Fonbec.Web.DataAccess.Constants;
+using Fonbec.Web.Logic.Models.Users.Input;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Ui.Constants;
 using Fonbec.Web.Ui.Models.User;
@@ -7,6 +8,7 @@ using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.Pages.Users;
 
+[PageMetadata(nameof(UserCreate), "Crear y actualizar usuarios", [FonbecRole.Admin, FonbecRole.Manager])]
 public partial class UserCreate : AuthenticationRequiredComponentBase
 {
     private readonly UserCreateBindModel _bindModel = new();
@@ -72,8 +74,6 @@ public partial class UserCreate : AuthenticationRequiredComponentBase
             }
         }
 
-        var authenticatedUserId = await GetAuthenticatedUserIdAsync();
-
         var createUserInputModel = new CreateUserInputModel
         (
             _bindModel.UserChapterId,
@@ -84,7 +84,7 @@ public partial class UserCreate : AuthenticationRequiredComponentBase
             _bindModel.UserEmail,
             _bindModel.UserPhoneNumber,
             _bindModel.UserRole,
-            authenticatedUserId
+            CurrentUserId
         );
 
         var (createdUserId, errors) = await UserService.CreateUserAsync(createUserInputModel);
