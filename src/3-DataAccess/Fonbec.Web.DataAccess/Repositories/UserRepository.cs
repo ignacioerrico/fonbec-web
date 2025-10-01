@@ -6,6 +6,7 @@ using Fonbec.Web.DataAccess.Entities;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using System.Security.Claims;
+using Fonbec.Web.DataAccess.DataModels.Users.Output;
 
 namespace Fonbec.Web.DataAccess.Repositories;
 
@@ -16,6 +17,7 @@ public interface IUserRepository
     Task<(bool isPasswordValid, List<string> errors)> ValidatePasswordAsync(string password);
     Task<AllUsersDataModel> GetAllUsersAsync(int? chapterId);
     Task<IEnumerable<SelectableDataModel<int>>> GetAllUsersInRoleForSelectionAsync(string role);
+    Task<GetUserOutputDataModel?> GetUserAsync(int userId);
     Task<(int userId, List<string> errors)> CreateUserAsync(CreateUserInputDataModel model);
     Task<bool> UpdateUserAsync(UpdateUserInputDataModel model);
     Task<List<string>> DisableUserAsync(DisableUserInputDataModel model);
@@ -129,6 +131,31 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
             .OrderBy(u => u.Value);
 
         return activeUsers;
+    }
+
+    public async Task<GetUserOutputDataModel?> GetUserAsync(int userId)
+    {
+        var fonbecUserDb = await userManager.Users
+            .AsNoTracking()
+            .Include(u => u.Chapter)
+            .SingleOrDefaultAsync(u => u.Id == userId);
+
+        if (fonbecUserDb is null)
+        {
+            return null;
+        }
+
+        var outputDataModel = new GetUserOutputDataModel
+        {
+            UserFullName = fonbecUserDb.FullName(),
+            UserNickName = fonbecUserDb.NickName,
+        };
+
+        var roles = await userManager.GetRolesAsync(fonbecUserDb);
+
+        outputDataModel.UserRole = roles.Single();
+
+        return outputDataModel;
     }
 
     public async Task<(int userId, List<string> errors)> CreateUserAsync(CreateUserInputDataModel model)

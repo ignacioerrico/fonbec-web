@@ -1,5 +1,6 @@
 ﻿using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.Logic.Authorization;
+using Fonbec.Web.Logic.Models.Users.Output;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Ui.Constants;
 using Fonbec.Web.Ui.Models.User;
@@ -14,6 +15,8 @@ public partial class UserPermissions : AuthenticationRequiredComponentBase
 
     private readonly List<bool> _originalSelection = [];
 
+    private GetUserOutputModel _userData = new();
+
     [Parameter]
     public int UserId { get; set; }
 
@@ -26,6 +29,10 @@ public partial class UserPermissions : AuthenticationRequiredComponentBase
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
+
+        Loading = true;
+
+        _userData = await UserService.GetUserAsync(UserId);
 
         var fonbecAuthClaim = await UserService.GetFonbecAuthClaim(UserId);
 
@@ -42,6 +49,8 @@ public partial class UserPermissions : AuthenticationRequiredComponentBase
 
             _originalSelection.Add(checkBoxItem.IsChecked);
         }
+
+        Loading = false;
     }
 
     private void SetAllTo(bool b) => CheckBoxItems.ForEach(cbi => cbi.IsChecked = b);
