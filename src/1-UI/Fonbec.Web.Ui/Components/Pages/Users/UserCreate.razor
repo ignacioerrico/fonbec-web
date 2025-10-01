@@ -15,7 +15,7 @@
 
 <MudForm @bind-IsValid="@_formValidationSucceeded" Disabled="_isFormDisabled">
 	
-	@if (!_isFormDisabled)
+	@if (FonbecClaim.ChapterId is null && !_isFormDisabled)
 	{
 		<ChapterSelector @bind-SelectedChapterId="_bindModel.UserChapterId"
 		                 OnChaptersLoaded="OnChaptersLoaded" />

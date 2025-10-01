@@ -76,7 +76,7 @@ public partial class UserCreate : AuthenticationRequiredComponentBase
 
         var createUserInputModel = new CreateUserInputModel
         (
-            _bindModel.UserChapterId,
+            FonbecClaim.ChapterId ?? _bindModel.UserChapterId,
             _bindModel.UserFirstName,
             _bindModel.UserLastName,
             _bindModel.UserNickName,
