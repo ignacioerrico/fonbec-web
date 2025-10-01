@@ -81,7 +81,8 @@
 	                              FilterBy="@(vm => vm.UserRole)" />
                 </FilterTemplate>
             </PropertyColumn>
-            <PropertyColumn Property="vm => vm.UserChapterName" Title="Filial">
+            <PropertyColumn Property="vm => vm.UserChapterName" Title="Filial"
+                            Hidden="@(FonbecClaim.ChapterId is not null)">
 	            <EditTemplate>
 	            </EditTemplate>
                 <FilterTemplate>

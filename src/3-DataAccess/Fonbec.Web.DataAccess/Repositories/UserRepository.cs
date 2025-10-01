@@ -14,7 +14,7 @@ public interface IUserRepository
     Task<FonbecWebUser?> ValidateUniqueEmailAsync(string userEmail);
     Task<FonbecWebUser?> ValidateUniqueFullNameAsync(string firstName, string lastName);
     Task<(bool isPasswordValid, List<string> errors)> ValidatePasswordAsync(string password);
-    Task<AllUsersDataModel> GetAllUsersAsync();
+    Task<AllUsersDataModel> GetAllUsersAsync(int? chapterId);
     Task<IEnumerable<SelectableDataModel<int>>> GetAllUsersInRoleForSelectionAsync(string role);
     Task<(int userId, List<string> errors)> CreateUserAsync(CreateUserInputDataModel model);
     Task<bool> UpdateUserAsync(UpdateUserInputDataModel model);
@@ -58,7 +58,7 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
         return (isPasswordValid, errors);
     }
 
-    public async Task<AllUsersDataModel> GetAllUsersAsync()
+    public async Task<AllUsersDataModel> GetAllUsersAsync(int? chapterId)
     {
         var result = new AllUsersDataModel();
 
@@ -67,6 +67,9 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
             .Include(u => u.LastUpdatedBy)
             .Include(u => u.DisabledBy)
             .Include(u => u.ReenabledBy)
+            .Where(u => chapterId == null
+                        || (u.ChapterId != null
+                            && u.ChapterId.Value == chapterId.Value))
             .Select(u =>
                 new AllUsersUserDataModel
                 {

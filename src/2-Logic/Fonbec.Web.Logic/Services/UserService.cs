@@ -17,7 +17,7 @@ public interface IUserService
 {
     Task<ValidateUniqueEmailOutputModel> ValidateUniqueEmailAsync(string userEmail);
     Task<ValidateUniqueFullNameOutputModel> ValidateUniqueFullNameAsync(string firstName, string lastName);
-    Task<List<UsersListViewModel>> GetAllUsersAsync();
+    Task<List<UsersListViewModel>> GetAllUsersAsync(int? chapterId);
     Task<List<SelectableModel<int>>> GetAllUsersInRoleForSelectionAsync(string role);
     Task<(int userId, List<string> errors)> CreateUserAsync(CreateUserInputModel model);
     Task<bool> UpdateUserAsync(UpdateUserInputModel model);
@@ -59,9 +59,9 @@ public class UserService(
         return new ValidateUniqueFullNameOutputModel(isFullNameUnique);
     }
 
-    public async Task<List<UsersListViewModel>> GetAllUsersAsync()
+    public async Task<List<UsersListViewModel>> GetAllUsersAsync(int? chapterId)
     {
-        var allUsersDataModel = await userRepository.GetAllUsersAsync();
+        var allUsersDataModel = await userRepository.GetAllUsersAsync(chapterId);
         var allUsers = allUsersDataModel.Users.Adapt<List<UsersListViewModel>>();
 
         foreach (var user in allUsers)

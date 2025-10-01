@@ -31,7 +31,7 @@ public partial class UsersList : AuthenticationRequiredComponentBase
 
         Loading = true;
 
-        _viewModel = await UserService.GetAllUsersAsync();
+        _viewModel = await UserService.GetAllUsersAsync(FonbecClaim.ChapterId);
 
         _allChapters = _viewModel.Select(vm => vm.UserChapterName)
             .Distinct()
