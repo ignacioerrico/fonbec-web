@@ -36,7 +36,7 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
     {
         var fonbecUser = await userManager.Users.FirstOrDefaultAsync(u =>
             u.FirstName == firstName
-            || u.LastName == lastName);
+            && u.LastName == lastName);
         return fonbecUser;
     }
 
