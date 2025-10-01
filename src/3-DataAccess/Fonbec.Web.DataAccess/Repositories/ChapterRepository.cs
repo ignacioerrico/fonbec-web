@@ -7,12 +7,24 @@ namespace Fonbec.Web.DataAccess.Repositories;
 
 public interface IChapterRepository
 {
+    Task<string?> GetChapterNameAsync(int chapterId);
     Task<List<AllChaptersDataModel>> GetAllChaptersAsync();
     Task<int> CreateChapterAsync(CreateChapterInputDataModel dataModel);
 }
 
 public class ChapterRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : IChapterRepository
 {
+    public async Task<string?> GetChapterNameAsync(int chapterId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+        
+        var chapter = await db.Chapters.FindAsync(chapterId);
+            
+        return chapter is { IsActive: true }
+            ? chapter.Name
+            : null;
+    }
+
     public async Task<List<AllChaptersDataModel>> GetAllChaptersAsync()
     {
         await using var db = await dbContext.CreateDbContextAsync();

@@ -84,7 +84,7 @@ public partial class UserCreate : AuthenticationRequiredComponentBase
             _bindModel.UserEmail,
             _bindModel.UserPhoneNumber,
             _bindModel.UserRole,
-            CurrentUserId
+            FonbecClaim.UserId
         );
 
         var (createdUserId, errors) = await UserService.CreateUserAsync(createUserInputModel);

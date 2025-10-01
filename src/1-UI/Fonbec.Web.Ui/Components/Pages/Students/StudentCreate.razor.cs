@@ -55,7 +55,7 @@ public partial class StudentCreate : AuthenticationRequiredComponentBase
             _bindModel.StudentSecondarySchoolStartYear,
             _bindModel.StudentUniversityStartYear,
             _bindModel.FacilitatorId,
-            CurrentUserId);
+            FonbecClaim.UserId);
 
         var result = await StudentService.CreateStudentAsync(createStudentInputModel);
         if (!result.AnyAffectedRows)

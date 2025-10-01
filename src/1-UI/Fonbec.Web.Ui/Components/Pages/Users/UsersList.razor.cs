@@ -57,7 +57,7 @@ public partial class UsersList : AuthenticationRequiredComponentBase
             viewModel.UserGender,
             viewModel.UserEmail,
             viewModel.UserPhoneNumber,
-            CurrentUserId
+            FonbecClaim.UserId
         );
 
         var userUpdatedSuccessfully = await UserService.UpdateUserAsync(updateUserInputModel);
@@ -96,7 +96,7 @@ public partial class UsersList : AuthenticationRequiredComponentBase
             return;
         }
 
-        var disableUserInputModel = new DisableUserInputModel(viewModel.UserId, DisableUser: true, CurrentUserId);
+        var disableUserInputModel = new DisableUserInputModel(viewModel.UserId, DisableUser: true, FonbecClaim.UserId);
 
         var errors = await UserService.DisableUserAsync(disableUserInputModel);
 
@@ -120,7 +120,7 @@ public partial class UsersList : AuthenticationRequiredComponentBase
             return;
         }
 
-        var disableUserInputModel = new DisableUserInputModel(viewModel.UserId, DisableUser: false, CurrentUserId);
+        var disableUserInputModel = new DisableUserInputModel(viewModel.UserId, DisableUser: false, FonbecClaim.UserId);
         
         var errors = await UserService.DisableUserAsync(disableUserInputModel);
 

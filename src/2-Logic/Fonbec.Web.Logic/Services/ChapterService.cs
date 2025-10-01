@@ -9,6 +9,7 @@ namespace Fonbec.Web.Logic.Services;
 
 public interface IChapterService
 {
+    Task<string?> GetChapterNameAsync(int chapterId);
     Task<List<ChaptersListViewModel>> GetAllChaptersAsync();
     Task<List<SelectableModel<int>>> GetAllChaptersForSelectionAsync();
     Task<int> CreateChapterAsync(CreateChapterInputModel inputModel);
@@ -16,6 +17,11 @@ public interface IChapterService
 
 public class ChapterService(IChapterRepository chapterRepository) : IChapterService
 {
+    public async Task<string?> GetChapterNameAsync(int chapterId)
+    {
+        return await chapterRepository.GetChapterNameAsync(chapterId);
+    }
+
     public async Task<List<ChaptersListViewModel>> GetAllChaptersAsync()
     {
         var allChaptersDataModel = await chapterRepository.GetAllChaptersAsync();
