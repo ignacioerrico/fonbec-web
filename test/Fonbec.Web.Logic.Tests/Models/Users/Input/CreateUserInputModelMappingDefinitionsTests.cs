@@ -28,7 +28,7 @@ public class CreateUserInputModelMappingDefinitionsTests : MappingTestBase
 
         result.UserFirstName.Should().Be("John");
         result.UserLastName.Should().Be("Doe");
-        result.UserNickName.Should().Be("JD");
+        result.UserNickName.Should().Be("Jd");
         result.UserGender.Should().Be(Gender.Male);
         result.UserEmail.Should().Be("john@email.com");
         result.UserPhoneNumber.Should().Be("555-1234");

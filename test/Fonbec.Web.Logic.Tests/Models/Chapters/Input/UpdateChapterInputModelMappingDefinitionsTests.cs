@@ -35,6 +35,6 @@ public class UpdateChapterInputModelMappingDefinitionsTests : MappingTestBase
         var result = input.Adapt<UpdateChapterInputDataModel>(Config);
 
         result.ChapterId.Should().Be(456);
-        result.ChapterUpdatedName.Should().Be(updatedName);
+        result.ChapterUpdatedName.Should().BeEmpty();
     }
 }

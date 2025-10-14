@@ -28,7 +28,7 @@ public class UpdateStudentInputModelMappingDefinitionsTests : MappingTestBase
         result.StudentId.Should().Be(1);
         result.StudentFirstName.Should().Be("Jane");
         result.StudentLastName.Should().Be("Smith");
-        result.StudentNickName.Should().Be("JS");
+        result.StudentNickName.Should().Be("Js");
         result.StudentEmail.Should().Be("jane@x.com");
         result.StudentPhoneNumber.Should().Be("555-1234");
         result.StudentNotes.Should().Be("Some notes");

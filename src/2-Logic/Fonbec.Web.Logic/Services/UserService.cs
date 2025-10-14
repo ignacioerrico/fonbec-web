@@ -3,6 +3,7 @@ using Fonbec.Web.DataAccess.DataModels.Users.Input;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Authorization;
 using Fonbec.Web.Logic.Constants;
+using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models;
 using Fonbec.Web.Logic.Models.Users;
 using Fonbec.Web.Logic.Models.Users.Input;
@@ -51,8 +52,8 @@ public class UserService(
 
     public async Task<ValidateUniqueFullNameOutputModel> ValidateUniqueFullNameAsync(string firstName, string lastName)
     {
-        var normalizedFirstName = firstName;
-        var normalizedLastName = lastName;
+        var normalizedFirstName = firstName.NormalizeText();
+        var normalizedLastName = lastName.NormalizeText();
         var fonbecUser = await userRepository.ValidateUniqueFullNameAsync(normalizedFirstName, normalizedLastName);
 
         // Full name is unique if no user is found with the given full name
