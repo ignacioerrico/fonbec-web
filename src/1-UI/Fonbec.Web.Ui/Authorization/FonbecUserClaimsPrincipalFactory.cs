@@ -55,7 +55,7 @@ public class FonbecUserClaimsPrincipalFactory(
 
             var chapterName = await chapterService.GetChapterNameAsync(chapterId);
             
-            claim = new Claim(FonbecWebUserCustomClaim.ChapterName, chapterName);
+            claim = new Claim(FonbecWebUserCustomClaim.ChapterName, chapterName ?? string.Empty);
             claimsIdentity.AddClaim(claim);
         }
 
