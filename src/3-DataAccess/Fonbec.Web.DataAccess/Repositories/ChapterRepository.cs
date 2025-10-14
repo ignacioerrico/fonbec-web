@@ -10,6 +10,7 @@ public interface IChapterRepository
     Task<string?> GetChapterNameAsync(int chapterId);
     Task<List<AllChaptersDataModel>> GetAllChaptersAsync();
     Task<int> CreateChapterAsync(CreateChapterInputDataModel dataModel);
+    Task<int> UpdateChapterAsync(UpdateChapterInputDataModel dataModel);
 }
 
 public class ChapterRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : IChapterRepository
@@ -56,8 +57,25 @@ public class ChapterRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             Name = dataModel.ChapterName,
             CreatedById = dataModel.ChapterCreatedById,
         };
+        
         db.Chapters.Add(chapter);
+        return await db.SaveChangesAsync();
+    }
 
+    public async Task<int> UpdateChapterAsync(UpdateChapterInputDataModel dataModel)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var chapterDb = await db.Chapters.FindAsync(dataModel.ChapterId);
+
+        if (chapterDb is not { IsActive: true })
+        {
+            return 0;
+        }
+
+        chapterDb.Name = dataModel.ChapterUpdatedName;
+
+        db.Chapters.Update(chapterDb);
         return await db.SaveChangesAsync();
     }
 }

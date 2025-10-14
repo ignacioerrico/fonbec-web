@@ -1,0 +1,19 @@
+﻿using Fonbec.Web.DataAccess.DataModels.Chapters.Input;
+using Mapster;
+
+namespace Fonbec.Web.Logic.Models.Chapters.Input;
+
+public record UpdateChapterInputModel(
+    int ChapterId,
+    string ChapterUpdatedName
+);
+
+public class UpdateChapterInputModelMappingDefinitions : IRegister
+{
+    public void Register(TypeAdapterConfig config)
+    {
+        config.NewConfig<UpdateChapterInputModel, UpdateChapterInputDataModel>()
+            .Map(dest => dest.ChapterId, src => src.ChapterId)
+            .Map(dest => dest.ChapterUpdatedName, src => src.ChapterUpdatedName);
+    }
+}

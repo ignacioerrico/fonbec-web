@@ -6,6 +6,8 @@ public static class NavRoutes
 
     public const string Chapters = "/filiales";
 
+    public const string ChapterCreate = $"{Chapters}/alta";
+
     public const string Users = "/usuarios";
 
     public const string UserCreate = $"{Users}/alta";

@@ -1,0 +1,29 @@
+﻿@attribute [Route(NavRoutes.ChapterCreate)]
+@attribute [Authorize(Policy = nameof(ChapterCreate))]
+@inherits AuthenticationRequiredComponentBase
+
+@using Fonbec.Web.DataAccess.Constants
+
+<PageHeader Title="Alta de filial" />
+
+<LoadingIndicator Loading="Loading" />
+
+<MudForm @bind-IsValid="@_formValidationSucceeded">
+	<MudTextField T="string" Label="Nombre" @ref="_mudTextFieldName" @bind-Value="_bindModel.ChapterName" Immediate="true"
+	              Required="true" RequiredError="Este es un campo obligatorio."
+	              MaxLength="MaxLength.Chapter.Name"
+				  OnKeyDown="OnKeyDownAsync" />
+</MudForm>
+
+<MudStack Row="true" Class="pt-4">
+	<MudButton OnClick="Save" Disabled="SaveButtonDisabled"
+	           Variant="Variant.Filled" Color="Color.Primary">
+		Crear
+	</MudButton>
+	<MudButton Href="@NavRoutes.Chapters"
+	           Variant="Variant.Filled" Color="Color.Default" Class="ms-4">
+		Cancelar
+	</MudButton>
+</MudStack>
+
+<LoadingIndicator Loading="_saving" LoadingText="Guardando los datos" />

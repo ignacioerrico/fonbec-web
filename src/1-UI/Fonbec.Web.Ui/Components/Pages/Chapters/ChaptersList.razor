@@ -1,24 +1,69 @@
 ﻿@attribute [Route(NavRoutes.Chapters)]
 @attribute [Authorize(Policy = nameof(ChaptersList))]
+@inherits AuthenticationRequiredComponentBase
 
-<PageTitle>Filiales</PageTitle>
+@using Fonbec.Web.Logic.Models.Chapters
 
-<MudText Typo="Typo.h3" GutterBottom="true">Filiales</MudText>
+<PageHeader Title="Filiales" />
 
-<MudTable Items="_viewModel" Hover="true" Striped="true" Dense="true">
-    <HeaderContent>
-        <MudTh>Nombre</MudTh>
-    </HeaderContent>
-    <RowTemplate>
-        <MudTd DataLabel="Nombre">
-            <AuditableItemDisplay Id="@context.ChapterId"
-                                  ItemName="@context.ChapterName"
-								  IsActive="@context.IsChapterActive"
-                                  AuditableViewModel="@context" />
-        </MudTd>
-    </RowTemplate>
-</MudTable>
-
-<AuthorizeView Policy="@nameof(CreateChapter)">
-	<CreateChapter OnChapterCreated="RefreshChapters"/>
+<AuthorizeView Policy="@nameof(ChapterCreate)">
+	<MudTooltip Text="Alta de filial"
+	            Arrow="true" Placement="Placement.Right"
+	            Color="Color.Primary">
+		<MudFab Href="@NavRoutes.ChapterCreate"
+		        StartIcon="@Icons.Material.Filled.Add"
+		        Color="Color.Primary" />
+	</MudTooltip>
 </AuthorizeView>
+
+<LoadingIndicator Loading="Loading"
+                  If="!_viewModels.Any()"
+                  ThenDisplay="No hay filiales." />
+
+@if (_viewModels.Any())
+{
+	<MudDataGrid T="ChaptersListViewModel"
+	             Items="_viewModels"
+	             Dense="true" Hover="true" Striped="true" Bordered="true"
+	             ReadOnly="false"
+	             CommittedItemChanges="@(async viewModel => await CommittedItemChangesAsync(viewModel))"
+	             EditMode="DataGridEditMode.Form"
+	             EditTrigger="DataGridEditTrigger.Manual"
+	             QuickFilter="Filter"
+	             Filterable="true"
+	             FilterMode="DataGridFilterMode.ColumnFilterRow"
+	             FilterCaseSensitivity="DataGridFilterCaseSensitivity.CaseInsensitive"
+	             SortMode="SortMode.Multiple"
+	             Class="mt-4">
+		<ToolBarContent>
+			<MudTextField T="string" @bind-Value="_searchString"
+			              Placeholder="Buscar"
+			              Clearable="true" Immediate="true"
+			              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"/>
+		</ToolBarContent>
+		<Columns>
+			<PropertyColumn Property="vm => vm.ChapterName" Title="Nombre">
+				<CellTemplate>
+					<AuditableItemDisplay Id="@context.Item.ChapterId"
+					                      ItemName="@context.Item.ChapterName"
+					                      IsActive="@context.Item.IsChapterActive"
+					                      AuditableViewModel="@context.Item"/>
+				</CellTemplate>
+			</PropertyColumn>
+			<TemplateColumn Title="Acciones" Filterable="false" Sortable="false">
+				<CellTemplate>
+					<AuthorizeView Policy="@nameof(ChapterCreate)" Context="innerContext">
+						<MudTooltip Text="Editar" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
+							<MudIconButton OnClick="@context.Actions.StartEditingItemAsync"
+							               Disabled="@(!context.Item.IsChapterActive)"
+							               Icon="@Icons.Material.Outlined.Edit" Size="@Size.Small" Color="Color.Primary" />
+						</MudTooltip>
+					</AuthorizeView>
+				</CellTemplate>
+			</TemplateColumn>
+		</Columns>
+		<PagerContent>
+			<MudDataGridPager T="ChaptersListViewModel" RowsPerPageString="Filas por página:" InfoFormat="{first_item}-{last_item} of {all_items}" />
+		</PagerContent>
+	</MudDataGrid>
+}
