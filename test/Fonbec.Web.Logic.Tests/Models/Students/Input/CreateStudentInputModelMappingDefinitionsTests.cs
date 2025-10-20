@@ -31,7 +31,7 @@ public class CreateStudentInputModelMappingDefinitionsTests : MappingTestBase
         result.ChapterId.Should().Be(1);
         result.StudentFirstName.Should().Be("Jane");
         result.StudentLastName.Should().Be("Smith");
-        result.StudentNickName.Should().Be("JS");
+        result.StudentNickName.Should().Be("Js");
         result.StudentGender.Should().Be(Gender.Female);
         result.StudentEmail.Should().Be("jane@x.com");
         result.StudentPhoneNumber.Should().Be("555-1234");

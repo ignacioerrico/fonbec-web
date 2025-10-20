@@ -1,4 +1,5 @@
 ﻿using Fonbec.Web.DataAccess.DataModels.Chapters.Input;
+using Fonbec.Web.Logic.ExtensionMethods;
 using Mapster;
 
 namespace Fonbec.Web.Logic.Models.Chapters.Input;
@@ -13,7 +14,7 @@ public class CreateChapterInputModelMappingDefinitions : IRegister
     public void Register(TypeAdapterConfig config)
     {
         config.NewConfig<CreateChapterInputModel, CreateChapterInputDataModel>()
-            .Map(dest => dest.ChapterName, src => src.ChapterName)
+            .Map(dest => dest.ChapterName, src => src.ChapterName.NormalizeText())
             .Map(dest => dest.ChapterCreatedById, src => src.ChapterCreatedById);
     }
 }

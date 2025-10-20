@@ -1,5 +1,6 @@
 ﻿using Fonbec.Web.DataAccess.DataModels.Students.Input;
 using Fonbec.Web.DataAccess.Entities.Enums;
+using Fonbec.Web.Logic.ExtensionMethods;
 using Mapster;
 
 namespace Fonbec.Web.Logic.Models.Students.Input;
@@ -25,9 +26,9 @@ public class CreateStudentInputModelMappingDefinitions : IRegister
     {
         config.NewConfig<CreateStudentInputModel, CreateStudentInputDataModel>()
             .Map(dest => dest.ChapterId, src => src.ChapterId)
-            .Map(dest => dest.StudentFirstName, src => src.StudentFirstName)
-            .Map(dest => dest.StudentLastName, src => src.StudentLastName)
-            .Map(dest => dest.StudentNickName, src => src.StudentNickName,
+            .Map(dest => dest.StudentFirstName, src => src.StudentFirstName.NormalizeText())
+            .Map(dest => dest.StudentLastName, src => src.StudentLastName.NormalizeText())
+            .Map(dest => dest.StudentNickName, src => src.StudentNickName.NormalizeText(),
                 src => src.StudentNickName.Trim() != string.Empty)
             .Map(dest => dest.StudentGender, src => src.StudentGender)
             .Map(dest => dest.StudentEmail, src => src.StudentEmail,

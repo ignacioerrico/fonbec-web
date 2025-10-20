@@ -19,4 +19,22 @@ public class StringExtensionMethodsTests
         // Assert
         expected.Should().Be(actual);
     }
+
+    [Theory]
+    [InlineData("María Elena")]
+    [InlineData("  María   Elena  ")]
+    [InlineData("MARÍA  ELENA")]
+    [InlineData("maría  elena")]
+    [InlineData("MarÍA  eLenA")]
+    public void NormalizeText_Success(string source)
+    {
+        // Arrange
+        const string expected = "María Elena";
+
+        // Act
+        var actual = source.NormalizeText();
+
+        // Assert
+        actual.Should().Be(expected);
+    }
 }

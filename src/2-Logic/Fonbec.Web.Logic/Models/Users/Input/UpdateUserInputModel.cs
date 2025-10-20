@@ -1,5 +1,6 @@
 ﻿using Fonbec.Web.DataAccess.DataModels.Users.Input;
 using Fonbec.Web.DataAccess.Entities.Enums;
+using Fonbec.Web.Logic.ExtensionMethods;
 using Mapster;
 
 namespace Fonbec.Web.Logic.Models.Users.Input;
@@ -21,9 +22,9 @@ public class UpdateUserInputModelMappingDefinitions : IRegister
     {
         config.NewConfig<UpdateUserInputModel, UpdateUserInputDataModel>()
             .Map(dest => dest.UserId, src => src.UserId)
-            .Map(dest => dest.UserFirstName, src => src.UserFirstName)
-            .Map(dest => dest.UserLastName, src => src.UserLastName)
-            .Map(dest => dest.UserNickName, src => src.UserNickName,
+            .Map(dest => dest.UserFirstName, src => src.UserFirstName.NormalizeText())
+            .Map(dest => dest.UserLastName, src => src.UserLastName.NormalizeText())
+            .Map(dest => dest.UserNickName, src => src.UserNickName.NormalizeText(),
                 src => !string.IsNullOrWhiteSpace(src.UserNickName))
             .Map(dest => dest.Gender, src => src.Gender)
             .Map(dest => dest.UserEmail, src => src.UserEmail)

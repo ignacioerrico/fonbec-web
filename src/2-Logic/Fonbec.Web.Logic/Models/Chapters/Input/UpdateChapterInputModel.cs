@@ -1,4 +1,5 @@
 ﻿using Fonbec.Web.DataAccess.DataModels.Chapters.Input;
+using Fonbec.Web.Logic.ExtensionMethods;
 using Mapster;
 
 namespace Fonbec.Web.Logic.Models.Chapters.Input;
@@ -14,6 +15,6 @@ public class UpdateChapterInputModelMappingDefinitions : IRegister
     {
         config.NewConfig<UpdateChapterInputModel, UpdateChapterInputDataModel>()
             .Map(dest => dest.ChapterId, src => src.ChapterId)
-            .Map(dest => dest.ChapterUpdatedName, src => src.ChapterUpdatedName);
+            .Map(dest => dest.ChapterUpdatedName, src => src.ChapterUpdatedName.NormalizeText());
     }
 }
