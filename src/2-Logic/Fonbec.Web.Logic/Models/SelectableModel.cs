@@ -1,11 +1,13 @@
 ﻿namespace Fonbec.Web.Logic.Models;
 
-public class SelectableModel<TKey>(TKey key, string displayName) : IEquatable<SelectableModel<TKey>>
+public class SelectableModel<TKey>(TKey key, string displayName, string displayDescription) : IEquatable<SelectableModel<TKey>>
     where TKey : struct
 {
     public TKey Key { get; init; } = key;
 
     public string DisplayName { get; set; } = displayName;
+
+    public string DisplayDescription { get; set; } = displayDescription;
 
     public override string ToString() => DisplayName;
 

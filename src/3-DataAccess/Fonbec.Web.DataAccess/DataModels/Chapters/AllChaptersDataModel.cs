@@ -9,4 +9,5 @@ public class AllChaptersDataModel(Auditable auditable) : AuditableDataModel(audi
     public string ChapterName { get; set; } = string.Empty;
 
     public bool IsChapterActive { get; set; }
+    public string? ChapterDescription { get; set; } = string.Empty;
 }
