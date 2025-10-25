@@ -12,7 +12,8 @@ public class UpdateChapterInputModelMappingDefinitionsTests : MappingTestBase
     {
         var input = new UpdateChapterInputModel(
             ChapterId: 123,
-            ChapterUpdatedName: "Updated Chapter Name"
+            ChapterUpdatedName: "Updated Chapter Name",
+            ChapterUpdatedDescription: "Some description"
         );
 
         var result = input.Adapt<UpdateChapterInputDataModel>(Config);
@@ -29,7 +30,8 @@ public class UpdateChapterInputModelMappingDefinitionsTests : MappingTestBase
     {
         var input = new UpdateChapterInputModel(
             ChapterId: 456,
-            ChapterUpdatedName: updatedName!
+            ChapterUpdatedName: updatedName!,
+            ChapterUpdatedDescription: null
         );
 
         var result = input.Adapt<UpdateChapterInputDataModel>(Config);

@@ -8,7 +8,7 @@ public class SelectableModelTests
     [Fact]
     public void Constructor_Sets_Properties()
     {
-        var model = new SelectableModel<int>(42, "Test");
+        var model = new SelectableModel<int>(42, "Test", "DescTest");
         
         model.Key.Should().Be(42);
         model.DisplayName.Should().Be("Test");
@@ -17,7 +17,7 @@ public class SelectableModelTests
     [Fact]
     public void ToString_Returns_DisplayName()
     {
-        var model = new SelectableModel<int>(1, "Display");
+        var model = new SelectableModel<int>(1, "Display", "DescTest");
 
         model.ToString().Should().Be("Display");
     }
@@ -25,9 +25,9 @@ public class SelectableModelTests
     [Fact]
     public void Equality_Based_On_Key()
     {
-        var a = new SelectableModel<int>(1, "A");
-        var b = new SelectableModel<int>(1, "B");
-        var c = new SelectableModel<int>(2, "A");
+        var a = new SelectableModel<int>(1, "A", "DescA");
+        var b = new SelectableModel<int>(1, "B", "DescB");
+        var c = new SelectableModel<int>(2, "A", "DescC");
 
         (a == b).Should().BeTrue();
         (a != c).Should().BeTrue();
@@ -40,8 +40,8 @@ public class SelectableModelTests
     [Fact]
     public void GetHashCode_Based_On_Key()
     {
-        var a = new SelectableModel<int>(5, "A");
-        var b = new SelectableModel<int>(5, "B");
+        var a = new SelectableModel<int>(5, "A", "DescA");
+        var b = new SelectableModel<int>(5, "B", "DescB");
 
         a.GetHashCode().Should().Be(b.GetHashCode());
     }

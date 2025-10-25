@@ -15,6 +15,7 @@ using Microsoft.EntityFrameworkCore;
 using MudBlazor.Services;
 using MudExtensions.Services;
 
+
 namespace Fonbec.Web.Ui.Configuration;
 
 public static class ConfigureServices
@@ -40,10 +41,9 @@ public static class ConfigureServices
 
         services.AddSingleton<IEmailMessageSender, EmailMessageSender>(); // Sends email messages using Azure Communication Services
         services.AddSingleton<IEmailSender, EmailMessageSenderWrapper>();
-        services.AddSingleton<IEmailSender<FonbecWebUser>, IdentityEmailSender>(); // Used by Identity UI; leverages IEmailSender
-
-        var communicationServiceConnectionString =
-            configuration.GetConnectionString("CommunicationServiceConnectionString");
+        services.AddSingleton<IEmailSender<FonbecWebUser>, IdentityNoOpEmailSender>(); // Used by Identity UI; leverages IEmailSender
+        //Reemplazar por IdentityEmailSender el IdentityNoOpEmailSender
+        string? communicationServiceConnectionString = configuration.GetConnectionString("CommunicationServiceConnectionString");
         services.AddSingleton(_ => new EmailClient(communicationServiceConnectionString));
 
         services.AddScoped<IChapterService, ChapterService>();

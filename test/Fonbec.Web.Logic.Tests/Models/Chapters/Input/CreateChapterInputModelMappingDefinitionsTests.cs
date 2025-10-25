@@ -12,7 +12,8 @@ public class CreateChapterInputModelMappingDefinitionsTests : MappingTestBase
     {
         var input = new CreateChapterInputModel(
             ChapterName: "Chapter X",
-            ChapterCreatedById: 42
+            ChapterCreatedById: 42,
+            ChapterDescription: null
         );
 
         var result = input.Adapt<CreateChapterInputDataModel>(Config);

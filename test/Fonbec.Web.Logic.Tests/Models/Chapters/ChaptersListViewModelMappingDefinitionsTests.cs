@@ -14,7 +14,8 @@ public class ChaptersListViewModelMappingDefinitionsTests : MappingTestBase
         var dataModel = new AllChaptersDataModel(Auditable)
         {
             ChapterId = 314,
-            ChapterName = "Test Chapter"
+            ChapterName = "Test Chapter",
+            ChapterDescription = "A description",
         };
 
         // Act
@@ -23,5 +24,6 @@ public class ChaptersListViewModelMappingDefinitionsTests : MappingTestBase
         // Assert
         viewModel.ChapterId.Should().Be(314);
         viewModel.ChapterName.Should().Be("Test Chapter");
+        viewModel.ChapterDescription.Should().Be("A description");
     }
 }
