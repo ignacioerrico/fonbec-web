@@ -5,5 +5,6 @@ public class UpdateChapterInputDataModel
     public int ChapterId { get; set; }
 
     public string ChapterUpdatedName { get; set; } = null!;
+    
     public string? ChapterUpdatedDescription { get; set; }
 }

@@ -26,4 +26,20 @@ public class ChaptersListViewModelMappingDefinitionsTests : MappingTestBase
         viewModel.ChapterName.Should().Be("Test Chapter");
         viewModel.ChapterDescription.Should().Be("A description");
     }
+
+    [Fact]
+    public void Maps_DataModel_Null_Description_To_ViewModel_EmptyString()
+    {
+        // Arrange
+        var dataModel = new AllChaptersDataModel(Auditable)
+        {
+            ChapterDescription = null,
+        };
+
+        // Act
+        var viewModel = dataModel.Adapt<ChaptersListViewModel>(Config);
+
+        // Assert
+        viewModel.ChapterDescription.Should().BeEmpty();
+    }
 }

@@ -73,12 +73,12 @@ public static class ConfigureServices
     public static void RegisterEntityFrameworkCore(IServiceCollection services, IConfiguration configuration)
     {
         services.AddDbContextFactory<FonbecWebDbContext>(options =>
-        {
-            var connectionString = configuration.GetConnectionString("FonbecWebDbContextConnection") ??
-                                   throw new InvalidOperationException("Connection string 'FonbecWebDbContextConnection' not found.");
+            {
+                var connectionString = configuration.GetConnectionString("FonbecWebDbContextConnection") ??
+                                       throw new InvalidOperationException("Connection string 'FonbecWebDbContextConnection' not found.");
 
-            options.UseSqlServer(connectionString);
-        }
+                options.UseSqlServer(connectionString);
+            }
         );
 
         services.AddDatabaseDeveloperPageExceptionFilter();

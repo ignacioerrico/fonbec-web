@@ -18,6 +18,5 @@ public class UpdateChapterInputModelMappingDefinitions : IRegister
             .Map(dest => dest.ChapterId, src => src.ChapterId)
             .Map(dest => dest.ChapterUpdatedName, src => src.ChapterUpdatedName.NormalizeText())
             .Map(dest => dest.ChapterUpdatedDescription, src => string.IsNullOrWhiteSpace(src.ChapterUpdatedDescription) ? null : src.ChapterUpdatedDescription.Trim());
-
     }
 }

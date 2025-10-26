@@ -13,7 +13,8 @@
 	              Required="true" RequiredError="Este es un campo obligatorio."
 	              MaxLength="MaxLength.Chapter.Name"
 				  OnKeyDown="OnKeyDownAsync" />
-	<MudTextField T="string" Label="Descripcion" @ref="_mudTextFieldDescription" @bind-Value="_bindModel.ChapterDescription" Immediate="true"
+    
+    <MudTextField T="string" Label="Descripción" @bind-Value="_bindModel.ChapterDescription" Immediate="true"
 				  Required="false"
 				  MaxLength="MaxLength.Chapter.Description"
 				  OnKeyDown="OnKeyDownAsync" />
