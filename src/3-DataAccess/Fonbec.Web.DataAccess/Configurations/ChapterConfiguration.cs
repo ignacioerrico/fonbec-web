@@ -15,6 +15,10 @@ internal class ChapterConfiguration : AuditableEntityTypeConfiguration<Chapter>
             .IsRequired()
             .HasMaxLength(MaxLength.Chapter.Name);
 
+        builder.Property(ch => ch.Description)
+            .IsRequired(false)
+            .HasMaxLength(MaxLength.Chapter.Description);
+
         base.Configure(builder);
     }
 }

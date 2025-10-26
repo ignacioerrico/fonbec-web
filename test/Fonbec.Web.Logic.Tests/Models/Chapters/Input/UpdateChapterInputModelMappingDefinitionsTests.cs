@@ -8,33 +8,38 @@ namespace Fonbec.Web.Logic.Tests.Models.Chapters.Input;
 public class UpdateChapterInputModelMappingDefinitionsTests : MappingTestBase
 {
     [Fact]
-    public void Maps_All_Fields_Correctly()
+    public void Maps_InputModel_To_InputDataModel()
     {
         var input = new UpdateChapterInputModel(
             ChapterId: 123,
-            ChapterUpdatedName: "Updated Chapter Name"
+            ChapterUpdatedName: "Updated Chapter Name",
+            ChapterUpdatedDescription: "Some description"
         );
 
         var result = input.Adapt<UpdateChapterInputDataModel>(Config);
 
         result.ChapterId.Should().Be(123);
         result.ChapterUpdatedName.Should().Be("Updated Chapter Name");
+        result.ChapterUpdatedDescription.Should().Be("Some description");
     }
 
     [Theory]
-    [InlineData(null)]
     [InlineData("")]
+    [InlineData(" ")]
     [InlineData("   ")]
-    public void Maps_ChapterUpdatedName_When_Null_Or_Whitespace(string? updatedName)
+    [InlineData("  \t \n \r ")]
+    public void Maps_ChapterUpdatedDescription_InputModel_EmptyOrWhitespace_To_InputDataModel_Null(string chapterUpdatedDescription)
     {
         var input = new UpdateChapterInputModel(
             ChapterId: 456,
-            ChapterUpdatedName: updatedName!
+            ChapterUpdatedName: "Updated Chapter Name",
+            ChapterUpdatedDescription: chapterUpdatedDescription
         );
 
         var result = input.Adapt<UpdateChapterInputDataModel>(Config);
 
         result.ChapterId.Should().Be(456);
-        result.ChapterUpdatedName.Should().BeEmpty();
+        result.ChapterUpdatedName.Should().Be("Updated Chapter Name");
+        result.ChapterUpdatedDescription.Should().BeNull();
     }
 }

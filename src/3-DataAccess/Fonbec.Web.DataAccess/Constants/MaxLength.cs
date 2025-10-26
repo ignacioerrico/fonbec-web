@@ -15,5 +15,6 @@ public static class MaxLength
     public static class Chapter
     {
         public const int Name = 30;
+        public const int Description = 127;
     }
 }

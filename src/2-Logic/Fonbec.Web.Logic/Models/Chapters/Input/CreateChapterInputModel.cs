@@ -6,6 +6,7 @@ namespace Fonbec.Web.Logic.Models.Chapters.Input;
 
 public record CreateChapterInputModel(
     string ChapterName,
+    string ChapterDescription,
     int ChapterCreatedById
 );
 
@@ -15,6 +16,7 @@ public class CreateChapterInputModelMappingDefinitions : IRegister
     {
         config.NewConfig<CreateChapterInputModel, CreateChapterInputDataModel>()
             .Map(dest => dest.ChapterName, src => src.ChapterName.NormalizeText())
+            .Map(dest => dest.ChapterDescription, src => string.IsNullOrWhiteSpace(src.ChapterDescription) ? null : src.ChapterDescription.Trim())
             .Map(dest => dest.ChapterCreatedById, src => src.ChapterCreatedById);
     }
 }
