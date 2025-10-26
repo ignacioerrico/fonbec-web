@@ -23,12 +23,28 @@ public class UpdateChapterInputModelMappingDefinitionsTests : MappingTestBase
         result.ChapterUpdatedDescription.Should().Be("Some description");
     }
 
+    [Fact]
+    public void Maps_InputModel_ChapterUpdatedDescription_To_Trimmed_InputDataModel()
+    {
+        var input = new UpdateChapterInputModel(
+            ChapterId: 123,
+            ChapterUpdatedName: "Updated Chapter Name",
+            ChapterUpdatedDescription: "  A description with trailing spaces   "
+        );
+
+        var result = input.Adapt<UpdateChapterInputDataModel>(Config);
+
+        result.ChapterId.Should().Be(123);
+        result.ChapterUpdatedName.Should().Be("Updated Chapter Name");
+        result.ChapterUpdatedDescription.Should().Be("A description with trailing spaces");
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData(" ")]
     [InlineData("   ")]
     [InlineData("  \t \n \r ")]
-    public void Maps_ChapterUpdatedDescription_InputModel_EmptyOrWhitespace_To_InputDataModel_Null(string chapterUpdatedDescription)
+    public void Maps_EmptyOrWhitespace_InputModel_ChapterUpdatedDescription_To_InputDataModel_Null(string chapterUpdatedDescription)
     {
         var input = new UpdateChapterInputModel(
             ChapterId: 456,
