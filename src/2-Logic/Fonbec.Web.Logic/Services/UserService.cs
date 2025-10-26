@@ -79,7 +79,7 @@ public class UserService(
     public async Task<List<SelectableModel<int>>> GetAllUsersInRoleForSelectionAsync(string role)
     {
         var usersInRole = await userRepository.GetAllUsersInRoleForSelectionAsync(role);
-        return usersInRole.Select(u => new SelectableModel<int>(u.Key, u.Value, u.Value)).ToList();
+        return usersInRole.Select(u => new SelectableModel<int>(u.Key, u.Value)).ToList();
     }
 
     public async Task<GetUserOutputModel> GetUserAsync(int userId)

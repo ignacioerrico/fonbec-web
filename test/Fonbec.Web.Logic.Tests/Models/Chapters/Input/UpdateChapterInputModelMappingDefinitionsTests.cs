@@ -20,6 +20,7 @@ public class UpdateChapterInputModelMappingDefinitionsTests : MappingTestBase
 
         result.ChapterId.Should().Be(123);
         result.ChapterUpdatedName.Should().Be("Updated Chapter Name");
+        result.ChapterUpdatedDescription.Should().Be("Some description");
     }
 
     [Theory]
@@ -38,5 +39,6 @@ public class UpdateChapterInputModelMappingDefinitionsTests : MappingTestBase
 
         result.ChapterId.Should().Be(456);
         result.ChapterUpdatedName.Should().BeEmpty();
+        result.ChapterUpdatedDescription.Should().BeNull();
     }
 }

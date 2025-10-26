@@ -20,5 +20,6 @@ public class CreateChapterInputModelMappingDefinitionsTests : MappingTestBase
 
         result.ChapterName.Should().Be("Chapter X");
         result.ChapterCreatedById.Should().Be(42);
+        result.ChapterDescription.Should().BeNull();
     }
 }

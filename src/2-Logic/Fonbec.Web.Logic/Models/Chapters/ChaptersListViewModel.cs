@@ -9,7 +9,7 @@ public class ChaptersListViewModel : AuditableViewModel
 
     public string ChapterName { get; init; } = string.Empty;
 
-    public string? ChapterDescription { get; set; } = string.Empty;
+    public string ChapterDescription { get; set; } = string.Empty;
 
     public bool IsChapterActive { get; set; }
 }
@@ -22,12 +22,11 @@ public class ChaptersListViewModelMappingDefinitions : IRegister
             .Map(dest => dest.ChapterId, src => src.ChapterId)
             .Map(dest => dest.ChapterName, src => src.ChapterName)
             .Map(dest => dest.IsChapterActive, src => src.IsChapterActive)
-            .Map(dest => dest.ChapterDescription, src => src.ChapterDescription);
+            .Map(dest => dest.ChapterDescription, src => src.ChapterDescription ?? string.Empty);
 
         config.NewConfig<ChaptersListViewModel, SelectableModel<int>>()
             .Map(dest => dest.Key, src => src.ChapterId)
-            .Map(dest => dest.DisplayName, src => src.ChapterName)
-            .Map(dest => dest.DisplayDescription, src => src.ChapterDescription);
+            .Map(dest => dest.DisplayName, src => src.ChapterName);
 
     }
 }

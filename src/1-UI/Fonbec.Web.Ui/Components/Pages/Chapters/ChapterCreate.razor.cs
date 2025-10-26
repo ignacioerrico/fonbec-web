@@ -18,8 +18,6 @@ public partial class ChapterCreate : AuthenticationRequiredComponentBase
 
     private MudTextField<string> _mudTextFieldName = null!;
 
-    private MudTextField<string>? _mudTextFieldDescription;
-
     private bool _saving;
 
     private bool SaveButtonDisabled => Loading
@@ -53,8 +51,8 @@ public partial class ChapterCreate : AuthenticationRequiredComponentBase
 
         var createChapterInputModel = new CreateChapterInputModel(
             _bindModel.ChapterName,
-            FonbecClaim.UserId,
-            _bindModel.ChapterDescription);
+            _bindModel.ChapterDescription,
+            FonbecClaim.UserId);
 
         var result = await ChapterService.CreateChapterAsync(createChapterInputModel);
         if (!result.AnyAffectedRows)
