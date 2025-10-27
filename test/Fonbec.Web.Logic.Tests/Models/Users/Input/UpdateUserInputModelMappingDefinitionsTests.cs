@@ -25,6 +25,7 @@ public class UpdateUserInputModelMappingDefinitionsTests : MappingTestBase
             Gender: Gender.Female,
             UserEmail: "alice@example.com",
             UserPhoneNumber: "555-1234",
+            UserNotes: "Some personal notes",
             UpdatedById: 99
         );
 
@@ -37,6 +38,7 @@ public class UpdateUserInputModelMappingDefinitionsTests : MappingTestBase
         result.Gender.Should().Be(Gender.Female);
         result.UserEmail.Should().Be("alice@example.com");
         result.UserPhoneNumber.Should().Be("555-1234");
+        result.UserNotes.Should().Be("Some personal notes");
         result.UpdatedById.Should().Be(99);
     }
 
@@ -51,6 +53,7 @@ public class UpdateUserInputModelMappingDefinitionsTests : MappingTestBase
             Gender: Gender.Female,
             UserEmail: "alice@example.com",
             UserPhoneNumber: "555-1234",
+            UserNotes: "Some personal notes",
             UpdatedById: 99
         );
 
@@ -71,6 +74,7 @@ public class UpdateUserInputModelMappingDefinitionsTests : MappingTestBase
             Gender: Gender.Female,
             UserEmail: "alice@example.com",
             UserPhoneNumber: "555-1234",
+            UserNotes: "Some personal notes",
             UpdatedById: 99
         );
 
@@ -90,6 +94,7 @@ public class UpdateUserInputModelMappingDefinitionsTests : MappingTestBase
             Gender: Gender.Female,
             UserEmail: "alice@example.com",
             UserPhoneNumber: "555-1234",
+            UserNotes: "Some personal notes",
             UpdatedById: 99
         );
 
@@ -110,6 +115,7 @@ public class UpdateUserInputModelMappingDefinitionsTests : MappingTestBase
             Gender: Gender.Female,
             UserEmail: "alice@example.com",
             UserPhoneNumber: "555-1234",
+            UserNotes: "Some personal notes",
             UpdatedById: 99
         );
 
@@ -131,6 +137,7 @@ public class UpdateUserInputModelMappingDefinitionsTests : MappingTestBase
             Gender: Gender.Unknown,
             UserEmail: "a@b.com",
             UserPhoneNumber: "123",
+            UserNotes: "Some personal notes",
             UpdatedById: 2
         );
 
@@ -150,6 +157,7 @@ public class UpdateUserInputModelMappingDefinitionsTests : MappingTestBase
             Gender: Gender.Unknown,
             UserEmail: "a@b.com",
             UserPhoneNumber: "123",
+            UserNotes: "Some personal notes",
             UpdatedById: 2
         );
 
@@ -169,6 +177,7 @@ public class UpdateUserInputModelMappingDefinitionsTests : MappingTestBase
             Gender: Gender.Unknown,
             UserEmail: "  A@b.Com   ",
             UserPhoneNumber: "555-1234",
+            UserNotes: "Some personal notes",
             UpdatedById: 2
         );
 
@@ -190,6 +199,7 @@ public class UpdateUserInputModelMappingDefinitionsTests : MappingTestBase
             Gender: Gender.Unknown,
             UserEmail: "a@b.com",
             UserPhoneNumber: phone,
+            UserNotes: "Some personal notes",
             UpdatedById: 2
         );
 
@@ -209,11 +219,56 @@ public class UpdateUserInputModelMappingDefinitionsTests : MappingTestBase
             Gender: Gender.Unknown,
             UserEmail: "a@b.com",
             UserPhoneNumber: "  555-1234   ",
+            UserNotes: "Some personal notes",
             UpdatedById: 2
         );
 
         var result = input.Adapt<UpdateUserInputDataModel>(Config);
 
         result.UserPhoneNumber.Should().Be("555-1234");
+    }
+
+    [Fact]
+    public void Maps_InputModel_UserNotes_To_Trimmed_InputDataModel()
+    {
+        var input = new UpdateUserInputModel(
+            UserId: 1,
+            UserFirstName: "A",
+            UserLastName: "B",
+            UserNickName: "Nick",
+            Gender: Gender.Unknown,
+            UserEmail: "a@b.com",
+            UserPhoneNumber: "555-1234",
+            UserNotes: "  Some personal notes   ",
+            UpdatedById: 2
+        );
+
+        var result = input.Adapt<UpdateUserInputDataModel>(Config);
+
+        result.UserNotes.Should().Be("Some personal notes");
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData("   ")]
+    [InlineData("  \t \n \r ")]
+    public void Maps_EmptyOrWhitespace_InputModel_UserNotes_To_InputDataModel_Null(string userNotes)
+    {
+        var input = new UpdateUserInputModel(
+            UserId: 1,
+            UserFirstName: "A",
+            UserLastName: "B",
+            UserNickName: "Nick",
+            Gender: Gender.Unknown,
+            UserEmail: "a@b.com",
+            UserPhoneNumber: "555-1234",
+            UserNotes: userNotes,
+            UpdatedById: 2
+        );
+
+        var result = input.Adapt<UpdateUserInputDataModel>(Config);
+
+        result.UserNotes.Should().BeNull();
     }
 }

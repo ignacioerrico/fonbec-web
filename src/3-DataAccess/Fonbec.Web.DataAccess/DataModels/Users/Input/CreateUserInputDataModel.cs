@@ -20,6 +20,8 @@ public class CreateUserInputDataModel
 
     public string? UserPhoneNumber { get; set; }
 
+    public string? UserNotes { get; set; }
+
     public int CreatedById { get; set; }
 
     public string GeneratedPassword { get; set; } = null!;

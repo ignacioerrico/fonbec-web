@@ -4,18 +4,28 @@
 <MudStack Row="true">
     <MudTooltip Delay="500" Arrow="true" Placement="Placement.Bottom" Color="Color.Dark">
         <ChildContent>
-	        @if (@IsActive)
-	        {
-		        <MudText Color="@Color">
-	                <strong>@ItemName</strong>
-	            </MudText>
-            }
-	        else
-	        {
-		        <MudText>
-			        <em>@ItemName</em>
-		        </MudText>
-	        }        </ChildContent>
+            <MudStack Row="true">
+                @if (@IsActive)
+	            {
+		            <MudText Color="@Color">
+	                    <strong>@ItemName</strong>
+	                </MudText>
+                }
+	            else
+	            {
+		            <MudText>
+			            <em>@ItemName</em>
+		            </MudText>
+	            }
+                
+                @if (!string.IsNullOrWhiteSpace(AuditableViewModel.Notes))
+                {
+                    <MudTooltip Text="@AuditableViewModel.Notes" Placement="Placement.Top">
+                        <MudIconButton Icon="@Icons.Material.Filled.Info" Size="Size.Small"/>
+                    </MudTooltip>
+                }
+            </MudStack>
+        </ChildContent>
         <TooltipContent>
             <MudText Align="Align.Left" Typo="Typo.body1">
                 @ItemName (ID: @Id)

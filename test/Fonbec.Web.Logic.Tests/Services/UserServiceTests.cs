@@ -1,5 +1,7 @@
 using System.Security.Claims;
 using FluentAssertions;
+using Fonbec.Web.DataAccess.DataModels.Users.Input;
+using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Authorization;
 using Fonbec.Web.Logic.Constants;
@@ -135,15 +137,16 @@ public class UserServiceTests
             UserFirstName: "John",
             UserLastName: "Doe",
             UserNickName: "JD",
-            UserGender: Fonbec.Web.DataAccess.Entities.Enums.Gender.Male,
+            UserGender: Gender.Male,
             UserEmail: "john@doe.com",
             UserPhoneNumber: "1234567890",
+            UserNotes: "New user notes",
             UserRole: "Role1",
             CreatedById: 99
         );
 
         passwordGen.GeneratePassword().Returns("TestPassword");
-        userRepo.CreateUserAsync(Arg.Any<Fonbec.Web.DataAccess.DataModels.Users.Input.CreateUserInputDataModel>()).Returns((42, new List<string>()));
+        userRepo.CreateUserAsync(Arg.Any<CreateUserInputDataModel>()).Returns((42, new List<string>()));
 
         // Act
         await userService.CreateUserAsync(model);

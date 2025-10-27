@@ -18,6 +18,8 @@ public abstract class AuditableDataModel
 
         ReenabledBy = auditable.ReenabledBy;
         ReenabledOnUtc = auditable.ReenabledOnUtc;
+
+        Notes = auditable.Notes;
     }
 
     public FonbecWebUser CreatedBy { get; }
@@ -31,4 +33,6 @@ public abstract class AuditableDataModel
 
     public FonbecWebUser? ReenabledBy { get; }
     public DateTime? ReenabledOnUtc { get; }
+
+    public string? Notes { get; set; }
 }

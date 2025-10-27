@@ -14,10 +14,6 @@ internal class StudentConfiguration : UserWithoutAccountConfiguration<Student>
             .IsRequired(false)
             .HasMaxLength(MaxLength.FonbecWebUser.Email);
 
-        builder.Property(s => s.Notes)
-            .IsRequired(false)
-            .HasMaxLength(MaxLength.FonbecWebUser.Notes);
-
         builder.Property(s => s.SecondarySchoolStartYear)
             .IsRequired(false);
 

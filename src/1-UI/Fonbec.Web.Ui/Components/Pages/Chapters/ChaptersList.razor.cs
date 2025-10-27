@@ -37,7 +37,7 @@ public partial class ChaptersList : AuthenticationRequiredComponentBase
         var updateChapterInputModel = new UpdateChapterInputModel(
             viewModel.ChapterId,
             viewModel.ChapterName,
-            viewModel.ChapterDescription
+            viewModel.Notes
         );
 
         var result = await ChapterService.UpdateChapterAsync(updateChapterInputModel);

@@ -6,8 +6,8 @@ namespace Fonbec.Web.Logic.Models.Chapters.Input;
 
 public record UpdateChapterInputModel(
     int ChapterId,
-    string ChapterUpdatedName, 
-    string ChapterUpdatedDescription
+    string ChapterUpdatedName,
+    string ChapterUpdatedNotes
 );
 
 public class UpdateChapterInputModelMappingDefinitions : IRegister
@@ -17,6 +17,6 @@ public class UpdateChapterInputModelMappingDefinitions : IRegister
         config.NewConfig<UpdateChapterInputModel, UpdateChapterInputDataModel>()
             .Map(dest => dest.ChapterId, src => src.ChapterId)
             .Map(dest => dest.ChapterUpdatedName, src => src.ChapterUpdatedName.MustBeNonEmpty().NormalizeText())
-            .Map(dest => dest.ChapterUpdatedDescription, src => src.ChapterUpdatedDescription.NullOrTrimmed());
+            .Map(dest => dest.ChapterUpdatedNotes, src => src.ChapterUpdatedNotes.NullOrTrimmed());
     }
 }

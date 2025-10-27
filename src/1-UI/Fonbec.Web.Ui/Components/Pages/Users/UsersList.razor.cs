@@ -57,6 +57,7 @@ public partial class UsersList : AuthenticationRequiredComponentBase
             viewModel.UserGender,
             viewModel.UserEmail,
             viewModel.UserPhoneNumber,
+            viewModel.UserNotes,
             FonbecClaim.UserId
         );
 

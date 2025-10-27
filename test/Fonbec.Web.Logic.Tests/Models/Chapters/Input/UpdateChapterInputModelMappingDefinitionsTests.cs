@@ -13,14 +13,14 @@ public class UpdateChapterInputModelMappingDefinitionsTests : MappingTestBase
         var input = new UpdateChapterInputModel(
             ChapterId: 123,
             ChapterUpdatedName: "Updated Chapter Name",
-            ChapterUpdatedDescription: "Some description"
+            ChapterUpdatedNotes: "Some personal notes"
         );
 
         var result = input.Adapt<UpdateChapterInputDataModel>(Config);
 
         result.ChapterId.Should().Be(123);
         result.ChapterUpdatedName.Should().Be("Updated Chapter Name");
-        result.ChapterUpdatedDescription.Should().Be("Some description");
+        result.ChapterUpdatedNotes.Should().Be("Some personal notes");
     }
 
     [Fact]
@@ -29,7 +29,7 @@ public class UpdateChapterInputModelMappingDefinitionsTests : MappingTestBase
         var input = new UpdateChapterInputModel(
             ChapterId: 123,
             ChapterUpdatedName: string.Empty,
-            ChapterUpdatedDescription: "Some description"
+            ChapterUpdatedNotes: "Some personal notes"
         );
 
         var result = () => input.Adapt<UpdateChapterInputDataModel>(Config);
@@ -44,7 +44,7 @@ public class UpdateChapterInputModelMappingDefinitionsTests : MappingTestBase
         var input = new UpdateChapterInputModel(
             ChapterId: 123,
             ChapterUpdatedName: "  uPdated cHapter nAME  ",
-            ChapterUpdatedDescription: "Some description"
+            ChapterUpdatedNotes: "Some personal notes"
         );
 
         var result = input.Adapt<UpdateChapterInputDataModel>(Config);
@@ -53,17 +53,17 @@ public class UpdateChapterInputModelMappingDefinitionsTests : MappingTestBase
     }
 
     [Fact]
-    public void Maps_InputModel_ChapterUpdatedDescription_To_Trimmed_InputDataModel()
+    public void Maps_InputModel_ChapterUpdatedNotes_To_Trimmed_InputDataModel()
     {
         var input = new UpdateChapterInputModel(
             ChapterId: 123,
             ChapterUpdatedName: "Updated Chapter Name",
-            ChapterUpdatedDescription: "  A description with trailing spaces   "
+            ChapterUpdatedNotes: "  Some personal notes with trailing spaces   "
         );
 
         var result = input.Adapt<UpdateChapterInputDataModel>(Config);
 
-        result.ChapterUpdatedDescription.Should().Be("A description with trailing spaces");
+        result.ChapterUpdatedNotes.Should().Be("Some personal notes with trailing spaces");
     }
 
     [Theory]
@@ -71,16 +71,16 @@ public class UpdateChapterInputModelMappingDefinitionsTests : MappingTestBase
     [InlineData(" ")]
     [InlineData("   ")]
     [InlineData("  \t \n \r ")]
-    public void Maps_EmptyOrWhitespace_InputModel_ChapterUpdatedDescription_To_InputDataModel_Null(string chapterUpdatedDescription)
+    public void Maps_EmptyOrWhitespace_InputModel_ChapterUpdatedNotes_To_InputDataModel_Null(string chapterUpdatedNotes)
     {
         var input = new UpdateChapterInputModel(
             ChapterId: 456,
             ChapterUpdatedName: "Updated Chapter Name",
-            ChapterUpdatedDescription: chapterUpdatedDescription
+            ChapterUpdatedNotes: chapterUpdatedNotes
         );
 
         var result = input.Adapt<UpdateChapterInputDataModel>(Config);
 
-        result.ChapterUpdatedDescription.Should().BeNull();
+        result.ChapterUpdatedNotes.Should().BeNull();
     }
 }

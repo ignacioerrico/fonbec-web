@@ -13,6 +13,7 @@ public record CreateUserInputModel(
     Gender UserGender,
     string UserEmail,
     string UserPhoneNumber,
+    string UserNotes,
     string UserRole,
     int CreatedById
 );
@@ -30,6 +31,7 @@ public class CreateUserInputModelMappingDefinitions : IRegister
             .Map(dest => dest.UserGender, src => src.UserGender)
             .Map(dest => dest.UserEmail, src => src.UserEmail.Trim().ToLower())
             .Map(dest => dest.UserPhoneNumber, src => src.UserPhoneNumber.NullOrTrimmed())
+            .Map(dest => dest.UserNotes, src => src.UserNotes.NullOrTrimmed())
             .Map(dest => dest.UserRole, src => src.UserRole)
             .Map(dest => dest.CreatedById, src => src.CreatedById)
             .Map(dest => dest.GeneratedPassword, src => MapContext.Current!.Parameters["generatedPassword"],

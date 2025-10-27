@@ -125,8 +125,9 @@
                     <MudTextField T="string" @bind-Value="context.Item.UserPhoneNumber" Immediate="true"
                                   Label="Teléfono" Variant="Variant.Outlined" Margin="Margin.Dense"
                                   MaxLength="MaxLength.FonbecWebUser.PhoneNumber" />
-				</EditTemplate>
+                </EditTemplate>
             </PropertyColumn>
+            <PropertyColumn Property="vm => vm.UserNotes" Title="Notas personales" Required="false" Hidden="true" />
             <TemplateColumn Title="Acciones" Filterable="false" Sortable="false">
                 <CellTemplate>
 	                <AuthorizeView Policy="@nameof(UserCreate)" Context="innerContext">

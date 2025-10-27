@@ -1,4 +1,5 @@
-﻿using Fonbec.Web.DataAccess.Entities.Abstract;
+﻿using Fonbec.Web.DataAccess.Constants;
+using Fonbec.Web.DataAccess.Entities.Abstract;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
@@ -24,5 +25,9 @@ internal abstract class AuditableEntityTypeConfiguration<T> : IEntityTypeConfigu
         builder.HasOne(a => a.ReenabledBy)
             .WithMany()
             .HasForeignKey(a => a.ReenabledById);
+
+        builder.Property(a => a.Notes)
+            .IsRequired(false)
+            .HasMaxLength(MaxLength.Auditable.Notes);
     }
 }

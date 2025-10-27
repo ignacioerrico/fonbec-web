@@ -33,7 +33,7 @@ internal class FonbecUserConfiguration : IEntityTypeConfiguration<FonbecWebUser>
             .HasMaxLength(MaxLength.FonbecWebUser.NickName);
 
         builder.Property(u => u.Notes)
-            .HasMaxLength(MaxLength.FonbecWebUser.Notes);
+            .HasMaxLength(MaxLength.Auditable.Notes);
 
         builder.HasOne(u => u.Chapter)
             .WithMany()

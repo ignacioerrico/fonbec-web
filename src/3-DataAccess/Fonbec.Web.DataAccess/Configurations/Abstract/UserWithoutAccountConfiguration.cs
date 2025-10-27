@@ -27,10 +27,6 @@ internal class UserWithoutAccountConfiguration<T> : AuditableEntityTypeConfigura
             .IsRequired(false)
             .HasMaxLength(MaxLength.FonbecWebUser.PhoneNumber);
 
-        builder.Property(u => u.Notes)
-            .IsRequired(false)
-            .HasMaxLength(MaxLength.FonbecWebUser.Notes);
-
         builder.Property(s => s.IsDeleted)
             .IsRequired()
             .HasDefaultValue(false);

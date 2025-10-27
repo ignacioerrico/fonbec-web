@@ -18,5 +18,7 @@ public class UpdateUserInputDataModel
 
     public string? UserPhoneNumber { get; set; }
 
+    public string? UserNotes { get; set; }
+
     public int UpdatedById { get; set; }
 }
