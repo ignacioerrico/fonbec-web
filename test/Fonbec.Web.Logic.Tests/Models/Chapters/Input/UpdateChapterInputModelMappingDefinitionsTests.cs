@@ -24,6 +24,35 @@ public class UpdateChapterInputModelMappingDefinitionsTests : MappingTestBase
     }
 
     [Fact]
+    public void InputModel_ChapterName_MustBeNonEmpty()
+    {
+        var input = new UpdateChapterInputModel(
+            ChapterId: 123,
+            ChapterUpdatedName: string.Empty,
+            ChapterUpdatedDescription: "Some description"
+        );
+
+        var result = () => input.Adapt<UpdateChapterInputDataModel>(Config);
+
+        result.Should().Throw<ArgumentException>()
+            .WithMessage("String must be non-empty. (Parameter 'value')");
+    }
+
+    [Fact]
+    public void InputModel_ChapterName_IsNormalized()
+    {
+        var input = new UpdateChapterInputModel(
+            ChapterId: 123,
+            ChapterUpdatedName: "  uPdated cHapter nAME  ",
+            ChapterUpdatedDescription: "Some description"
+        );
+
+        var result = input.Adapt<UpdateChapterInputDataModel>(Config);
+
+        result.ChapterUpdatedName.Should().Be("Updated Chapter Name");
+    }
+
+    [Fact]
     public void Maps_InputModel_ChapterUpdatedDescription_To_Trimmed_InputDataModel()
     {
         var input = new UpdateChapterInputModel(
@@ -34,8 +63,6 @@ public class UpdateChapterInputModelMappingDefinitionsTests : MappingTestBase
 
         var result = input.Adapt<UpdateChapterInputDataModel>(Config);
 
-        result.ChapterId.Should().Be(123);
-        result.ChapterUpdatedName.Should().Be("Updated Chapter Name");
         result.ChapterUpdatedDescription.Should().Be("A description with trailing spaces");
     }
 
@@ -54,8 +81,6 @@ public class UpdateChapterInputModelMappingDefinitionsTests : MappingTestBase
 
         var result = input.Adapt<UpdateChapterInputDataModel>(Config);
 
-        result.ChapterId.Should().Be(456);
-        result.ChapterUpdatedName.Should().Be("Updated Chapter Name");
         result.ChapterUpdatedDescription.Should().BeNull();
     }
 }

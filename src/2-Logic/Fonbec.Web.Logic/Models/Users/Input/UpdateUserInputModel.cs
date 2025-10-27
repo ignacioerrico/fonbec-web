@@ -22,14 +22,13 @@ public class UpdateUserInputModelMappingDefinitions : IRegister
     {
         config.NewConfig<UpdateUserInputModel, UpdateUserInputDataModel>()
             .Map(dest => dest.UserId, src => src.UserId)
-            .Map(dest => dest.UserFirstName, src => src.UserFirstName.NormalizeText())
-            .Map(dest => dest.UserLastName, src => src.UserLastName.NormalizeText())
+            .Map(dest => dest.UserFirstName, src => src.UserFirstName.MustBeNonEmpty().NormalizeText())
+            .Map(dest => dest.UserLastName, src => src.UserLastName.MustBeNonEmpty().NormalizeText())
             .Map(dest => dest.UserNickName, src => src.UserNickName.NormalizeText(),
                 src => !string.IsNullOrWhiteSpace(src.UserNickName))
             .Map(dest => dest.Gender, src => src.Gender)
-            .Map(dest => dest.UserEmail, src => src.UserEmail)
-            .Map(dest => dest.UserPhoneNumber, src => src.UserPhoneNumber,
-                src => !string.IsNullOrWhiteSpace(src.UserPhoneNumber))
+            .Map(dest => dest.UserEmail, src => src.UserEmail.Trim().ToLower())
+            .Map(dest => dest.UserPhoneNumber, src => src.UserPhoneNumber.NullOrTrimmed())
             .Map(dest => dest.UpdatedById, src => src.UpdatedById);
     }
 }

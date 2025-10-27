@@ -40,17 +40,94 @@ public class UpdateUserInputModelMappingDefinitionsTests : MappingTestBase
         result.UpdatedById.Should().Be(99);
     }
 
+    [Fact]
+    public void InputModel_UserFirstName_MustBeNonEmpty()
+    {
+        var input = new UpdateUserInputModel(
+            UserId: 42,
+            UserFirstName: string.Empty,
+            UserLastName: "Smith",
+            UserNickName: "Ally",
+            Gender: Gender.Female,
+            UserEmail: "alice@example.com",
+            UserPhoneNumber: "555-1234",
+            UpdatedById: 99
+        );
+
+        var result = () => input.Adapt<UpdateUserInputDataModel>(Config);
+
+        result.Should().Throw<ArgumentException>()
+            .WithMessage("String must be non-empty. (Parameter 'value')");
+    }
+
+    [Fact]
+    public void InputModel_UserFirstName_IsNormalized()
+    {
+        var input = new UpdateUserInputModel(
+            UserId: 42,
+            UserFirstName: "  aliCe  ",
+            UserLastName: "Smith",
+            UserNickName: "Ally",
+            Gender: Gender.Female,
+            UserEmail: "alice@example.com",
+            UserPhoneNumber: "555-1234",
+            UpdatedById: 99
+        );
+
+        var result = input.Adapt<UpdateUserInputDataModel>(Config);
+
+        result.UserFirstName.Should().Be("Alice");
+    }
+
+    [Fact]
+    public void InputModel_UserLastName_MustBeNonEmpty()
+    {
+        var input = new UpdateUserInputModel(
+            UserId: 42,
+            UserFirstName: "Alice",
+            UserLastName: string.Empty,
+            UserNickName: "Ally",
+            Gender: Gender.Female,
+            UserEmail: "alice@example.com",
+            UserPhoneNumber: "555-1234",
+            UpdatedById: 99
+        );
+
+        var result = () => input.Adapt<UpdateUserInputDataModel>(Config);
+
+        result.Should().Throw<ArgumentException>()
+            .WithMessage("String must be non-empty. (Parameter 'value')");
+    }
+
+    [Fact]
+    public void InputModel_UserLastName_IsNormalized()
+    {
+        var input = new UpdateUserInputModel(
+            UserId: 42,
+            UserFirstName: "Alice",
+            UserLastName: "  smiTh   ",
+            UserNickName: "Ally",
+            Gender: Gender.Female,
+            UserEmail: "alice@example.com",
+            UserPhoneNumber: "555-1234",
+            UpdatedById: 99
+        );
+
+        var result = input.Adapt<UpdateUserInputDataModel>(Config);
+
+        result.UserLastName.Should().Be("Smith");
+    }
+
     [Theory]
-    [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void Does_Not_Map_UserNickName_When_Null_Or_Whitespace(string? nickName)
+    public void Does_Not_Map_UserNickName_When_Null_Or_Whitespace(string nickName)
     {
         var input = new UpdateUserInputModel(
             UserId: 1,
             UserFirstName: "A",
             UserLastName: "B",
-            UserNickName: nickName!,
+            UserNickName: nickName,
             Gender: Gender.Unknown,
             UserEmail: "a@b.com",
             UserPhoneNumber: "123",
@@ -62,11 +139,48 @@ public class UpdateUserInputModelMappingDefinitionsTests : MappingTestBase
         result.UserNickName.Should().BeNull();
     }
 
+    [Fact]
+    public void InputModel_UserNickName_IsNormalized()
+    {
+        var input = new UpdateUserInputModel(
+            UserId: 1,
+            UserFirstName: "A",
+            UserLastName: "B",
+            UserNickName: "  usEr  nickNAMe   ",
+            Gender: Gender.Unknown,
+            UserEmail: "a@b.com",
+            UserPhoneNumber: "123",
+            UpdatedById: 2
+        );
+
+        var result = input.Adapt<UpdateUserInputDataModel>(Config);
+
+        result.UserNickName.Should().Be("User Nickname");
+    }
+
+    [Fact]
+    public void InputModel_UserEmail_IsTrimmedAndLowered()
+    {
+        var input = new UpdateUserInputModel(
+            UserId: 1,
+            UserFirstName: "A",
+            UserLastName: "B",
+            UserNickName: "Nick",
+            Gender: Gender.Unknown,
+            UserEmail: "  A@b.Com   ",
+            UserPhoneNumber: "555-1234",
+            UpdatedById: 2
+        );
+
+        var result = input.Adapt<UpdateUserInputDataModel>(Config);
+
+        result.UserEmail.Should().Be("a@b.com");
+    }
+
     [Theory]
-    [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void Does_Not_Map_UserPhoneNumber_When_Null_Or_Whitespace(string? phone)
+    public void Does_Not_Map_UserPhoneNumber_When_Null_Or_Whitespace(string phone)
     {
         var input = new UpdateUserInputModel(
             UserId: 1,
@@ -75,7 +189,7 @@ public class UpdateUserInputModelMappingDefinitionsTests : MappingTestBase
             UserNickName: "Nick",
             Gender: Gender.Unknown,
             UserEmail: "a@b.com",
-            UserPhoneNumber: phone!,
+            UserPhoneNumber: phone,
             UpdatedById: 2
         );
 
@@ -85,7 +199,7 @@ public class UpdateUserInputModelMappingDefinitionsTests : MappingTestBase
     }
 
     [Fact]
-    public void Maps_UserNickName_And_UserPhoneNumber_When_Not_Whitespace()
+    public void InputModel_UserPhoneNumber_IsTrimmed()
     {
         var input = new UpdateUserInputModel(
             UserId: 1,
@@ -94,13 +208,12 @@ public class UpdateUserInputModelMappingDefinitionsTests : MappingTestBase
             UserNickName: "Nick",
             Gender: Gender.Unknown,
             UserEmail: "a@b.com",
-            UserPhoneNumber: "12345",
+            UserPhoneNumber: "  555-1234   ",
             UpdatedById: 2
         );
 
         var result = input.Adapt<UpdateUserInputDataModel>(Config);
 
-        result.UserNickName.Should().Be("Nick");
-        result.UserPhoneNumber.Should().Be("12345");
+        result.UserPhoneNumber.Should().Be("555-1234");
     }
 }

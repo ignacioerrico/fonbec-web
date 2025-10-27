@@ -38,16 +38,97 @@ public class CreateUserInputModelMappingDefinitionsTests : MappingTestBase
         result.GeneratedPassword.Should().Be("secret");
     }
 
+    [Fact]
+    public void InputModel_UserFirstName_MustBeNonEmpty()
+    {
+        var input = new CreateUserInputModel(
+            UserFirstName: string.Empty,
+            UserLastName: "Doe",
+            UserNickName: "JD",
+            UserGender: Gender.Male,
+            UserEmail: "John@Email.com ",
+            UserPhoneNumber: " 555-1234 ",
+            UserRole: "Admin",
+            CreatedById: 99,
+            UserChapterId: 5
+        );
+
+        var result = () => input.Adapt<CreateUserInputDataModel>(Config);
+
+        result.Should().Throw<ArgumentException>()
+            .WithMessage("String must be non-empty. (Parameter 'value')");
+    }
+
+    [Fact]
+    public void InputModel_UserFirstName_IsNormalized()
+    {
+        var input = new CreateUserInputModel(
+            UserFirstName: "  jOhn   ",
+            UserLastName: "Doe",
+            UserNickName: "JD",
+            UserGender: Gender.Male,
+            UserEmail: "John@Email.com ",
+            UserPhoneNumber: " 555-1234 ",
+            UserRole: "Admin",
+            CreatedById: 99,
+            UserChapterId: 5
+        );
+
+        var result = input.Adapt<CreateUserInputDataModel>(Config);
+
+        result.UserFirstName.Should().Be("John");
+    }
+
+    [Fact]
+    public void InputModel_UserLastName_MustBeNonEmpty()
+    {
+        var input = new CreateUserInputModel(
+            UserFirstName: "John",
+            UserLastName: string.Empty,
+            UserNickName: "JD",
+            UserGender: Gender.Male,
+            UserEmail: "John@Email.com ",
+            UserPhoneNumber: " 555-1234 ",
+            UserRole: "Admin",
+            CreatedById: 99,
+            UserChapterId: 5
+        );
+
+        var result = () => input.Adapt<CreateUserInputDataModel>(Config);
+
+        result.Should().Throw<ArgumentException>()
+            .WithMessage("String must be non-empty. (Parameter 'value')");
+    }
+
+    [Fact]
+    public void InputModel_UserLastName_IsNormalized()
+    {
+        var input = new CreateUserInputModel(
+            UserFirstName: "John",
+            UserLastName: "  dOE  ",
+            UserNickName: "JD",
+            UserGender: Gender.Male,
+            UserEmail: "John@Email.com ",
+            UserPhoneNumber: " 555-1234 ",
+            UserRole: "Admin",
+            CreatedById: 99,
+            UserChapterId: 5
+        );
+
+        var result = input.Adapt<CreateUserInputDataModel>(Config);
+
+        result.UserLastName.Should().Be("Doe");
+    }
+
     [Theory]
-    [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void Does_Not_Map_UserNickName_When_Null_Or_Whitespace(string? nickName)
+    public void Does_Not_Map_UserNickName_When_Null_Or_Whitespace(string nickName)
     {
         var input = new CreateUserInputModel(
             UserFirstName: "John",
             UserLastName: "Doe",
-            UserNickName: nickName!,
+            UserNickName: nickName,
             UserGender: Gender.Male,
             UserEmail: "john@email.com",
             UserPhoneNumber: "555-1234",
@@ -62,11 +143,50 @@ public class CreateUserInputModelMappingDefinitionsTests : MappingTestBase
         result.UserNickName.Should().BeNull();
     }
 
+    [Fact]
+    public void InputModel_UserNickName_IsNormalized()
+    {
+        var input = new CreateUserInputModel(
+            UserFirstName: "John",
+            UserLastName: "Doe",
+            UserNickName: "  jD  ",
+            UserGender: Gender.Male,
+            UserEmail: "john@email.com",
+            UserPhoneNumber: "555-1234",
+            UserRole: "Admin",
+            CreatedById: 99,
+            UserChapterId: 5
+        );
+
+        var result = input.Adapt<CreateUserInputDataModel>(Config);
+
+        result.UserNickName.Should().Be("Jd");
+    }
+
+    [Fact]
+    public void InputModel_UserEmail_IsTrimmedAndLowered()
+    {
+        var input = new CreateUserInputModel(
+            UserFirstName: "John",
+            UserLastName: "Doe",
+            UserNickName: "JD",
+            UserGender: Gender.Male,
+            UserEmail: "  JOHN@emaIl.Com   ",
+            UserPhoneNumber: "555-1234",
+            UserRole: "Admin",
+            CreatedById: 99,
+            UserChapterId: 5
+        );
+
+        var result = input.Adapt<CreateUserInputDataModel>(Config);
+
+        result.UserEmail.Should().Be("john@email.com");
+    }
+
     [Theory]
-    [InlineData(null)]
     [InlineData("")]
     [InlineData("   ")]
-    public void Does_Not_Map_UserPhoneNumber_When_Null_Or_Whitespace(string? phone)
+    public void Does_Not_Map_UserPhoneNumber_When_Null_Or_Whitespace(string phone)
     {
         var input = new CreateUserInputModel(
             UserFirstName: "John",
@@ -74,7 +194,7 @@ public class CreateUserInputModelMappingDefinitionsTests : MappingTestBase
             UserNickName: "JD",
             UserGender: Gender.Male,
             UserEmail: "john@email.com",
-            UserPhoneNumber: phone!,
+            UserPhoneNumber: phone,
             UserRole: "Admin",
             CreatedById: 99,
             UserChapterId: 5
@@ -84,6 +204,26 @@ public class CreateUserInputModelMappingDefinitionsTests : MappingTestBase
             .AdaptToType<CreateUserInputDataModel>();
 
         result.UserPhoneNumber.Should().BeNull();
+    }
+
+    [Fact]
+    public void InputModel_UserPhoneNumber_IsTrimmed()
+    {
+        var input = new CreateUserInputModel(
+            UserFirstName: "John",
+            UserLastName: "Doe",
+            UserNickName: "JD",
+            UserGender: Gender.Male,
+            UserEmail: "john@email.com",
+            UserPhoneNumber: "  555-1234   ",
+            UserRole: "Admin",
+            CreatedById: 99,
+            UserChapterId: 5
+        );
+
+        var result = input.Adapt<CreateUserInputDataModel>(Config);
+
+        result.UserPhoneNumber.Should().Be("555-1234");
     }
 
     [Fact]

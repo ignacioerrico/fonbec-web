@@ -42,6 +42,100 @@ public class CreateStudentInputModelMappingDefinitionsTests : MappingTestBase
         result.CreatedById.Should().Be(99);
     }
 
+    [Fact]
+    public void InputModel_StudentFirstName_MustBeNonEmpty()
+    {
+        var input = new CreateStudentInputModel(
+            ChapterId: 1,
+            StudentFirstName: string.Empty,
+            StudentLastName: "Smith",
+            StudentNickName: "JS",
+            StudentGender: Gender.Female,
+            StudentEmail: "",
+            StudentPhone: "555-1234",
+            StudentNotes: "Some notes",
+            StudentSecondarySchoolStartYear: null,
+            StudentUniversityStartYear: null,
+            FacilitatorId: 2,
+            CreatedById: 99
+        );
+
+        var result = () => input.Adapt<CreateStudentInputDataModel>(Config);
+
+        result.Should().Throw<ArgumentException>()
+            .WithMessage("String must be non-empty. (Parameter 'value')");
+    }
+
+    [Fact]
+    public void InputModel_StudentFirstName_IsNormalized()
+    {
+        var input = new CreateStudentInputModel(
+            ChapterId: 1,
+            StudentFirstName: "  studEnt fiRSt naMe   ",
+            StudentLastName: "Smith",
+            StudentNickName: "JS",
+            StudentGender: Gender.Female,
+            StudentEmail: "",
+            StudentPhone: "555-1234",
+            StudentNotes: "Some notes",
+            StudentSecondarySchoolStartYear: null,
+            StudentUniversityStartYear: null,
+            FacilitatorId: 2,
+            CreatedById: 99
+        );
+
+        var result = input.Adapt<CreateStudentInputDataModel>(Config);
+
+        result.StudentFirstName.Should().Be("Student First Name");
+    }
+
+    [Fact]
+    public void InputModel_StudentLastName_MustBeNonEmpty()
+    {
+        var input = new CreateStudentInputModel(
+            ChapterId: 1,
+            StudentFirstName: "Jane",
+            StudentLastName: string.Empty,
+            StudentNickName: "JS",
+            StudentGender: Gender.Female,
+            StudentEmail: "jane@x.com",
+            StudentPhone: "555-1234",
+            StudentNotes: "Some notes",
+            StudentSecondarySchoolStartYear: null,
+            StudentUniversityStartYear: null,
+            FacilitatorId: 2,
+            CreatedById: 99
+        );
+
+        var result = () => input.Adapt<CreateStudentInputDataModel>(Config);
+
+        result.Should().Throw<ArgumentException>()
+            .WithMessage("String must be non-empty. (Parameter 'value')");
+    }
+
+    [Fact]
+    public void InputModel_StudentLastName_IsNormalized()
+    {
+        var input = new CreateStudentInputModel(
+            ChapterId: 1,
+            StudentFirstName: "Jane",
+            StudentLastName: "  studEnt laSt naMe   ",
+            StudentNickName: "JS",
+            StudentGender: Gender.Female,
+            StudentEmail: "jane@x.com",
+            StudentPhone: "555-1234",
+            StudentNotes: "Some notes",
+            StudentSecondarySchoolStartYear: null,
+            StudentUniversityStartYear: null,
+            FacilitatorId: 2,
+            CreatedById: 99
+        );
+
+        var result = input.Adapt<CreateStudentInputDataModel>(Config);
+
+        result.StudentLastName.Should().Be("Student Last Name");
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
@@ -65,6 +159,29 @@ public class CreateStudentInputModelMappingDefinitionsTests : MappingTestBase
         var result = input.Adapt<CreateStudentInputDataModel>(Config);
         
         result.StudentNickName.Should().BeNull();
+    }
+
+    [Fact]
+    public void InputModel_StudentNickName_IsNormalized()
+    {
+        var input = new CreateStudentInputModel(
+            ChapterId: 1,
+            StudentFirstName: "Jane",
+            StudentLastName: "Smith",
+            StudentNickName: "  studEnt  niCKnaMe   ",
+            StudentGender: Gender.Female,
+            StudentEmail: "jane@x.com",
+            StudentPhone: "555-1234",
+            StudentNotes: "Some notes",
+            StudentSecondarySchoolStartYear: null,
+            StudentUniversityStartYear: null,
+            FacilitatorId: 2,
+            CreatedById: 99
+        );
+
+        var result = input.Adapt<CreateStudentInputDataModel>(Config);
+
+        result.StudentNickName.Should().Be("Student Nickname");
     }
 
     [Theory]
@@ -92,6 +209,29 @@ public class CreateStudentInputModelMappingDefinitionsTests : MappingTestBase
         result.StudentEmail.Should().BeNull();
     }
 
+    [Fact]
+    public void InputModel_StudentEmail_IsTrimmedAndLowered()
+    {
+        var input = new CreateStudentInputModel(
+            ChapterId: 1,
+            StudentFirstName: "Jane",
+            StudentLastName: "Smith",
+            StudentNickName: "JS",
+            StudentGender: Gender.Female,
+            StudentEmail: "  jaNE@x.Com   ",
+            StudentPhone: "555-1234",
+            StudentNotes: "Some notes",
+            StudentSecondarySchoolStartYear: null,
+            StudentUniversityStartYear: null,
+            FacilitatorId: 2,
+            CreatedById: 99
+        );
+
+        var result = input.Adapt<CreateStudentInputDataModel>(Config);
+
+        result.StudentEmail.Should().Be("jane@x.com");
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
@@ -117,6 +257,29 @@ public class CreateStudentInputModelMappingDefinitionsTests : MappingTestBase
         result.StudentPhoneNumber.Should().BeNull();
     }
 
+    [Fact]
+    public void InputModel_StudentPhone_IsTrimmed()
+    {
+        var input = new CreateStudentInputModel(
+            ChapterId: 1,
+            StudentFirstName: "Jane",
+            StudentLastName: "Smith",
+            StudentNickName: "JS",
+            StudentGender: Gender.Female,
+            StudentEmail: "jane@x.com",
+            StudentPhone: "  555-1234   ",
+            StudentNotes: "Some notes",
+            StudentSecondarySchoolStartYear: null,
+            StudentUniversityStartYear: null,
+            FacilitatorId: 2,
+            CreatedById: 99
+        );
+
+        var result = input.Adapt<CreateStudentInputDataModel>(Config);
+
+        result.StudentPhoneNumber.Should().Be("555-1234");
+    }
+
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
@@ -140,5 +303,28 @@ public class CreateStudentInputModelMappingDefinitionsTests : MappingTestBase
         var result = input.Adapt<CreateStudentInputDataModel>(Config);
 
         result.StudentNotes.Should().BeNull();
+    }
+
+    [Fact]
+    public void InputModel_StudentNotes_IsTrimmed()
+    {
+        var input = new CreateStudentInputModel(
+            ChapterId: 1,
+            StudentFirstName: "Jane",
+            StudentLastName: "Smith",
+            StudentNickName: "JS",
+            StudentGender: Gender.Female,
+            StudentEmail: "jane@x.com",
+            StudentPhone: "555-1234",
+            StudentNotes: "  Some notes   ",
+            StudentSecondarySchoolStartYear: null,
+            StudentUniversityStartYear: null,
+            FacilitatorId: 2,
+            CreatedById: 99
+        );
+
+        var result = input.Adapt<CreateStudentInputDataModel>(Config);
+
+        result.StudentNotes.Should().Be("Some notes");
     }
 }

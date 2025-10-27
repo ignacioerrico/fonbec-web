@@ -24,6 +24,35 @@ public class CreateChapterInputModelMappingDefinitionsTests : MappingTestBase
     }
 
     [Fact]
+    public void InputModel_ChapterName_MustBeNonEmpty()
+    {
+        var input = new CreateChapterInputModel(
+            ChapterName: string.Empty,
+            ChapterCreatedById: 42,
+            ChapterDescription: "A description"
+        );
+
+        var result = () => input.Adapt<CreateChapterInputDataModel>(Config);
+
+        result.Should().Throw<ArgumentException>()
+            .WithMessage("String must be non-empty. (Parameter 'value')");
+    }
+
+    [Fact]
+    public void InputModel_ChapterName_IsNormalized()
+    {
+        var input = new CreateChapterInputModel(
+            ChapterName: "  chApter naMe   ",
+            ChapterCreatedById: 42,
+            ChapterDescription: "A description"
+        );
+
+        var result = input.Adapt<CreateChapterInputDataModel>(Config);
+
+        result.ChapterName.Should().Be("Chapter Name");
+    }
+
+    [Fact]
     public void Maps_InputModel_ChapterDescription_To_Trimmed_InputDataModel()
     {
         var input = new CreateChapterInputModel(
@@ -34,8 +63,6 @@ public class CreateChapterInputModelMappingDefinitionsTests : MappingTestBase
 
         var result = input.Adapt<CreateChapterInputDataModel>(Config);
 
-        result.ChapterName.Should().Be("Chapter X");
-        result.ChapterCreatedById.Should().Be(42);
         result.ChapterDescription.Should().Be("A description with trailing spaces");
     }
 
@@ -54,8 +81,6 @@ public class CreateChapterInputModelMappingDefinitionsTests : MappingTestBase
 
         var result = input.Adapt<CreateChapterInputDataModel>(Config);
 
-        result.ChapterName.Should().Be("Chapter X");
-        result.ChapterCreatedById.Should().Be(42);
         result.ChapterDescription.Should().BeNull();
     }
 }

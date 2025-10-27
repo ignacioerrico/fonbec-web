@@ -15,8 +15,8 @@ public class CreateChapterInputModelMappingDefinitions : IRegister
     public void Register(TypeAdapterConfig config)
     {
         config.NewConfig<CreateChapterInputModel, CreateChapterInputDataModel>()
-            .Map(dest => dest.ChapterName, src => src.ChapterName.NormalizeText())
-            .Map(dest => dest.ChapterDescription, src => string.IsNullOrWhiteSpace(src.ChapterDescription) ? null : src.ChapterDescription.Trim())
+            .Map(dest => dest.ChapterName, src => src.ChapterName.MustBeNonEmpty().NormalizeText())
+            .Map(dest => dest.ChapterDescription, src => src.ChapterDescription.NullOrTrimmed())
             .Map(dest => dest.ChapterCreatedById, src => src.ChapterCreatedById);
     }
 }

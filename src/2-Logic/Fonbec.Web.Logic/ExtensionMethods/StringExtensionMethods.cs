@@ -42,4 +42,21 @@ public static class StringExtensionMethods
 
         return string.Join(' ', words);
     }
+
+    public static string MustBeNonEmpty(this string value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            throw new ArgumentException("String must be non-empty.", nameof(value));
+        }
+
+        return value;
+    }
+
+    public static string? NullOrTrimmed(this string value)
+    {
+        return string.IsNullOrWhiteSpace(value)
+            ? null
+            : value.Trim();
+    }
 }
