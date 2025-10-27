@@ -20,6 +20,8 @@ public class UsersListViewModel
 
     public string UserPhoneNumber { get; set; } = null!;
 
+    public string UserNotes { get; set; } = null!;
+
     public string UserRole { get; set; } = null!;
 
     public string UserChapterName { get; set; } = null!;
@@ -57,6 +59,7 @@ public class UsersListViewModelMappingDefinitions : IRegister
             .Map(dest => dest.UserEmail, src => string.Empty, src => src.UserEmail == null)
             .Map(dest => dest.UserPhoneNumber, src => src.UserPhoneNumber, src => src.UserPhoneNumber != null)
             .Map(dest => dest.UserPhoneNumber, src => string.Empty, src => src.UserPhoneNumber == null)
+            .Map(dest => dest.UserNotes, src => src.UserNotes ?? string.Empty)
             .Map(dest => dest.CanUserBeLockedOut, src => src.CanUserBeLockedOut)
             .Map(dest => dest.UserChapterName, src => src.UserChapterName, src => src.UserChapterName != null)
             .Map(dest => dest.UserChapterName, src => "GLOBAL", src => src.UserChapterName == null)

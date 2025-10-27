@@ -13,6 +13,7 @@ public record UpdateUserInputModel(
     Gender Gender,
     string UserEmail,
     string UserPhoneNumber,
+    string UserNotes,
     int UpdatedById
 );
 
@@ -29,6 +30,7 @@ public class UpdateUserInputModelMappingDefinitions : IRegister
             .Map(dest => dest.Gender, src => src.Gender)
             .Map(dest => dest.UserEmail, src => src.UserEmail.Trim().ToLower())
             .Map(dest => dest.UserPhoneNumber, src => src.UserPhoneNumber.NullOrTrimmed())
+            .Map(dest => dest.UserNotes, src => src.UserNotes.NullOrTrimmed())
             .Map(dest => dest.UpdatedById, src => src.UpdatedById);
     }
 }

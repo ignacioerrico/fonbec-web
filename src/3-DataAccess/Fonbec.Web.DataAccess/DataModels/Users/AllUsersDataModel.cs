@@ -25,6 +25,8 @@ public class AllUsersUserDataModel
 
     public string? UserPhoneNumber { get; set; }
 
+    public string? UserNotes { get; set; }
+
     public string? UserChapterName { get; set; }
 
     public bool CanUserBeLockedOut { get; set; }

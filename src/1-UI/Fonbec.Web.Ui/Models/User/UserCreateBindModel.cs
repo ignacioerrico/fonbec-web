@@ -21,4 +21,6 @@ public class UserCreateBindModel
     public string UserEmail { get; set; } = null!;
 
     public string UserPhoneNumber { get; set; } = null!;
+
+    public string UserNotes { get; set; } = null!;
 }

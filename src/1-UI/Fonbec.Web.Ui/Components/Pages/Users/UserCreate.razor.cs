@@ -83,6 +83,7 @@ public partial class UserCreate : AuthenticationRequiredComponentBase
             _bindModel.UserGender,
             _bindModel.UserEmail,
             _bindModel.UserPhoneNumber,
+            _bindModel.UserNotes,
             _bindModel.UserRole,
             FonbecClaim.UserId
         );

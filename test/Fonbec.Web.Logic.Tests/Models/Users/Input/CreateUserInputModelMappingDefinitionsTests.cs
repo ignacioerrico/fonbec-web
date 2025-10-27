@@ -18,6 +18,7 @@ public class CreateUserInputModelMappingDefinitionsTests : MappingTestBase
             UserGender: Gender.Male,
             UserEmail: "John@Email.com ",
             UserPhoneNumber: " 555-1234 ",
+            UserNotes: "Some personal notes",
             UserRole: "Admin",
             CreatedById: 99,
             UserChapterId: 5
@@ -32,6 +33,7 @@ public class CreateUserInputModelMappingDefinitionsTests : MappingTestBase
         result.UserGender.Should().Be(Gender.Male);
         result.UserEmail.Should().Be("john@email.com");
         result.UserPhoneNumber.Should().Be("555-1234");
+        result.UserNotes.Should().Be("Some personal notes");
         result.UserRole.Should().Be("Admin");
         result.CreatedById.Should().Be(99);
         result.UserChapterId.Should().Be(5);
@@ -48,6 +50,7 @@ public class CreateUserInputModelMappingDefinitionsTests : MappingTestBase
             UserGender: Gender.Male,
             UserEmail: "John@Email.com ",
             UserPhoneNumber: " 555-1234 ",
+            UserNotes: "Some personal notes",
             UserRole: "Admin",
             CreatedById: 99,
             UserChapterId: 5
@@ -69,6 +72,7 @@ public class CreateUserInputModelMappingDefinitionsTests : MappingTestBase
             UserGender: Gender.Male,
             UserEmail: "John@Email.com ",
             UserPhoneNumber: " 555-1234 ",
+            UserNotes: "Some personal notes",
             UserRole: "Admin",
             CreatedById: 99,
             UserChapterId: 5
@@ -89,6 +93,7 @@ public class CreateUserInputModelMappingDefinitionsTests : MappingTestBase
             UserGender: Gender.Male,
             UserEmail: "John@Email.com ",
             UserPhoneNumber: " 555-1234 ",
+            UserNotes: "Some personal notes",
             UserRole: "Admin",
             CreatedById: 99,
             UserChapterId: 5
@@ -110,6 +115,7 @@ public class CreateUserInputModelMappingDefinitionsTests : MappingTestBase
             UserGender: Gender.Male,
             UserEmail: "John@Email.com ",
             UserPhoneNumber: " 555-1234 ",
+            UserNotes: "Some personal notes",
             UserRole: "Admin",
             CreatedById: 99,
             UserChapterId: 5
@@ -132,6 +138,7 @@ public class CreateUserInputModelMappingDefinitionsTests : MappingTestBase
             UserGender: Gender.Male,
             UserEmail: "john@email.com",
             UserPhoneNumber: "555-1234",
+            UserNotes: "Some personal notes",
             UserRole: "Admin",
             CreatedById: 99,
             UserChapterId: 5
@@ -153,6 +160,7 @@ public class CreateUserInputModelMappingDefinitionsTests : MappingTestBase
             UserGender: Gender.Male,
             UserEmail: "john@email.com",
             UserPhoneNumber: "555-1234",
+            UserNotes: "Some personal notes",
             UserRole: "Admin",
             CreatedById: 99,
             UserChapterId: 5
@@ -173,6 +181,7 @@ public class CreateUserInputModelMappingDefinitionsTests : MappingTestBase
             UserGender: Gender.Male,
             UserEmail: "  JOHN@emaIl.Com   ",
             UserPhoneNumber: "555-1234",
+            UserNotes: "Some personal notes",
             UserRole: "Admin",
             CreatedById: 99,
             UserChapterId: 5
@@ -195,6 +204,7 @@ public class CreateUserInputModelMappingDefinitionsTests : MappingTestBase
             UserGender: Gender.Male,
             UserEmail: "john@email.com",
             UserPhoneNumber: phone,
+            UserNotes: "Some personal notes",
             UserRole: "Admin",
             CreatedById: 99,
             UserChapterId: 5
@@ -216,6 +226,7 @@ public class CreateUserInputModelMappingDefinitionsTests : MappingTestBase
             UserGender: Gender.Male,
             UserEmail: "john@email.com",
             UserPhoneNumber: "  555-1234   ",
+            UserNotes: "Some personal notes",
             UserRole: "Admin",
             CreatedById: 99,
             UserChapterId: 5
@@ -224,6 +235,52 @@ public class CreateUserInputModelMappingDefinitionsTests : MappingTestBase
         var result = input.Adapt<CreateUserInputDataModel>(Config);
 
         result.UserPhoneNumber.Should().Be("555-1234");
+    }
+
+    [Fact]
+    public void Maps_InputModel_UserNotes_To_Trimmed_InputDataModel()
+    {
+        var input = new CreateUserInputModel(
+            UserFirstName: "John",
+            UserLastName: "Doe",
+            UserNickName: "JD",
+            UserGender: Gender.Male,
+            UserEmail: "john@email.com",
+            UserPhoneNumber: "555-1234",
+            UserNotes: "  Some personal notes   ",
+            UserRole: "Admin",
+            CreatedById: 99,
+            UserChapterId: 5
+        );
+
+        var result = input.Adapt<CreateUserInputDataModel>(Config);
+
+        result.UserNotes.Should().Be("Some personal notes");
+    }
+
+    [Theory]
+    [InlineData("")]
+    [InlineData(" ")]
+    [InlineData("   ")]
+    [InlineData("  \t \n \r ")]
+    public void Maps_EmptyOrWhitespace_InputModel_UserNotes_To_InputDataModel_Null(string userNotes)
+    {
+        var input = new CreateUserInputModel(
+            UserFirstName: "John",
+            UserLastName: "Doe",
+            UserNickName: "JD",
+            UserGender: Gender.Male,
+            UserEmail: "john@email.com",
+            UserPhoneNumber: "555-1234",
+            UserNotes: userNotes,
+            UserRole: "Admin",
+            CreatedById: 99,
+            UserChapterId: 5
+        );
+
+        var result = input.Adapt<CreateUserInputDataModel>(Config);
+
+        result.UserNotes.Should().BeNull();
     }
 
     [Fact]
@@ -236,6 +293,7 @@ public class CreateUserInputModelMappingDefinitionsTests : MappingTestBase
             UserGender: Gender.Male,
             UserEmail: "john@email.com",
             UserPhoneNumber: "555-1234",
+            UserNotes: "Some personal notes",
             UserRole: "Admin",
             CreatedById: 99,
             UserChapterId: 5

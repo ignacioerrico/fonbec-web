@@ -11,16 +11,16 @@ public class CreateChapterInputModelMappingDefinitionsTests : MappingTestBase
     public void Maps_InputModel_To_InputDataModel()
     {
         var input = new CreateChapterInputModel(
-            ChapterName: "Chapter X",
-            ChapterCreatedById: 42,
-            ChapterDescription: "A description"
+            ChapterName: "Test Chapter",
+            ChapterNotes: "Some personal notes",
+            ChapterCreatedById: 42
         );
 
         var result = input.Adapt<CreateChapterInputDataModel>(Config);
 
-        result.ChapterName.Should().Be("Chapter X");
+        result.ChapterName.Should().Be("Test Chapter");
+        result.ChapterNotes.Should().Be("Some personal notes");
         result.ChapterCreatedById.Should().Be(42);
-        result.ChapterDescription.Should().Be("A description");
     }
 
     [Fact]
@@ -28,8 +28,8 @@ public class CreateChapterInputModelMappingDefinitionsTests : MappingTestBase
     {
         var input = new CreateChapterInputModel(
             ChapterName: string.Empty,
-            ChapterCreatedById: 42,
-            ChapterDescription: "A description"
+            ChapterNotes: "Some personal notes",
+            ChapterCreatedById: 42
         );
 
         var result = () => input.Adapt<CreateChapterInputDataModel>(Config);
@@ -43,8 +43,8 @@ public class CreateChapterInputModelMappingDefinitionsTests : MappingTestBase
     {
         var input = new CreateChapterInputModel(
             ChapterName: "  chApter naMe   ",
-            ChapterCreatedById: 42,
-            ChapterDescription: "A description"
+            ChapterNotes: "Some personal notes",
+            ChapterCreatedById: 42
         );
 
         var result = input.Adapt<CreateChapterInputDataModel>(Config);
@@ -53,17 +53,17 @@ public class CreateChapterInputModelMappingDefinitionsTests : MappingTestBase
     }
 
     [Fact]
-    public void Maps_InputModel_ChapterDescription_To_Trimmed_InputDataModel()
+    public void Maps_InputModel_ChapterNotes_To_Trimmed_InputDataModel()
     {
         var input = new CreateChapterInputModel(
-            ChapterName: "Chapter X",
-            ChapterCreatedById: 42,
-            ChapterDescription: "  A description with trailing spaces   "
+            ChapterName: "Test Chapter",
+            ChapterNotes: "  Some personal notes   ",
+            ChapterCreatedById: 42
         );
 
         var result = input.Adapt<CreateChapterInputDataModel>(Config);
 
-        result.ChapterDescription.Should().Be("A description with trailing spaces");
+        result.ChapterNotes.Should().Be("Some personal notes");
     }
 
     [Theory]
@@ -71,16 +71,16 @@ public class CreateChapterInputModelMappingDefinitionsTests : MappingTestBase
     [InlineData(" ")]
     [InlineData("   ")]
     [InlineData("  \t \n \r ")]
-    public void Maps_EmptyOrWhitespace_InputModel_ChapterDescription_To_InputDataModel_Null(string chapterDescription)
+    public void Maps_EmptyOrWhitespace_InputModel_ChapterNotes_To_InputDataModel_Null(string chapterNotes)
     {
         var input = new CreateChapterInputModel(
-            ChapterName: "Chapter X",
-            ChapterCreatedById: 42,
-            ChapterDescription: chapterDescription
+            ChapterName: "Test Chapter",
+            ChapterNotes: chapterNotes,
+            ChapterCreatedById: 42
         );
 
         var result = input.Adapt<CreateChapterInputDataModel>(Config);
 
-        result.ChapterDescription.Should().BeNull();
+        result.ChapterNotes.Should().BeNull();
     }
 }

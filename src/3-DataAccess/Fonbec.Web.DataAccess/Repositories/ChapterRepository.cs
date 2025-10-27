@@ -40,7 +40,7 @@ public class ChapterRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             {
                 ChapterId = ch.Id,
                 ChapterName = ch.Name,
-                ChapterDescription = ch.Description,
+                Notes = ch.Notes,
                 IsChapterActive = ch.IsActive
             })
             .OrderBy(ch => ch.ChapterName)
@@ -56,7 +56,7 @@ public class ChapterRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
         var chapter = new Chapter
         {
             Name = dataModel.ChapterName,
-            Description = dataModel.ChapterDescription,
+            Notes = dataModel.ChapterNotes,
             CreatedById = dataModel.ChapterCreatedById,
         };
         
@@ -76,7 +76,7 @@ public class ChapterRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
         }
 
         chapterDb.Name = dataModel.ChapterUpdatedName;
-        chapterDb.Description = dataModel.ChapterUpdatedDescription;
+        chapterDb.Notes = dataModel.ChapterUpdatedNotes;
 
         db.Chapters.Update(chapterDb);
         return await db.SaveChangesAsync();

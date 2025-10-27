@@ -40,8 +40,11 @@
 	              Required="true" RequiredError="Este es un campo obligatorio."
 	              MaxLength="MaxLength.FonbecWebUser.Email" />
 
-	<MudTextField T="string" Label="Teléfono" @bind-Value="_bindModel.UserPhoneNumber" Immediate="true"
-	              MaxLength="MaxLength.FonbecWebUser.PhoneNumber" />
+    <MudTextField T="string" Label="Teléfono" @bind-Value="_bindModel.UserPhoneNumber" Immediate="true"
+                  MaxLength="MaxLength.FonbecWebUser.PhoneNumber" />
+
+    <MudTextField T="string" Label="Notas personales" @bind-Value="_bindModel.UserNotes" Immediate="true"
+                  MaxLength="MaxLength.Auditable.Notes" />
 </MudForm>
 
 <MudStack Row="true" Class="pt-4">

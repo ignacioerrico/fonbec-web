@@ -16,6 +16,8 @@ public abstract class AuditableViewModel
 
     public string? ReenabledBy { get; set; }
     public DateTime? ReenabledOnUtc { get; set; }
+
+    public string Notes { get; set; } = null!;
 }
 
 public class AuditableViewModelMappingDefinitions : IRegister
@@ -30,6 +32,7 @@ public class AuditableViewModelMappingDefinitions : IRegister
             .Map(dest => dest.DisabledBy, src => src.DisabledBy!.FullName(), src => src.DisabledBy != null)
             .Map(dest => dest.DisabledOnUtc, src => src.DisabledOnUtc)
             .Map(dest => dest.ReenabledBy, src => src.ReenabledBy!.FullName(), src => src.ReenabledBy != null)
-            .Map(dest => dest.ReenabledOnUtc, src => src.ReenabledOnUtc);
+            .Map(dest => dest.ReenabledOnUtc, src => src.ReenabledOnUtc)
+            .Map(dest => dest.Notes, src => src.Notes ?? string.Empty);
     }
 }

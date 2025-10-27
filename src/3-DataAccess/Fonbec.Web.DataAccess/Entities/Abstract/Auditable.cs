@@ -40,4 +40,6 @@ public abstract class Auditable
     public DateTime? ReenabledOnUtc { get; set; }
 
     public bool IsActive { get; set; }
+
+    public string? Notes { get; set; }
 }

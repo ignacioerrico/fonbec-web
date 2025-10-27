@@ -51,7 +51,7 @@ public partial class ChapterCreate : AuthenticationRequiredComponentBase
 
         var createChapterInputModel = new CreateChapterInputModel(
             _bindModel.ChapterName,
-            _bindModel.ChapterDescription,
+            _bindModel.ChapterNotes,
             FonbecClaim.UserId);
 
         var result = await ChapterService.CreateChapterAsync(createChapterInputModel);

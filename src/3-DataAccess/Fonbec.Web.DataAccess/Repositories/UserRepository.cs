@@ -82,6 +82,7 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
                     UserGender = u.Gender,
                     UserEmail = u.Email,
                     UserPhoneNumber = u.PhoneNumber,
+                    UserNotes = u.Notes,
                     UserChapterName = u.Chapter == null ? null : u.Chapter.Name,
                     CanUserBeLockedOut = u.LockoutEnabled,
                     UserLockOutEndsOnUtc = u.LockoutEnd,
@@ -171,6 +172,7 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
             NickName = model.UserNickName,
             Gender = model.UserGender,
             PhoneNumber = model.UserPhoneNumber,
+            Notes = model.UserNotes,
 
             // Audit
             CreatedById = model.CreatedById,
@@ -250,6 +252,7 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
         fonbecUserDb.NickName = model.UserNickName;
         fonbecUserDb.Gender = model.Gender;
         fonbecUserDb.PhoneNumber = model.UserPhoneNumber;
+        fonbecUserDb.Notes = model.UserNotes;
 
         // Audit
         fonbecUserDb.LastUpdatedById = model.UpdatedById;

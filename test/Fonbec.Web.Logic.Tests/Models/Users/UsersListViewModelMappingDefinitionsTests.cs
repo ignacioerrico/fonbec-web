@@ -28,6 +28,7 @@ public class UsersListViewModelMappingDefinitionsTests : MappingTestBase
             UserGender = Gender.Male,
             UserEmail = "john.doe@example.com",
             UserPhoneNumber = "1234567890",
+            UserNotes = "Some personal notes",
             CanUserBeLockedOut = false,
             UserLockOutEndsOnUtc = now.AddMinutes(-1)
         };
@@ -41,6 +42,7 @@ public class UsersListViewModelMappingDefinitionsTests : MappingTestBase
         viewModel.UserGender.Should().Be(Gender.Male);
         viewModel.UserEmail.Should().Be("john.doe@example.com");
         viewModel.UserPhoneNumber.Should().Be("1234567890");
+        viewModel.UserNotes.Should().Be("Some personal notes");
         viewModel.IsUserActive.Should().BeTrue();
         viewModel.UserRole.Should().BeNull(); // Not mapped by default
     }
@@ -85,6 +87,19 @@ public class UsersListViewModelMappingDefinitionsTests : MappingTestBase
         var viewModel = userDataModel.Adapt<UsersListViewModel>(Config);
 
         viewModel.UserPhoneNumber.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Maps_Null_DataModel_UserNotes_To_EmptyString()
+    {
+        var userDataModel = new AllUsersUserDataModel
+        {
+            UserNotes = null
+        };
+
+        var viewModel = userDataModel.Adapt<UsersListViewModel>(Config);
+
+        viewModel.UserNotes.Should().BeEmpty();
     }
 
     [Fact]

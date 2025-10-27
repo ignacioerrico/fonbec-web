@@ -16,8 +16,6 @@ public abstract class UserWithoutAccount : Auditable
 
     public string? PhoneNumber { get; set; }
 
-    public string? Notes { get; set; }
-
     public bool IsDeleted { get; set; }
 
     public int ChapterId { get; set; }
