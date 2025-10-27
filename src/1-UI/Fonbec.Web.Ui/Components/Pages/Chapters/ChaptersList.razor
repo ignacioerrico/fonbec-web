@@ -50,7 +50,7 @@
 					                      AuditableViewModel="@context.Item"/>
 				</CellTemplate>
 			</PropertyColumn>
-			<PropertyColumn Property="vm => vm.Notes" Title="Notas personales" Required="false" Hidden="true" />
+			<PropertyColumn Property="vm => vm.Notes" Title="Información adicional" Required="false" Hidden="true" />
 			<TemplateColumn Title="Acciones" Filterable="false" Sortable="false">
 				<CellTemplate>
 					<AuthorizeView Policy="@nameof(ChapterCreate)" Context="innerContext">

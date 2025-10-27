@@ -127,7 +127,7 @@
                                   MaxLength="MaxLength.FonbecWebUser.PhoneNumber" />
                 </EditTemplate>
             </PropertyColumn>
-            <PropertyColumn Property="vm => vm.UserNotes" Title="Notas personales" Required="false" Hidden="true" />
+            <PropertyColumn Property="vm => vm.UserNotes" Title="Información adicional" Required="false" Hidden="true" />
             <TemplateColumn Title="Acciones" Filterable="false" Sortable="false">
                 <CellTemplate>
 	                <AuthorizeView Policy="@nameof(UserCreate)" Context="innerContext">

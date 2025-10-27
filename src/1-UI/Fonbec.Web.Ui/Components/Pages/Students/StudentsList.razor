@@ -53,7 +53,8 @@
 	        <PropertyColumn Property="@(vm => _sortByLastName ? vm.StudentLastName : vm.StudentFirstName)" Title="Nombre">
 		        <CellTemplate>
 			        <AuditableItemDisplay Id="@context.Item.StudentId"
-			                              ItemName="@StudentFullName(context.Item)"
+                                          ItemName="@StudentFullName(context.Item)"
+										  Email="@context.Item.StudentEmail"
 			                              IsActive="@context.Item.IsStudentActive"
 			                              AuditableViewModel="@context.Item" />
 					@if (!string.IsNullOrWhiteSpace(context.Item.StundentNickName))
@@ -130,10 +131,10 @@
 								  MaxLength="MaxLength.FonbecWebUser.PhoneNumber" />
 				</EditTemplate>
 	        </PropertyColumn>
-	        <PropertyColumn Property="vm => vm.StudentNotes" Title="Notas personales" Hidden="true" Required="false">
+			<PropertyColumn Property="vm => vm.StudentNotes" Title="Información adicional" Hidden="true" Required="false">
 		        <EditTemplate>
 			        <MudTextField T="string" @bind-Value="context.Item.StudentNotes" Immediate="true"
-			                      Label="Notas personales" Variant="Variant.Outlined" Margin="Margin.Dense"
+								  Label="Información adicional" Variant="Variant.Outlined" Margin="Margin.Dense"
 			                      MaxLength="MaxLength.Auditable.Notes" />
 		        </EditTemplate>
 	        </PropertyColumn>

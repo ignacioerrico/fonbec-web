@@ -28,6 +28,8 @@ public partial class FacilitatorSelector
 
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
+        
         var facilitators = await UserService.GetAllUsersInRoleForSelectionAsync(FonbecRole.Uploader);
 
         _dataLoaded = true;
@@ -35,14 +37,17 @@ public partial class FacilitatorSelector
         _facilitators.AddRange(facilitators);
 
         await OnFacilitatorsLoaded.InvokeAsync(facilitators.Count);
+    }
 
-        if (facilitators.Count > 0)
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+
+        if (SelectedFacilitatorId == 0 && _facilitators.Count > 0)
         {
-            SelectedFacilitatorId = facilitators.First().Key;
+            SelectedFacilitatorId = _facilitators.First().Key;
             await OnSelectedValueChanged(SelectedFacilitatorId);
         }
-
-        await base.OnInitializedAsync();
     }
 
     private async Task OnSelectedValueChanged(int selectedFacilitatorId)

@@ -20,7 +20,13 @@ public partial class ChaptersList : AuthenticationRequiredComponentBase
 
     protected override async Task OnInitializedAsync()
     {
+        await base.OnInitializedAsync();
+
+        Loading = true;
+
         _viewModels = await ChapterService.GetAllChaptersAsync();
+
+        Loading = false;
     }
 
     /// <summary>
