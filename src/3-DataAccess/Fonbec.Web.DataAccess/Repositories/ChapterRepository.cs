@@ -77,6 +77,7 @@ public class ChapterRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
 
         chapterDb.Name = dataModel.ChapterUpdatedName;
         chapterDb.Notes = dataModel.ChapterUpdatedNotes;
+        chapterDb.LastUpdatedById = dataModel.UpdatedById;
 
         db.Chapters.Update(chapterDb);
         return await db.SaveChangesAsync();

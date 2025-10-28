@@ -13,4 +13,5 @@ public class UpdateStudentInputDataModel
     public DateTime? StudentSecondarySchoolStartYear { get; set; }
     public DateTime? StudentUniversityStartYear { get; set; }
     public int FacilitatorId { get; set; }
+    public int UpdatedById { get; set; }
 }

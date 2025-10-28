@@ -14,7 +14,8 @@ public record UpdateStudentInputModel(
     string StudentNotes,
     DateTime? StudentSecondarySchoolStartYear,
     DateTime? StudentUniversityStartYear,
-    int FacilitatorId
+    int FacilitatorId,
+    int UpdatedById
 );
 
 public class UpdateStudentInputModelMappingDefinitions : IRegister
@@ -33,6 +34,7 @@ public class UpdateStudentInputModelMappingDefinitions : IRegister
             .Map(dest => dest.StudentNotes, src => src.StudentNotes.NullOrTrimmed())
             .Map(dest => dest.StudentSecondarySchoolStartYear, src => src.StudentSecondarySchoolStartYear)
             .Map(dest => dest.StudentUniversityStartYear, src => src.StudentUniversityStartYear)
-            .Map(dest => dest.FacilitatorId, src => src.FacilitatorId);
+            .Map(dest => dest.FacilitatorId, src => src.FacilitatorId)
+            .Map(dest => dest.UpdatedById, src => src.UpdatedById);
     }
 }

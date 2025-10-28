@@ -176,6 +176,7 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
 
             // Audit
             CreatedById = model.CreatedById,
+            CreatedOnUtc = DateTime.UtcNow,
         };
         await userStore.SetUserNameAsync(fonbecUser, model.UserEmail, CancellationToken.None);
         await ((IUserEmailStore<FonbecWebUser>)userStore).SetEmailAsync(fonbecUser, model.UserEmail, CancellationToken.None);

@@ -95,6 +95,7 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
         studentDb.SecondarySchoolStartYear = dataModel.StudentSecondarySchoolStartYear;
         studentDb.UniversityStartYear = dataModel.StudentUniversityStartYear;
         studentDb.FacilitatorId = dataModel.FacilitatorId;
+        studentDb.LastUpdatedById = dataModel.UpdatedById;
 
         db.Students.Update(studentDb);
         return await db.SaveChangesAsync();

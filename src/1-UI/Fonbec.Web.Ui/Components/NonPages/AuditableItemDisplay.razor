@@ -24,16 +24,16 @@
             <MudText Align="Align.Left" Typo="Typo.body2">
                 Creado por: @AuditableViewModel.CreatedBy el @AuditableViewModel.CreatedOnUtc.ToLocalizedDateTime()
             </MudText>
-            @if (AuditableViewModel.LastUpdatedBy is not null)
+            @if (AuditableViewModel.LastUpdatedBy is not null && AuditableViewModel.LastUpdatedOnUtc is not null)
             {
                 <MudText Align="Align.Left" Typo="Typo.body2">
-                    Última actualización por: @AuditableViewModel.CreatedBy el @AuditableViewModel.CreatedOnUtc.ToLocalizedDateTime()
+                    Última actualización por: @AuditableViewModel.LastUpdatedBy el @AuditableViewModel.LastUpdatedOnUtc.Value.ToLocalizedDateTime()
                 </MudText>
             }
-            @if (AuditableViewModel.DisabledBy is not null)
+            @if (AuditableViewModel.DisabledBy is not null && AuditableViewModel.DisabledOnUtc is not null)
             {
                 <MudText Align="Align.Left" Typo="Typo.body2">
-                    Desabilitado por: @AuditableViewModel.CreatedBy el @AuditableViewModel.CreatedOnUtc.ToLocalizedDateTime()
+                    Desabilitado por: @AuditableViewModel.DisabledBy el @AuditableViewModel.DisabledOnUtc.Value.ToLocalizedDateTime()
                 </MudText>
             }
         </TooltipContent>

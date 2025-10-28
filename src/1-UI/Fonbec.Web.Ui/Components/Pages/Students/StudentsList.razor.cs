@@ -68,7 +68,8 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
             viewModel.StudentNotes,
             viewModel.StudentSecondarySchoolStartYear,
             viewModel.StudentUniversityStartYear,
-            viewModel.FacilitatorId
+            viewModel.FacilitatorId,
+            FonbecClaim.UserId
         );
 
         var result = await StudentService.UpdateStudentAsync(updateStudentInputModel);
