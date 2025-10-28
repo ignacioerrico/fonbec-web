@@ -32,6 +32,9 @@ public static class ConfigureServices
         services.AddMudExtensions();
 
         services.AddScoped<IAuthorizationHandler, FonbecPermissionHandler>();
+
+        // Registers a singleton List<PageAccessInfo> by reflecting over Blazor page components with PageMetadataAttribute;
+        // obtain it via constructor injection of List<PageAccessInfo>.
         services.AddSingleton(_ => PageAccessDiscovery.DiscoverPages());
 
         services.AddScoped<IUserClaimsPrincipalFactory<FonbecWebUser>, FonbecUserClaimsPrincipalFactory>(); // Overrides registration done internally by AddIdentityCore

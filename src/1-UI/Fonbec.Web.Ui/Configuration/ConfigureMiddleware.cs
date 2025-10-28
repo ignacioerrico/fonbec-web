@@ -1,14 +1,14 @@
 ﻿using Fonbec.Web.DataAccess;
 using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.Entities;
+using Fonbec.Web.Logic.Authorization;
+using Fonbec.Web.Logic.Constants;
 using Fonbec.Web.Ui.Options;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 using System.ComponentModel.DataAnnotations;
 using System.Security.Claims;
-using Fonbec.Web.Logic.Authorization;
-using Fonbec.Web.Logic.Constants;
 
 namespace Fonbec.Web.Ui.Configuration;
 
@@ -56,6 +56,11 @@ public static class ConfigureMiddleware
         var roleManager = scope.ServiceProvider.GetRequiredService<RoleManager<FonbecWebRole>>();
         var adminUserOptions = scope.ServiceProvider.GetRequiredService<IOptions<AdminUserOptions>>().Value;
 
+        // Prepare claim value containing all page codenames
+        var allPages = scope.ServiceProvider.GetRequiredService<List<PageAccessInfo>>();
+        var claimValues = allPages.Select(c => c.Codename);
+        var allClaims = string.Join(',', claimValues);
+
         // Ensure roles exist
         foreach (var roleName in FonbecRole.AllRoles)
         {
@@ -86,6 +91,10 @@ public static class ConfigureMiddleware
         if (adminUser is not null)
         {
             // Admin user already exists
+
+            // Ensure Admin has all permissions
+            await UpdateClaim(userManager, adminUser, allClaims);
+
             return;
         }
 
@@ -128,11 +137,33 @@ public static class ConfigureMiddleware
             Halt("Could not add Admin role to admin user: ", roleAssignmentResult.Errors);
         }
 
-        // Add all existing permissions to the custom claim of type "FonbecAuth".
-        // The value of the claim is a comma-separated list of page names the user has access to.
-        var allPages = scope.ServiceProvider.GetRequiredService<List<PageAccessInfo>>();
-        var claimValues = allPages.Select(c => c.Codename);
-        var claimValue = string.Join(',', claimValues);
+        // Add all existing permissions to the custom claim of type "FonbecAuth"
+        await AddClaim(userManager, adminUser, allClaims);
+    }
+
+    private static async Task UpdateClaim(UserManager<FonbecWebUser> userManager, FonbecWebUser adminUser, string newClaimValue)
+    {
+        // Retrieve current claims
+        var claims = await userManager.GetClaimsAsync(adminUser);
+
+        var claimToUpdate = claims.FirstOrDefault(c => c.Type == FonbecAuth.ClaimType);
+        if (claimToUpdate is not null)
+        {
+            if (string.Equals(claimToUpdate.Value, newClaimValue, StringComparison.Ordinal))
+            {
+                // The existing claim already has all permissions. No update needed.
+                return;
+            }
+
+            // Remove the old claim
+            await userManager.RemoveClaimAsync(adminUser, claimToUpdate);
+        }
+
+        await AddClaim(userManager, adminUser, newClaimValue);
+    }
+
+    private static async Task AddClaim(UserManager<FonbecWebUser> userManager, FonbecWebUser adminUser, string claimValue)
+    {
         var claim = new Claim(FonbecAuth.ClaimType, claimValue);
 
         var addClaimResult = await userManager.AddClaimAsync(adminUser, claim);
