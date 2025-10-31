@@ -20,7 +20,8 @@ public class UpdateStudentInputModelMappingDefinitionsTests : MappingTestBase
             StudentNotes: "Some notes",
             StudentSecondarySchoolStartYear: new DateTime(2020, 1, 1),
             StudentUniversityStartYear: new DateTime(2022, 1, 1),
-            FacilitatorId: 2
+            FacilitatorId: 2,
+            UpdatedById: 3
         );
 
         var result = input.Adapt<UpdateStudentInputDataModel>(Config);
@@ -35,6 +36,7 @@ public class UpdateStudentInputModelMappingDefinitionsTests : MappingTestBase
         result.StudentSecondarySchoolStartYear.Should().Be(new DateTime(2020, 1, 1));
         result.StudentUniversityStartYear.Should().Be(new DateTime(2022, 1, 1));
         result.FacilitatorId.Should().Be(2);
+        result.UpdatedById.Should().Be(3);
     }
 
     [Fact]
@@ -50,7 +52,8 @@ public class UpdateStudentInputModelMappingDefinitionsTests : MappingTestBase
             StudentNotes: "Some notes",
             StudentSecondarySchoolStartYear: new DateTime(2020, 1, 1),
             StudentUniversityStartYear: new DateTime(2022, 1, 1),
-            FacilitatorId: 2
+            FacilitatorId: 2,
+            UpdatedById: 3
         );
 
         var result = () => input.Adapt<UpdateStudentInputDataModel>(Config);
@@ -72,7 +75,8 @@ public class UpdateStudentInputModelMappingDefinitionsTests : MappingTestBase
             StudentNotes: "Some notes",
             StudentSecondarySchoolStartYear: new DateTime(2020, 1, 1),
             StudentUniversityStartYear: new DateTime(2022, 1, 1),
-            FacilitatorId: 2
+            FacilitatorId: 2,
+            UpdatedById: 3
         );
 
         var result = input.Adapt<UpdateStudentInputDataModel>(Config);
@@ -93,7 +97,8 @@ public class UpdateStudentInputModelMappingDefinitionsTests : MappingTestBase
             StudentNotes: "Some notes",
             StudentSecondarySchoolStartYear: new DateTime(2020, 1, 1),
             StudentUniversityStartYear: new DateTime(2022, 1, 1),
-            FacilitatorId: 2
+            FacilitatorId: 2,
+            UpdatedById: 3
         );
 
         var result = () => input.Adapt<UpdateStudentInputDataModel>(Config);
@@ -115,7 +120,8 @@ public class UpdateStudentInputModelMappingDefinitionsTests : MappingTestBase
             StudentNotes: "Some notes",
             StudentSecondarySchoolStartYear: new DateTime(2020, 1, 1),
             StudentUniversityStartYear: new DateTime(2022, 1, 1),
-            FacilitatorId: 2
+            FacilitatorId: 2,
+            UpdatedById: 3
         );
 
         var result = input.Adapt<UpdateStudentInputDataModel>(Config);
@@ -138,7 +144,8 @@ public class UpdateStudentInputModelMappingDefinitionsTests : MappingTestBase
             StudentNotes: "Some notes",
             StudentSecondarySchoolStartYear: null,
             StudentUniversityStartYear: null,
-            FacilitatorId: 2
+            FacilitatorId: 2,
+            UpdatedById: 3
         );
 
         var result = input.Adapt<UpdateStudentInputDataModel>(Config);
@@ -159,7 +166,8 @@ public class UpdateStudentInputModelMappingDefinitionsTests : MappingTestBase
             StudentNotes: "Some notes",
             StudentSecondarySchoolStartYear: null,
             StudentUniversityStartYear: null,
-            FacilitatorId: 2
+            FacilitatorId: 2,
+            UpdatedById: 3
         );
 
         var result = input.Adapt<UpdateStudentInputDataModel>(Config);
@@ -182,7 +190,8 @@ public class UpdateStudentInputModelMappingDefinitionsTests : MappingTestBase
             StudentNotes: "Some notes",
             StudentSecondarySchoolStartYear: null,
             StudentUniversityStartYear: null,
-            FacilitatorId: 2
+            FacilitatorId: 2,
+            UpdatedById: 3
         );
 
         var result = input.Adapt<UpdateStudentInputDataModel>(Config);
@@ -203,7 +212,8 @@ public class UpdateStudentInputModelMappingDefinitionsTests : MappingTestBase
             StudentNotes: "Some notes",
             StudentSecondarySchoolStartYear: null,
             StudentUniversityStartYear: null,
-            FacilitatorId: 2
+            FacilitatorId: 2,
+            UpdatedById: 3
         );
 
         var result = input.Adapt<UpdateStudentInputDataModel>(Config);
@@ -226,7 +236,8 @@ public class UpdateStudentInputModelMappingDefinitionsTests : MappingTestBase
             StudentNotes: "Some notes",
             StudentSecondarySchoolStartYear: null,
             StudentUniversityStartYear: null,
-            FacilitatorId: 2
+            FacilitatorId: 2,
+            UpdatedById: 3
         );
 
         var result = input.Adapt<UpdateStudentInputDataModel>(Config);
@@ -247,7 +258,8 @@ public class UpdateStudentInputModelMappingDefinitionsTests : MappingTestBase
             StudentNotes: "Some notes",
             StudentSecondarySchoolStartYear: null,
             StudentUniversityStartYear: null,
-            FacilitatorId: 2
+            FacilitatorId: 2,
+            UpdatedById: 3
         );
 
         var result = input.Adapt<UpdateStudentInputDataModel>(Config);
@@ -270,7 +282,8 @@ public class UpdateStudentInputModelMappingDefinitionsTests : MappingTestBase
             StudentNotes: notes,
             StudentSecondarySchoolStartYear: null,
             StudentUniversityStartYear: null,
-            FacilitatorId: 2
+            FacilitatorId: 2,
+            UpdatedById: 3
         );
 
         var result = input.Adapt<UpdateStudentInputDataModel>(Config);
@@ -291,7 +304,8 @@ public class UpdateStudentInputModelMappingDefinitionsTests : MappingTestBase
             StudentNotes: "  Some notes   ",
             StudentSecondarySchoolStartYear: null,
             StudentUniversityStartYear: null,
-            FacilitatorId: 2
+            FacilitatorId: 2,
+            UpdatedById: 3
         );
 
         var result = input.Adapt<UpdateStudentInputDataModel>(Config);
