@@ -38,7 +38,7 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
                 FacilitatorLastName = s.Facilitator.LastName,
                 FacilitatorEmail = s.Facilitator.Email,
                 StudentEmail = s.Email,
-                StudentNotes = s.Notes,
+                Notes = s.Notes,
                 StudentCurrentEducationLevel = s.CurrentEducationLevel,
                 StudentSecondarySchoolStartYear = s.SecondarySchoolStartYear,
                 StudentUniversityStartYear = s.UniversityStartYear,

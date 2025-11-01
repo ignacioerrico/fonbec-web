@@ -25,7 +25,6 @@ public class StudentsListViewModelMappingDefinitionsTests : MappingTestBase
             FacilitatorLastName = "Tilitator",
             FacilitatorEmail = "facilitator@email.com",
             StudentEmail = "student@email.com",
-            StudentNotes = "Some notes",
             StudentCurrentEducationLevel = EducationLevel.SecondarySchool,
             StudentSecondarySchoolStartYear = now,
             StudentUniversityStartYear = now.AddYears(2),
@@ -44,7 +43,6 @@ public class StudentsListViewModelMappingDefinitionsTests : MappingTestBase
         viewModel.FacilitatorFullName.Should().Be("Fac Tilitator");
         viewModel.FacilitatorEmail.Should().Be("facilitator@email.com");
         viewModel.StudentEmail.Should().Be("student@email.com");
-        viewModel.StudentNotes.Should().Be("Some notes");
         viewModel.StudentCurrentEducationLevel.Should().Be("Secundario");
         viewModel.StudentSecondarySchoolStartYear.Should().Be(now);
         viewModel.StudentUniversityStartYear.Should().Be(now.AddYears(2));
@@ -52,14 +50,13 @@ public class StudentsListViewModelMappingDefinitionsTests : MappingTestBase
     }
 
     [Fact]
-    public void Maps_Nullable_Fields_To_Empty_Or_Default()
+    public void Maps_Nullable_Fields_To_Empty()
     {
         var dataModel = new AllStudentsDataModel(Auditable)
         {
             StundentNickName = null,
             FacilitatorEmail = null,
             StudentEmail = null,
-            StudentNotes = null,
             StudentPhoneNumber = null
         };
 
@@ -68,7 +65,6 @@ public class StudentsListViewModelMappingDefinitionsTests : MappingTestBase
         viewModel.StundentNickName.Should().BeEmpty();
         viewModel.FacilitatorEmail.Should().BeEmpty();
         viewModel.StudentEmail.Should().BeEmpty();
-        viewModel.StudentNotes.Should().BeEmpty();
         viewModel.StudentPhoneNumber.Should().BeEmpty();
     }
 }

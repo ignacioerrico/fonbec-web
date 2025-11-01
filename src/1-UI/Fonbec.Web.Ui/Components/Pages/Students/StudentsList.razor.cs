@@ -65,7 +65,7 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
             viewModel.StundentNickName,
             viewModel.StudentEmail,
             viewModel.StudentPhoneNumber,
-            viewModel.StudentNotes,
+            viewModel.Notes,
             viewModel.StudentSecondarySchoolStartYear,
             viewModel.StudentUniversityStartYear,
             viewModel.FacilitatorId,

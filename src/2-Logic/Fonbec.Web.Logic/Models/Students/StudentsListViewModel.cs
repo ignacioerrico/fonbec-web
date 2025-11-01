@@ -16,7 +16,6 @@ public class StudentsListViewModel : AuditableViewModel
     public string FacilitatorFullName { get; set; } = string.Empty;
     public string FacilitatorEmail { get; set; } = string.Empty;
     public string StudentEmail { get; set; } = string.Empty;
-    public string StudentNotes { get; set; } = string.Empty;
     public string StudentCurrentEducationLevel { get; set; } = string.Empty;
     public DateTime? StudentSecondarySchoolStartYear { get; set; }
     public DateTime? StudentUniversityStartYear { get; set; }
@@ -38,7 +37,6 @@ public class StudentsListViewModelMappingDefinitions : IRegister
             .Map(dest => dest.FacilitatorFullName, src => $"{src.FacilitatorFirstName} {src.FacilitatorLastName}")
             .Map(dest => dest.FacilitatorEmail, src => src.FacilitatorEmail ?? string.Empty)
             .Map(dest => dest.StudentEmail, src => src.StudentEmail ?? string.Empty)
-            .Map(dest => dest.StudentNotes, src => src.StudentNotes ?? string.Empty)
             .Map(dest => dest.StudentCurrentEducationLevel, src => src.StudentCurrentEducationLevel.EnumToString())
             .Map(dest => dest.StudentSecondarySchoolStartYear, src => src.StudentSecondarySchoolStartYear)
             .Map(dest => dest.StudentUniversityStartYear, src => src.StudentUniversityStartYear)
