@@ -14,9 +14,9 @@ public sealed class FonbecWebDbContext : IdentityDbContext<FonbecWebUser, Fonbec
         ChangeTracker.Tracked += UpdateTimestamps;
     }
 
-    internal DbSet<Chapter> Chapters => Set<Chapter>();
+    public DbSet<Chapter> Chapters => Set<Chapter>();
 
-    internal DbSet<Student> Students => Set<Student>();
+    public DbSet<Student> Students => Set<Student>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
