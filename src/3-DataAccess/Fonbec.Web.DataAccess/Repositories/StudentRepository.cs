@@ -57,7 +57,7 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
 
         var student = new Student
         {
-            ChapterId = inputDataModel.ChapterId,
+            StudentId = inputDataModel.StudentId,
             FirstName = inputDataModel.StudentFirstName,
             LastName = inputDataModel.StudentLastName,
             NickName = inputDataModel.StudentNickName,

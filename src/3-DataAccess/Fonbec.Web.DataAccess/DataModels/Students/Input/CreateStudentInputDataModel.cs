@@ -4,7 +4,7 @@ namespace Fonbec.Web.DataAccess.DataModels.Students.Input;
 
 public class CreateStudentInputDataModel
 {
-    public int ChapterId { get; set; }
+    public int StudentId { get; set; }
 
     public string StudentFirstName { get; set; } = null!;
     
