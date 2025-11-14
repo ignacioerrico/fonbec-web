@@ -70,6 +70,7 @@ await ConfigureMiddleware.ApplyMigrationsAndSeedingAsync(app, applySeeding: fals
 
 await ConfigureMiddleware.SeedRolesAndAdminUserAsync(app);
 
+
 if (app.Environment.IsDevelopment())
 {
     app.UseMigrationsEndPoint();

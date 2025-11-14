@@ -5,11 +5,11 @@
 @using Fonbec.Web.Logic.Models.Sponsors
 @using Fonbec.Web.DataAccess.Constants
 
-<PageHeader Title="Padrinos" />
+<PageHeader Title="Sponsors" />
 
 <LoadingIndicator Loading="Loading"
 				  If="!_viewModels.Any()"
-				  ThenDisplay="No hay padrinos." />
+				  ThenDisplay="No hay Sponsors." />
 
 @if (_viewModels.Any())
 {

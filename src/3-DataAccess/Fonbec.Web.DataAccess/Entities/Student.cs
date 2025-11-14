@@ -40,6 +40,4 @@ public class Student : UserWithoutAccount
                 : EducationLevel.PrimarySchool;
         }
     }
-
-    public int StudentId { get; set; }
 }
