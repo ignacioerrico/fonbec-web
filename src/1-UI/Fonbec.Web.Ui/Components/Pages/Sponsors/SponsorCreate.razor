@@ -1,0 +1,9 @@
+﻿@attribute [Route(NavRoutes.ChapterCreate)]
+@attribute [Authorize(Policy = nameof(SponsorCreate))]
+@inherits AuthenticationRequiredComponentBase
+
+@using Fonbec.Web.DataAccess.Constants
+
+<PageHeader Title="Alta de Sponsor" />
+
+<LoadingIndicator Loading="Loading" />
