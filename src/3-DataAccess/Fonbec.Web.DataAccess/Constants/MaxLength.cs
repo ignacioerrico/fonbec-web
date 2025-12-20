@@ -20,4 +20,6 @@ public static class MaxLength
     {
         public const int Name = 30;
     }
+
+    //TODO: Add sponsors max lengths when needed
 }

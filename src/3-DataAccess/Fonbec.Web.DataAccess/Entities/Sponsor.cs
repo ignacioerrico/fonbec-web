@@ -9,6 +9,6 @@ namespace Fonbec.Web.DataAccess.Entities;
 public class Sponsor : UserWithoutAccount
 {
     public string Email { get; set; } = string.Empty;
-    public string? SendAlsoTo { get; set; }
+    public List<string>? SendAlsoTo { get; set; }
     public string BranchOffice { get; set; } = string.Empty;
 }

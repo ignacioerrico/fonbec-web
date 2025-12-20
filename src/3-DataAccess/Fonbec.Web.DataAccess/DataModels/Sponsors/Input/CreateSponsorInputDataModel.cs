@@ -8,9 +8,9 @@ public class CreateSponsorInputDataModel
     public string SponsorLastName { get; set; } = string.Empty;
     public string? SponsorNickName { get; set; }
     public Gender SponsorGender { get; set; } 
-    public string SponsorPhoneNumber { get; set; } = string.Empty;
+    public string? SponsorPhoneNumber { get; set; }
     public string? SponsorNotes { get; set; }
     public string SponsorEmail { get; set; } = string.Empty;
-    public string? SponsorSendAlsoTo { get; set; }
+    public List<string>? SponsorSendAlsoTo { get; set; }
     public string SponsorBranchOffice { get; set; } = string.Empty;
 }
