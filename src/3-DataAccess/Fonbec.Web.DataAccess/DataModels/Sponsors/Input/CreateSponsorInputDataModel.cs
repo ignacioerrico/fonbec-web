@@ -13,4 +13,5 @@ public class CreateSponsorInputDataModel
     public string SponsorEmail { get; set; } = string.Empty;
     public List<string>? SponsorSendAlsoTo { get; set; }
     public string SponsorBranchOffice { get; set; } = string.Empty;
+    public int CreatedById { get; set; }
 }

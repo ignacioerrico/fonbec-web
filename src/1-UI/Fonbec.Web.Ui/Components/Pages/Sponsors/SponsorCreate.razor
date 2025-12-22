@@ -1,8 +1,18 @@
-﻿@attribute [Route(NavRoutes.ChapterCreate)]
+﻿@attribute [Route(NavRoutes.SponsorCreate)]
 @attribute [Authorize(Policy = nameof(SponsorCreate))]
 @inherits AuthenticationRequiredComponentBase
 
 @using Fonbec.Web.DataAccess.Constants
+
+<AuthorizeView Policy="@nameof(SponsorCreate)">
+	<MudTooltip Text="Alta de sponsor"
+				Arrow="true" Placement="Placement.Right"
+				Color="Color.Primary">
+		<MudFab Href="@NavRoutes.SponsorCreate"
+				StartIcon="@Icons.Material.Filled.Add"
+				Color="Color.Primary" />
+	</MudTooltip>
+</AuthorizeView>
 
 <PageHeader Title="Alta de Padrino" />
 

@@ -8,13 +8,14 @@ public record CreateSponsorInputModel(
     int ChapterId,
     string SponsorFirstName,
     string SponsorLastName,
-    string SponsorNickName,
+    string? SponsorNickName,
     Gender SponsorGender,
     string SponsorPhoneNumber,
-    string SponsorNotes,
+    string? SponsorNotes,
     string SponsorEmail,
-    string SponsorSendAlsoTo,
-    string SponsorBranchOffice
+    string? SponsorSendAlsoTo,
+    string SponsorBranchOffice,
+    int CreatedById
 );
 public class CreateSponsorInputModelMappingDefinitions : IRegister
 {
@@ -24,14 +25,15 @@ public class CreateSponsorInputModelMappingDefinitions : IRegister
             .Map(dest => dest.ChapterId, src => src.ChapterId)
             .Map(dest => dest.SponsorFirstName, src => src.SponsorFirstName.MustBeNonEmpty().NormalizeText())
             .Map(dest => dest.SponsorLastName, src => src.SponsorLastName.MustBeNonEmpty().NormalizeText())
-            .Map(dest => dest.SponsorNickName, src => src.SponsorNickName.NormalizeText(),
+            .Map(dest => dest.SponsorNickName, src => src.SponsorNickName,
              src => !string.IsNullOrWhiteSpace(src.SponsorNickName))
             .Map(dest => dest.SponsorGender, src => src.SponsorGender)
             .Map(dest => dest.SponsorPhoneNumber, src => src.SponsorPhoneNumber.NullOrTrimmed())
-            .Map(dest => dest.SponsorNotes, src => src.SponsorNotes.NullOrTrimmed())
+            .Map(dest => dest.SponsorNotes, src => src.SponsorNotes)
             .Map(dest => dest.SponsorEmail, src => src.SponsorEmail.Trim().ToLower())
-            .Map(dest => dest.SponsorSendAlsoTo, src => src.SponsorSendAlsoTo.NormalizeText(),
+            .Map(dest => dest.SponsorSendAlsoTo, src => src.SponsorSendAlsoTo,
              src => !string.IsNullOrWhiteSpace(src.SponsorSendAlsoTo))
-            .Map(dest => dest.SponsorBranchOffice, src => src.SponsorBranchOffice.MustBeNonEmpty().NormalizeText());
+            .Map(dest => dest.SponsorBranchOffice, src => src.SponsorBranchOffice.MustBeNonEmpty().NormalizeText())
+            .Map(dest => dest.CreatedById, src => src.CreatedById);
     }
 }

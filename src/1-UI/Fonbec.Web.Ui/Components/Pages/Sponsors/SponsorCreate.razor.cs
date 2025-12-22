@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.Pages.Sponsors;
+
 [PageMetadata(nameof(SponsorCreate), "Crear y actualizar Padrino", [FonbecRole.Admin])]
 
 public partial class SponsorCreate : AuthenticationRequiredComponentBase
@@ -47,8 +48,9 @@ public partial class SponsorCreate : AuthenticationRequiredComponentBase
             _bindModel.SponsorNotes,
             _bindModel.SponsorEmail,
             _bindModel.SponsorSendAlsoTo,
-            _bindModel.SponsorBranchOffice
-            );
+            _bindModel.SponsorBranchOffice,
+            FonbecClaim.UserId
+        );
 
         var result = await SponsorService.CreateSponsorAsync(createSponsorInputModel);
         if (!result.AnyAffectedRows)

@@ -16,6 +16,7 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
 
         var Sponsor = new Sponsor
         {
+            ChapterId = dataModel.ChapterId,
             FirstName = dataModel.SponsorFirstName,
             LastName = dataModel.SponsorLastName,
             NickName = dataModel.SponsorNickName,
@@ -25,6 +26,7 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             Email = dataModel.SponsorEmail,
             SendAlsoTo = dataModel.SponsorSendAlsoTo,
             BranchOffice = dataModel.SponsorBranchOffice,
+            CreatedById = dataModel.CreatedById
         };
 
         db.Sponsors.Add(Sponsor);
