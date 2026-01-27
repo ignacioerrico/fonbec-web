@@ -31,8 +31,8 @@ public class CreateSponsorInputModelMappingDefinitions : IRegister
             .Map(dest => dest.SponsorPhoneNumber, src => src.SponsorPhoneNumber.NullOrTrimmed())
             .Map(dest => dest.SponsorNotes, src => src.SponsorNotes)
             .Map(dest => dest.SponsorEmail, src => src.SponsorEmail.Trim().ToLower())
-            .Map(dest => dest.SponsorSendAlsoTo, src => src.SponsorSendAlsoTo,
-             src => !string.IsNullOrWhiteSpace(src.SponsorSendAlsoTo))
+            .Map( dest => dest.SponsorSendAlsoTo,src => string.IsNullOrWhiteSpace(src.SponsorSendAlsoTo) ? 
+             new List<string>() : src.SponsorSendAlsoTo.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList())
             .Map(dest => dest.SponsorBranchOffice, src => src.SponsorBranchOffice.MustBeNonEmpty().NormalizeText())
             .Map(dest => dest.CreatedById, src => src.CreatedById);
     }

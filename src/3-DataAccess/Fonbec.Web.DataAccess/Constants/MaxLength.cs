@@ -21,5 +21,8 @@ public static class MaxLength
         public const int Name = 30;
     }
 
-    //TODO: Add sponsors max lengths when needed
+    public static class Sponsor
+    {
+        public const int SendAlsoTo = 500;
+    }
 }

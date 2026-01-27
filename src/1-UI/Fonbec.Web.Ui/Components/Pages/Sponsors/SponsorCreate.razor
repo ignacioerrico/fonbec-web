@@ -47,6 +47,9 @@
 	<MudTextField T="string" Label="Sucursal" @bind-Value="_bindModel.SponsorBranchOffice" Immediate="true"
 				  Required="true" RequiredError="Este es un campo obligatorio." />
 
+	<MudTextField T="string" Label="Lista de CC/BCC separados por coma (,)" @bind-Value="_bindModel.SponsorSendAlsoTo" Immediate="true"
+				  MaxLength="MaxLength.Sponsor.SendAlsoTo" />
+
 </MudForm>
 
 <MudStack Row="true" Class="pt-4">
