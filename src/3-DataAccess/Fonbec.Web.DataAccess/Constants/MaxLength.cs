@@ -20,9 +20,4 @@ public static class MaxLength
     {
         public const int Name = 30;
     }
-
-    public static class Sponsor
-    {
-        public const int SendAlsoTo = 500;
-    }
 }

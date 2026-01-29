@@ -4,24 +4,20 @@
 
 @using Fonbec.Web.DataAccess.Constants
 
-<AuthorizeView Policy="@nameof(SponsorCreate)">
-	<MudTooltip Text="Alta de sponsor"
-				Arrow="true" Placement="Placement.Right"
-				Color="Color.Primary">
-		<MudFab Href="@NavRoutes.SponsorCreate"
-				StartIcon="@Icons.Material.Filled.Add"
-				Color="Color.Primary" />
-	</MudTooltip>
-</AuthorizeView>
-
 <PageHeader Title="Alta de Padrino" />
+
+@if (!_anyChapters)
+{
+	<MudAlert Severity="Severity.Error">No hay filiales. Para dar de alta usuarios se requiere <MudLink Href="@NavRoutes.ChapterCreate" Typo="Typo.body2">al menos una filial</MudLink>.</MudAlert>
+}
 
 <LoadingIndicator Loading="Loading" />
 
-<MudForm @bind-IsValid="@_formValidationSucceeded">
-	<ChapterSelector @bind-SelectedChapterId="_bindModel.ChapterId" />
+<MudForm @bind-IsValid="@_formValidationSucceeded" Disabled="!_anyChapters">
+	<ChapterSelector @bind-SelectedChapterId="_bindModel.ChapterId"
+					 OnChaptersLoaded="OnChaptersLoaded" />
 
-	<MudTextField T="string" Label="Nombre" @bind-Value="_bindModel.SponsorFirstName" Immediate="true"
+	<MudTextField T="string" Label="Nombre" @bind-Value="_bindModel.SponsorFirstName" Immediate="true" AutoFocus="_anyChapters"
 				  Required="true" RequiredError="Este es un campo obligatorio."
 				  MaxLength="MaxLength.FonbecWebUser.FirstName" />
 
@@ -43,12 +39,6 @@
 
 	<MudTextField T="string" Label="Información adicional" @bind-Value="_bindModel.SponsorNotes" Immediate="true"
 				  MaxLength="MaxLength.Auditable.Notes" />
-
-	<MudTextField T="string" Label="Sucursal" @bind-Value="_bindModel.SponsorBranchOffice" Immediate="true"
-				  Required="true" RequiredError="Este es un campo obligatorio." />
-
-	<MudTextField T="string" Label="Lista de CC/BCC separados por coma (,)" @bind-Value="_bindModel.SponsorSendAlsoTo" Immediate="true"
-				  MaxLength="MaxLength.Sponsor.SendAlsoTo" />
 
 </MudForm>
 

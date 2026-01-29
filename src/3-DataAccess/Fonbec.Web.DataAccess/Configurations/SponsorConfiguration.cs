@@ -11,10 +11,6 @@ internal class SponsorConfiguration : UserWithoutAccountConfiguration<Sponsor>
             .IsRequired(false)
             .HasMaxLength(Constants.MaxLength.FonbecWebUser.Email);
 
-        builder.Property(s => s.SendAlsoTo)
-            .IsRequired(false)
-            .HasMaxLength(Constants.MaxLength.FonbecWebUser.Email);
-
         builder.Property(s => s.Notes)
             .IsRequired(false);
 

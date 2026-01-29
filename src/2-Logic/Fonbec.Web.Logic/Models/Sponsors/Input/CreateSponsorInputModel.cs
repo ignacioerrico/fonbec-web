@@ -4,19 +4,19 @@ using Fonbec.Web.Logic.ExtensionMethods;
 using Mapster;
 
 namespace Fonbec.Web.Logic.Models.Sponsors.Input;
+
 public record CreateSponsorInputModel(
     int ChapterId,
     string SponsorFirstName,
     string SponsorLastName,
-    string? SponsorNickName,
+    string SponsorNickName,
     Gender SponsorGender,
     string SponsorPhoneNumber,
-    string? SponsorNotes,
+    string SponsorNotes,
     string SponsorEmail,
-    string? SponsorSendAlsoTo,
-    string SponsorBranchOffice,
     int CreatedById
 );
+
 public class CreateSponsorInputModelMappingDefinitions : IRegister
 {
     public void Register(TypeAdapterConfig config)
@@ -25,15 +25,12 @@ public class CreateSponsorInputModelMappingDefinitions : IRegister
             .Map(dest => dest.ChapterId, src => src.ChapterId)
             .Map(dest => dest.SponsorFirstName, src => src.SponsorFirstName.MustBeNonEmpty().NormalizeText())
             .Map(dest => dest.SponsorLastName, src => src.SponsorLastName.MustBeNonEmpty().NormalizeText())
-            .Map(dest => dest.SponsorNickName, src => src.SponsorNickName,
-             src => !string.IsNullOrWhiteSpace(src.SponsorNickName))
+            .Map(dest => dest.SponsorNickName, src => src.SponsorNickName.NormalizeText(),
+                srcCond => !string.IsNullOrWhiteSpace(srcCond.SponsorNickName))
             .Map(dest => dest.SponsorGender, src => src.SponsorGender)
             .Map(dest => dest.SponsorPhoneNumber, src => src.SponsorPhoneNumber.NullOrTrimmed())
-            .Map(dest => dest.SponsorNotes, src => src.SponsorNotes)
-            .Map(dest => dest.SponsorEmail, src => src.SponsorEmail.Trim().ToLower())
-            .Map( dest => dest.SponsorSendAlsoTo,src => string.IsNullOrWhiteSpace(src.SponsorSendAlsoTo) ? 
-             new List<string>() : src.SponsorSendAlsoTo.Split(',', StringSplitOptions.RemoveEmptyEntries).Select(s => s.Trim()).ToList())
-            .Map(dest => dest.SponsorBranchOffice, src => src.SponsorBranchOffice.MustBeNonEmpty().NormalizeText())
+            .Map(dest => dest.SponsorNotes, src => src.SponsorNotes.NullOrTrimmed())
+            .Map(dest => dest.SponsorEmail, src => src.SponsorEmail.MustBeNonEmpty().Trim().ToLower())
             .Map(dest => dest.CreatedById, src => src.CreatedById);
     }
 }

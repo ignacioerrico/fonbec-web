@@ -1,9 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
-using Fonbec.Web.DataAccess.DataModels.Sponsors.Input;
+﻿using Fonbec.Web.DataAccess.DataModels.Sponsors.Input;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Models.Results;
 using Fonbec.Web.Logic.Models.Sponsors.Input;

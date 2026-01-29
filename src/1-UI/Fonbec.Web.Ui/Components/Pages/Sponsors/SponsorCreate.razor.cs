@@ -4,16 +4,16 @@ using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Ui.Constants;
 using Fonbec.Web.Ui.Models.Sponsor;
 using Microsoft.AspNetCore.Components;
-using Microsoft.AspNetCore.Components.Web;
 using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.Pages.Sponsors;
 
-[PageMetadata(nameof(SponsorCreate), "Crear y actualizar Padrino", [FonbecRole.Admin])]
-
+[PageMetadata(nameof(SponsorCreate), "Crear y actualizar padrino", [FonbecRole.Manager])]
 public partial class SponsorCreate : AuthenticationRequiredComponentBase
 {
     private readonly SponsorCreateBindModel _bindModel = new();
+
+    private bool _anyChapters;
 
     private bool _formValidationSucceeded;
 
@@ -26,13 +26,8 @@ public partial class SponsorCreate : AuthenticationRequiredComponentBase
     [Inject]
     public ISponsorService SponsorService { get; set; } = null!;
 
-    private async Task OnKeyDownAsync(KeyboardEventArgs e)
-    {
-        if (e.Key == "Enter" && !SaveButtonDisabled)
-        {
-            await Save();
-        }
-    }
+    private async Task OnChaptersLoaded(int chaptersCount) =>
+        _anyChapters = chaptersCount > 0;
 
     private async Task Save()
     {
@@ -47,8 +42,6 @@ public partial class SponsorCreate : AuthenticationRequiredComponentBase
             _bindModel.SponsorPhoneNumber,
             _bindModel.SponsorNotes,
             _bindModel.SponsorEmail,
-            _bindModel.SponsorSendAlsoTo,
-            _bindModel.SponsorBranchOffice,
             FonbecClaim.UserId
         );
 

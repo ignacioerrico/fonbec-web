@@ -8,13 +8,14 @@ public interface ISponsorRepository
 {
     Task<int> CreateSponsorAsync(CreateSponsorInputDataModel dataModel);
 }
+
 public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : ISponsorRepository
 {
     public async Task<int> CreateSponsorAsync(CreateSponsorInputDataModel dataModel)
     {
         await using var db = await dbContext.CreateDbContextAsync();
 
-        var Sponsor = new Sponsor
+        var sponsor = new Sponsor
         {
             ChapterId = dataModel.ChapterId,
             FirstName = dataModel.SponsorFirstName,
@@ -24,12 +25,10 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             PhoneNumber = dataModel.SponsorPhoneNumber,
             Notes = dataModel.SponsorNotes,
             Email = dataModel.SponsorEmail,
-            SendAlsoTo = dataModel.SponsorSendAlsoTo,
-            BranchOffice = dataModel.SponsorBranchOffice,
             CreatedById = dataModel.CreatedById
         };
 
-        db.Sponsors.Add(Sponsor);
+        db.Sponsors.Add(sponsor);
         return await db.SaveChangesAsync();
     }
 }
