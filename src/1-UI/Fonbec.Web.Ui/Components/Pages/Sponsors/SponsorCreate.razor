@@ -1,0 +1,56 @@
+﻿@attribute [Route(NavRoutes.SponsorCreate)]
+@attribute [Authorize(Policy = nameof(SponsorCreate))]
+@inherits AuthenticationRequiredComponentBase
+
+@using Fonbec.Web.DataAccess.Constants
+
+<PageHeader Title="Alta de Padrino" />
+
+@if (!_anyChapters)
+{
+	<MudAlert Severity="Severity.Error">No hay filiales. Para dar de alta usuarios se requiere <MudLink Href="@NavRoutes.ChapterCreate" Typo="Typo.body2">al menos una filial</MudLink>.</MudAlert>
+}
+
+<LoadingIndicator Loading="Loading" />
+
+<MudForm @bind-IsValid="@_formValidationSucceeded" Disabled="!_anyChapters">
+	<ChapterSelector @bind-SelectedChapterId="_bindModel.ChapterId"
+					 OnChaptersLoaded="OnChaptersLoaded" />
+
+	<MudTextField T="string" Label="Nombre" @bind-Value="_bindModel.SponsorFirstName" Immediate="true" AutoFocus="_anyChapters"
+				  Required="true" RequiredError="Este es un campo obligatorio."
+				  MaxLength="MaxLength.FonbecWebUser.FirstName" />
+
+	<MudTextField T="string" Label="Apellido" @bind-Value="_bindModel.SponsorLastName" Immediate="true"
+				  Required="true" RequiredError="Este es un campo obligatorio."
+				  MaxLength="MaxLength.FonbecWebUser.LastName" />
+
+	<MudTextField T="string" Label="Apodo" @bind-Value="_bindModel.SponsorNickName" Immediate="true"
+				  MaxLength="MaxLength.FonbecWebUser.NickName" />
+
+	<GenderSelector @bind-SelectedGender="_bindModel.SponsorGender" />
+
+	<MudTextField T="string" Label="Correo electrónico" @bind-Value="_bindModel.SponsorEmail" Immediate="true"
+				  Required="true" RequiredError="Este es un campo obligatorio."
+				  MaxLength="MaxLength.FonbecWebUser.Email" />
+
+	<MudTextField T="string" Label="Teléfono" @bind-Value="_bindModel.SponsorPhoneNumber" Immediate="true"
+				  MaxLength="MaxLength.FonbecWebUser.PhoneNumber" />
+
+	<MudTextField T="string" Label="Información adicional" @bind-Value="_bindModel.SponsorNotes" Immediate="true"
+				  MaxLength="MaxLength.Auditable.Notes" />
+
+</MudForm>
+
+<MudStack Row="true" Class="pt-4">
+	<MudButton OnClick="Save" Disabled="SaveButtonDisabled"
+			   Variant="Variant.Filled" Color="Color.Primary">
+		Crear
+	</MudButton>
+	<MudButton Href="@NavRoutes.Sponsors"
+			   Variant="Variant.Filled" Color="Color.Default" Class="ms-4">
+		Cancelar
+	</MudButton>
+</MudStack>
+
+<LoadingIndicator Loading="_saving" LoadingText="Guardando los datos" />
