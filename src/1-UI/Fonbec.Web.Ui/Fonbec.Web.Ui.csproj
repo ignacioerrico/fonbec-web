@@ -1,7 +1,7 @@
 ﻿<Project Sdk="Microsoft.NET.Sdk.Web">
 
 	<PropertyGroup>
-		<TargetFramework>net9.0</TargetFramework>
+		<TargetFramework>net10.0</TargetFramework>
 		<Nullable>enable</Nullable>
 		<ImplicitUsings>enable</ImplicitUsings>
 		<UserSecretsId>4c28b461-71af-4fd0-a4dd-c8d64f94193d</UserSecretsId>
@@ -12,11 +12,14 @@
 	</ItemGroup>
 
 	<ItemGroup>
-		<PackageReference Include="CodeBeam.MudBlazor.Extensions" Version="8.*" />
-		<PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="9.*" />
-		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="9.*" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="9.*" />
-		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="9.*" />
+		<PackageReference Include="CodeBeam.MudBlazor.Extensions.Qr" Version="1.0.0" />
+		<PackageReference Include="Microsoft.AspNetCore.Diagnostics.EntityFrameworkCore" Version="10.*" />
+		<PackageReference Include="Microsoft.AspNetCore.Identity.EntityFrameworkCore" Version="10.*" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.SqlServer" Version="10.*" />
+		<PackageReference Include="Microsoft.EntityFrameworkCore.Tools" Version="10.*">
+		  <PrivateAssets>all</PrivateAssets>
+		  <IncludeAssets>runtime; build; native; contentfiles; analyzers; buildtransitive</IncludeAssets>
+		</PackageReference>
 		<PackageReference Include="MudBlazor" Version="8.*" />
 		<PackageReference Include="Extensions.MudBlazor.StaticInput" Version="3.*" />
 	</ItemGroup>
