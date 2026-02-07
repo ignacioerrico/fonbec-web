@@ -14,7 +14,7 @@ public class UpdateChapterInputModelMappingDefinitionsTests : MappingTestBase
             ChapterId: 123,
             ChapterUpdatedName: "Updated Chapter Name",
             ChapterUpdatedNotes: "Some personal notes",
-            UpdatedById: 4
+            UpdatedById: 456
         );
 
         var result = input.Adapt<UpdateChapterInputDataModel>(Config);
@@ -32,7 +32,7 @@ public class UpdateChapterInputModelMappingDefinitionsTests : MappingTestBase
             ChapterId: 123,
             ChapterUpdatedName: string.Empty,
             ChapterUpdatedNotes: "Some personal notes",
-            UpdatedById: 4
+            UpdatedById: 456
         );
 
         var result = () => input.Adapt<UpdateChapterInputDataModel>(Config);
@@ -48,7 +48,7 @@ public class UpdateChapterInputModelMappingDefinitionsTests : MappingTestBase
             ChapterId: 123,
             ChapterUpdatedName: "  uPdated cHapter nAME  ",
             ChapterUpdatedNotes: "Some personal notes",
-            UpdatedById: 4
+            UpdatedById: 456
         );
 
         var result = input.Adapt<UpdateChapterInputDataModel>(Config);
@@ -63,7 +63,7 @@ public class UpdateChapterInputModelMappingDefinitionsTests : MappingTestBase
             ChapterId: 123,
             ChapterUpdatedName: "Updated Chapter Name",
             ChapterUpdatedNotes: "  Some personal notes with trailing spaces   ",
-            UpdatedById: 4
+            UpdatedById: 456
         );
 
         var result = input.Adapt<UpdateChapterInputDataModel>(Config);
@@ -82,7 +82,7 @@ public class UpdateChapterInputModelMappingDefinitionsTests : MappingTestBase
             ChapterId: 456,
             ChapterUpdatedName: "Updated Chapter Name",
             ChapterUpdatedNotes: chapterUpdatedNotes,
-            UpdatedById: 4
+            UpdatedById: 789
         );
 
         var result = input.Adapt<UpdateChapterInputDataModel>(Config);

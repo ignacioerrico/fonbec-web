@@ -144,7 +144,7 @@ public class UpdateStudentInputModelMappingDefinitionsTests : MappingTestBase
             StudentNotes: "Some notes",
             StudentSecondarySchoolStartYear: null,
             StudentUniversityStartYear: null,
-            FacilitatorId: 2,
+            FacilitatorId: 2, 
             UpdatedById: 3
         );
 

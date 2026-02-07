@@ -15,8 +15,11 @@ internal class SponsorConfiguration : UserWithoutAccountConfiguration<Sponsor>
     public override void Configure(EntityTypeBuilder<Sponsor> builder)
     {
         builder.Property(s => s.Email)
-            .IsRequired(true)
-            .HasMaxLength(MaxLength.FonbecWebUser.Email);
+            .IsRequired(false)
+            .HasMaxLength(Constants.MaxLength.FonbecWebUser.Email);
+
+        builder.Property(s => s.Notes)
+            .IsRequired(false);
 
         base.Configure(builder);
     }
