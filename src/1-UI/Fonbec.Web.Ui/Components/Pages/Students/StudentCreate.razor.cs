@@ -13,31 +13,27 @@ public partial class StudentCreate : AuthenticationRequiredComponentBase
 {
     private readonly StudentCreateBindModel _bindModel = new();
 
-    private bool _isFormDisabled;
+    private bool IsFormDisabled => !_anyChapters || !_anyFacilitators;
+    private bool _anyChapters;
+    private bool _anyFacilitators;
 
     private bool _formValidationSucceeded;
-
-    private MudTextField<string> _mudTextFieldName = null!;
 
     private bool _saving;
 
     private bool SaveButtonDisabled => Loading
                                        || _saving
-                                       || _isFormDisabled
+                                       || IsFormDisabled
                                        || !_formValidationSucceeded;
 
     [Inject]
     public IStudentService StudentService { get; set; } = null!;
 
-    private async Task OnFacilitatorsLoaded(int totalFacilitators)
-    {
-        _isFormDisabled = totalFacilitators == 0;
+    private async Task OnChaptersLoaded(int chaptersCount) =>
+        _anyChapters = chaptersCount > 0;
 
-        if (!_isFormDisabled)
-        {
-            await _mudTextFieldName.FocusAsync();
-        }
-    }
+    private async Task OnFacilitatorsLoaded(int totalFacilitators) =>
+        _anyFacilitators = totalFacilitators > 0;
 
     private async Task Save()
     {

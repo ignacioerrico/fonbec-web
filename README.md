@@ -48,9 +48,9 @@ involved to focus more effectively on their specific roles.
 
 ## Setting up your development environment
 
-The solution is implemented with ASP.NET Core Blazor 9, so the [.NET 9.0
+The solution is implemented with ASP.NET Core Blazor 10, so the [.NET 10.0
 SDK](https://dotnet.microsoft.com/en-us/download) is required. If you're using
-[Visual Studio 2022](https://visualstudio.microsoft.com/) you should be all set.
+[Visual Studio 2026](https://visualstudio.microsoft.com/) you should be all set.
 
 ### Database
 
@@ -58,7 +58,7 @@ It uses Entity Framework Core with a code-first approach and is configured to
 use **SQL Server**. If you use Visual Studio, just make sure the _Data storage
 and processing_ workload is enabled. (Visual Studio Installer → Modify →
 Workloads → Data storage and processing). Otherwise, install [SQL Server
-2022](https://www.microsoft.com/en-us/sql-server/sql-server-downloads).
+2025](https://www.microsoft.com/en-us/sql-server/sql-server-downloads).
 
 In `appsettings.json`, set `Server` in the `FonbecWebDbContextConnection`
 connection string to a SQL Server instance that exists on your machine. To list
@@ -158,6 +158,7 @@ strong requirements must be set.
 ### Lockout requirements
 
 In order to protect against brute force attacks, these two values must be set.
+Add this to your user secrets.
 
 ```json
 "Identity": {

@@ -15,15 +15,13 @@ public partial class UserCreate : AuthenticationRequiredComponentBase
 
     private bool _formValidationSucceeded;
 
-    private bool _isFormDisabled;
-
-    private MudTextField<string> _mudTextFieldFirstName = null!;
+    private bool _anyChapters;
 
     private bool _saving;
 
     private bool SaveButtonDisabled => Loading
                                        || _saving
-                                       || _isFormDisabled
+                                       || !_anyChapters
                                        || !_formValidationSucceeded;
 
     [Inject]
@@ -32,15 +30,8 @@ public partial class UserCreate : AuthenticationRequiredComponentBase
     [Inject]
     public IDialogService DialogService { get; set; } = null!;
 
-    private async Task OnChaptersLoaded(int chaptersCount)
-    {
-        _isFormDisabled = chaptersCount == 0;
-
-        if (!_isFormDisabled)
-        {
-            await _mudTextFieldFirstName.FocusAsync();
-        }
-    }
+    private async Task OnChaptersLoaded(int chaptersCount) =>
+        _anyChapters = chaptersCount > 0;
 
     private async Task SaveAsync()
     {

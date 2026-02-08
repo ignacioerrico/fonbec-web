@@ -6,17 +6,22 @@
 
 <PageHeader Title="Alta de becario" />
 
-@if (_isFormDisabled)
+@if (!_anyChapters)
 {
-	<MudAlert Severity="Severity.Error">No hay mediadores. Para dar de alta becarios se requiere al menos un mediador.</MudAlert>
+	<MudAlert Severity="Severity.Error">No hay filiales. Para dar de alta usuarios se requiere <MudLink Href="@NavRoutes.ChapterCreate" Typo="Typo.body2">al menos una filial</MudLink>.</MudAlert>
+}
+else if (!_anyFacilitators)
+{
+	<MudAlert Severity="Severity.Error">No hay mediadores. Para dar de alta becarios se requiere <MudLink Href="@NavRoutes.UserCreate" Typo="Typo.body2">al menos un mediador</MudLink>.</MudAlert>
 }
 
 <LoadingIndicator Loading="Loading" />
 
-<MudForm @bind-IsValid="@_formValidationSucceeded" Disabled="_isFormDisabled">
-	<ChapterSelector @bind-SelectedChapterId="_bindModel.ChapterId" />
+<MudForm @bind-IsValid="@_formValidationSucceeded" Disabled="IsFormDisabled">
+	<ChapterSelector @bind-SelectedChapterId="_bindModel.ChapterId"
+						OnChaptersLoaded="OnChaptersLoaded" />
 	
-	<MudTextField T="string" Label="Nombre" @ref="_mudTextFieldName" @bind-Value="_bindModel.StudentFirstName" Immediate="true"
+	<MudTextField T="string" Label="Nombre" @bind-Value="_bindModel.StudentFirstName" Immediate="true" AutoFocus="!IsFormDisabled"
 	              Required="true" RequiredError="Este es un campo obligatorio."
 	              MaxLength="MaxLength.FonbecWebUser.FirstName" />
 
@@ -33,7 +38,7 @@
 	                        @bind-UniversityStartYear="_bindModel.StudentUniversityStartYear" />
 
 	<FacilitatorSelector @bind-SelectedFacilitatorId="_bindModel.FacilitatorId"
-	                     OnFacilitatorsLoaded="OnFacilitatorsLoaded" />
+							OnFacilitatorsLoaded="OnFacilitatorsLoaded" />
 
 	<MudTextField T="string" Label="Correo electrónico" @bind-Value="_bindModel.StudentEmail" Immediate="true"
 	              MaxLength="MaxLength.FonbecWebUser.Email" />

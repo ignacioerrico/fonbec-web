@@ -6,22 +6,22 @@
 
 <PageHeader Title="Alta de usuario" />
 
-@if (_isFormDisabled)
+@if (!_anyChapters)
 {
-    <MudAlert Severity="Severity.Error">No hay filiales. Para dar de alta usuarios se requiere al menos una filial.</MudAlert>
+	<MudAlert Severity="Severity.Error">No hay filiales. Para dar de alta usuarios se requiere <MudLink Href="@NavRoutes.ChapterCreate" Typo="Typo.body2">al menos una filial</MudLink>.</MudAlert>
 }
 
 <LoadingIndicator Loading="Loading" />
 
-<MudForm @bind-IsValid="@_formValidationSucceeded" Disabled="_isFormDisabled">
+<MudForm @bind-IsValid="@_formValidationSucceeded" Disabled="!_anyChapters">
 	
-	@if (FonbecClaim.ChapterId is null && !_isFormDisabled)
+	@if (FonbecClaim.ChapterId is null)
 	{
 		<ChapterSelector @bind-SelectedChapterId="_bindModel.UserChapterId"
 		                 OnChaptersLoaded="OnChaptersLoaded" />
 	}
 
-	<MudTextField T="string" Label="Nombre" @ref="_mudTextFieldFirstName" @bind-Value="_bindModel.UserFirstName" Immediate="true"
+	<MudTextField T="string" Label="Nombre" @bind-Value="_bindModel.UserFirstName" Immediate="true" AutoFocus="_anyChapters"
 	              Required="true" RequiredError="Este es un campo obligatorio."
 	              MaxLength="MaxLength.FonbecWebUser.FirstName" />
 
