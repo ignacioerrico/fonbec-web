@@ -2,6 +2,7 @@
 using Fonbec.Web.DataAccess.DataModels.Students;
 using Fonbec.Web.Logic.Models.Students;
 using Mapster;
+using Microsoft.Data.SqlClient;
 using System;
 using System.Collections.Generic;
 using System.Text;
@@ -17,6 +18,8 @@ namespace Fonbec.Web.Logic.Models.Sponsors
         public string SponsorLastName { get; set; } = string.Empty;
 
         public string SponsorNickName { get; set; } = string.Empty;
+
+        public string SponsorEmail { get; set; } = string.Empty;
     }
 
     public class SponsorsListViewModelMappingDefinitions : IRegister
@@ -27,7 +30,8 @@ namespace Fonbec.Web.Logic.Models.Sponsors
                 .Map(dest => dest.SponsorId, src => src.SponsorId)
                 .Map(dest => dest.SponsorFirstName, src => src.SponsorFirstName)
                 .Map(dest => dest.SponsorLastName, src => src.SponsorLastName)
-                .Map(dest => dest.SponsorNickName, src => src.SponsorNickName ?? string.Empty);
+                .Map(dest => dest.SponsorNickName, src => src.SponsorNickName ?? string.Empty)
+                .Map(dest => dest.SponsorEmail, src => src.SponsorEmail);
         }
     }
 
