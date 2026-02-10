@@ -7,6 +7,7 @@ namespace Fonbec.Web.DataAccess.Repositories;
 
 public interface ISponsorRepository
 {
+    // falta pasarle filtro chapterId
     Task<List<AllSponsorsDataModel>> GetAllSponsorsAsync();
     Task<int> CreateSponsorAsync(CreateSponsorInputDataModel dataModel);
 }
@@ -18,16 +19,25 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
         await using var db = await dbContext.CreateDbContextAsync();
 
         var allSponsors = await db.Sponsors
+            // misses filter chapterid...
             .Where(s => s.IsActive)
+            // add this because it is an auditable...
+            .Include(s => s.CreatedBy)
+            .Include(s => s.LastUpdatedBy)
+            .Include(s => s.DisabledBy)
+            .Include(s => s.ReenabledBy)
             .Select(s => new AllSponsorsDataModel(s)
             {
                 SponsorId = s.Id,
                 SponsorFirstName = s.FirstName,
                 SponsorLastName = s.LastName,
                 SponsorNickName = s.NickName,
+                // maybe this was missed...
+                SponsorEmail = s.Email
             })
             .OrderBy(sdm => sdm.SponsorFirstName)
             .ThenBy(sdm => sdm.SponsorLastName)
+            // this...
             .ToListAsync();
 
         return allSponsors;

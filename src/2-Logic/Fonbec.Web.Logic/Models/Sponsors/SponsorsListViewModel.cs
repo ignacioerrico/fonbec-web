@@ -7,8 +7,7 @@ using System;
 using System.Collections.Generic;
 using System.Text;
 
-namespace Fonbec.Web.Logic.Models.Sponsors
-{
+namespace Fonbec.Web.Logic.Models.Sponsors;
     public class SponsorsListViewModel : AuditableViewModel
     {
         public int SponsorId { get; set; } 
@@ -31,8 +30,7 @@ namespace Fonbec.Web.Logic.Models.Sponsors
                 .Map(dest => dest.SponsorFirstName, src => src.SponsorFirstName)
                 .Map(dest => dest.SponsorLastName, src => src.SponsorLastName)
                 .Map(dest => dest.SponsorNickName, src => src.SponsorNickName ?? string.Empty)
-                .Map(dest => dest.SponsorEmail, src => src.SponsorEmail);
+                .Map(dest => dest.SponsorEmail, src => src.SponsorEmail ?? string.Empty);
         }
     }
 
-}

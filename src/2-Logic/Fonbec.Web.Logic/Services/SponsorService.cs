@@ -1,5 +1,6 @@
 ﻿using Fonbec.Web.DataAccess.DataModels.Sponsors.Input;
 using Fonbec.Web.DataAccess.Repositories;
+using Fonbec.Web.Logic.Constants;
 using Fonbec.Web.Logic.Models.Results;
 using Fonbec.Web.Logic.Models.Sponsors;
 using Fonbec.Web.Logic.Models.Sponsors.Input;
@@ -10,6 +11,7 @@ namespace Fonbec.Web.Logic.Services;
 public interface ISponsorService
 {
     // estoy agregando esto:
+    // misses parameter chapterId
     Task<List<SponsorsListViewModel>> GetAllSponsorsAsync();
     Task<CrudResult> CreateSponsorAsync(CreateSponsorInputModel createSponsorInputModel);
 }
@@ -17,6 +19,7 @@ public class SponsorService(ISponsorRepository sponsorRepository) : ISponsorServ
 {
     public async Task<List<SponsorsListViewModel>> GetAllSponsorsAsync()
     {
+        // misses chapterId as a parameter
         var allSponsorsDataModel = await sponsorRepository.GetAllSponsorsAsync();
         // Adapt is not async...
         var allSponsorsListViewModel = allSponsorsDataModel.Adapt<List<SponsorsListViewModel>>();

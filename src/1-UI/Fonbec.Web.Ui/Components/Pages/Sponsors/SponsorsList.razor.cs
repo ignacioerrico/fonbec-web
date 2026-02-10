@@ -29,6 +29,7 @@ public partial class SponsorsList : AuthenticationRequiredComponentBase
         // this is to prevent Blazor from blocking the render process due to this asynchronous statement
         Loading = true;
 
+        // falta pasarle una claim
         _viewModels = await SponsorService.GetAllSponsorsAsync();
 
         Loading = false;

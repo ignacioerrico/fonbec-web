@@ -3,64 +3,78 @@
 @inherits AuthenticationRequiredComponentBase
 
 @using Fonbec.Web.DataAccess.Constants
-@using Fonbec.Web.DataAccess.Entities.Enums
 @using Fonbec.Web.Logic.Models.Sponsors
 
-<PageHeader Title="Padrinos"/>
-<AuthorizeView Policy="@nameof(SponsorCreate)">
-	<MudTooltip Text="Alta de padrinos"
-				Arrow="true" Placement="Placement.Right"
-				Color="Color.Primary">
-		<MudFab Href="@NavRoutes.SponsorCreate"
-				StartIcon="@Icons.Material.Filled.Add"
-				Color="Color.Primary" />
-	</MudTooltip>
-</AuthorizeView>
-<MudSpacer />
-<MudSwitch @bind-Value="_sortByLastName" LabelPlacement="Placement.Left">
-	@(_sortByLastName ? "Apellido, Nombre" : "Nombre Apellido")
-</MudSwitch>
+<PageHeader Title="Padrinos" />
 
-<LoadingIndicator Loading="Loading"
-				  If="!_viewModels.Any()"
-				  ThenDisplay="No hay Padrinos." />
+<MudStack StretchItems="StretchItems.Middle" Row>
+    <AuthorizeView Policy="@nameof(SponsorCreate)">
+        <MudTooltip Text="Alta de padrino"
+                    Arrow="true"
+                    Placement="Placement.Right"
+                    Color="Color.Primary">
+            <MudFab Href="@NavRoutes.SponsorCreate"
+                    StartIcon="@Icons.Material.Filled.Add"
+                    Color="Color.Primary" />
+        </MudTooltip>
+    </AuthorizeView>
 
+    <MudSpacer />
+
+    <MudSwitch @bind-Value="_sortByLastName" LabelPlacement="Placement.Left">
+        @(_sortByLastName ? "Apellido, Nombre" : "Nombre Apellido")
+    </MudSwitch>
+</MudStack>
+
+<LoadingIndicator Loading="Loading" />
 
 @if (_viewModels.Any())
 {
-	<MudDataGrid T="SponsorsListViewModel"
-	             Items="_viewModels"
-	             Dense="true" Hover="true" Striped="true" Bordered="true"
-	             ReadOnly="false"
-	             EditMode="DataGridEditMode.Form"
-	             EditTrigger="DataGridEditTrigger.Manual"
-	             QuickFilter="Filter"
-	             Filterable="true"
-	             FilterMode="DataGridFilterMode.ColumnFilterRow"
-	             FilterCaseSensitivity="DataGridFilterCaseSensitivity.CaseInsensitive"
-	             SortMode="SortMode.Multiple"
-	             Class="mt-4">
-		<ToolBarContent>
-			<MudTextField T="string" @bind-Value="_searchString"
-			              Placeholder="Buscar"
-			              Clearable="true" Immediate="true"
-			              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"/>
-		</ToolBarContent>
+    <MudDataGrid T="SponsorsListViewModel"
+                 Items="_viewModels"
+                 Dense="true" Hover="true" Striped="true" Bordered="true"
+                 ReadOnly="true"
+                 QuickFilter="Filter"
+                 Filterable="true"
+                 FilterMode="DataGridFilterMode.ColumnFilterRow"
+                 FilterCaseSensitivity="DataGridFilterCaseSensitivity.CaseInsensitive"
+                 SortMode="SortMode.Multiple"
+                 Class="mt-4">
+
+        <ToolBarContent>
+            <MudTextField T="string"
+                          @bind-Value="_searchString"
+                          Placeholder="Buscar"
+                          Clearable="true"
+                          Immediate="true"
+                          Adornment="Adornment.Start"
+                          AdornmentIcon="@Icons.Material.Filled.Search"
+                          IconSize="Size.Medium" />
+        </ToolBarContent>
 
         <Columns>
-	        <PropertyColumn Property="@(vm => _sortByLastName ? vm.SponsorLastName : vm.SponsorFirstName)" Title="Nombre">
-		        <CellTemplate>
-			        <AuditableItemDisplay Id="@context.Item.SponsorId"
+            <PropertyColumn Property="@(vm => _sortByLastName ? vm.SponsorLastName : vm.SponsorFirstName)"
+                            Title="Nombre">
+                <CellTemplate>
+                    <AuditableItemDisplay Id="@context.Item.SponsorId"
                                           ItemName="@SponsorFullName(context.Item)"
-										  Email="@context.Item.SponsorEmail"
-			                              AuditableViewModel="@context.Item" />
-					@if (!string.IsNullOrWhiteSpace(context.Item.SponsorNickName))
-			        {
-						<span>(<em>@context.Item.SponsorNickName</em>)</span>
-			        }
-				</CellTemplate>
-			</PropertyColumn>
-		</Columns>
+                                          Email="@context.Item.SponsorEmail"
+                                          AuditableViewModel="@context.Item" />
+                    @if (!string.IsNullOrWhiteSpace(context.Item.SponsorNickName))
+                    {
+                        <span>(<em>@context.Item.SponsorNickName</em>)</span>
+                    }
+                </CellTemplate>
+            </PropertyColumn>
 
-	</MudDataGrid>
+            <PropertyColumn Property="vm => vm.SponsorEmail" Title="Correo electrónico">
+                <CellTemplate>
+                    <MudLink Href="@($"mailto:{context.Item.SponsorEmail}")">
+                        @context.Item.SponsorEmail
+                    </MudLink>
+                </CellTemplate>
+            </PropertyColumn>
+        </Columns>
+    </MudDataGrid>
 }
+
