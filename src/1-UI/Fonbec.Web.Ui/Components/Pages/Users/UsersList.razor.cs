@@ -19,6 +19,8 @@ public partial class UsersList : AuthenticationRequiredComponentBase
 
     private IEnumerable<string> _allChapters = [];
 
+    private Dictionary<int, UsersListViewModel> _originalValues = [];
+
     [Inject]
     public IUserService UserService { get; set; } = null!;
 
@@ -47,8 +49,43 @@ public partial class UsersList : AuthenticationRequiredComponentBase
         || viewModel.UserEmail.ContainsIgnoringAccents(_searchString)
         || viewModel.UserPhoneNumber.ContainsIgnoringAccents(_searchString);
 
+    private void StartedEditingItem(UsersListViewModel viewModel)
+    {
+        _originalValues[viewModel.UserId] = new UsersListViewModel
+        {
+            UserId = viewModel.UserId,
+            UserFirstName = viewModel.UserFirstName,
+            UserLastName = viewModel.UserLastName,
+            UserNickName = viewModel.UserNickName,
+            UserGender = viewModel.UserGender,
+            UserEmail = viewModel.UserEmail,
+            UserPhoneNumber = viewModel.UserPhoneNumber,
+            UserNotes = viewModel.UserNotes
+        };
+    }
+
     private async Task CommittedItemChangesAsync(UsersListViewModel viewModel)
     {
+        if (_originalValues.TryGetValue(viewModel.UserId, out var originalItem))
+        {
+            bool hasChanges = originalItem.UserFirstName != viewModel.UserFirstName
+                || originalItem.UserLastName != viewModel.UserLastName
+                || originalItem.UserNickName != viewModel.UserNickName
+                || originalItem.UserGender != viewModel.UserGender
+                || originalItem.UserEmail != viewModel.UserEmail
+                || originalItem.UserPhoneNumber != viewModel.UserPhoneNumber
+                || originalItem.UserNotes != viewModel.UserNotes;
+
+            if (!hasChanges)
+            {
+                Snackbar.Add("No se realizaron cambios.", Severity.Info);
+                _originalValues.Remove(viewModel.UserId);
+                return;
+            }
+
+            _originalValues.Remove(viewModel.UserId);
+        }
+
         var updateUserInputModel = new UpdateUserInputModel(
             viewModel.UserId,
             viewModel.UserFirstName,
@@ -66,6 +103,11 @@ public partial class UsersList : AuthenticationRequiredComponentBase
         {
             Snackbar.Add("No se pudo actualizar el usuario.", Severity.Error);
         }
+    }
+
+    private void CancelledEditingItem(UsersListViewModel viewModel)
+    {
+        _originalValues.Remove(viewModel.UserId);
     }
 
     private static Color MudChipColorForRole(string role) =>

@@ -33,14 +33,16 @@
 				 Items="_viewModel"
 				 Dense="true" Hover="true" Striped="true" Bordered="true"
 				 ReadOnly="false"
-                 CommittedItemChanges="@(async viewModel => await CommittedItemChangesAsync(viewModel))"
+				 CommittedItemChanges="@(async viewModel => await CommittedItemChangesAsync(viewModel))"
 				 EditMode="DataGridEditMode.Form"
 				 EditTrigger="DataGridEditTrigger.Manual"
-                 QuickFilter="Filter"
-                 Filterable="true"
-                 FilterMode="DataGridFilterMode.ColumnFilterRow"
-                 FilterCaseSensitivity="DataGridFilterCaseSensitivity.CaseInsensitive"
-                 SortMode="SortMode.Multiple"
+				 QuickFilter="Filter"
+				 Filterable="true"
+				 FilterMode="DataGridFilterMode.ColumnFilterRow"
+				 FilterCaseSensitivity="DataGridFilterCaseSensitivity.CaseInsensitive"
+				 startedEditingItem="StartedEditingItem"
+				 CancelledEditingItem="CancelledEditingItem"
+				 SortMode="SortMode.Multiple"
 				 Class="mt-4">
 		<ToolBarContent>
 			<MudTextField T="string" @bind-Value="_searchString"
@@ -55,6 +57,16 @@
 										  IsLastNameFirst="_isLastNameFirst"
 										  CurrentUserId="FonbecClaim.UserId" />
 				</CellTemplate>
+				<EditTemplate>
+					<MudTextField T="string" @bind-Value="@context.Item.UserFirstName" Immediate="true"
+								  Required="true" RequiredError="Este es un campo requerido"
+								  Label="Nombre" Variant="Variant.Outlined" Margin="Margin.Dense"
+								  MaxLength="MaxLength.FonbecWebUser.FirstName" />
+					<MudTextField T="string" @bind-Value="@context.Item.UserLastName" Immediate="true" Class="mt-4"
+								  Required="true" RequiredError="Este es un campo requerido"
+								  Label="Apellido" Variant="Variant.Outlined" Margin="Margin.Dense"
+								  MaxLength="MaxLength.FonbecWebUser.LastName" />
+				</EditTemplate>
 			</PropertyColumn>
 			<PropertyColumn Property="vm => vm.UserRole" Title="Rol">
 				<CellTemplate>
@@ -62,6 +74,8 @@
 						@FonbecRole.Translator[context.Item.UserRole]
 					</MudChip>
 				</CellTemplate>
+				<EditTemplate>
+				</EditTemplate>
 				<FilterTemplate>
 					<FilterByList T="UsersListViewModel"
 								  AllItems="FonbecRole.AllRoles"
@@ -72,6 +86,8 @@
 			</PropertyColumn>
 			<PropertyColumn Property="vm => vm.UserChapterName" Title="Filial"
 							Hidden="@(FonbecClaim.ChapterId is not null)">
+				<EditTemplate>
+				</EditTemplate>
 				<FilterTemplate>
 					<FilterByList T="UsersListViewModel"
 								  AllItems="_allChapters"
@@ -80,8 +96,20 @@
 				</FilterTemplate>
 			</PropertyColumn>
 			<PropertyColumn Property="vm => vm.UserNickName" Title="Apodo" Hidden="true" Required="false">
+				<EditTemplate>
+					<MudTextField T="string" @bind-Value="@context.Item.UserNickName" Immediate="true"
+								  Label="Apodo" Variant="Variant.Outlined" Margin="Margin.Dense"
+								  MaxLength="MaxLength.FonbecWebUser.NickName" />
+				</EditTemplate>
 			</PropertyColumn>
 			<PropertyColumn Property="vm => vm.UserGender" Title="Sexo" Hidden="true">
+				<EditTemplate>
+					<MudSelect T="Gender" @bind-Value="context.Item.UserGender" Class="mt-4"
+							   Label="Sexo" Variant="Variant.Outlined" Margin="@Margin.Dense">
+						<MudSelectItem Value="Gender.Male">Masculino</MudSelectItem>
+						<MudSelectItem Value="Gender.Female">Femenino</MudSelectItem>
+					</MudSelect>
+				</EditTemplate>
 			</PropertyColumn>
 			<PropertyColumn Property="vm => vm.UserEmail" Title="Correo electrónico">
 				<CellTemplate>
@@ -89,8 +117,19 @@
 						@context.Item.UserEmail
 					</MudLink>
 				</CellTemplate>
+				<EditTemplate>
+					<MudTextField T="string" @bind-Value="context.Item.UserEmail" Immediate="true"
+								  Label="Correo electrónico" Variant="Variant.Outlined" Margin="Margin.Dense"
+								  MaxLength="MaxLength.FonbecWebUser.Email" />
+				</EditTemplate>
 			</PropertyColumn>
-			<PropertyColumn Property="vm => vm.UserPhoneNumber" Title="Teléfono" Required="false"></PropertyColumn>
+			<PropertyColumn Property="vm => vm.UserPhoneNumber" Title="Teléfono" Required="false">
+				<EditTemplate>
+					<MudTextField T="string" @bind-Value="context.Item.UserPhoneNumber" Immediate="true"
+								  Label="Teléfono" Variant="Variant.Outlined" Margin="Margin.Dense"
+								  MaxLength="MaxLength.FonbecWebUser.PhoneNumber" />
+				</EditTemplate>
+			</PropertyColumn>
 			<PropertyColumn Property="vm => vm.UserNotes" Title="Información adicional" Required="false" Hidden="true" />
 			<TemplateColumn Title="Acciones" Filterable="false" Sortable="false">
 				<CellTemplate>
@@ -131,10 +170,6 @@
 				</CellTemplate>
 			</TemplateColumn>
 		</Columns>
-
-    <EditFormTemplate>
-        <EditPersonDialog Context="context" T="UsersListViewModel" />
-    </EditFormTemplate>
 		<PagerContent>
 			<MudDataGridPager T="UsersListViewModel" RowsPerPageString="Filas por página:" InfoFormat="{first_item}-{last_item} of {all_items}" />
 		</PagerContent>
