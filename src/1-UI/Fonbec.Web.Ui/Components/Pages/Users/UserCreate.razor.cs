@@ -30,6 +30,16 @@ public partial class UserCreate : AuthenticationRequiredComponentBase
     [Inject]
     public IDialogService DialogService { get; set; } = null!;
 
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        if (FonbecClaim?.ChapterId is not null)
+        {
+            _anyChapters = true;
+        }
+    }
+
     private async Task OnChaptersLoaded(int chaptersCount) =>
         _anyChapters = chaptersCount > 0;
 
@@ -51,7 +61,7 @@ public partial class UserCreate : AuthenticationRequiredComponentBase
         if (!validateUniqueFullNameOutputModel.IsFullNameUnique)
         {
             var message = $"Ya existe un usuario que se llama {_bindModel.UserFirstName} {_bindModel.UserLastName}. ¿Querés crear este de todas formas?";
-            
+
             var dialogResult = await DialogService.ShowMessageBox(
                 "¡Atención!",
                 message,
