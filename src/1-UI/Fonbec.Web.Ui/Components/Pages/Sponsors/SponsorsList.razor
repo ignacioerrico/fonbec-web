@@ -33,7 +33,9 @@
     <MudDataGrid T="SponsorsListViewModel"
                  Items="_viewModels"
                  Dense="true" Hover="true" Striped="true" Bordered="true"
-                 ReadOnly="true"
+                 ReadOnly="false"
+                 EditMode="DataGridEditMode.Form"
+                 EditTrigger="DataGridEditTrigger.Manual"
                  QuickFilter="Filter"
                  Filterable="true"
                  FilterMode="DataGridFilterMode.ColumnFilterRow"
@@ -60,21 +62,72 @@
                                           ItemName="@SponsorFullName(context.Item)"
                                           Email="@context.Item.SponsorEmail"
                                           AuditableViewModel="@context.Item" />
-                    @if (!string.IsNullOrWhiteSpace(context.Item.SponsorNickName))
-                    {
-                        <span>(<em>@context.Item.SponsorNickName</em>)</span>
-                    }
                 </CellTemplate>
+                <!--agrego...--->
+                <EditTemplate>
+                    <MudTextField T="string" @bind-Value="@context.Item.SponsorFirstName" Immediate="true"
+                                  Required="true" RequiredError="Este es un campo requerido"
+                                  Label="Nombre" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                  MaxLength="MaxLength.FonbecWebUser.FirstName" />
+                    <MudTextField T="string" @bind-Value="@context.Item.SponsorLastName" Immediate="true" Class="mt-4"
+                                  Required="true" RequiredError="Este es un campo requerido"
+                                  Label="Apellido" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                  MaxLength="MaxLength.FonbecWebUser.LastName" />
+                </EditTemplate>
             </PropertyColumn>
 
-            <PropertyColumn Property="vm => vm.SponsorEmail" Title="Correo electrónico">
+            <!--agrego...-->
+            <PropertyColumn Property="vm => vm.SponsorNickName" Title="Apodo" Required="false">
+                <EditTemplate>
+                    <MudTextField T="string" @bind-Value="context.Item.SponsorNickName" Immediate="true"
+                                  Label="Apodo" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                  MaxLength="MaxLength.FonbecWebUser.NickName" />
+                </EditTemplate>
+            </PropertyColumn>
+
+            <PropertyColumn Property="vm => vm.SponsorEmail" Title="Correo electrónico" Required="false">
                 <CellTemplate>
                     <MudLink Href="@($"mailto:{context.Item.SponsorEmail}")">
                         @context.Item.SponsorEmail
                     </MudLink>
                 </CellTemplate>
+                <EditTemplate>
+                    <MudTextField T="string" @bind-Value="context.Item.SponsorEmail" Immediate="true"
+                                  Label="Correo electrónico" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                  MaxLength="MaxLength.FonbecWebUser.Email" />
+                </EditTemplate>
             </PropertyColumn>
+
+            <!--agrego...-->
+            <PropertyColumn Property="vm => vm.SponsorChapterId" Title="Filial" Required="false">
+                <CellTemplate>
+                    <MudLink Href="@($"mailto:{context.Item.SponsorChapterId}")">
+                        @context.Item.SponsorChapterId
+                    </MudLink>
+                </CellTemplate>
+                <EditTemplate>
+
+                </EditTemplate>
+            </PropertyColumn>
+
+            <!--agrego chapter name...?-->
+
+            <!--agrego...-->
+            <PropertyColumn Property="vm => vm.SponsorPhoneNumber" Title="Telefono" Required="false">
+                <EditTemplate>
+                    <MudTextField T="string" @bind-Value="context.Item.SponsorPhoneNumber" Immediate="true"
+                                  Label="Telefono" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                  MaxLength="MaxLength.FonbecWebUser.PhoneNumber" />
+                </EditTemplate>
+            </PropertyColumn>
+
+            <Column Title="Apadrinamientos (Ahijado)" Required="false">
+            </Column>
         </Columns>
+
+        <PagerContent>
+            <MudDataGridPager T="SponsorsListViewModel" RowsPerPageString="Filas por página:" InfoFormat="{first_item}-{last_item} of {all_items}" />
+        </PagerContent>
     </MudDataGrid>
 }
 

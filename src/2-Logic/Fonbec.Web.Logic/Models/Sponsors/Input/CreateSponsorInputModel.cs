@@ -15,7 +15,7 @@ public record CreateSponsorInputModel(
     string SponsorNotes,
     string SponsorEmail,
     int CreatedById
-);
+);  
 
 public class CreateSponsorInputModelMappingDefinitions : IRegister
 {

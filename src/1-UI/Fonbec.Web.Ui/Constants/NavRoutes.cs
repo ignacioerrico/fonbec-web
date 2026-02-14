@@ -1,4 +1,6 @@
-﻿namespace Fonbec.Web.Ui.Constants;
+﻿using System.Globalization;
+
+namespace Fonbec.Web.Ui.Constants;
 
 public static class NavRoutes
 {
@@ -20,5 +22,9 @@ public static class NavRoutes
 
     public const string SponsorCreate = $"{Sponsors}/alta";
 
+    // add
+    public const string Sponsorships = "/sponsorships";
+
+    public const string SponsorshipCreate = $"{Sponsorships}/alta";
     public static string UsersUserIdPermissions(int userId) => $"{Users}/{userId}/permisos";
 }

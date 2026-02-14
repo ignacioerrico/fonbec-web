@@ -1,0 +1,35 @@
+﻿@attribute [Route(NavRoutes.SponsorshipCreate)]
+@attribute [Authorize(Policy = nameof(SponsorshipCreate))]
+@inherits AuthenticationRequiredComponentBase
+@using Fonbec.Web.DataAccess.Constants
+
+<PageHeader Title="Alta de apadrinamiento"/>
+
+@if (!_anyStudents || !_anySponsors)
+{
+	<MudAlert Severity="Severity.Error">No hay becarios o padrinos...</MudAlert>
+}
+
+	<LoadingIndicator Loading="Loading" />
+
+<MudForm @bind-IsValid="@_formValidationSucceeded" Disabled="IsFormDisabled">
+	<StudentSelector @bind-selectedStudentId="_bindModel.StudentId"
+							OnStudentsLoaded="OnStudentsLoaded"/>
+	<SponsorSelector @bind-SelectedSponsorId="_bindModel.SponsorId"
+					 OnSponsorsLoaded="OnSponsorsLoaded" />
+	<MudTextField T="string" Label="Información adicional" @bind-Value="_bindModel.SponsorshipNotes" Immediate="true"
+				  MaxLength="MaxLength.Auditable.Notes" />
+</MudForm>
+
+<MudStack Row="true" Class="pt-4">
+	<MudButton OnClick="Save" Disabled="SaveButtonDisabled"
+			   Variant="Variant.Filled" Color="Color.Primary">
+		Crear
+	</MudButton>
+	<MudButton Href="@NavRoutes.Sponsorships"
+			   Variant="Variant.Filled" Color="Color.Default" Class="ms-4">
+		Cancelar
+	</MudButton>
+</MudStack>
+
+<LoadingIndicator Loading="_saving" LoadingText="Guardando los datos" />

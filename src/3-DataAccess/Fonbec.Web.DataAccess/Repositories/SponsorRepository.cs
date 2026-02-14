@@ -8,19 +8,27 @@ namespace Fonbec.Web.DataAccess.Repositories;
 public interface ISponsorRepository
 {
     // falta pasarle filtro chapterId
-    Task<List<AllSponsorsDataModel>> GetAllSponsorsAsync();
+    Task<List<AllSponsorsDataModel>> GetAllSponsorsAsync(int? chapterId = null);
     Task<int> CreateSponsorAsync(CreateSponsorInputDataModel dataModel);
 }
 
 public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : ISponsorRepository
 {
-    public async Task<List<AllSponsorsDataModel>> GetAllSponsorsAsync()
+    public async Task<List<AllSponsorsDataModel>> GetAllSponsorsAsync(int? chapterId = null)
     {
         await using var db = await dbContext.CreateDbContextAsync();
 
-        var allSponsors = await db.Sponsors
-            // misses filter chapterid...
-            .Where(s => s.IsActive)
+        var query = db.Sponsors
+        // only active and IsDeleted == false
+            .Where(s => s.IsActive && s.IsDeleted == false);
+
+        // filter by chapterId if any
+        if (chapterId.HasValue)
+        {
+            query = query.Where(s => s.ChapterId == chapterId);
+        }
+
+        var allSponsors = await query
             // add this because it is an auditable...
             .Include(s => s.CreatedBy)
             .Include(s => s.LastUpdatedBy)
@@ -32,8 +40,10 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
                 SponsorFirstName = s.FirstName,
                 SponsorLastName = s.LastName,
                 SponsorNickName = s.NickName,
-                // maybe this was missed...
-                SponsorEmail = s.Email
+                SponsorEmail = s.Email,
+                // added...
+                SponsorChapterId = s.ChapterId,
+                SponsorPhoneNumber = s.PhoneNumber
             })
             .OrderBy(sdm => sdm.SponsorFirstName)
             .ThenBy(sdm => sdm.SponsorLastName)

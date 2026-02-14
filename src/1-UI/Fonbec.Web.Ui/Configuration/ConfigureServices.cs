@@ -53,11 +53,15 @@ public static class ConfigureServices
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IStudentService, StudentService>();
         services.AddScoped<ISponsorService, SponsorService>();
+        //add
+        services.AddScoped<ISponsorshipService, SponsorshipService>();
 
         services.AddScoped<IChapterRepository, ChapterRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IStudentRepository, StudentRepository>();
         services.AddScoped<ISponsorRepository, SponsorRepository>();
+        //add
+        services.AddScoped<ISponsorshipRepository, SponsorshipRepository>();
     }
 
     public static void RegisterPolicies(IServiceCollection services)

@@ -29,8 +29,8 @@ public partial class SponsorsList : AuthenticationRequiredComponentBase
         // this is to prevent Blazor from blocking the render process due to this asynchronous statement
         Loading = true;
 
-        // falta pasarle una claim
-        _viewModels = await SponsorService.GetAllSponsorsAsync();
+        // paso la claim...
+        _viewModels = await SponsorService.GetAllSponsorsAsync(FonbecClaim.ChapterId);
 
         Loading = false;
     }
@@ -38,7 +38,7 @@ public partial class SponsorsList : AuthenticationRequiredComponentBase
     /// <summary>
     /// Called by MudTable to determine if a row should be displayed
     /// </summary>
-    /// <param name="viewModel">The student view model to evaluate against the search string. Cannot be null.</param>
+    /// <param name="viewModel">The sponsors view model to evaluate against the search string. Cannot be null.</param>
     /// <returns>true if the student matches the search string in any of the relevant fields; otherwise, false.</returns>
     private bool Filter(SponsorsListViewModel viewModel) =>
         string.IsNullOrWhiteSpace(_searchString)
