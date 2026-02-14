@@ -2,6 +2,7 @@
 using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models.Chapters;
 using Fonbec.Web.Logic.Models.Chapters.Input;
+using Fonbec.Web.Logic.Models.Students;
 using Fonbec.Web.Logic.Services;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
@@ -17,6 +18,8 @@ public partial class ChaptersList : AuthenticationRequiredComponentBase
 
     [Inject]
     public IChapterService ChapterService { get; set; } = null!;
+
+    private Dictionary<int, ChaptersListViewModel> _originalValues = [];
 
     protected override async Task OnInitializedAsync()
     {
@@ -38,8 +41,33 @@ public partial class ChaptersList : AuthenticationRequiredComponentBase
         string.IsNullOrWhiteSpace(_searchString)
         || viewModel.ChapterName.ContainsIgnoringAccents(_searchString);
 
+    private void StartedEditingItem(ChaptersListViewModel viewModel)
+    {
+        _originalValues[viewModel.ChapterId] = new ChaptersListViewModel
+        {
+            ChapterId = viewModel.ChapterId,
+            ChapterName = viewModel.ChapterName,
+            Notes = viewModel.Notes
+        };
+    }
+
     private async Task CommittedItemChangesAsync(ChaptersListViewModel viewModel)
     {
+        if (_originalValues.TryGetValue(viewModel.ChapterId, out var originalItem))
+        {
+            bool hasChanges = originalItem.ChapterName != viewModel.ChapterName
+                || originalItem.Notes != viewModel.Notes;
+
+            if (!hasChanges)
+            {
+                Snackbar.Add("No se realizaron cambios.", Severity.Info);
+                _originalValues.Remove(viewModel.ChapterId);
+                return;
+            }
+
+            _originalValues.Remove(viewModel.ChapterId);
+        }
+
         var updateChapterInputModel = new UpdateChapterInputModel(
             viewModel.ChapterId,
             viewModel.ChapterName,

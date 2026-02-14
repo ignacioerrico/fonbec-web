@@ -3,6 +3,7 @@ using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models.Students;
 using Fonbec.Web.Logic.Models.Students.Input;
+using Fonbec.Web.Logic.Models.Users;
 using Fonbec.Web.Logic.Services;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
@@ -20,6 +21,8 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
     private string _searchString = string.Empty;
 
     private bool _sortByLastName;
+
+    private Dictionary<int, StudentsListViewModel> _originalValues = [];
 
     [Inject]
     public IStudentService StudentService { get; set; } = null!;
@@ -55,9 +58,45 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
         || viewModel.FacilitatorFullName.ContainsIgnoringAccents(_searchString)
         || (!string.IsNullOrWhiteSpace(viewModel.StudentPhoneNumber)
             && viewModel.StudentPhoneNumber.ContainsIgnoringAccents(_searchString));
+    private void StartedEditingItem(StudentsListViewModel viewModel)
+    {
+        _originalValues[viewModel.StudentId] = new StudentsListViewModel
+        {
+            StudentId = viewModel.StudentId,
+            StudentFirstName = viewModel.StudentFirstName,
+            StudentLastName = viewModel.StudentLastName,
+            StundentNickName = viewModel.StundentNickName,
+            StudentEmail = viewModel.StudentEmail,
+            StudentPhoneNumber = viewModel.StudentPhoneNumber,
+            StudentNotes = viewModel.StudentNotes,
+            StudentSecondarySchoolStartYear = viewModel.StudentSecondarySchoolStartYear,
+            StudentUniversityStartYear = viewModel.StudentUniversityStartYear,
+            FacilitatorId = viewModel.FacilitatorId
+        };
+    }
 
     private async Task CommittedItemChangesAsync(StudentsListViewModel viewModel)
     {
+        if (_originalValues.TryGetValue(viewModel.StudentId, out var originalItem))
+        {
+            bool hasChanges = originalItem.StudentFirstName != viewModel.StudentFirstName
+                || originalItem.StudentLastName != viewModel.StudentLastName
+                || originalItem.StundentNickName != viewModel.StundentNickName
+                || originalItem.StudentGender != viewModel.StudentGender
+                || originalItem.StudentEmail != viewModel.StudentEmail
+                || originalItem.StudentPhoneNumber != viewModel.StudentPhoneNumber
+                || originalItem.StudentNotes != viewModel.StudentNotes;
+
+            if (!hasChanges)
+            {
+                Snackbar.Add("No se realizaron cambios.", Severity.Info);
+                _originalValues.Remove(viewModel.StudentId);
+                return;
+            }
+
+            _originalValues.Remove(viewModel.StudentId);
+        }
+
         var updateStudentInputModel = new UpdateStudentInputModel(
             viewModel.StudentId,
             viewModel.StudentFirstName,

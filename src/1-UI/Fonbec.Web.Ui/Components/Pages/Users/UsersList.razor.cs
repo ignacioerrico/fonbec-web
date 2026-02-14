@@ -105,11 +105,6 @@ public partial class UsersList : AuthenticationRequiredComponentBase
         }
     }
 
-    private void CancelledEditingItem(UsersListViewModel viewModel)
-    {
-        _originalValues.Remove(viewModel.UserId);
-    }
-
     private static Color MudChipColorForRole(string role) =>
         role switch
         {
