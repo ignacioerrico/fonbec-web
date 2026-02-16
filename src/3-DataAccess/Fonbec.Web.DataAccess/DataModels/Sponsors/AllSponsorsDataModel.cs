@@ -12,6 +12,7 @@ public class AllSponsorsDataModel(Auditable auditable) : AuditableDataModel(audi
 
     public string? SponsorNickName { get; set; }
 
+    public string? SponsorPhoneNumber { get; set; }
     public string SponsorEmail { get; set; } = null!;
 
 }

@@ -3,6 +3,7 @@
 @inherits AuthenticationRequiredComponentBase
 
 @using Fonbec.Web.DataAccess.Constants
+@using Fonbec.Web.DataAccess.Entities.Enums
 @using Fonbec.Web.Logic.Models.Sponsors
 
 <PageHeader Title="Padrinos" />
@@ -66,6 +67,21 @@
                     }
                 </CellTemplate>
             </PropertyColumn>
+            <PropertyColumn Property="vm => vm.SponsorNickName" Title="Apodo" Required="false">
+		        <EditTemplate>
+			        <MudTextField T="string" @bind-Value="context.Item.SponsorNickName" Immediate="true"
+			                      Label="Apodo" Variant="Variant.Outlined" Margin="Margin.Dense"
+			                      MaxLength="MaxLength.FonbecWebUser.NickName" />
+		        </EditTemplate>
+	        </PropertyColumn>
+
+            <PropertyColumn Property="vm => vm.SponsorPhoneNumber" Title="Teléfono" Required="false">
+				<EditTemplate>
+					<MudTextField T="string" @bind-Value="context.Item.SponsorPhoneNumber" Immediate="true"
+								  Label="Teléfono" Variant="Variant.Outlined" Margin="Margin.Dense"
+								  MaxLength="MaxLength.FonbecWebUser.PhoneNumber" />
+				</EditTemplate>
+	        </PropertyColumn>
 
             <PropertyColumn Property="vm => vm.SponsorEmail" Title="Correo electrónico">
                 <CellTemplate>
@@ -75,6 +91,9 @@
                 </CellTemplate>
             </PropertyColumn>
         </Columns>
+        <PagerContent>
+            <MudDataGridPager T="SponsorsListViewModel" RowsPerPageString="Filas por página:" InfoFormat="{first_item}-{last_item} of {all_items}" />
+        </PagerContent>
     </MudDataGrid>
 }
 

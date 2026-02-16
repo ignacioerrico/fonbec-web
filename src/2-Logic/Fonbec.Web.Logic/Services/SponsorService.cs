@@ -10,17 +10,15 @@ namespace Fonbec.Web.Logic.Services;
 
 public interface ISponsorService
 {
-    // estoy agregando esto:
-    // misses parameter chapterId
-    Task<List<SponsorsListViewModel>> GetAllSponsorsAsync();
+    Task<List<SponsorsListViewModel>> GetAllSponsorsAsync(int? chapterId);
     Task<CrudResult> CreateSponsorAsync(CreateSponsorInputModel createSponsorInputModel);
 }
 public class SponsorService(ISponsorRepository sponsorRepository) : ISponsorService
 {
-    public async Task<List<SponsorsListViewModel>> GetAllSponsorsAsync()
+    public async Task<List<SponsorsListViewModel>> GetAllSponsorsAsync(int? chapterId)
     {
         // misses chapterId as a parameter
-        var allSponsorsDataModel = await sponsorRepository.GetAllSponsorsAsync();
+        var allSponsorsDataModel = await sponsorRepository.GetAllSponsorsAsync(chapterId);
         // Adapt is not async...
         var allSponsorsListViewModel = allSponsorsDataModel.Adapt<List<SponsorsListViewModel>>();
         return allSponsorsListViewModel;
