@@ -27,6 +27,15 @@
     </MudSwitch>
 </MudStack>
 
+@if (FonbecClaim?.ChapterId != null)
+{
+    <MudText>Filial: @FonbecClaim.ChapterName</MudText>
+}
+else
+{
+    <MudText>Filial: GLOBAL</MudText>
+}
+
 <LoadingIndicator Loading="Loading" />
 
 @if (_viewModels.Any())
@@ -54,6 +63,7 @@
         </ToolBarContent>
 
         <Columns>
+
             <PropertyColumn Property="@(vm => _sortByLastName ? vm.SponsorLastName : vm.SponsorFirstName)"
                             Title="Nombre">
                 <CellTemplate>
@@ -90,6 +100,7 @@
                     </MudLink>
                 </CellTemplate>
             </PropertyColumn>
+
         </Columns>
         <PagerContent>
             <MudDataGridPager T="SponsorsListViewModel" RowsPerPageString="Filas por página:" InfoFormat="{first_item}-{last_item} of {all_items}" />
