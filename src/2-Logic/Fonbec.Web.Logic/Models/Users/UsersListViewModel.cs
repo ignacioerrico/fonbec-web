@@ -4,7 +4,7 @@ using Mapster;
 
 namespace Fonbec.Web.Logic.Models.Users;
 
-public class UsersListViewModel
+public class UsersListViewModel : IChangableViewModel<UsersListViewModel>
 {
     public int UserId { get; set; }
 
@@ -42,6 +42,27 @@ public class UsersListViewModel
 
     public string? ReenabledByFullName { get; set; }
     public DateTime? ReenabledOnUtc { get; set; }
+
+    public UsersListViewModel DeepClone()
+    {
+        return this.Adapt<UsersListViewModel>();
+    }
+
+    public bool Equals(UsersListViewModel? other)
+    {
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return IsIdenticalTo(other);
+    }
+
+    public bool IsIdenticalTo(UsersListViewModel other) =>
+        UserFirstName == other.UserFirstName
+        && UserLastName == other.UserLastName
+        && UserNickName == other.UserNickName
+        && UserGender == other.UserGender
+        && UserEmail == other.UserEmail
+        && UserPhoneNumber == other.UserPhoneNumber
+        && UserNotes == other.UserNotes;
 }
 
 public class UsersListViewModelMappingDefinitions : IRegister

@@ -19,7 +19,7 @@ public partial class ChaptersList : AuthenticationRequiredComponentBase
     [Inject]
     public IChapterService ChapterService { get; set; } = null!;
 
-    private Dictionary<int, ChaptersListViewModel> _originalValues = [];
+    private ChaptersListViewModel _originalValues = new();
 
     protected override async Task OnInitializedAsync()
     {
@@ -41,37 +41,23 @@ public partial class ChaptersList : AuthenticationRequiredComponentBase
         string.IsNullOrWhiteSpace(_searchString)
         || viewModel.ChapterName.ContainsIgnoringAccents(_searchString);
 
-    private void StartedEditingItem(ChaptersListViewModel viewModel)
+    private void StartedEditingItem(ChaptersListViewModel originalViewModel)
     {
-        _originalValues[viewModel.ChapterId] = new ChaptersListViewModel
-        {
-            ChapterId = viewModel.ChapterId,
-            ChapterName = viewModel.ChapterName,
-            Notes = viewModel.Notes
-        };
+        _originalValues = originalViewModel.DeepClone();
     }
 
-    private async Task CommittedItemChangesAsync(ChaptersListViewModel viewModel)
+    private async Task CommittedItemChangesAsync(ChaptersListViewModel modifiedViewModel)
     {
-        if (_originalValues.TryGetValue(viewModel.ChapterId, out var originalItem))
+        if (_originalValues.Equals(modifiedViewModel))
         {
-            bool hasChanges = originalItem.ChapterName != viewModel.ChapterName
-                || originalItem.Notes != viewModel.Notes;
-
-            if (!hasChanges)
-            {
-                Snackbar.Add("No se realizaron cambios.", Severity.Info);
-                _originalValues.Remove(viewModel.ChapterId);
-                return;
-            }
-
-            _originalValues.Remove(viewModel.ChapterId);
+            Snackbar.Add("No se realizaron cambios.", Severity.Info);
+            return;
         }
 
         var updateChapterInputModel = new UpdateChapterInputModel(
-            viewModel.ChapterId,
-            viewModel.ChapterName,
-            viewModel.Notes,
+            modifiedViewModel.ChapterId,
+            modifiedViewModel.ChapterName,
+            modifiedViewModel.Notes,
             FonbecClaim.UserId
         );
 
@@ -80,7 +66,5 @@ public partial class ChaptersList : AuthenticationRequiredComponentBase
         {
             Snackbar.Add("No se pudo actualizar la filial.", Severity.Error);
         }
-
-        _viewModels.Single(vm => vm.ChapterId == viewModel.ChapterId).LastUpdatedOnUtc = DateTime.Now;
     }
 }

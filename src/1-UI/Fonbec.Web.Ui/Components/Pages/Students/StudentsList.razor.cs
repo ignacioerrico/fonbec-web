@@ -22,7 +22,7 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
 
     private bool _sortByLastName;
 
-    private Dictionary<int, StudentsListViewModel> _originalValues = [];
+    private StudentsListViewModel _originalValues = new();
 
     [Inject]
     public IStudentService StudentService { get; set; } = null!;
@@ -58,56 +58,30 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
         || viewModel.FacilitatorFullName.ContainsIgnoringAccents(_searchString)
         || (!string.IsNullOrWhiteSpace(viewModel.StudentPhoneNumber)
             && viewModel.StudentPhoneNumber.ContainsIgnoringAccents(_searchString));
-    private void StartedEditingItem(StudentsListViewModel viewModel)
+    private void StartedEditingItem(StudentsListViewModel originalViewModel)
     {
-        _originalValues[viewModel.StudentId] = new StudentsListViewModel
-        {
-            StudentId = viewModel.StudentId,
-            StudentFirstName = viewModel.StudentFirstName,
-            StudentLastName = viewModel.StudentLastName,
-            StundentNickName = viewModel.StundentNickName,
-            StudentEmail = viewModel.StudentEmail,
-            StudentPhoneNumber = viewModel.StudentPhoneNumber,
-            StudentNotes = viewModel.StudentNotes,
-            StudentSecondarySchoolStartYear = viewModel.StudentSecondarySchoolStartYear,
-            StudentUniversityStartYear = viewModel.StudentUniversityStartYear,
-            FacilitatorId = viewModel.FacilitatorId
-        };
+        _originalValues = originalViewModel.DeepClone();
     }
 
-    private async Task CommittedItemChangesAsync(StudentsListViewModel viewModel)
+    private async Task CommittedItemChangesAsync(StudentsListViewModel modifiedViewModel)
     {
-        if (_originalValues.TryGetValue(viewModel.StudentId, out var originalItem))
+        if (_originalValues.Equals(modifiedViewModel))
         {
-            bool hasChanges = originalItem.StudentFirstName != viewModel.StudentFirstName
-                || originalItem.StudentLastName != viewModel.StudentLastName
-                || originalItem.StundentNickName != viewModel.StundentNickName
-                || originalItem.StudentGender != viewModel.StudentGender
-                || originalItem.StudentEmail != viewModel.StudentEmail
-                || originalItem.StudentPhoneNumber != viewModel.StudentPhoneNumber
-                || originalItem.StudentNotes != viewModel.StudentNotes;
-
-            if (!hasChanges)
-            {
-                Snackbar.Add("No se realizaron cambios.", Severity.Info);
-                _originalValues.Remove(viewModel.StudentId);
-                return;
-            }
-
-            _originalValues.Remove(viewModel.StudentId);
+            Snackbar.Add("No se realizaron cambios.", Severity.Info);
+            return;
         }
 
         var updateStudentInputModel = new UpdateStudentInputModel(
-            viewModel.StudentId,
-            viewModel.StudentFirstName,
-            viewModel.StudentLastName,
-            viewModel.StundentNickName,
-            viewModel.StudentEmail,
-            viewModel.StudentPhoneNumber,
-            viewModel.StudentNotes,
-            viewModel.StudentSecondarySchoolStartYear,
-            viewModel.StudentUniversityStartYear,
-            viewModel.FacilitatorId,
+            modifiedViewModel.StudentId,
+            modifiedViewModel.StudentFirstName,
+            modifiedViewModel.StudentLastName,
+            modifiedViewModel.StundentNickName,
+            modifiedViewModel.StudentEmail,
+            modifiedViewModel.StudentPhoneNumber,
+            modifiedViewModel.StudentNotes,
+            modifiedViewModel.StudentSecondarySchoolStartYear,
+            modifiedViewModel.StudentUniversityStartYear,
+            modifiedViewModel.FacilitatorId,
             FonbecClaim.UserId
         );
 
@@ -116,8 +90,6 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
         {
             Snackbar.Add("No se pudo actualizar el becario.", Severity.Error);
         }
-
-        _viewModels.Single(vm => vm.StudentId == viewModel.StudentId).LastUpdatedOnUtc = DateTime.Now;
     }
 
     private string StudentFullName(StudentsListViewModel viewModel) =>

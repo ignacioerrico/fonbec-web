@@ -19,7 +19,7 @@ public partial class UsersList : AuthenticationRequiredComponentBase
 
     private IEnumerable<string> _allChapters = [];
 
-    private Dictionary<int, UsersListViewModel> _originalValues = [];
+    private UsersListViewModel _originalViewModel = new();
 
     [Inject]
     public IUserService UserService { get; set; } = null!;
@@ -49,52 +49,28 @@ public partial class UsersList : AuthenticationRequiredComponentBase
         || viewModel.UserEmail.ContainsIgnoringAccents(_searchString)
         || viewModel.UserPhoneNumber.ContainsIgnoringAccents(_searchString);
 
-    private void StartedEditingItem(UsersListViewModel viewModel)
+    private void StartedEditingItem(UsersListViewModel originalViewModel)
     {
-        _originalValues[viewModel.UserId] = new UsersListViewModel
-        {
-            UserId = viewModel.UserId,
-            UserFirstName = viewModel.UserFirstName,
-            UserLastName = viewModel.UserLastName,
-            UserNickName = viewModel.UserNickName,
-            UserGender = viewModel.UserGender,
-            UserEmail = viewModel.UserEmail,
-            UserPhoneNumber = viewModel.UserPhoneNumber,
-            UserNotes = viewModel.UserNotes
-        };
+        _originalViewModel = originalViewModel.DeepClone();
     }
 
-    private async Task CommittedItemChangesAsync(UsersListViewModel viewModel)
+    private async Task CommittedItemChangesAsync(UsersListViewModel modifiedViewModel)
     {
-        if (_originalValues.TryGetValue(viewModel.UserId, out var originalItem))
+        if (_originalViewModel.Equals(modifiedViewModel))
         {
-            bool hasChanges = originalItem.UserFirstName != viewModel.UserFirstName
-                || originalItem.UserLastName != viewModel.UserLastName
-                || originalItem.UserNickName != viewModel.UserNickName
-                || originalItem.UserGender != viewModel.UserGender
-                || originalItem.UserEmail != viewModel.UserEmail
-                || originalItem.UserPhoneNumber != viewModel.UserPhoneNumber
-                || originalItem.UserNotes != viewModel.UserNotes;
-
-            if (!hasChanges)
-            {
-                Snackbar.Add("No se realizaron cambios.", Severity.Info);
-                _originalValues.Remove(viewModel.UserId);
-                return;
-            }
-
-            _originalValues.Remove(viewModel.UserId);
+            Snackbar.Add("No se realizaron cambios.", Severity.Info);
+            return;
         }
 
         var updateUserInputModel = new UpdateUserInputModel(
-            viewModel.UserId,
-            viewModel.UserFirstName,
-            viewModel.UserLastName,
-            viewModel.UserNickName,
-            viewModel.UserGender,
-            viewModel.UserEmail,
-            viewModel.UserPhoneNumber,
-            viewModel.UserNotes,
+            modifiedViewModel.UserId,
+            modifiedViewModel.UserFirstName,
+            modifiedViewModel.UserLastName,
+            modifiedViewModel.UserNickName,
+            modifiedViewModel.UserGender,
+            modifiedViewModel.UserEmail,
+            modifiedViewModel.UserPhoneNumber,
+            modifiedViewModel.UserNotes,
             FonbecClaim.UserId
         );
 

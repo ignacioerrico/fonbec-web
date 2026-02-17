@@ -1,10 +1,11 @@
 ﻿using Fonbec.Web.DataAccess.DataModels.Students;
 using Fonbec.Web.DataAccess.Entities.Enums;
+using Fonbec.Web.Logic.Models.Chapters;
 using Mapster;
 
 namespace Fonbec.Web.Logic.Models.Students;
 
-public class StudentsListViewModel : AuditableViewModel
+public class StudentsListViewModel : AuditableViewModel, IChangableViewModel<StudentsListViewModel>
 {
     public int StudentId { get; set; }
     public string StudentFirstName { get; set; } = string.Empty;
@@ -21,6 +22,30 @@ public class StudentsListViewModel : AuditableViewModel
     public DateTime? StudentSecondarySchoolStartYear { get; set; }
     public DateTime? StudentUniversityStartYear { get; set; }
     public string StudentPhoneNumber { get; set; } = string.Empty;
+    public StudentsListViewModel DeepClone()
+    {
+        return this.Adapt<StudentsListViewModel>();
+    }
+
+    public bool Equals(StudentsListViewModel? other)
+    {
+        if (other is null) return false;
+        if (ReferenceEquals(this, other)) return true;
+        return IsIdenticalTo(other);
+    }
+    private bool IsIdenticalTo(StudentsListViewModel other) =>
+        StudentFirstName == other.StudentFirstName
+        && StudentLastName == other.StudentLastName
+        && StundentNickName == other.StundentNickName
+        && StudentGender == other.StudentGender
+        && FacilitatorId == other.FacilitatorId
+        && FacilitatorFullName == other.FacilitatorFullName
+        && StudentSecondarySchoolStartYear == other.StudentSecondarySchoolStartYear
+        && StudentUniversityStartYear == other.StudentUniversityStartYear
+        && StudentEmail == other.StudentEmail
+        && StudentPhoneNumber == other.StudentPhoneNumber
+        && StudentNotes == other.StudentNotes;
+
 }
 
 public class StudentsListViewModelMappingDefinitions : IRegister
