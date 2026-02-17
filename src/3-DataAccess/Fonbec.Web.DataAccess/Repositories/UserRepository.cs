@@ -22,6 +22,7 @@ public interface IUserRepository
     Task<bool> UpdateUserAsync(UpdateUserInputDataModel model);
     Task<List<string>> DisableUserAsync(DisableUserInputDataModel model);
     Task<IdentityResult> DeleteForeverAsync(string userId);
+    Task<IdentityResult> ResetPasswordAsync(ResetPasswordInputDataModel inputDataModel);
     Task<string?> GetUserClaim(string userId, string claimType);
     Task SetUserClaim(string userId, string claimType, string claimValue);
 }
@@ -323,6 +324,25 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
         }
 
         var identityResult = await userManager.DeleteAsync(fonbecUser);
+        return identityResult;
+    }
+
+    public async Task<IdentityResult> ResetPasswordAsync(ResetPasswordInputDataModel inputDataModel)
+    {
+        var fonbecUser = await userManager.FindByIdAsync(inputDataModel.UserId);
+        if (fonbecUser is null)
+        {
+            var identityError = new IdentityError
+            {
+                Description = "User not found.",
+            };
+            return IdentityResult.Failed(identityError);
+        }
+
+        var passwordResetToken = await userManager.GeneratePasswordResetTokenAsync(fonbecUser);
+
+        var identityResult = await userManager.ResetPasswordAsync(fonbecUser, passwordResetToken, inputDataModel.NewPassword);
+
         return identityResult;
     }
 

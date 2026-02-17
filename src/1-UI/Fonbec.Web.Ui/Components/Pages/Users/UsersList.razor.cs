@@ -61,7 +61,12 @@ public partial class UsersList : AuthenticationRequiredComponentBase
             FonbecClaim.UserId
         );
 
+        Loading = true;
+
         var userUpdatedSuccessfully = await UserService.UpdateUserAsync(updateUserInputModel);
+        
+        Loading = false;
+
         if (!userUpdatedSuccessfully)
         {
             Snackbar.Add("No se pudo actualizar el usuario.", Severity.Error);
@@ -85,6 +90,8 @@ public partial class UsersList : AuthenticationRequiredComponentBase
             return;
         }
 
+        Loading = true;
+
         var message = $"¿Estás seguro de que querés deshabilitar al usuario {viewModel.UserFirstName} {viewModel.UserLastName}?";
         var dialogResult = await DialogService.ShowMessageBox(
             "¡Atención!",
@@ -100,6 +107,8 @@ public partial class UsersList : AuthenticationRequiredComponentBase
         var disableUserInputModel = new DisableUserInputModel(viewModel.UserId, DisableUser: true, FonbecClaim.UserId);
 
         var errors = await UserService.DisableUserAsync(disableUserInputModel);
+
+        Loading = false;
 
         if (errors.Count > 0)
         {
@@ -122,8 +131,12 @@ public partial class UsersList : AuthenticationRequiredComponentBase
         }
 
         var disableUserInputModel = new DisableUserInputModel(viewModel.UserId, DisableUser: false, FonbecClaim.UserId);
-        
+
+        Loading = true;
+
         var errors = await UserService.DisableUserAsync(disableUserInputModel);
+
+        Loading = false;
 
         if (errors.Count > 0)
         {
@@ -145,6 +158,8 @@ public partial class UsersList : AuthenticationRequiredComponentBase
             return;
         }
 
+        Loading = true;
+
         var message = string.Format("¿Estás seguro de que querés eliminar al usuario {0} (ID {1})? Este cambio es irreversible.",
             $"{viewModel.UserFirstName} {viewModel.UserLastName}",
             viewModel.UserId);
@@ -160,6 +175,9 @@ public partial class UsersList : AuthenticationRequiredComponentBase
         }
 
         var identityResult = await UserService.DeleteForeverAsync(viewModel.UserId);
+        
+        Loading = false;
+
         if (!identityResult.Succeeded)
         {
             Snackbar.Add("No se pudo eliminar al usuario.", Severity.Error);
@@ -173,5 +191,45 @@ public partial class UsersList : AuthenticationRequiredComponentBase
         }
 
         _viewModel.Remove(viewModel);
+    }
+
+    private async Task ResetPasswordAsync(UsersListViewModel? viewModel)
+    {
+        if (viewModel is null)
+        {
+            return;
+        }
+
+        Loading = true;
+
+        var message = string.Format("Estás por resetear la contraseña del usuario {0} (ID {1}).  El usuario va a recibir su nueva contraseña por correo eletrónico.  ¿Querés continuar?",
+            $"{viewModel.UserFirstName} {viewModel.UserLastName}",
+            viewModel.UserId);
+        var dialogResult = await DialogService.ShowMessageBox(
+            "¡Atención!",
+            message,
+            yesText: "Sí",
+            cancelText: "No");
+
+        if (dialogResult is null)
+        {
+            return;
+        }
+
+        var identityResult = await UserService.ResetPasswordAsync(viewModel.UserId, viewModel.UserEmail);
+
+        Loading = false;
+
+        if (identityResult.Succeeded)
+        {
+            Snackbar.Add($"La nueva contraseña fue enviada a {viewModel.UserEmail}", Severity.Success);
+        }
+        else
+        {
+            foreach (var error in identityResult.Errors.Where(e => !string.IsNullOrWhiteSpace(e.Description)))
+            {
+                Snackbar.Add(error.Description, Severity.Error);
+            }
+        }
     }
 }
