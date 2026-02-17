@@ -43,12 +43,16 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
             FonbecClaim.UserId);
 
         var result = await SponsorshipService.CreateSponsorshipAsync(createSponsorshitInputModel);
-        if (!result.AnyAffectedRows)
+
+        _saving = false;
+        if (result.AnyAffectedRows)
+        {
+            NavigationManager.NavigateTo(NavRoutes.Students);
+        }
+        else
         {
             Snackbar.Add("No se pudo crear el apadrinamiento.", Severity.Error);
         }
-        _saving = false;
-        NavigationManager.NavigateTo(NavRoutes.Students);
 
     }
 }

@@ -147,10 +147,10 @@
 				                           Icon="@Icons.Material.Outlined.Edit" Size="@Size.Small" Color="Color.Primary" />
 			            </MudTooltip>
 
-						<MudTooltip Text="Apadrinar" Arrow="true" Placement="Placement.Bottom"Color="Color.Primary">
-							<MudIconButton Href="@NavRoutes.SponsorshipCreate"
-										   Icon="@Icons.Material.Outlined.People" Size="@Size.Small" Color="Color.Default" />
-						</MudTooltip>
+						<MudIconButton Href="@($"/becarios/{context.Item.StudentId}/padrinos/alta")"
+									   Icon="@Icons.Material.Outlined.People"
+									   Size="@Size.Small"
+									   Color="Color.Default" />
 		            </AuthorizeView>
 	            </CellTemplate>
             </TemplateColumn>
