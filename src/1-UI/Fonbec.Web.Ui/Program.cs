@@ -1,5 +1,7 @@
 using Fonbec.Web.DataAccess;
 using Fonbec.Web.DataAccess.Entities;
+using Fonbec.Web.DataAccess.Repositories;
+using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Ui.Account;
 using Fonbec.Web.Ui.Components;
 using Fonbec.Web.Ui.Configuration;
@@ -18,6 +20,9 @@ builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
+// added
+builder.Services.AddScoped<ISponsorshipService, SponsorshipService>();
+builder.Services.AddScoped<ISponsorshipRepository, SponsorshipRepository>();
 
 builder.Services.AddAuthentication(options =>
     {

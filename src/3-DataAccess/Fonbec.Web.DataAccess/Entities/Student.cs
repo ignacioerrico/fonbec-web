@@ -40,4 +40,5 @@ public class Student : UserWithoutAccount
                 : EducationLevel.PrimarySchool;
         }
     }
+
 }

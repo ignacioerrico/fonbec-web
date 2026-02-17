@@ -1,0 +1,55 @@
+﻿@attribute [Route(NavRoutes.SponsorshipCreate)]
+@attribute [Authorize(Policy = nameof(SponsorshipCreate))]
+@inherits AuthenticationRequiredComponentBase
+
+@using Fonbec.Web.DataAccess.Constants
+
+<PageHeader Title="Apadrinar" />
+
+@if (!_anySponsors)
+{
+    <MudAlert Severity="Severity.Error">
+        No hay Padrinos. Para apadrinar se requiere
+        <MudLink Href="@NavRoutes.SponsorCreate" Typo="Typo.body2">
+            al menos un padrino
+        </MudLink>.
+    </MudAlert>
+}
+
+<LoadingIndicator Loading="Loading" />
+
+<MudForm @bind-IsValid="_formValidationSucceeded" Disabled="IsFormDisabled">
+
+    <ChapterSelector @bind-SelectedChapterId="_bindModel.SponsorId"
+                     OnChaptersLoaded="OnSponsorsLoaded" />
+
+    <MudTextField T="DateTime"
+                  Label="Fecha Inicio"
+                  @bind-Value="_bindModel.SponsorshipStartDate"
+                  Immediate="true"
+                  Required="true"
+                  RequiredError="Este es un campo obligatorio." />
+
+    <MudTextField T="DateTime ?"
+                  Label="Fecha Fin"
+                  @bind-Value="_bindModel.SponsorshipEndDate"
+                  Immediate="true" />
+</MudForm>
+
+<MudStack Row="true" Class="pt-4">
+    <MudButton OnClick="Save"
+               Disabled="SaveButtonDisabled"
+               Variant="Variant.Filled"
+               Color="Color.Primary">
+        Crear
+    </MudButton>
+
+    <MudButton Href="@NavRoutes.Students"
+               Variant="Variant.Filled"
+               Color="Color.Default"
+               Class="ms-4">
+        Cancelar
+    </MudButton>
+</MudStack>
+
+<LoadingIndicator Loading="_saving" LoadingText="Guardando los datos" />
