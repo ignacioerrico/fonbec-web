@@ -101,6 +101,7 @@ public partial class UsersList : AuthenticationRequiredComponentBase
 
         if (dialogResult is null)
         {
+            Loading = false;
             return;
         }
 
@@ -171,6 +172,7 @@ public partial class UsersList : AuthenticationRequiredComponentBase
 
         if (dialogResult is null)
         {
+            Loading = false;
             return;
         }
 
@@ -202,7 +204,7 @@ public partial class UsersList : AuthenticationRequiredComponentBase
 
         Loading = true;
 
-        var message = string.Format("Estás por resetear la contraseña del usuario {0} (ID {1}).  El usuario va a recibir su nueva contraseña por correo eletrónico.  ¿Querés continuar?",
+        var message = string.Format("Estás por restablecer la contraseña del usuario {0} (ID {1}).  El usuario va a recibir su nueva contraseña por correo eletrónico.  ¿Querés continuar?",
             $"{viewModel.UserFirstName} {viewModel.UserLastName}",
             viewModel.UserId);
         var dialogResult = await DialogService.ShowMessageBox(
@@ -213,6 +215,7 @@ public partial class UsersList : AuthenticationRequiredComponentBase
 
         if (dialogResult is null)
         {
+            Loading = false;
             return;
         }
 

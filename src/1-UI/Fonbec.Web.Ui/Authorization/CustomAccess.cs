@@ -14,6 +14,6 @@ public static class CustomAccess
 
     public static readonly List<PageAccessInfo> List =
     [
-        new(ResetPassword, "Reestablecer contraseña de usuario", [FonbecRole.Admin, FonbecRole.Manager]),
+        new(ResetPassword, "Restablecer contraseña de usuario", [FonbecRole.Admin, FonbecRole.Manager]),
     ];
 }

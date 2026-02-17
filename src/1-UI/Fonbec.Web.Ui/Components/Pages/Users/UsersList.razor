@@ -166,7 +166,7 @@
 	                    </MudTooltip>
 	                </AuthorizeView>
                     <AuthorizeView Policy="@CustomAccess.ResetPassword" Context="innerContext">
-                        <MudTooltip Text="Reestablecer contraseña" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
+                        <MudTooltip Text="Restablecer contraseña" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
                             <MudIconButton OnClick="@(async _ => await ResetPasswordAsync(context.Item))"
                                            Icon="@Icons.Material.Outlined.Password" Size="@Size.Small" Color="Color.Primary"
                                            Disabled="@(context.Item.UserId == FonbecClaim.UserId)" />
