@@ -25,7 +25,6 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             query = query.Where(s => s.ChapterId == chapterId);
         }
         var allSponsors = await query
-            // add this because it is an auditable...
             .Include(s => s.CreatedBy)
             .Include(s => s.LastUpdatedBy)
             .Include(s => s.DisabledBy)
@@ -41,7 +40,6 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             })
             .OrderBy(sdm => sdm.SponsorFirstName)
             .ThenBy(sdm => sdm.SponsorLastName)
-            // this...
             .ToListAsync();
 
         return allSponsors;

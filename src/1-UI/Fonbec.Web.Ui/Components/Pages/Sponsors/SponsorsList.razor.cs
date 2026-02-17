@@ -6,19 +6,15 @@ using Microsoft.AspNetCore.Components;
 using MudBlazor;
 namespace Fonbec.Web.Ui.Components.Pages.Sponsors;
 
-// agregamos este atributo
-
 [PageMetadata(nameof(SponsorsList), "Lista de Sponsors", [FonbecRole.Manager])]
 
 public partial class SponsorsList : AuthenticationRequiredComponentBase
 {
     private List<SponsorsListViewModel> _viewModels = [];
 
-    // this...
     private string _searchString = string.Empty;
     private bool _sortByLastName;
 
-    // dependency injection
     [Inject]
     public ISponsorService SponsorService { get; set; } = null!;
 
@@ -26,7 +22,6 @@ public partial class SponsorsList : AuthenticationRequiredComponentBase
     { 
         await base.OnInitializedAsync();
 
-        // this is to prevent Blazor from blocking the render process due to this asynchronous statement
         Loading = true;
 
         _viewModels = await SponsorService.GetAllSponsorsAsync(FonbecClaim.ChapterId);
@@ -37,7 +32,7 @@ public partial class SponsorsList : AuthenticationRequiredComponentBase
     /// <summary>
     /// Called by MudTable to determine if a row should be displayed
     /// </summary>
-    /// <param name="viewModel">The student view model to evaluate against the search string. Cannot be null.</param>
+    /// <param name="viewModel">The sponsor view model to evaluate against the search string. Cannot be null.</param>
     /// <returns>true if the student matches the search string in any of the relevant fields; otherwise, false.</returns>
     private bool Filter(SponsorsListViewModel viewModel) =>
         string.IsNullOrWhiteSpace(_searchString)

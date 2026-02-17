@@ -17,9 +17,7 @@ public class SponsorService(ISponsorRepository sponsorRepository) : ISponsorServ
 {
     public async Task<List<SponsorsListViewModel>> GetAllSponsorsAsync(int? chapterId)
     {
-        // misses chapterId as a parameter
         var allSponsorsDataModel = await sponsorRepository.GetAllSponsorsAsync(chapterId);
-        // Adapt is not async...
         var allSponsorsListViewModel = allSponsorsDataModel.Adapt<List<SponsorsListViewModel>>();
         return allSponsorsListViewModel;
     }

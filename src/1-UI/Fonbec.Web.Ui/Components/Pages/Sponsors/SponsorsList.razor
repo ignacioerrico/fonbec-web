@@ -27,14 +27,24 @@
     </MudSwitch>
 </MudStack>
 
-@if (FonbecClaim?.ChapterId != null)
-{
-    <MudText>Filial: @FonbecClaim.ChapterName</MudText>
-}
-else
-{
-    <MudText>Filial: GLOBAL</MudText>
-}
+<MudPaper Elevation="0"
+          Class="pa-3 mb-4 d-flex align-center"
+          Style="background-color: var(--mud-palette-background-grey);">
+
+    <MudIcon Icon="@Icons.Material.Filled.AccountTree"
+             Color="Color.Primary"
+             Class="me-2" />
+
+    <MudText Typo="Typo.subtitle2">
+        Filial:
+        <MudText Typo="Typo.subtitle1"
+                 Class="ms-1"
+                 Style="font-weight:600; display:inline;">
+            @(FonbecClaim?.ChapterName ?? "GLOBAL")
+        </MudText>
+    </MudText>
+
+</MudPaper>
 
 <LoadingIndicator Loading="Loading" />
 
