@@ -25,7 +25,7 @@ public class StudentsListViewModelMappingDefinitionsTests : MappingTestBase
             FacilitatorLastName = "Tilitator",
             FacilitatorEmail = "facilitator@email.com",
             StudentEmail = "student@email.com",
-            StudentNotes = "Some notes",
+            Notes = "Some notes",
             StudentCurrentEducationLevel = EducationLevel.SecondarySchool,
             StudentSecondarySchoolStartYear = now,
             StudentUniversityStartYear = now.AddYears(2),
@@ -44,7 +44,7 @@ public class StudentsListViewModelMappingDefinitionsTests : MappingTestBase
         viewModel.FacilitatorFullName.Should().Be("Fac Tilitator");
         viewModel.FacilitatorEmail.Should().Be("facilitator@email.com");
         viewModel.StudentEmail.Should().Be("student@email.com");
-        viewModel.StudentNotes.Should().Be("Some notes");
+        viewModel.Notes.Should().Be("Some notes");
         viewModel.StudentCurrentEducationLevel.Should().Be("Secundario");
         viewModel.StudentSecondarySchoolStartYear.Should().Be(now);
         viewModel.StudentUniversityStartYear.Should().Be(now.AddYears(2));
@@ -59,7 +59,7 @@ public class StudentsListViewModelMappingDefinitionsTests : MappingTestBase
             StundentNickName = null,
             FacilitatorEmail = null,
             StudentEmail = null,
-            StudentNotes = null,
+            Notes = null,
             StudentPhoneNumber = null
         };
 
@@ -68,7 +68,49 @@ public class StudentsListViewModelMappingDefinitionsTests : MappingTestBase
         viewModel.StundentNickName.Should().BeEmpty();
         viewModel.FacilitatorEmail.Should().BeEmpty();
         viewModel.StudentEmail.Should().BeEmpty();
-        viewModel.StudentNotes.Should().BeEmpty();
+        viewModel.Notes.Should().BeEmpty();
         viewModel.StudentPhoneNumber.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void IsIdenticalTo_Compares_FirstName_LastName_NickName_Gender_FacilitatorId_EducationLevel_Email_PhoneNumber_Notes()
+    {
+        var studentsListViewModel1 = new StudentsListViewModel
+        {
+            StudentId = 314,
+            StudentFirstName = "First Name",
+            StudentLastName = "Last Name",
+            StundentNickName = "Nick Name",
+            StudentGender = Gender.Male,
+            IsStudentActive = true,
+            FacilitatorId = 512,
+            FacilitatorFullName = "FacilitatorFullName1",
+            FacilitatorEmail = "FacilitatorEmail1@mail.com",
+            StudentEmail = "student-email@mail.com",
+            Notes = "Notes",
+            StudentCurrentEducationLevel = "EducationLevel",
+            StudentPhoneNumber = "PhoneNumber",
+        };
+
+        var studentsListViewModel2 = new StudentsListViewModel
+        {
+            StudentId = 315,
+            StudentFirstName = "First Name",
+            StudentLastName = "Last Name",
+            StundentNickName = "Nick Name",
+            StudentGender = Gender.Male,
+            IsStudentActive = false,
+            FacilitatorId = 512,
+            FacilitatorFullName = "FacilitatorFullName2",
+            FacilitatorEmail = "FacilitatorEmail2@mail.com",
+            StudentEmail = "student-email@mail.com",
+            Notes = "Notes",
+            StudentCurrentEducationLevel = "EducationLevel",
+            StudentPhoneNumber = "PhoneNumber",
+        };
+
+        var result = studentsListViewModel1.IsIdenticalTo(studentsListViewModel2);
+
+        result.Should().BeTrue();
     }
 }

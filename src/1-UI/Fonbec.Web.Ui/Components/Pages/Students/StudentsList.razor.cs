@@ -3,7 +3,6 @@ using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models.Students;
 using Fonbec.Web.Logic.Models.Students.Input;
-using Fonbec.Web.Logic.Models.Users;
 using Fonbec.Web.Logic.Services;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
@@ -15,14 +14,14 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
 {
     private List<StudentsListViewModel> _viewModels = [];
 
+    private StudentsListViewModel _originalViewModel = new();
+
     private IEnumerable<string> _allEducationLevels = [];
     private IEnumerable<string> _allFacilitators = [];
 
     private string _searchString = string.Empty;
 
     private bool _sortByLastName;
-
-    private StudentsListViewModel _originalValues = new();
 
     [Inject]
     public IStudentService StudentService { get; set; } = null!;
@@ -58,14 +57,13 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
         || viewModel.FacilitatorFullName.ContainsIgnoringAccents(_searchString)
         || (!string.IsNullOrWhiteSpace(viewModel.StudentPhoneNumber)
             && viewModel.StudentPhoneNumber.ContainsIgnoringAccents(_searchString));
-    private void StartedEditingItem(StudentsListViewModel originalViewModel)
-    {
-        _originalValues = originalViewModel.DeepClone();
-    }
+
+    private void StartedEditingItem(StudentsListViewModel originalViewModel) =>
+        _originalViewModel = originalViewModel.DeepClone();
 
     private async Task CommittedItemChangesAsync(StudentsListViewModel modifiedViewModel)
     {
-        if (_originalValues.Equals(modifiedViewModel))
+        if (_originalViewModel.IsEqualTo(modifiedViewModel))
         {
             Snackbar.Add("No se realizaron cambios.", Severity.Info);
             return;
@@ -78,14 +76,19 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
             modifiedViewModel.StundentNickName,
             modifiedViewModel.StudentEmail,
             modifiedViewModel.StudentPhoneNumber,
-            modifiedViewModel.StudentNotes,
+            modifiedViewModel.Notes,
             modifiedViewModel.StudentSecondarySchoolStartYear,
             modifiedViewModel.StudentUniversityStartYear,
             modifiedViewModel.FacilitatorId,
             FonbecClaim.UserId
         );
 
+        Loading = true;
+
         var result = await StudentService.UpdateStudentAsync(updateStudentInputModel);
+        
+        Loading = false;
+
         if (!result.AnyAffectedRows)
         {
             Snackbar.Add("No se pudo actualizar el becario.", Severity.Error);

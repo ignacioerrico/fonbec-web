@@ -157,4 +157,44 @@ public class UsersListViewModelMappingDefinitionsTests : MappingTestBase
 
         viewModel.IsUserActive.Should().BeFalse();
     }
+
+    [Fact]
+    public void IsIdenticalTo_Compares_FirstName_LastName_NickName_Gender_Email_PhoneNumber_Notes()
+    {
+        var usersListViewModel1 = new UsersListViewModel
+        {
+            UserId = 314,
+            UserFirstName = "First Name",
+            UserLastName = "Last Name",
+            UserNickName = "Nick Name",
+            UserGender = Gender.Male,
+            UserEmail = "user-email@mail.com",
+            UserPhoneNumber = "PhoneNumber",
+            UserNotes = "Notes",
+            UserRole = "Admin",
+            UserChapterName = "Buenos Aires",
+            CanUserBeLockedOut = true,
+            IsUserActive = true,
+        };
+
+        var usersListViewModel2 = new UsersListViewModel
+        {
+            UserId = 315,
+            UserFirstName = "First Name",
+            UserLastName = "Last Name",
+            UserNickName = "Nick Name",
+            UserGender = Gender.Male,
+            UserEmail = "user-email@mail.com",
+            UserPhoneNumber = "PhoneNumber",
+            UserNotes = "Notes",
+            UserRole = "Manager",
+            UserChapterName = "Rosario",
+            CanUserBeLockedOut = false,
+            IsUserActive = false,
+        };
+
+        var result = usersListViewModel1.IsIdenticalTo(usersListViewModel2);
+
+        result.Should().BeTrue();
+    }
 }

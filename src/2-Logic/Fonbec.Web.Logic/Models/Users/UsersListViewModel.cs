@@ -1,10 +1,12 @@
-﻿using Fonbec.Web.DataAccess.DataModels.Users;
+﻿using Fonbec.Web.DataAccess.DataModels;
+using Fonbec.Web.DataAccess.DataModels.Users;
 using Fonbec.Web.DataAccess.Entities.Enums;
+using Fonbec.Web.Logic.ExtensionMethods;
 using Mapster;
 
 namespace Fonbec.Web.Logic.Models.Users;
 
-public class UsersListViewModel : IChangableViewModel<UsersListViewModel>
+public class UsersListViewModel : IDetectChanges<UsersListViewModel>
 {
     public int UserId { get; set; }
 
@@ -43,26 +45,14 @@ public class UsersListViewModel : IChangableViewModel<UsersListViewModel>
     public string? ReenabledByFullName { get; set; }
     public DateTime? ReenabledOnUtc { get; set; }
 
-    public UsersListViewModel DeepClone()
-    {
-        return this.Adapt<UsersListViewModel>();
-    }
-
-    public bool Equals(UsersListViewModel? other)
-    {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-        return IsIdenticalTo(other);
-    }
-
     public bool IsIdenticalTo(UsersListViewModel other) =>
-        UserFirstName == other.UserFirstName
-        && UserLastName == other.UserLastName
-        && UserNickName == other.UserNickName
+        UserFirstName == other.UserFirstName.NormalizeText()
+        && UserLastName == other.UserLastName.NormalizeText()
+        && UserNickName == other.UserNickName.NormalizeText()
         && UserGender == other.UserGender
-        && UserEmail == other.UserEmail
-        && UserPhoneNumber == other.UserPhoneNumber
-        && UserNotes == other.UserNotes;
+        && UserEmail == other.UserEmail.Trim().ToLower()
+        && UserPhoneNumber == other.UserPhoneNumber.NullOrTrimmed()
+        && UserNotes == other.UserNotes.NullOrTrimmed();
 }
 
 public class UsersListViewModelMappingDefinitions : IRegister

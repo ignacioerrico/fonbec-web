@@ -1,31 +1,19 @@
-﻿using Fonbec.Web.DataAccess.DataModels.Chapters;
-using Fonbec.Web.Logic.Models.Students;
+﻿using Fonbec.Web.DataAccess.DataModels;
+using Fonbec.Web.DataAccess.DataModels.Chapters;
+using Fonbec.Web.Logic.ExtensionMethods;
 using Mapster;
 
 namespace Fonbec.Web.Logic.Models.Chapters;
 
-public class ChaptersListViewModel : AuditableViewModel, IChangableViewModel<ChaptersListViewModel>
+public class ChaptersListViewModel : AuditableViewModel, IDetectChanges<ChaptersListViewModel>
 {
     public int ChapterId { get; set; }
     public string ChapterName { get; init; } = string.Empty;
     public bool IsChapterActive { get; set; }
-    public ChaptersListViewModel DeepClone()
-    {
-        return this.Adapt<ChaptersListViewModel>();
-    }
 
-    public bool Equals(ChaptersListViewModel? other)
-    {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-        return IsIdenticalTo(other);
-    }
-
-    private bool IsIdenticalTo(ChaptersListViewModel other) =>
-        ChapterId == other.ChapterId
-        && ChapterName == other.ChapterName
-        && IsChapterActive == other.IsChapterActive
-        && Notes == other.Notes;
+    public bool IsIdenticalTo(ChaptersListViewModel other) =>
+        ChapterName == other.ChapterName.NormalizeText()
+        && Notes == other.Notes.NullOrTrimmed();
 }
 
 public class ChaptersListViewModelMappingDefinitions : IRegister
@@ -40,6 +28,5 @@ public class ChaptersListViewModelMappingDefinitions : IRegister
         config.NewConfig<ChaptersListViewModel, SelectableModel<int>>()
             .Map(dest => dest.Key, src => src.ChapterId)
             .Map(dest => dest.DisplayName, src => src.ChapterName);
-
     }
 }

@@ -1,11 +1,12 @@
-﻿using Fonbec.Web.DataAccess.DataModels.Students;
+﻿using Fonbec.Web.DataAccess.DataModels;
+using Fonbec.Web.DataAccess.DataModels.Students;
 using Fonbec.Web.DataAccess.Entities.Enums;
-using Fonbec.Web.Logic.Models.Chapters;
+using Fonbec.Web.Logic.ExtensionMethods;
 using Mapster;
 
 namespace Fonbec.Web.Logic.Models.Students;
 
-public class StudentsListViewModel : AuditableViewModel, IChangableViewModel<StudentsListViewModel>
+public class StudentsListViewModel : AuditableViewModel, IDetectChanges<StudentsListViewModel>
 {
     public int StudentId { get; set; }
     public string StudentFirstName { get; set; } = string.Empty;
@@ -17,35 +18,21 @@ public class StudentsListViewModel : AuditableViewModel, IChangableViewModel<Stu
     public string FacilitatorFullName { get; set; } = string.Empty;
     public string FacilitatorEmail { get; set; } = string.Empty;
     public string StudentEmail { get; set; } = string.Empty;
-    public string StudentNotes { get; set; } = string.Empty;
     public string StudentCurrentEducationLevel { get; set; } = string.Empty;
     public DateTime? StudentSecondarySchoolStartYear { get; set; }
     public DateTime? StudentUniversityStartYear { get; set; }
     public string StudentPhoneNumber { get; set; } = string.Empty;
-    public StudentsListViewModel DeepClone()
-    {
-        return this.Adapt<StudentsListViewModel>();
-    }
 
-    public bool Equals(StudentsListViewModel? other)
-    {
-        if (other is null) return false;
-        if (ReferenceEquals(this, other)) return true;
-        return IsIdenticalTo(other);
-    }
-    private bool IsIdenticalTo(StudentsListViewModel other) =>
-        StudentFirstName == other.StudentFirstName
-        && StudentLastName == other.StudentLastName
-        && StundentNickName == other.StundentNickName
+    public bool IsIdenticalTo(StudentsListViewModel other) =>
+        StudentFirstName == other.StudentFirstName.NormalizeText()
+        && StudentLastName == other.StudentLastName.NormalizeText()
+        && StundentNickName == other.StundentNickName.NormalizeText()
         && StudentGender == other.StudentGender
         && FacilitatorId == other.FacilitatorId
-        && FacilitatorFullName == other.FacilitatorFullName
-        && StudentSecondarySchoolStartYear == other.StudentSecondarySchoolStartYear
-        && StudentUniversityStartYear == other.StudentUniversityStartYear
-        && StudentEmail == other.StudentEmail
-        && StudentPhoneNumber == other.StudentPhoneNumber
-        && StudentNotes == other.StudentNotes;
-
+        && StudentCurrentEducationLevel == other.StudentCurrentEducationLevel
+        && StudentEmail == other.StudentEmail.Trim().ToLower()
+        && StudentPhoneNumber == other.StudentPhoneNumber.NullOrTrimmed()
+        && Notes == other.Notes.NullOrTrimmed();
 }
 
 public class StudentsListViewModelMappingDefinitions : IRegister
@@ -63,7 +50,6 @@ public class StudentsListViewModelMappingDefinitions : IRegister
             .Map(dest => dest.FacilitatorFullName, src => $"{src.FacilitatorFirstName} {src.FacilitatorLastName}")
             .Map(dest => dest.FacilitatorEmail, src => src.FacilitatorEmail ?? string.Empty)
             .Map(dest => dest.StudentEmail, src => src.StudentEmail ?? string.Empty)
-            .Map(dest => dest.StudentNotes, src => src.StudentNotes ?? string.Empty)
             .Map(dest => dest.StudentCurrentEducationLevel, src => src.StudentCurrentEducationLevel.EnumToString())
             .Map(dest => dest.StudentSecondarySchoolStartYear, src => src.StudentSecondarySchoolStartYear)
             .Map(dest => dest.StudentUniversityStartYear, src => src.StudentUniversityStartYear)
