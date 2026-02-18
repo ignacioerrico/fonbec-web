@@ -93,6 +93,8 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
         {
             Snackbar.Add("No se pudo actualizar el becario.", Severity.Error);
         }
+
+        _viewModels.Single(vm => vm.StudentId == modifiedViewModel.StudentId).LastUpdatedOnUtc = DateTime.Now;
     }
 
     private string StudentFullName(StudentsListViewModel viewModel) =>
