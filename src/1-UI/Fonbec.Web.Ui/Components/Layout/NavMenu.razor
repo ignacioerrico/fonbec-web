@@ -22,7 +22,7 @@
 				<MudNavLink Href="@NavRoutes.Students" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Face">Becarios</MudNavLink>
 		    </AuthorizeView>
             <AuthorizeView Policy="@nameof(SponsorsList)">
-                <MudNavLink Href="@NavRoutes.Sponsors" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Money">Padrinos</MudNavLink>
+                <MudNavLink Href="@NavRoutes.Sponsors" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.SupervisorAccount">Padrinos</MudNavLink>
             </AuthorizeView>
 		    <MudNavLink Href="Account/Manage" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Person">@outerContext.User.Identity?.Name</MudNavLink>
 		    <form action="Account/Logout" method="post">

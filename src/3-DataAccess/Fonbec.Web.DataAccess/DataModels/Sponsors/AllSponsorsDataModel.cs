@@ -16,4 +16,5 @@ public class AllSponsorsDataModel(Auditable auditable) : AuditableDataModel(audi
 
     public string SponsorEmail { get; set; } = null!;
 
+    public bool IsSponsorActive { get; set; }
 }

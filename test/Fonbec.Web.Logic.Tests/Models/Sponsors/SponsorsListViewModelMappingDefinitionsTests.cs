@@ -1,10 +1,7 @@
-﻿using Fonbec.Web.DataAccess.DataModels.Sponsors;
-using Mapster;
-using System;
-using System.Collections.Generic;
-using System.Text;
-using FluentAssertions;
+﻿using FluentAssertions;
+using Fonbec.Web.DataAccess.DataModels.Sponsors;
 using Fonbec.Web.Logic.Models.Sponsors;
+using Mapster;
 
 namespace Fonbec.Web.Logic.Tests.Models.Sponsors;
 
@@ -22,6 +19,7 @@ public class SponsorsListViewModelMappingDefinitionsTests : MappingTestBase
             SponsorPhoneNumber = "1234567890",
             SponsorEmail = "jose@email.com"
         };
+
         var viewModel = dataModel.Adapt<SponsorsListViewModel>(Config);
 
         viewModel.SponsorId.Should().Be(10);
@@ -40,9 +38,10 @@ public class SponsorsListViewModelMappingDefinitionsTests : MappingTestBase
             SponsorNickName = null,
             SponsorPhoneNumber = null,
         };
+
         var viewModel = dataModel.Adapt<SponsorsListViewModel>(Config);
 
         viewModel.SponsorNickName.Should().BeEmpty();
         viewModel.SponsorPhoneNumber.Should().BeEmpty();
     }
-}   
+}

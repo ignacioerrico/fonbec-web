@@ -3,16 +3,16 @@ using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models.Sponsors;
 using Fonbec.Web.Logic.Services;
 using Microsoft.AspNetCore.Components;
-using MudBlazor;
+
 namespace Fonbec.Web.Ui.Components.Pages.Sponsors;
 
-[PageMetadata(nameof(SponsorsList), "Lista de Sponsors", [FonbecRole.Manager])]
-
+[PageMetadata(nameof(SponsorsList), "Lista de padrinos", [FonbecRole.Manager])]
 public partial class SponsorsList : AuthenticationRequiredComponentBase
 {
     private List<SponsorsListViewModel> _viewModels = [];
 
     private string _searchString = string.Empty;
+
     private bool _sortByLastName;
 
     [Inject]
@@ -40,6 +40,6 @@ public partial class SponsorsList : AuthenticationRequiredComponentBase
 
     private string SponsorFullName(SponsorsListViewModel viewModel) =>
     _sortByLastName
-        ? $"{viewModel.SponsorFirstName} {viewModel.SponsorLastName}"
-        : $"{viewModel.SponsorLastName}, {viewModel.SponsorFirstName}";
+        ? $"{viewModel.SponsorLastName}, {viewModel.SponsorFirstName}"
+        : $"{viewModel.SponsorFirstName} {viewModel.SponsorLastName}";
 }

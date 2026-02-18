@@ -1,7 +1,7 @@
-﻿using Fonbec.Web.DataAccess.DataModels.Sponsors.Input;
-using Microsoft.EntityFrameworkCore;
+﻿using Fonbec.Web.DataAccess.DataModels.Sponsors;
+using Fonbec.Web.DataAccess.DataModels.Sponsors.Input;
 using Fonbec.Web.DataAccess.Entities;
-using Fonbec.Web.DataAccess.DataModels.Sponsors;
+using Microsoft.EntityFrameworkCore;
 
 namespace Fonbec.Web.DataAccess.Repositories;
 
@@ -18,17 +18,13 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
     {
         await using var db = await dbContext.CreateDbContextAsync();
 
-        var query = db.Sponsors
-            .Where(s => s.IsDeleted == false);
-        if (chapterId.HasValue)
-        {
-            query = query.Where(s => s.ChapterId == chapterId);
-        }
-        var allSponsors = await query
+        var allSponsors = await db.Sponsors
             .Include(s => s.CreatedBy)
             .Include(s => s.LastUpdatedBy)
             .Include(s => s.DisabledBy)
             .Include(s => s.ReenabledBy)
+            .Where(s => !s.IsDeleted
+                        && (!chapterId.HasValue || s.ChapterId == chapterId))
             .Select(s => new AllSponsorsDataModel(s)
             {
                 SponsorId = s.Id,
@@ -36,7 +32,8 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
                 SponsorLastName = s.LastName,
                 SponsorNickName = s.NickName,
                 SponsorPhoneNumber = s.PhoneNumber,
-                SponsorEmail = s.Email
+                SponsorEmail = s.Email,
+                IsSponsorActive = s.IsActive,
             })
             .OrderBy(sdm => sdm.SponsorFirstName)
             .ThenBy(sdm => sdm.SponsorLastName)

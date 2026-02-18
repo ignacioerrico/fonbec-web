@@ -8,20 +8,17 @@
 
 <PageHeader Title="Padrinos" />
 
-<MudStack StretchItems="StretchItems.Middle" Row>
+<MudStack StretchItems="StretchItems.Middle" Row="true">
     <AuthorizeView Policy="@nameof(SponsorCreate)">
         <MudTooltip Text="Alta de padrino"
-                    Arrow="true"
-                    Placement="Placement.Right"
+                    Arrow="true" Placement="Placement.Right"
                     Color="Color.Primary">
             <MudFab Href="@NavRoutes.SponsorCreate"
                     StartIcon="@Icons.Material.Filled.Add"
                     Color="Color.Primary" />
         </MudTooltip>
     </AuthorizeView>
-
     <MudSpacer />
-
     <MudSwitch @bind-Value="_sortByLastName" LabelPlacement="Placement.Left">
         @(_sortByLastName ? "Apellido, Nombre" : "Nombre Apellido")
     </MudSwitch>
@@ -30,7 +27,6 @@
 <MudPaper Elevation="0"
           Class="pa-3 mb-4 d-flex align-center"
           Style="background-color: var(--mud-palette-background-grey);">
-
     <MudIcon Icon="@Icons.Material.Filled.AccountTree"
              Color="Color.Primary"
              Class="me-2" />
@@ -43,10 +39,11 @@
             @(FonbecClaim?.ChapterName ?? "GLOBAL")
         </MudText>
     </MudText>
-
 </MudPaper>
 
-<LoadingIndicator Loading="Loading" />
+<LoadingIndicator Loading="Loading"
+                  If="!_viewModels.Any()"
+                  ThenDisplay="No hay padrinos." />
 
 @if (_viewModels.Any())
 {
@@ -60,26 +57,19 @@
                  FilterCaseSensitivity="DataGridFilterCaseSensitivity.CaseInsensitive"
                  SortMode="SortMode.Multiple"
                  Class="mt-4">
-
         <ToolBarContent>
-            <MudTextField T="string"
-                          @bind-Value="_searchString"
+            <MudTextField T="string" @bind-Value="_searchString"
                           Placeholder="Buscar"
-                          Clearable="true"
-                          Immediate="true"
-                          Adornment="Adornment.Start"
-                          AdornmentIcon="@Icons.Material.Filled.Search"
-                          IconSize="Size.Medium" />
+                          Clearable="true" Immediate="true"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
         </ToolBarContent>
-
         <Columns>
-
-            <PropertyColumn Property="@(vm => _sortByLastName ? vm.SponsorLastName : vm.SponsorFirstName)"
-                            Title="Nombre">
+            <PropertyColumn Property="@(vm => _sortByLastName ? vm.SponsorLastName : vm.SponsorFirstName)" Title="Nombre">
                 <CellTemplate>
                     <AuditableItemDisplay Id="@context.Item.SponsorId"
                                           ItemName="@SponsorFullName(context.Item)"
                                           Email="@context.Item.SponsorEmail"
+                                          IsActive="@context.Item.IsSponsorActive"
                                           AuditableViewModel="@context.Item" />
                     @if (!string.IsNullOrWhiteSpace(context.Item.SponsorNickName))
                     {
@@ -87,21 +77,6 @@
                     }
                 </CellTemplate>
             </PropertyColumn>
-            <PropertyColumn Property="vm => vm.SponsorNickName" Title="Apodo" Required="false">
-		        <EditTemplate>
-			        <MudTextField T="string" @bind-Value="context.Item.SponsorNickName" Immediate="true"
-			                      Label="Apodo" Variant="Variant.Outlined" Margin="Margin.Dense"
-			                      MaxLength="MaxLength.FonbecWebUser.NickName" />
-		        </EditTemplate>
-	        </PropertyColumn>
-
-            <PropertyColumn Property="vm => vm.SponsorPhoneNumber" Title="Teléfono" Required="false">
-				<EditTemplate>
-					<MudTextField T="string" @bind-Value="context.Item.SponsorPhoneNumber" Immediate="true"
-								  Label="Teléfono" Variant="Variant.Outlined" Margin="Margin.Dense"
-								  MaxLength="MaxLength.FonbecWebUser.PhoneNumber" />
-				</EditTemplate>
-	        </PropertyColumn>
 
             <PropertyColumn Property="vm => vm.SponsorEmail" Title="Correo electrónico">
                 <CellTemplate>
@@ -111,8 +86,18 @@
                 </CellTemplate>
             </PropertyColumn>
 
+            <PropertyColumn Property="vm => vm.SponsorPhoneNumber" Title="Teléfono" Required="false">
+                <EditTemplate>
+                    <MudTextField T="string" @bind-Value="context.Item.SponsorPhoneNumber" Immediate="true"
+                                  Label="Teléfono" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                  MaxLength="MaxLength.FonbecWebUser.PhoneNumber" />
+                </EditTemplate>
+            </PropertyColumn>
+
             <TemplateColumn Title="Acciones" Filterable="false" Sortable="false">
-                to fill
+                <CellTemplate>
+                    @* TODO *@
+                </CellTemplate>
             </TemplateColumn>
         </Columns>
         <PagerContent>
@@ -120,4 +105,3 @@
         </PagerContent>
     </MudDataGrid>
 }
-
