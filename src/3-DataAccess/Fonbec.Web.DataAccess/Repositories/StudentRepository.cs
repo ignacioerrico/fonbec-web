@@ -8,6 +8,7 @@ namespace Fonbec.Web.DataAccess.Repositories;
 public interface IStudentRepository
 {
     Task<List<AllStudentsDataModel>> GetAllStudentsAsync();
+    Task<List<AllStudentsDataModel>> GetStudentsAsync(StudentsFilterModel filter);
     Task<int> CreateStudentAsync(CreateStudentInputDataModel inputDataModel);
     Task<int> UpdateStudentAsync(UpdateStudentInputDataModel dataModel);
 }
@@ -50,7 +51,57 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
 
         return allStudents;
     }
+    public async Task<List<AllStudentsDataModel>> GetStudentsAsync(StudentsFilterModel filter)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
 
+        var query = db.Students
+            .AsNoTracking()
+            .Include(s => s.Facilitator)
+            .Include(s => s.CreatedBy)
+            .Include(s => s.LastUpdatedBy)
+            .Include(s => s.DisabledBy)
+            .Include(s => s.ReenabledBy)
+            .Where(s => s.IsActive)
+            .AsQueryable();
+
+        if (filter.FacilitatorIds?.Any() == true)
+            query = query.Where(s => filter.FacilitatorIds.Contains(s.FacilitatorId));
+
+        if (!string.IsNullOrWhiteSpace(filter.Search))
+        {
+            var search = filter.Search.ToLower();
+            query = query.Where(s => (s.FirstName + " " + s.LastName).ToLower().Contains(search));
+        }
+
+        var students = await query.ToListAsync();
+
+        if (filter.EducationLevel.HasValue)
+            students = students.Where(s => s.CurrentEducationLevel == filter.EducationLevel.Value).ToList();
+
+        return students.Select(s => new AllStudentsDataModel(s)
+        {
+            StudentId = s.Id,
+            StudentFirstName = s.FirstName ?? string.Empty,
+            StudentLastName = s.LastName ?? string.Empty,
+            StundentNickName = s.NickName,
+            StudentGender = s.Gender,
+            IsStudentActive = s.IsActive,
+
+            FacilitatorId = s.Facilitator?.Id ?? 0,
+            FacilitatorFirstName = s.Facilitator?.FirstName ?? "N/A",
+            FacilitatorLastName = s.Facilitator?.LastName ?? "N/A",
+            FacilitatorEmail = s.Facilitator?.Email ?? string.Empty,
+
+            StudentEmail = s.Email ?? string.Empty,
+            StudentNotes = s.Notes ?? string.Empty,
+            StudentCurrentEducationLevel = s.CurrentEducationLevel,
+
+            StudentSecondarySchoolStartYear = s.SecondarySchoolStartYear,
+            StudentUniversityStartYear = s.UniversityStartYear,
+            StudentPhoneNumber = s.PhoneNumber ?? string.Empty
+        }).ToList();
+    }
     public async Task<int> CreateStudentAsync(CreateStudentInputDataModel inputDataModel)
     {
         await using var db = await dbContext.CreateDbContextAsync();
