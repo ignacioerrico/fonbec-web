@@ -33,8 +33,7 @@ public class SponsorService(ISponsorRepository sponsorRepository) : ISponsorServ
 
     public async Task<List<SelectableModel<int>>> GetAllSponsorsForSelectionAsync()
     {
-        //return await GetAllSponsorsAsync()
-        //    .ContinueWith(s => s.Result.Adapt<List<SelectableModel<int>>>());
-        return null; 
+        return await GetAllSponsorsAsync(null)
+            .ContinueWith(s => s.Result.Adapt(new List<SelectableModel<int>>()));
     }
 }
