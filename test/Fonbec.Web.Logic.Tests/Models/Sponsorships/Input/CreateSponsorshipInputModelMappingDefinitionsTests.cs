@@ -1,11 +1,7 @@
 ﻿using FluentAssertions;
 using Fonbec.Web.DataAccess.DataModels.Sponsorships.Input;
-using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.Logic.Models.Sponsorships.Input;
 using Mapster;
-using System;
-using System.Collections.Generic;
-using System.Text;
 
 namespace Fonbec.Web.Logic.Tests.Models.Sponsorships.Input;
 

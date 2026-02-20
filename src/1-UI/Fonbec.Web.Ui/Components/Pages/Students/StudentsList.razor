@@ -141,16 +141,21 @@
 	        <TemplateColumn Title="Acciones" Filterable="false" Sortable="false">
 	            <CellTemplate>
 		            <AuthorizeView Policy="@nameof(StudentCreate)" Context="innerContext">
-			            <MudTooltip Text="Editar" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
+			            
+						<MudTooltip Text="Editar" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
 				            <MudIconButton OnClick="@context.Actions.StartEditingItemAsync"
 				                           Disabled="@(!context.Item.IsStudentActive)"
 				                           Icon="@Icons.Material.Outlined.Edit" Size="@Size.Small" Color="Color.Primary" />
 			            </MudTooltip>
 
-						<MudIconButton Href="@($"/becarios/{context.Item.StudentId}/padrinos/alta")"
-									   Icon="@Icons.Material.Outlined.People"
-									   Size="@Size.Small"
-									   Color="Color.Default" />
+		
+						<MudTooltip Text="Apadrinar" Arrow="true" Placement="Placement.Bottom"Color="Color.Primary"> 
+							<MudIconButton Href="@NavRoutes.SponsorshipCreate(context.Item.StudentId)"
+										   Icon="@Icons.Material.Outlined.People" 
+										   Size="@Size.Small" 
+										   Color="Color.Default" /> 
+						</MudTooltip>
+
 		            </AuthorizeView>
 	            </CellTemplate>
             </TemplateColumn>

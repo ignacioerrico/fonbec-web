@@ -35,7 +35,7 @@ public partial class SponsorSelector
 
         await OnSponsorsLoaded.InvokeAsync(sponsors.Count);
 
-        if (sponsors.Count > 0)
+        if (sponsors.Count > 0 && SelectedSponsorId == 0)
         {
             SelectedSponsorId = sponsors.First().Key;
             await OnSelectedValueChanged(SelectedSponsorId);
@@ -44,8 +44,8 @@ public partial class SponsorSelector
         await base.OnInitializedAsync();
     }
 
-    private async Task OnSelectedValueChanged(int selectedChapterId)
+    private async Task OnSelectedValueChanged(int selectedSponsorId)
     {
-        await SelectedSponsorIdChanged.InvokeAsync(selectedChapterId);
+        await SelectedSponsorIdChanged.InvokeAsync(selectedSponsorId);
     }
 }

@@ -10,7 +10,7 @@ public record CreateSponsorshipInputModel
 (
     int StudentId,
     int SponsorId,
-    DateTime SponsorshipStartDate,
+    DateTime? SponsorshipStartDate,
     DateTime? SponsorshipEndDate,
     int CreatedById
 );
@@ -22,7 +22,7 @@ public class CreateSponsorshipInputModelMappsingDefinitions : IRegister
         config.NewConfig<CreateSponsorshipInputModel, CreateSponsorshipInputDataModel>()
             .Map(dest => dest.StudentId, src => src.StudentId)
             .Map(dest => dest.SponsorId, src => src.SponsorId)
-            .Map(dest => dest.SponsorshipStartDate, src => src.SponsorshipStartDate)
+            .Map(dest => dest.SponsorshipStartDate, src => src.SponsorshipStartDate ?? DateTime.MinValue)
             .Map(dest => dest.SponsorshipEndDate, src => src.SponsorshipEndDate)
             .Map(dest => dest.CreatedById, src => src.CreatedById);
     }
