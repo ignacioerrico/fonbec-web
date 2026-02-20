@@ -1,10 +1,12 @@
-﻿using Fonbec.Web.DataAccess.DataModels.Users;
+﻿using Fonbec.Web.DataAccess.DataModels;
+using Fonbec.Web.DataAccess.DataModels.Users;
 using Fonbec.Web.DataAccess.Entities.Enums;
+using Fonbec.Web.Logic.ExtensionMethods;
 using Mapster;
 
 namespace Fonbec.Web.Logic.Models.Users;
 
-public class UsersListViewModel
+public class UsersListViewModel : IDetectChanges<UsersListViewModel>
 {
     public int UserId { get; set; }
 
@@ -42,6 +44,15 @@ public class UsersListViewModel
 
     public string? ReenabledByFullName { get; set; }
     public DateTime? ReenabledOnUtc { get; set; }
+
+    public bool IsIdenticalTo(UsersListViewModel other) =>
+        UserFirstName == other.UserFirstName.NormalizeText()
+        && UserLastName == other.UserLastName.NormalizeText()
+        && UserNickName == other.UserNickName.NormalizeText()
+        && UserGender == other.UserGender
+        && UserEmail == other.UserEmail.Trim().ToLower()
+        && UserPhoneNumber == other.UserPhoneNumber.NullOrTrimmed()
+        && UserNotes == other.UserNotes.NullOrTrimmed();
 }
 
 public class UsersListViewModelMappingDefinitions : IRegister
