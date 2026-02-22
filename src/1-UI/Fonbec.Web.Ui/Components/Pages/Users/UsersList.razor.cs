@@ -13,6 +13,8 @@ public partial class UsersList : AuthenticationRequiredComponentBase
 {
     private List<UsersListViewModel> _viewModel = [];
 
+    private UsersListViewModel _originalViewModel = new();
+
     private string _searchString = string.Empty;
 
     private bool _isLastNameFirst;
@@ -47,24 +49,33 @@ public partial class UsersList : AuthenticationRequiredComponentBase
         || viewModel.UserEmail.ContainsIgnoringAccents(_searchString)
         || viewModel.UserPhoneNumber.ContainsIgnoringAccents(_searchString);
 
-    private async Task CommittedItemChangesAsync(UsersListViewModel viewModel)
+    private void StartedEditingItem(UsersListViewModel originalViewModel) =>
+        _originalViewModel = originalViewModel.DeepClone();
+
+    private async Task CommittedItemChangesAsync(UsersListViewModel modifiedViewModel)
     {
+        if (_originalViewModel.IsEqualTo(modifiedViewModel))
+        {
+            Snackbar.Add("No se realizaron cambios.", Severity.Info);
+            return;
+        }
+
         var updateUserInputModel = new UpdateUserInputModel(
-            viewModel.UserId,
-            viewModel.UserFirstName,
-            viewModel.UserLastName,
-            viewModel.UserNickName,
-            viewModel.UserGender,
-            viewModel.UserEmail,
-            viewModel.UserPhoneNumber,
-            viewModel.UserNotes,
+            modifiedViewModel.UserId,
+            modifiedViewModel.UserFirstName,
+            modifiedViewModel.UserLastName,
+            modifiedViewModel.UserNickName,
+            modifiedViewModel.UserGender,
+            modifiedViewModel.UserEmail,
+            modifiedViewModel.UserPhoneNumber,
+            modifiedViewModel.UserNotes,
             FonbecClaim.UserId
         );
 
         Loading = true;
 
         var userUpdatedSuccessfully = await UserService.UpdateUserAsync(updateUserInputModel);
-        
+
         Loading = false;
 
         if (!userUpdatedSuccessfully)

@@ -28,4 +28,26 @@ public class ChaptersListViewModelMappingDefinitionsTests : MappingTestBase
         viewModel.ChapterName.Should().Be("Test Chapter");
         viewModel.IsChapterActive.Should().Be(isChapterActive);
     }
+
+    [Fact]
+    public void IsIdenticalTo_Compares_Name_Notes()
+    {
+        var chaptersListViewModel1 = new ChaptersListViewModel
+        {
+            ChapterId = 314,
+            ChapterName = "Test Chapter",
+            IsChapterActive = true,
+        };
+
+        var chaptersListViewModel2 = new ChaptersListViewModel
+        {
+            ChapterId = 314,
+            ChapterName = "Test Chapter",
+            IsChapterActive = false,
+        };
+
+        var result = chaptersListViewModel1.IsIdenticalTo(chaptersListViewModel2);
+
+        result.Should().BeTrue();
+    }
 }
