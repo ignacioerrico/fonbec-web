@@ -5,19 +5,20 @@
 @using Fonbec.Web.DataAccess.Constants
 @using Fonbec.Web.DataAccess.Entities.Enums
 @using Fonbec.Web.Logic.Models.Users
+@using Fonbec.Web.Ui.Authorization
 
 <PageHeader Title="Usuarios" />
 
 <MudStack StretchItems="StretchItems.Middle" Row>
-    <AuthorizeView Policy="@nameof(UserCreate)">
-        <MudTooltip Text="Alta de usuario"
-                    Arrow="true" Placement="Placement.Right"
-                    Color="Color.Primary">
-            <MudFab Href="@NavRoutes.UserCreate"
-                    StartIcon="@Icons.Material.Filled.Add"
-                    Color="Color.Primary" />
-        </MudTooltip>
-    </AuthorizeView>
+	<AuthorizeView Policy="@nameof(UserCreate)">
+		<MudTooltip Text="Alta de usuario"
+		            Arrow="true" Placement="Placement.Right"
+		            Color="Color.Primary">
+			<MudFab Href="@NavRoutes.UserCreate"
+			        StartIcon="@Icons.Material.Filled.Add"
+			        Color="Color.Primary" />
+		</MudTooltip>
+	</AuthorizeView>
     <MudSpacer />
     <MudSwitch @bind-Value="_isLastNameFirst" LabelPlacement="Placement.Left">
         @(_isLastNameFirst ? "Apellido, Nombre" : "Nombre Apellido")
@@ -39,6 +40,7 @@
                  Filterable="true"
                  FilterMode="DataGridFilterMode.ColumnFilterRow"
                  FilterCaseSensitivity="DataGridFilterCaseSensitivity.CaseInsensitive"
+                 StartedEditingItem="StartedEditingItem"
                  SortMode="SortMode.Multiple"
                  Class="mt-4">
         <ToolBarContent>
@@ -99,40 +101,6 @@
                                   MaxLength="MaxLength.FonbecWebUser.NickName" />
 				</EditTemplate>
             </PropertyColumn>
-            <PropertyColumn Property="vm => vm.UserRole" Title="Rol">
-                <CellTemplate>
-                    <MudChip Variant="Variant.Outlined" Color="MudChipColorForRole(context.Item.UserRole)">
-                             @FonbecRole.Translator[context.Item.UserRole]
-                    </MudChip>
-                </CellTemplate>
-                <EditTemplate>
-                </EditTemplate>
-                <FilterTemplate>
-                    <FilterByList T="UsersListViewModel"
-                                  AllItems="FonbecRole.AllRoles"
-                                  TranslateUsing="@(s => FonbecRole.Translator[s])"
-                                  FilterContext="context"
-                                  FilterBy="@(vm => vm.UserRole)" />
-                </FilterTemplate>
-            </PropertyColumn>
-            <PropertyColumn Property="vm => vm.UserChapterName" Title="Filial"
-                            Hidden="@(FonbecClaim.ChapterId is not null)">
-                <EditTemplate>
-                </EditTemplate>
-                <FilterTemplate>
-                    <FilterByList T="UsersListViewModel"
-                                  AllItems="_allChapters"
-                                  FilterContext="context"
-                                  FilterBy="@(vm => vm.UserChapterName)" />
-                </FilterTemplate>
-            </PropertyColumn>
-            <PropertyColumn Property="vm => vm.UserNickName" Title="Apodo" Hidden="true" Required="false">
-                <EditTemplate>
-                    <MudTextField T="string" @bind-Value="@context.Item.UserNickName" Immediate="true"
-                                  Label="Apodo" Variant="Variant.Outlined" Margin="Margin.Dense"
-                                  MaxLength="MaxLength.FonbecWebUser.NickName" />
-                </EditTemplate>
-            </PropertyColumn>
             <PropertyColumn Property="vm => vm.UserGender" Title="Sexo" Hidden="true">
                 <EditTemplate>
                     <MudSelect T="Gender" @bind-Value="context.Item.UserGender" Class="mt-4"
@@ -164,41 +132,40 @@
             <PropertyColumn Property="vm => vm.UserNotes" Title="Información adicional" Required="false" Hidden="true" />
             <TemplateColumn Title="Acciones" Filterable="false" Sortable="false">
                 <CellTemplate>
-                    <AuthorizeView Policy="@nameof(UserCreate)" Context="innerContext">
-                        <MudTooltip Text="Editar" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
-                            <MudIconButton OnClick="@context.Actions.StartEditingItemAsync"
-                                           Icon="@Icons.Material.Outlined.Edit" Size="@Size.Small" Color="Color.Primary" />
-                            </MudTooltip>
-                    </AuthorizeView>
-                    <AuthorizeView Policy="@nameof(UserPermissions)" Context="innerContext">
-                        <MudTooltip Text="Permisos" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
-                            <MudIconButton Href="@NavRoutes.UsersUserIdPermissions(context.Item.UserId)"
-                                           Icon="@Icons.Material.Outlined.Checklist" Size="@Size.Small" Color="Color.Primary" />
-                        </MudTooltip>
-                    </AuthorizeView>
-                    <AuthorizeView Policy="@nameof(UserCreate)" Context="innerContext">
-                        @if (context.Item.IsUserActive)
-                        {
-                            <MudTooltip Text="Deshabilitar" Arrow="true" Placement="Placement.Bottom" Color="Color.Warning" Delay="500">
-                                <MudIconButton OnClick="@(async _ => await DisableUserAsync(context.Item))"
-                                               Icon="@Icons.Material.Outlined.Delete" Size="@Size.Small" Color="Color.Warning"
-                                               Disabled="@(context.Item.UserId == FonbecClaim.UserId || !context.Item.CanUserBeLockedOut)" />
-                            </MudTooltip>
-                        }
-                        else
-                        {
-                            <MudTooltip Text="Habilitar" Arrow="true" Placement="Placement.Bottom" Color="Color.Success" Delay="500">
-                                <MudIconButton OnClick="@(async _ => await ReenableUserAsync(context.Item))"
-                                               Icon="@Icons.Material.Outlined.RestoreFromTrash" Size="@Size.Small" Color="Color.Success" />
-                            </MudTooltip>
-                        }
-
-                        <MudTooltip Text="Eliminar" Arrow="true" Placement="Placement.Bottom" Color="Color.Error" Delay="500">
-                            <MudIconButton OnClick="@(async _ => await DeleteForeverAsync(context.Item))"
-                                           Icon="@Icons.Material.Outlined.DeleteForever" Size="@Size.Small" Color="Color.Error"
+	                <AuthorizeView Policy="@nameof(UserCreate)" Context="innerContext">
+		                <MudTooltip Text="Editar" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
+			                <MudIconButton OnClick="@context.Actions.StartEditingItemAsync"
+			                               Icon="@Icons.Material.Outlined.Edit" Size="@Size.Small" Color="Color.Primary" />
+		                </MudTooltip>
+	                </AuthorizeView>
+	                <AuthorizeView Policy="@nameof(UserPermissions)" Context="innerContext">
+		                <MudTooltip Text="Permisos" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
+			                <MudIconButton Href="@NavRoutes.UsersUserIdPermissions(context.Item.UserId)"
+			                               Icon="@Icons.Material.Outlined.Checklist" Size="@Size.Small" Color="Color.Primary" />
+		                </MudTooltip>
+	                </AuthorizeView>
+	                <AuthorizeView Policy="@nameof(UserCreate)" Context="innerContext">
+	                    @if (context.Item.IsUserActive)
+	                    {
+	                        <MudTooltip Text="Deshabilitar" Arrow="true" Placement="Placement.Bottom" Color="Color.Warning" Delay="500">
+	                            <MudIconButton OnClick="@(async _ => await DisableUserAsync(context.Item))"
+	                                           Icon="@Icons.Material.Outlined.Delete" Size="@Size.Small" Color="Color.Warning"
+	                                           Disabled="@(context.Item.UserId == FonbecClaim.UserId || !context.Item.CanUserBeLockedOut)" />
+	                        </MudTooltip>
+	                    }
+	                    else
+	                    {
+	                        <MudTooltip Text="Habilitar" Arrow="true" Placement="Placement.Bottom" Color="Color.Success" Delay="500">
+	                            <MudIconButton OnClick="@(async _ => await ReenableUserAsync(context.Item))"
+	                                           Icon="@Icons.Material.Outlined.RestoreFromTrash" Size="@Size.Small" Color="Color.Success" />
+	                        </MudTooltip>
+	                    }
+	                    <MudTooltip Text="Eliminar" Arrow="true" Placement="Placement.Bottom" Color="Color.Error" Delay="500">
+		                    <MudIconButton OnClick="@(async _ => await DeleteForeverAsync(context.Item))"
+		                                   Icon="@Icons.Material.Outlined.DeleteForever" Size="@Size.Small" Color="Color.Error"
                                            Disabled="@(context.Item.UserId == FonbecClaim.UserId || !context.Item.CanUserBeLockedOut)" />
-                        </MudTooltip>
-                    </AuthorizeView>
+	                    </MudTooltip>
+	                </AuthorizeView>
                     <AuthorizeView Policy="@CustomAccess.ResetPassword" Context="innerContext">
                         <MudTooltip Text="Restablecer contraseña" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
                             <MudIconButton OnClick="@(async _ => await ResetPasswordAsync(context.Item))"
