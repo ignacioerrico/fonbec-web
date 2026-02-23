@@ -43,26 +43,26 @@ internal class FonbecUserConfiguration : IEntityTypeConfiguration<FonbecWebUser>
         // Audit Properties
 
         builder.HasOne(u => u.CreatedBy)
-            .WithOne()
-            .HasForeignKey<FonbecWebUser>(u => u.CreatedById)
+            .WithMany()
+            .HasForeignKey(u => u.CreatedById)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.Property(u => u.CreatedOnUtc)
             .HasDefaultValueSql("GETUTCDATE()");
 
         builder.HasOne(u => u.LastUpdatedBy)
-            .WithOne()
-            .HasForeignKey<FonbecWebUser>(u => u.LastUpdatedById)
+            .WithMany()
+            .HasForeignKey(u => u.LastUpdatedById)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(u => u.DisabledBy)
-            .WithOne()
-            .HasForeignKey<FonbecWebUser>(u => u.DisabledById)
+            .WithMany()
+            .HasForeignKey(u => u.DisabledById)
             .OnDelete(DeleteBehavior.Restrict);
 
         builder.HasOne(u => u.ReenabledBy)
-            .WithOne()
-            .HasForeignKey<FonbecWebUser>(u => u.ReenabledById)
+            .WithMany()
+            .HasForeignKey(u => u.ReenabledById)
             .OnDelete(DeleteBehavior.Restrict);
     }
 }
