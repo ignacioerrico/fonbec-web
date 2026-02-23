@@ -1,4 +1,4 @@
-﻿@inherits LayoutComponentBase
+﻿@inherits LayoutComponentBase 
 
 @* Required *@
 <MudThemeProvider />
@@ -14,6 +14,8 @@
     <MudAppBar Elevation="1">
         <MudStaticNavDrawerToggle DrawerId="nav-drawer" Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" />
         <MudText Typo="Typo.h5" Class="ml-3">FONBEC Web</MudText>
+        <MudSpacer />
+        <CurrentChapterName />
         <MudSpacer />
         <LoginDisplay />
     </MudAppBar>
