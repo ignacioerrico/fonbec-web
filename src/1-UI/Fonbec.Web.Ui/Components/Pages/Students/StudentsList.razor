@@ -51,16 +51,16 @@
 			              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"/>
 		</ToolBarContent>
         <Columns>
-	        <PropertyColumn Property="@(vm => _sortByLastName ? vm.StudentLastName : vm.StudentFirstName)" Title="Nombre">
+			<PropertyColumn Property="@(vm => $"{vm.StudentFirstName} {vm.StudentLastName} {vm.StudentNickName} {vm.StudentLastName}")" Title="Nombre">
 		        <CellTemplate>
 			        <AuditableItemDisplay Id="@context.Item.StudentId"
                                           ItemName="@StudentFullName(context.Item)"
 										  Email="@context.Item.StudentEmail"
 			                              IsActive="@context.Item.IsStudentActive"
 			                              AuditableViewModel="@context.Item" />
-					@if (!string.IsNullOrWhiteSpace(context.Item.StundentNickName))
+					@if (!string.IsNullOrWhiteSpace(context.Item.StudentNickName))
 			        {
-						<span>(<em>@context.Item.StundentNickName</em>)</span>
+						<span>(<em>@context.Item.StudentNickName</em>)</span>
 			        }
 		        </CellTemplate>
 		        <EditTemplate>
@@ -74,9 +74,9 @@
 			                      MaxLength="MaxLength.FonbecWebUser.LastName" />
 		        </EditTemplate>
 	        </PropertyColumn>
-	        <PropertyColumn Property="vm => vm.StundentNickName" Title="Apodo" Hidden="true" Required="false">
+	        <PropertyColumn Property="vm => vm.StudentNickName" Title="Apodo" Hidden="true" Required="false">
 		        <EditTemplate>
-			        <MudTextField T="string" @bind-Value="context.Item.StundentNickName" Immediate="true"
+			        <MudTextField T="string" @bind-Value="context.Item.StudentNickName" Immediate="true"
 			                      Label="Apodo" Variant="Variant.Outlined" Margin="Margin.Dense"
 			                      MaxLength="MaxLength.FonbecWebUser.NickName" />
 		        </EditTemplate>

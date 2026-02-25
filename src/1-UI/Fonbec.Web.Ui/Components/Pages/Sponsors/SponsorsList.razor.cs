@@ -36,7 +36,12 @@ public partial class SponsorsList : AuthenticationRequiredComponentBase
     /// <returns>true if the student matches the search string in any of the relevant fields; otherwise, false.</returns>
     private bool Filter(SponsorsListViewModel viewModel) =>
         string.IsNullOrWhiteSpace(_searchString)
-        || $"{viewModel.SponsorFirstName} {viewModel.SponsorLastName}".ContainsIgnoringAccents(_searchString);
+        || $"{viewModel.SponsorFirstName} {viewModel.SponsorLastName}".ContainsIgnoringAccents(_searchString)
+        || (!string.IsNullOrEmpty(viewModel.SponsorNickName)
+            && $"{viewModel.SponsorNickName} {viewModel.SponsorLastName}".ContainsIgnoringAccents(_searchString))
+        || viewModel.SponsorEmail.Contains(_searchString, StringComparison.OrdinalIgnoreCase)
+        || (!string.IsNullOrEmpty(viewModel.SponsorPhoneNumber)
+            && viewModel.SponsorPhoneNumber.ContainsIgnoringSpaces(_searchString));
 
     private string SponsorFullName(SponsorsListViewModel viewModel) =>
     _sortByLastName

@@ -1,4 +1,5 @@
 ﻿using System.Globalization;
+using System.Text.RegularExpressions;
 
 namespace Fonbec.Web.Logic.ExtensionMethods;
 
@@ -13,6 +14,13 @@ public static class StringExtensionMethods
         var index = CultureInfo.InvariantCulture.CompareInfo.IndexOf(source, subString, compareOptions);
 
         return index != -1;
+    }
+
+    public static bool ContainsIgnoringSpaces(this string source, string subString)
+    {
+        var regex = new Regex(@"\s+");
+        return regex.Replace(source, string.Empty)
+            .Contains(regex.Replace(subString, string.Empty), StringComparison.OrdinalIgnoreCase);
     }
 
     /// <summary>

@@ -1,5 +1,4 @@
-﻿using Fonbec.Web.DataAccess.DataModels;
-using Fonbec.Web.DataAccess.DataModels.Students;
+﻿using Fonbec.Web.DataAccess.DataModels.Students;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.Logic.ExtensionMethods;
 using Mapster;
@@ -11,7 +10,7 @@ public class StudentsListViewModel : AuditableViewModel, IDetectChanges<Students
     public int StudentId { get; set; }
     public string StudentFirstName { get; set; } = string.Empty;
     public string StudentLastName { get; set; } = string.Empty;
-    public string StundentNickName { get; set; } = string.Empty;
+    public string StudentNickName { get; set; } = string.Empty;
     public Gender StudentGender { get; set; }
     public bool IsStudentActive { get; set; }
     public int FacilitatorId { get; set; }
@@ -26,7 +25,7 @@ public class StudentsListViewModel : AuditableViewModel, IDetectChanges<Students
     public bool IsIdenticalTo(StudentsListViewModel other) =>
         StudentFirstName == other.StudentFirstName.NormalizeText()
         && StudentLastName == other.StudentLastName.NormalizeText()
-        && StundentNickName == other.StundentNickName.NormalizeText()
+        && StudentNickName == other.StudentNickName.NormalizeText()
         && StudentGender == other.StudentGender
         && FacilitatorId == other.FacilitatorId
         && StudentCurrentEducationLevel == other.StudentCurrentEducationLevel
@@ -43,7 +42,7 @@ public class StudentsListViewModelMappingDefinitions : IRegister
             .Map(dest => dest.StudentId, src => src.StudentId)
             .Map(dest => dest.StudentFirstName, src => src.StudentFirstName)
             .Map(dest => dest.StudentLastName, src => src.StudentLastName)
-            .Map(dest => dest.StundentNickName, src => src.StundentNickName ?? string.Empty)
+            .Map(dest => dest.StudentNickName, src => src.StundentNickName ?? string.Empty)
             .Map(dest => dest.StudentGender, src => src.StudentGender)
             .Map(dest => dest.IsStudentActive, src => src.IsStudentActive)
             .Map(dest => dest.FacilitatorId, src => src.FacilitatorId)

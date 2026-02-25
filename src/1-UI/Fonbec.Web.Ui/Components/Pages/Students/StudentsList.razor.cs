@@ -52,11 +52,13 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
     private bool Filter(StudentsListViewModel viewModel) =>
         string.IsNullOrWhiteSpace(_searchString)
         || $"{viewModel.StudentFirstName} {viewModel.StudentLastName}".ContainsIgnoringAccents(_searchString)
-        || (!string.IsNullOrWhiteSpace(viewModel.StundentNickName)
-            && $"{viewModel.StundentNickName} {viewModel.StudentLastName}".ContainsIgnoringAccents(_searchString))
+        || (!string.IsNullOrEmpty(viewModel.StudentNickName)
+            && $"{viewModel.StudentNickName} {viewModel.StudentLastName}".ContainsIgnoringAccents(_searchString))
         || viewModel.FacilitatorFullName.ContainsIgnoringAccents(_searchString)
-        || (!string.IsNullOrWhiteSpace(viewModel.StudentPhoneNumber)
-            && viewModel.StudentPhoneNumber.ContainsIgnoringAccents(_searchString));
+        || (!string.IsNullOrEmpty(viewModel.StudentEmail)
+            && viewModel.StudentEmail.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+        || (!string.IsNullOrEmpty(viewModel.StudentPhoneNumber)
+            && viewModel.StudentPhoneNumber.ContainsIgnoringSpaces(_searchString));
 
     private void StartedEditingItem(StudentsListViewModel originalViewModel) =>
         _originalViewModel = originalViewModel.DeepClone();
@@ -73,7 +75,7 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
             modifiedViewModel.StudentId,
             modifiedViewModel.StudentFirstName,
             modifiedViewModel.StudentLastName,
-            modifiedViewModel.StundentNickName,
+            modifiedViewModel.StudentNickName,
             modifiedViewModel.StudentEmail,
             modifiedViewModel.StudentPhoneNumber,
             modifiedViewModel.Notes,

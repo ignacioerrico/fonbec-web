@@ -45,9 +45,11 @@ public partial class UsersList : AuthenticationRequiredComponentBase
     private bool Filter(UsersListViewModel viewModel) =>
         string.IsNullOrWhiteSpace(_searchString)
         || $"{viewModel.UserFirstName} {viewModel.UserLastName}".ContainsIgnoringAccents(_searchString)
-        || $"{viewModel.UserNickName} {viewModel.UserLastName}".ContainsIgnoringAccents(_searchString)
-        || viewModel.UserEmail.ContainsIgnoringAccents(_searchString)
-        || viewModel.UserPhoneNumber.ContainsIgnoringAccents(_searchString);
+        || (!string.IsNullOrEmpty(viewModel.UserNickName)
+            && $"{viewModel.UserNickName} {viewModel.UserLastName}".ContainsIgnoringAccents(_searchString))
+        || viewModel.UserEmail.Contains(_searchString, StringComparison.OrdinalIgnoreCase)
+        || (!string.IsNullOrEmpty(viewModel.UserPhoneNumber)
+            && viewModel.UserPhoneNumber.ContainsIgnoringSpaces(_searchString));
 
     private void StartedEditingItem(UsersListViewModel originalViewModel) =>
         _originalViewModel = originalViewModel.DeepClone();

@@ -16,7 +16,12 @@
         <MudText Typo="Typo.h5" Class="ml-3">FONBEC Web</MudText>
         <MudSpacer />
         <AuthorizeView>
-            <MudText Typo="Typo.h6" Class="ml-3">@(context.User.FindFirst(FonbecWebUserCustomClaim.ChapterName)?.Value ?? "GLOBAL")</MudText>
+            @{
+                var chapterName = context.User.FindFirst(FonbecWebUserCustomClaim.ChapterName)?.Value
+                                  ?? "GLOBAL";
+            }
+            <MudIcon Icon="@Icons.Material.Filled.Place" />
+            <MudText Typo="Typo.h6" Class="ml-1">@chapterName</MudText>
         </AuthorizeView>
         <MudSpacer />
         <LoginDisplay />

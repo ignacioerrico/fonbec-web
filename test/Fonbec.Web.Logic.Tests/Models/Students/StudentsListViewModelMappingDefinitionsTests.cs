@@ -37,7 +37,7 @@ public class StudentsListViewModelMappingDefinitionsTests : MappingTestBase
         viewModel.StudentId.Should().Be(10);
         viewModel.StudentFirstName.Should().Be("Jane");
         viewModel.StudentLastName.Should().Be("Smith");
-        viewModel.StundentNickName.Should().Be("JS");
+        viewModel.StudentNickName.Should().Be("JS");
         viewModel.StudentGender.Should().Be(Gender.Female);
         viewModel.IsStudentActive.Should().BeTrue();
         viewModel.FacilitatorId.Should().Be(5);
@@ -65,7 +65,7 @@ public class StudentsListViewModelMappingDefinitionsTests : MappingTestBase
 
         var viewModel = dataModel.Adapt<StudentsListViewModel>(Config);
 
-        viewModel.StundentNickName.Should().BeEmpty();
+        viewModel.StudentNickName.Should().BeEmpty();
         viewModel.FacilitatorEmail.Should().BeEmpty();
         viewModel.StudentEmail.Should().BeEmpty();
         viewModel.Notes.Should().BeEmpty();
@@ -80,7 +80,7 @@ public class StudentsListViewModelMappingDefinitionsTests : MappingTestBase
             StudentId = 314,
             StudentFirstName = "First Name",
             StudentLastName = "Last Name",
-            StundentNickName = "Nick Name",
+            StudentNickName = "Nick Name",
             StudentGender = Gender.Male,
             IsStudentActive = true,
             FacilitatorId = 512,
@@ -97,7 +97,7 @@ public class StudentsListViewModelMappingDefinitionsTests : MappingTestBase
             StudentId = 315,
             StudentFirstName = "First Name",
             StudentLastName = "Last Name",
-            StundentNickName = "Nick Name",
+            StudentNickName = "Nick Name",
             StudentGender = Gender.Male,
             IsStudentActive = false,
             FacilitatorId = 512,
