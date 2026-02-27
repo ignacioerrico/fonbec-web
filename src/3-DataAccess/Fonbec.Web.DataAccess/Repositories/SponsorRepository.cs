@@ -10,6 +10,7 @@ public interface ISponsorRepository
     // falta pasarle filtro chapterId
     Task<List<AllSponsorsDataModel>> GetAllSponsorsAsync(int? chapterId);
     Task<int> CreateSponsorAsync(CreateSponsorInputDataModel dataModel);
+    Task<int> UpdateSponsorAsync(UpdateSponsorInputDataModel dataModel);
 }
 
 public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : ISponsorRepository
@@ -60,6 +61,34 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
         };
 
         db.Sponsors.Add(sponsor);
+        return await db.SaveChangesAsync();
+    }
+
+    public async Task<int> UpdateSponsorAsync(UpdateSponsorInputDataModel dataModel)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var sponsor = await db.Sponsors.FirstAsync(s => s.Id == dataModel.SponsorId);
+
+        if (sponsor.FirstName == dataModel.SponsorFirstName
+            && sponsor.LastName == dataModel.SponsorLastName
+            && sponsor.NickName == dataModel.SponsorNickName
+            && sponsor.Gender == dataModel.SponsorGender
+            && sponsor.PhoneNumber == dataModel.SponsorPhoneNumber
+            && sponsor.Email == dataModel.SponsorEmail)
+        {
+            return 0;
+        }
+
+        sponsor.FirstName = dataModel.SponsorFirstName;
+        sponsor.LastName = dataModel.SponsorLastName;
+        sponsor.NickName = dataModel.SponsorNickName;
+        sponsor.Gender = dataModel.SponsorGender;
+        sponsor.PhoneNumber = dataModel.SponsorPhoneNumber;
+        sponsor.Email = dataModel.SponsorEmail;
+        sponsor.LastUpdatedById = dataModel.UpdatedById;
+        sponsor.LastUpdatedOnUtc = DateTime.UtcNow;
+
         return await db.SaveChangesAsync();
     }
 }

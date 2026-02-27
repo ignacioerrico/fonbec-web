@@ -1,0 +1,44 @@
+﻿@inherits AuthenticationRequiredComponentBase
+@using Fonbec.Web.DataAccess.Constants
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @bind-IsValid="_isValid">
+            <MudTextField T="string" Label="Nombre"
+                          @bind-Value="_model.SponsorFirstName"
+                          Required="true"
+                          RequiredError="Campo obligatorio."
+                          MaxLength="MaxLength.FonbecWebUser.FirstName" />
+
+            <MudTextField T="string" Label="Apellido"
+                          @bind-Value="_model.SponsorLastName"
+                          Required="true"
+                          RequiredError="Campo obligatorio."
+                          MaxLength="MaxLength.FonbecWebUser.LastName" />
+
+            <MudTextField T="string" Label="Apodo"
+                          @bind-Value="_model.SponsorNickName"
+                          MaxLength="MaxLength.FonbecWebUser.NickName" />
+
+            <GenderSelector @bind-SelectedGender="_model.SponsorGender" />
+
+            <MudTextField T="string" Label="Correo electrónico"
+                          @bind-Value="_model.SponsorEmail"
+                          Required="true"
+                          RequiredError="Campo obligatorio."
+                          MaxLength="MaxLength.FonbecWebUser.Email" />
+
+            <MudTextField T="string" Label="Teléfono"
+                          @bind-Value="_model.SponsorPhoneNumber"
+                          MaxLength="MaxLength.FonbecWebUser.PhoneNumber" />
+        </MudForm>
+    </DialogContent>
+
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancelar</MudButton>
+        <MudButton OnClick="Save" Disabled="SaveDisabled"
+                   Color="Color.Primary" Variant="Variant.Filled">
+            Guardar
+        </MudButton>
+    </DialogActions>
+</MudDialog>

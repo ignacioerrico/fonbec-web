@@ -96,7 +96,10 @@
 
             <TemplateColumn Title="Acciones" Filterable="false" Sortable="false">
                 <CellTemplate>
-                    @* TODO *@
+                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
+                                   Color="Color.Primary"
+                                   Size="Size.Small"
+                                   OnClick="@(() => OpenEditDialog(context.Item))" />
                 </CellTemplate>
             </TemplateColumn>
         </Columns>

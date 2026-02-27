@@ -3,6 +3,7 @@ using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models.Sponsors;
 using Fonbec.Web.Logic.Services;
 using Microsoft.AspNetCore.Components;
+using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.Pages.Sponsors;
 
@@ -17,9 +18,11 @@ public partial class SponsorsList : AuthenticationRequiredComponentBase
 
     [Inject]
     public ISponsorService SponsorService { get; set; } = null!;
+    [Inject]
+    public IDialogService DialogService { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
-    { 
+    {
         await base.OnInitializedAsync();
 
         Loading = true;
@@ -28,7 +31,6 @@ public partial class SponsorsList : AuthenticationRequiredComponentBase
 
         Loading = false;
     }
-
     /// <summary>
     /// Called by MudTable to determine if a row should be displayed
     /// </summary>
@@ -47,4 +49,20 @@ public partial class SponsorsList : AuthenticationRequiredComponentBase
     _sortByLastName
         ? $"{viewModel.SponsorLastName}, {viewModel.SponsorFirstName}"
         : $"{viewModel.SponsorFirstName} {viewModel.SponsorLastName}";
+    private async Task OpenEditDialog(SponsorsListViewModel sponsor)
+    {
+        var parameters = new DialogParameters { ["Sponsor"] = sponsor };
+        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small };
+
+        var dialog = DialogService.Show<EditSponsorDialog>("Editar padrino", parameters, options);
+        var result = await dialog.Result;
+
+        if (!result.Canceled)
+        {
+            Loading = true;
+            _viewModels = await SponsorService.GetAllSponsorsAsync(FonbecClaim.ChapterId);
+            Loading = false;
+            StateHasChanged();
+        }
+    }
 }
