@@ -20,6 +20,8 @@ public sealed class FonbecWebDbContext : IdentityDbContext<FonbecWebUser, Fonbec
 
     internal DbSet<Sponsor> Sponsors => Set<Sponsor>();
 
+    internal DbSet<Company> Companies => Set<Company>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         // The keys of Identity tables are mapped in the `OnModelCreating` method of `IdentityDbContext`.

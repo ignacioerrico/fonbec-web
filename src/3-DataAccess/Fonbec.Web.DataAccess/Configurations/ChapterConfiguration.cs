@@ -13,7 +13,7 @@ internal class ChapterConfiguration : AuditableEntityTypeConfiguration<Chapter>
 
         builder.Property(ch => ch.Name)
             .IsRequired()
-            .HasMaxLength(MaxLength.Chapter.Name);
+            .HasMaxLength(MaxLength.Auditable.Name);
 
         base.Configure(builder);
     }

@@ -20,5 +20,9 @@ public static class NavRoutes
 
     public const string SponsorCreate = $"{Sponsors}/alta";
 
+    public const string Companies = "/empresas";
+
+    public const string CompanyCreate = $"{Companies}/alta";
+
     public static string UsersUserIdPermissions(int userId) => $"{Users}/{userId}/permisos";
 }
