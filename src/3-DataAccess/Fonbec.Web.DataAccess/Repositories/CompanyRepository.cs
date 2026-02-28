@@ -34,12 +34,10 @@ public class CompanyRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
     {
         await using var db = await dbContext.CreateDbContextAsync();
 
-        var companyWithSameName = await db.Companies
-            .Where(x => x.Name == companyName)
-            .Select(x => x.Name)
-            .FirstOrDefaultAsync();
+        var nameExists = await db.Companies
+                .AnyAsync(c => c.Name == companyName);
 
-        return companyWithSameName is not null;
+        return nameExists;
     }
 }
 
