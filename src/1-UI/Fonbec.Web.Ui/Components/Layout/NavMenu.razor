@@ -6,6 +6,7 @@
 @using Fonbec.Web.Ui.Components.Pages.Students
 @using Fonbec.Web.Ui.Components.Pages.Users
 @using Fonbec.Web.Ui.Components.Pages.Sponsors
+@using Fonbec.Web.Ui.Components.Pages.Companies
 
 <MudNavMenu>
     <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
@@ -23,6 +24,9 @@
 		    </AuthorizeView>
             <AuthorizeView Policy="@nameof(SponsorsList)">
                 <MudNavLink Href="@NavRoutes.Sponsors" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.SupervisorAccount">Padrinos</MudNavLink>
+            </AuthorizeView>
+            <AuthorizeView Policy="@nameof(CompanyCreate)">
+                <MudNavLink Href="@NavRoutes.CompanyCreate" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Factory">Empresas</MudNavLink>
             </AuthorizeView>
 		    <MudNavLink Href="Account/Manage" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Person">@outerContext.User.Identity?.Name</MudNavLink>
 		    <form action="Account/Logout" method="post">
