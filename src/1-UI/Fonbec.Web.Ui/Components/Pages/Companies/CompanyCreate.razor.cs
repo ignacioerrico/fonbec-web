@@ -35,8 +35,12 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
             _bindModel.CompanyPhoneNumber,
             FonbecClaim.UserId);
 
-        var duplicatedCompany = await CompanyService.CompanyNameExistsAsync(createCompanyInputModel.CompanyName);
-        if (duplicatedCompany == false)
+        var companyNameExists = await CompanyService.CompanyNameExistsAsync(createCompanyInputModel.CompanyName);
+        if (companyNameExists)
+        {
+            Snackbar.Add("Ya existe una empresa con ese nombre.", Severity.Error);
+        }
+        else
         {
             var result = await CompanyService.CreateCompanyAsync(createCompanyInputModel);
             if (!result.AnyAffectedRows)
@@ -47,10 +51,6 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
             _saving = false;
 
             NavigationManager.NavigateTo(NavRoutes.Companies);
-        }
-        else
-        {
-            Snackbar.Add("Ya existe una empresa con ese nombre.", Severity.Error);
         }
         _saving = false;
 
