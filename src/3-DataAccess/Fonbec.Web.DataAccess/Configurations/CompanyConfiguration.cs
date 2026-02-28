@@ -16,13 +16,13 @@ internal class CompanyConfiguration : AuditableEntityTypeConfiguration<Company>
 
         builder.Property(company => company.Name)
             .IsRequired()
-            .HasMaxLength(MaxLength.Auditable.Name);
+            .HasMaxLength(MaxLength.Company.Name);
 
         builder.Property(company => company.Email)
-            .HasMaxLength(MaxLength.FonbecWebUser.Email);
+            .HasMaxLength(MaxLength.Company.Email);
 
         builder.Property(company => company.PhoneNumber)
-            .HasMaxLength(MaxLength.FonbecWebUser.PhoneNumber);
+            .HasMaxLength(MaxLength.Company.PhoneNumber);
 
         base.Configure(builder);
     }

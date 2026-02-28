@@ -20,7 +20,7 @@ public class CreateCompanyInputModelMappingDefinitions : IRegister
     {
         config.NewConfig<CreateCompanyInputModel, CreateCompanyInputDataModel>()
             .Map(dest => dest.CompanyName, src => src.CompanyName.MustBeNonEmpty().NormalizeText())
-            .Map(dest => dest.CompanyEmail, src => src.CompanyEmail.ToLower().NullOrTrimmed())
+            .Map(dest => dest.CompanyEmail, src => src.CompanyEmail.NullOrTrimmed())
             .Map(dest => dest.CompanyPhoneNumber, src => src.CompanyPhoneNumber.NullOrTrimmed())
             .Map(dest => dest.CreatedById, src => src.CreatedById);
     }

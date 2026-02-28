@@ -11,7 +11,7 @@
 <MudForm @bind-IsValid="@_formValidationSucceeded">
 	<MudTextField T="string" Label="Nombre" @ref="_mudTextFieldName" @bind-Value="_bindModel.ChapterName" Immediate="true"
 	              Required="true" RequiredError="Este es un campo obligatorio."
-	              MaxLength="MaxLength.Auditable.Name"
+	              MaxLength="MaxLength.Chapter.Name"
 				  OnKeyDown="OnKeyDownAsync" />
 
 	<MudTextField T="string" Label="Información adicional" @bind-Value="_bindModel.ChapterNotes" Immediate="true"

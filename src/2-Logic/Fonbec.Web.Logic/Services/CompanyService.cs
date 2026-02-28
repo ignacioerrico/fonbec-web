@@ -12,7 +12,7 @@ namespace Fonbec.Web.Logic.Services;
 public interface ICompanyService
 {
     Task<CrudResult> CreateCompanyAsync(CreateCompanyInputModel inputModel);
-    Task<string?> GetCompanyByNameAsync(string companyName);
+    Task<bool> CompanyNameExistsAsync(string companyName);
 }
 
 public class CompanyService(ICompanyRepository companyRepository) : ICompanyService
@@ -24,8 +24,8 @@ public class CompanyService(ICompanyRepository companyRepository) : ICompanyServ
         return new CrudResult(affectedRows);
     }
 
-    public async Task<string?> GetCompanyByNameAsync(string companyName)
+    public async Task<bool> CompanyNameExistsAsync(string companyName)
     {
-        return await companyRepository.GetCompanyByNameAsync(companyName);
+        return await companyRepository.CompanyNameExistsAsync(companyName);
     }
 }

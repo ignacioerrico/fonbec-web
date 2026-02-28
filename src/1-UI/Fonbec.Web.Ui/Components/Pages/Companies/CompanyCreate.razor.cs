@@ -31,12 +31,12 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
 
         var createCompanyInputModel = new CreateCompanyInputModel(
             _bindModel.CompanyName,
-            _bindModel.CompanyPhoneNumber,
             _bindModel.CompanyEmail,
+            _bindModel.CompanyPhoneNumber,
             FonbecClaim.UserId);
 
-        var duplicatedCompany = await CompanyService.GetCompanyByNameAsync(createCompanyInputModel.CompanyName);
-        if (duplicatedCompany == null)
+        var duplicatedCompany = await CompanyService.CompanyNameExistsAsync(createCompanyInputModel.CompanyName);
+        if (duplicatedCompany == false)
         {
             var result = await CompanyService.CreateCompanyAsync(createCompanyInputModel);
             if (!result.AnyAffectedRows)

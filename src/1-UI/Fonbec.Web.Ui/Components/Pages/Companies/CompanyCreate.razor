@@ -11,13 +11,13 @@
 
 	<MudTextField T="string" Label="Nombre" @bind-Value="_bindModel.CompanyName" Immediate="true"
 				  Required="true" RequiredError="Este es un campo obligatorio."
-				  MaxLength="MaxLength.Auditable.Name" />
+				  MaxLength="MaxLength.Company.Name" />
 
 	<MudTextField T="string" Label="Correo electrónico" @bind-Value="_bindModel.CompanyEmail" Immediate="true"
-				  MaxLength="MaxLength.FonbecWebUser.Email" />
+				  MaxLength="MaxLength.Company.Email" />
 
 	<MudTextField T="string" Label="Teléfono" @bind-Value="_bindModel.CompanyPhoneNumber" Immediate="true"
-				  MaxLength="MaxLength.FonbecWebUser.PhoneNumber" />
+				  MaxLength="MaxLength.Company.PhoneNumber" />
 
 </MudForm>
 

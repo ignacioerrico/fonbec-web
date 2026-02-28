@@ -10,7 +10,7 @@ namespace Fonbec.Web.DataAccess.Repositories;
 public interface ICompanyRepository
 {
     Task<int> CreateCompanyAsync(CreateCompanyInputDataModel dataModel);
-    Task<string?> GetCompanyByNameAsync(string companyName);
+    Task<bool> CompanyNameExistsAsync(string companyName);
 }
 public class CompanyRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : ICompanyRepository
 {
@@ -30,14 +30,16 @@ public class CompanyRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
         return await db.SaveChangesAsync();
     }
 
-    public async Task<string?> GetCompanyByNameAsync(string companyName)
+    public async Task<bool> CompanyNameExistsAsync(string companyName)
     {
         await using var db = await dbContext.CreateDbContextAsync();
 
-        return await db.Companies
+        var companyWithSameName = await db.Companies
             .Where(x => x.Name == companyName)
             .Select(x => x.Name)
             .FirstOrDefaultAsync();
+
+        return companyWithSameName is not null;
     }
 }
 
