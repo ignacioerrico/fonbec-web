@@ -1,6 +1,7 @@
 ﻿using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models.Sponsors;
+using Fonbec.Web.Logic.Models.Sponsors.Input;
 using Fonbec.Web.Logic.Services;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
@@ -11,6 +12,7 @@ namespace Fonbec.Web.Ui.Components.Pages.Sponsors;
 public partial class SponsorsList : AuthenticationRequiredComponentBase
 {
     private List<SponsorsListViewModel> _viewModels = [];
+    private SponsorsListViewModel _originalViewModel = new();
 
     private string _searchString = string.Empty;
 
@@ -18,8 +20,6 @@ public partial class SponsorsList : AuthenticationRequiredComponentBase
 
     [Inject]
     public ISponsorService SponsorService { get; set; } = null!;
-    [Inject]
-    public IDialogService DialogService { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
@@ -49,20 +49,43 @@ public partial class SponsorsList : AuthenticationRequiredComponentBase
     _sortByLastName
         ? $"{viewModel.SponsorLastName}, {viewModel.SponsorFirstName}"
         : $"{viewModel.SponsorFirstName} {viewModel.SponsorLastName}";
-    private async Task OpenEditDialog(SponsorsListViewModel sponsor)
+
+    private void StartedEditingItem(SponsorsListViewModel originalViewModel) =>
+       _originalViewModel = originalViewModel.DeepClone();
+    private async Task CommittedItemChangesAsync(SponsorsListViewModel modifiedViewModel)
     {
-        var parameters = new DialogParameters { ["Sponsor"] = sponsor };
-        var options = new DialogOptions { CloseButton = true, MaxWidth = MaxWidth.Small };
-
-        var dialog = DialogService.Show<EditSponsorDialog>("Editar padrino", parameters, options);
-        var result = await dialog.Result;
-
-        if (!result.Canceled)
+        if (_originalViewModel.IsEqualTo(modifiedViewModel))
         {
-            Loading = true;
-            _viewModels = await SponsorService.GetAllSponsorsAsync(FonbecClaim.ChapterId);
-            Loading = false;
-            StateHasChanged();
+            Snackbar.Add("No se realizaron cambios.", Severity.Info);
+            return;
+        }
+
+        var updateSponsorInputModel = new UpdateSponsorInputModel(
+            modifiedViewModel.SponsorId,
+            modifiedViewModel.SponsorFirstName,
+            modifiedViewModel.SponsorLastName,
+            modifiedViewModel.SponsorNickName,
+            modifiedViewModel.SponsorGender,
+            modifiedViewModel.SponsorPhoneNumber,
+            modifiedViewModel.SponsorEmail,
+            FonbecClaim.UserId
+        );
+
+        Loading = true;
+
+        var result = await SponsorService.UpdateSponsorAsync(updateSponsorInputModel);
+
+        Loading = false;
+
+        if (!result.AnyAffectedRows)
+        {
+            Snackbar.Add("No se pudo actualizar el padrino.", Severity.Error);
+        }
+        else
+        {
+            // Update timestamp in UI
+            _viewModels.Single(vm => vm.SponsorId == modifiedViewModel.SponsorId).LastUpdatedOnUtc = DateTime.Now;
+            Snackbar.Add("Padrino actualizado correctamente.", Severity.Success);
         }
     }
 }

@@ -1,23 +1,35 @@
 ﻿using Fonbec.Web.DataAccess.DataModels.Sponsors;
+using Fonbec.Web.DataAccess.Entities.Enums;
+using Fonbec.Web.Logic.ExtensionMethods;
 using Mapster;
 
 namespace Fonbec.Web.Logic.Models.Sponsors;
 
-public class SponsorsListViewModel : AuditableViewModel
+public class SponsorsListViewModel : AuditableViewModel, IDetectChanges<SponsorsListViewModel>
 {
-    public int SponsorId { get; set; } 
+    public int SponsorId { get; set; }
 
     public string SponsorFirstName { get; set; } = string.Empty;
 
     public string SponsorLastName { get; set; } = string.Empty;
 
     public string SponsorNickName { get; set; } = string.Empty;
+    public Gender SponsorGender { get; set; }
 
     public string SponsorPhoneNumber { get; set; } = string.Empty;
 
     public string SponsorEmail { get; set; } = string.Empty;
 
     public bool IsSponsorActive { get; set; }
+    public bool IsIdenticalTo(SponsorsListViewModel other)
+    {
+        return SponsorFirstName == other.SponsorFirstName.NormalizeText()
+               && SponsorLastName == other.SponsorLastName.NormalizeText()
+               && SponsorNickName == other.SponsorNickName.NormalizeText()
+               && SponsorGender == other.SponsorGender
+               && SponsorEmail == other.SponsorEmail.Trim().ToLower()
+               && SponsorPhoneNumber == other.SponsorPhoneNumber.NullOrTrimmed();
+    }
 }
 
 public class SponsorsListViewModelMappingDefinitions : IRegister

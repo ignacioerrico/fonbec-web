@@ -68,27 +68,22 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
     {
         await using var db = await dbContext.CreateDbContextAsync();
 
-        var sponsor = await db.Sponsors.FirstAsync(s => s.Id == dataModel.SponsorId);
+        var sponsorDb = await db.Sponsors.FindAsync(dataModel.SponsorId);
 
-        if (sponsor.FirstName == dataModel.SponsorFirstName
-            && sponsor.LastName == dataModel.SponsorLastName
-            && sponsor.NickName == dataModel.SponsorNickName
-            && sponsor.Gender == dataModel.SponsorGender
-            && sponsor.PhoneNumber == dataModel.SponsorPhoneNumber
-            && sponsor.Email == dataModel.SponsorEmail)
+        if (sponsorDb is not { IsActive: true })
         {
             return 0;
         }
 
-        sponsor.FirstName = dataModel.SponsorFirstName;
-        sponsor.LastName = dataModel.SponsorLastName;
-        sponsor.NickName = dataModel.SponsorNickName;
-        sponsor.Gender = dataModel.SponsorGender;
-        sponsor.PhoneNumber = dataModel.SponsorPhoneNumber;
-        sponsor.Email = dataModel.SponsorEmail;
-        sponsor.LastUpdatedById = dataModel.UpdatedById;
-        sponsor.LastUpdatedOnUtc = DateTime.UtcNow;
+        sponsorDb.FirstName = dataModel.SponsorFirstName;
+        sponsorDb.LastName = dataModel.SponsorLastName;
+        sponsorDb.NickName = dataModel.SponsorNickName;
+        sponsorDb.Gender = dataModel.SponsorGender;
+        sponsorDb.PhoneNumber = dataModel.SponsorPhoneNumber;
+        sponsorDb.Email = dataModel.SponsorEmail;
+        sponsorDb.LastUpdatedById = dataModel.UpdatedById;
 
+        db.Sponsors.Update(sponsorDb);
         return await db.SaveChangesAsync();
     }
 }

@@ -50,11 +50,15 @@
     <MudDataGrid T="SponsorsListViewModel"
                  Items="_viewModels"
                  Dense="true" Hover="true" Striped="true" Bordered="true"
-                 ReadOnly="true"
+                 ReadOnly="false"   
+                 CommittedItemChanges="@(async viewModel => await CommittedItemChangesAsync(viewModel))"  
+                 EditMode="DataGridEditMode.Form" 
+                 EditTrigger="DataGridEditTrigger.Manual" 
                  QuickFilter="Filter"
                  Filterable="true"
                  FilterMode="DataGridFilterMode.ColumnFilterRow"
                  FilterCaseSensitivity="DataGridFilterCaseSensitivity.CaseInsensitive"
+                 StartedEditingItem="StartedEditingItem"
                  SortMode="SortMode.Multiple"
                  Class="mt-4">
         <ToolBarContent>
@@ -64,7 +68,7 @@
                           Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
         </ToolBarContent>
         <Columns>
-            <PropertyColumn Property="@(vm => $"{vm.SponsorFirstName} {vm.SponsorLastName} {vm.SponsorNickName} {vm.SponsorLastName}")" Title="Nombre">
+            <PropertyColumn Property="@(vm => $"{vm.SponsorFirstName} {vm.SponsorLastName}")" Title="Nombre">
                 <CellTemplate>
                     <AuditableItemDisplay Id="@context.Item.SponsorId"
                                           ItemName="@SponsorFullName(context.Item)"
@@ -73,9 +77,36 @@
                                           AuditableViewModel="@context.Item" />
                     @if (!string.IsNullOrWhiteSpace(context.Item.SponsorNickName))
                     {
-                        <span>(<em>@context.Item.SponsorNickName</em>)</span>
+                        <span> (@context.Item.SponsorNickName)</span>  
                     }
                 </CellTemplate>
+                <EditTemplate>
+                    <MudTextField T="string" @bind-Value="@context.Item.SponsorFirstName" Immediate="true"
+                                  Required="true" RequiredError="Campo obligatorio"
+                                  Label="Nombre" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                  MaxLength="MaxLength.FonbecWebUser.FirstName" />
+                    <MudTextField T="string" @bind-Value="@context.Item.SponsorLastName" Immediate="true" Class="mt-4"
+                                  Required="true" RequiredError="Campo obligatorio"
+                                  Label="Apellido" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                  MaxLength="MaxLength.FonbecWebUser.LastName" />
+                </EditTemplate>
+            </PropertyColumn>
+
+            <PropertyColumn Property="vm => vm.SponsorNickName" Title="Apodo" Hidden="true" Required="false">
+                <EditTemplate>
+                    <MudTextField T="string" @bind-Value="context.Item.SponsorNickName" Immediate="true"
+                                  Label="Apodo" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                  MaxLength="MaxLength.FonbecWebUser.NickName" />
+                </EditTemplate>
+            </PropertyColumn>
+            <PropertyColumn Property="vm => vm.SponsorGender" Title="Sexo" Hidden="true">
+                <EditTemplate>
+                    <MudSelect T="Gender" @bind-Value="context.Item.SponsorGender" Class="mt-4"
+                               Label="Sexo" Variant="Variant.Outlined" Margin="@Margin.Dense">
+                        <MudSelectItem Value="Gender.Male">Masculino</MudSelectItem>
+                        <MudSelectItem Value="Gender.Female">Femenino</MudSelectItem>
+                    </MudSelect>
+                </EditTemplate>
             </PropertyColumn>
 
             <PropertyColumn Property="vm => vm.SponsorEmail" Title="Correo electrónico">
@@ -84,9 +115,18 @@
                         @context.Item.SponsorEmail
                     </MudLink>
                 </CellTemplate>
+                <EditTemplate>
+                    <MudTextField T="string" @bind-Value="context.Item.SponsorEmail" Immediate="true"
+                                  Required="true" RequiredError="Campo obligatorio"
+                                  Label="Correo electrónico" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                  MaxLength="MaxLength.FonbecWebUser.Email" />
+                </EditTemplate>
             </PropertyColumn>
 
             <PropertyColumn Property="vm => vm.SponsorPhoneNumber" Title="Teléfono" Required="false">
+                <CellTemplate>
+                    @context.Item.SponsorPhoneNumber
+                </CellTemplate>
                 <EditTemplate>
                     <MudTextField T="string" @bind-Value="context.Item.SponsorPhoneNumber" Immediate="true"
                                   Label="Teléfono" Variant="Variant.Outlined" Margin="Margin.Dense"
@@ -96,10 +136,15 @@
 
             <TemplateColumn Title="Acciones" Filterable="false" Sortable="false">
                 <CellTemplate>
-                    <MudIconButton Icon="@Icons.Material.Filled.Edit"
-                                   Color="Color.Primary"
-                                   Size="Size.Small"
-                                   OnClick="@(() => OpenEditDialog(context.Item))" />
+                    <AuthorizeView Policy="@nameof(SponsorCreate)" Context="innerContext">
+                        <MudTooltip Text="Editar" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
+                            <MudIconButton OnClick="@context.Actions.StartEditingItemAsync" 
+                                           Disabled="@(!context.Item.IsSponsorActive)"
+                                           Icon="@Icons.Material.Outlined.Edit" 
+                                           Size="@Size.Small"
+                                           Color="Color.Primary" />
+                        </MudTooltip>
+                    </AuthorizeView>
                 </CellTemplate>
             </TemplateColumn>
         </Columns>

@@ -2,13 +2,14 @@
 
 namespace Fonbec.Web.DataAccess.DataModels.Sponsors.Input;
 
-public record UpdateSponsorInputDataModel(
-    int SponsorId,
-    string SponsorFirstName,
-    string SponsorLastName,
-    string SponsorNickName,
-    Gender SponsorGender,
-    string SponsorPhoneNumber,
-    string SponsorEmail,
-    int UpdatedById
-);
+public class UpdateSponsorInputDataModel
+{
+    public int SponsorId { get; set; }
+    public string SponsorFirstName { get; set; } = string.Empty;
+    public string SponsorLastName { get; set; } = string.Empty;
+    public string? SponsorNickName { get; set; }
+    public Gender SponsorGender { get; set; }
+    public string? SponsorPhoneNumber { get; set; }
+    public string? SponsorEmail { get; set; }
+    public int UpdatedById { get; set; }
+}
