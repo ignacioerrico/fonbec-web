@@ -1,11 +1,12 @@
 ﻿<LoadingIndicator Loading="!_dataLoaded" LoadingText="Cargando datos" />
 
-<MudSelect Label="Empresa" T="int"
+<MudSelect Label="Empresa" T="int?"
 		   Value="SelectedCompanyId" ValueChanged="OnSelectedValueChanged"
 		   Disabled="!_dataLoaded"
+		   Clearable="true"
 		   Variant="Variant.Filled" AnchorOrigin="Origin.BottomLeft">
 	@foreach (var company in _companies)
 	{
-		<MudSelectItem T="int" Value="@company.Key">@company.DisplayName</MudSelectItem>
+		<MudSelectItem T="int?" Value="@company.Key">@company.DisplayName</MudSelectItem>
 	}
 </MudSelect>

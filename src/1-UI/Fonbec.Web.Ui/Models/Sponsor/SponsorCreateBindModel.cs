@@ -20,5 +20,5 @@ public class SponsorCreateBindModel
 
     public string SponsorEmail { get; set; } = null!;
 
-    public int CompanyId { get; set; }
+    public int? CompanyId { get; set; }
 }

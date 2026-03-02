@@ -14,6 +14,7 @@ public record CreateSponsorInputModel(
     string SponsorPhoneNumber,
     string SponsorNotes,
     string SponsorEmail,
+    int? CompanyId,
     int CreatedById
 );
 
@@ -31,6 +32,8 @@ public class CreateSponsorInputModelMappingDefinitions : IRegister
             .Map(dest => dest.SponsorPhoneNumber, src => src.SponsorPhoneNumber.NullOrTrimmed())
             .Map(dest => dest.SponsorNotes, src => src.SponsorNotes.NullOrTrimmed())
             .Map(dest => dest.SponsorEmail, src => src.SponsorEmail.MustBeNonEmpty().Trim().ToLower())
+            .Map(dest => dest.CompanyId, src => src.CompanyId)
             .Map(dest => dest.CreatedById, src => src.CreatedById);
+
     }
 }

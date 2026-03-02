@@ -11,5 +11,6 @@ public class Company : Auditable
     public string Name { get; set; } = null!;
     public string? Email { get; set; }
     public string? PhoneNumber { get; set; }
+    public List<Sponsor>? Sponsors { get; set; }
 }
 

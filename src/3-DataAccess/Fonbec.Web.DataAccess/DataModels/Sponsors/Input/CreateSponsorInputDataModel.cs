@@ -19,5 +19,6 @@ public class CreateSponsorInputDataModel
     
     public string SponsorEmail { get; set; } = string.Empty;
     
+    public int? CompanyId { get; set; }
     public int CreatedById { get; set; }
 }

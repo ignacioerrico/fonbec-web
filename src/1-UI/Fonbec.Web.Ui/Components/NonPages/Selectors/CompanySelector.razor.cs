@@ -11,13 +11,10 @@ public partial class CompanySelector
     private readonly List<SelectableModel<int>> _companies = [];
 
     [Parameter]
-    public int SelectedCompanyId { get; set; }
+    public int? SelectedCompanyId { get; set; }
 
     [Parameter]
-    public EventCallback<int> SelectedCompanyIdChanged { get; set; }
-
-    [Parameter]
-    public EventCallback<int> OnCompaniesLoaded { get; set; }
+    public EventCallback<int?> SelectedCompanyIdChanged { get; set; }
 
     [Inject]
     public ICompanyService companyService { get; set; } = null!;
@@ -30,8 +27,6 @@ public partial class CompanySelector
 
         _companies.AddRange(companies);
 
-        await OnCompaniesLoaded.InvokeAsync(companies.Count);
-
         if (companies.Count > 0)
         {
             SelectedCompanyId = companies.First().Key;
@@ -41,7 +36,7 @@ public partial class CompanySelector
         await base.OnInitializedAsync();
     }
 
-    private async Task OnSelectedValueChanged(int selectedCompanyId)
+    private async Task OnSelectedValueChanged(int? selectedCompanyId)
     {
         await SelectedCompanyIdChanged.InvokeAsync(selectedCompanyId);
     }

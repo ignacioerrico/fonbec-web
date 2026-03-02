@@ -56,6 +56,7 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             PhoneNumber = dataModel.SponsorPhoneNumber,
             Notes = dataModel.SponsorNotes,
             Email = dataModel.SponsorEmail,
+            CompanyId = dataModel.CompanyId,
             CreatedById = dataModel.CreatedById
         };
 

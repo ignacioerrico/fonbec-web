@@ -42,6 +42,7 @@ public partial class SponsorCreate : AuthenticationRequiredComponentBase
             _bindModel.SponsorPhoneNumber,
             _bindModel.SponsorNotes,
             _bindModel.SponsorEmail,
+            _bindModel.CompanyId,
             FonbecClaim.UserId
         );
 

@@ -20,6 +20,7 @@ public class CreateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorPhoneNumber: "555-1234",
             SponsorNotes: "Some notes",
             SponsorEmail: "jane@x.com",
+            CompanyId: 1,
             CreatedById: 99
         );
 
@@ -34,6 +35,7 @@ public class CreateSponsorInputModelMappingDefinitionsTests : MappingTestBase
         result.SponsorNotes.Should().Be("Some notes");
         result.SponsorEmail.Should().Be("jane@x.com");
         result.CreatedById.Should().Be(99);
+        result.CompanyId.Should().Be(1);
     }
 
     [Fact]
@@ -48,6 +50,7 @@ public class CreateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorPhoneNumber: "555-1234",
             SponsorNotes: "Some notes",
             SponsorEmail: "jane@x.com",
+            CompanyId: 1,
             CreatedById: 99
         );
 
@@ -69,6 +72,7 @@ public class CreateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorPhoneNumber: "555-1234",
             SponsorNotes: "Some notes",
             SponsorEmail: "jane@x.com",
+            CompanyId: 1,
             CreatedById: 99
         );
 
@@ -89,6 +93,7 @@ public class CreateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorPhoneNumber: "555-1234",
             SponsorNotes: "Some notes",
             SponsorEmail: "jane@x.com",
+            CompanyId: 1,
             CreatedById: 99
         );
 
@@ -110,6 +115,7 @@ public class CreateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorPhoneNumber: "555-1234",
             SponsorNotes: "Some notes",
             SponsorEmail: "jane@x.com",
+            CompanyId: 1,
             CreatedById: 99
         );
 
@@ -132,6 +138,7 @@ public class CreateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorPhoneNumber: "555-1234",
             SponsorNotes: "Some notes",
             SponsorEmail: "jane@x.com",
+            CompanyId: 1,
             CreatedById: 99
         );
 
@@ -152,6 +159,7 @@ public class CreateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorPhoneNumber: "555-1234",
             SponsorNotes: "Some notes",
             SponsorEmail: "jane@x.com",
+            CompanyId: 1,
             CreatedById: 99
         );
 
@@ -174,6 +182,7 @@ public class CreateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorPhoneNumber: "555-1234",
             SponsorNotes: "Some notes",
             SponsorEmail: email,
+            CompanyId: 1,
             CreatedById: 99
         );
 
@@ -195,6 +204,7 @@ public class CreateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorPhoneNumber: "555-1234",
             SponsorNotes: "Some notes",
             SponsorEmail: "  jaNE@x.Com   ",
+            CompanyId: 1,
             CreatedById: 99
         );
 
@@ -217,6 +227,7 @@ public class CreateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorPhoneNumber: phone,
             SponsorNotes: "Some notes",
             SponsorEmail: "jane@x.com",
+            CompanyId: 1,
             CreatedById: 99
         );
 
@@ -237,6 +248,7 @@ public class CreateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorPhoneNumber: "  555-1234   ",
             SponsorNotes: "Some notes",
             SponsorEmail: "jane@x.com",
+            CompanyId: 1,
             CreatedById: 99
         );
 
@@ -259,6 +271,7 @@ public class CreateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorPhoneNumber: "555-1234",
             SponsorNotes: notes,
             SponsorEmail: "jane@x.com",
+            CompanyId: 1,
             CreatedById: 99
         );
 
@@ -279,6 +292,7 @@ public class CreateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorPhoneNumber: "555-1234",
             SponsorNotes: "  Some noTEs   ",
             SponsorEmail: "jane@x.com",
+            CompanyId: 1,
             CreatedById: 99
         );
 
