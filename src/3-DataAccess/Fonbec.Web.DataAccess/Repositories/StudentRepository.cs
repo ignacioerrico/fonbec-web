@@ -43,7 +43,6 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
                 StudentSecondarySchoolStartYear = s.SecondarySchoolStartYear,
                 StudentUniversityStartYear = s.UniversityStartYear,
                 StudentPhoneNumber = s.PhoneNumber,
-                // added
                 ChapterId = s.ChapterId
             })
             .OrderBy(s => s.StudentFirstName)

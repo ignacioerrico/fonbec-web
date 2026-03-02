@@ -26,7 +26,6 @@ public partial class SponsorSelector
     [Inject]
     public ISponsorService SponsorService { get; set; } = null!;
 
-    // added (con shared service)
     [Inject]
     public StudentStateServicePayloadModel StudentChapterId { get; set; }    
     protected override async Task OnInitializedAsync() 

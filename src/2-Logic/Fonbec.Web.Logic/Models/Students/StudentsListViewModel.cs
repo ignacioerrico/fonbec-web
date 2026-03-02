@@ -21,8 +21,6 @@ public class StudentsListViewModel : AuditableViewModel
     public DateTime? StudentSecondarySchoolStartYear { get; set; }
     public DateTime? StudentUniversityStartYear { get; set; }
     public string StudentPhoneNumber { get; set; } = string.Empty;
-
-    // added
     public int ChapterId { get; set; }
 }
 
