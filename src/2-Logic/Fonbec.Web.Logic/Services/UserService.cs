@@ -25,6 +25,7 @@ public interface IUserService
     Task<bool> UpdateUserAsync(UpdateUserInputModel model);
     Task<List<string>> DisableUserAsync(DisableUserInputModel model);
     Task<IdentityResult> DeleteForeverAsync(int userId);
+    Task<IdentityResult> ResetPasswordAsync(int userId, string userEmail);
     string? GetFonbecAuthClaim(ClaimsPrincipal principal);
     Task<string> GetFonbecAuthClaim(int userId);
     Task<string> GetUserClaim(int userId, string claimType);
@@ -130,6 +131,28 @@ public class UserService(
     {
         var userIdString = userId.Adapt<string>();
         return await userRepository.DeleteForeverAsync(userIdString);
+    }
+
+    public async Task<IdentityResult> ResetPasswordAsync(int userId, string userEmail)
+    {
+        var generatedPassword = await passwordGenerator.GeneratePassword();
+
+        var resetPasswordInputDataModel = new ResetPasswordInputDataModel
+        { 
+            UserId = userId.Adapt<string>(),
+            NewPassword = generatedPassword,
+        };
+
+        var identityResult = await userRepository.ResetPasswordAsync(resetPasswordInputDataModel);
+        if (identityResult.Succeeded)
+        {
+            // TODO: Use a nice email template
+            await emailMessageSender.SendEmailAsync(userEmail,
+                "FONBEC | Tu nueva contraseña",
+                $"<p>Usuario: {userEmail}</p><p>Contraseña nueva: {generatedPassword}</p>");
+        }
+
+        return identityResult;
     }
 
     public string? GetFonbecAuthClaim(ClaimsPrincipal principal)

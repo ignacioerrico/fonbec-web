@@ -5,6 +5,7 @@
 @using Fonbec.Web.DataAccess.Constants
 @using Fonbec.Web.DataAccess.Entities.Enums
 @using Fonbec.Web.Logic.Models.Users
+@using Fonbec.Web.Ui.Authorization
 
 <PageHeader Title="Usuarios" />
 
@@ -39,6 +40,7 @@
                  Filterable="true"
                  FilterMode="DataGridFilterMode.ColumnFilterRow"
                  FilterCaseSensitivity="DataGridFilterCaseSensitivity.CaseInsensitive"
+                 StartedEditingItem="StartedEditingItem"
                  SortMode="SortMode.Multiple"
                  Class="mt-4">
         <ToolBarContent>
@@ -48,7 +50,7 @@
                           Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
         </ToolBarContent>
         <Columns>
-            <PropertyColumn Property="@(vm => _isLastNameFirst ? vm.UserLastName : vm.UserFirstName)" Title="Nombre">
+            <PropertyColumn Property="@(vm => $"{vm.UserFirstName} {vm.UserLastName} {vm.UserNickName} {vm.UserLastName}")" Title="Nombre">
                 <CellTemplate>
 	                <AuditableUserDisplay UsersListViewModel="context.Item"
 	                                      IsLastNameFirst="_isLastNameFirst"
@@ -164,6 +166,13 @@
                                            Disabled="@(context.Item.UserId == FonbecClaim.UserId || !context.Item.CanUserBeLockedOut)" />
 	                    </MudTooltip>
 	                </AuthorizeView>
+                    <AuthorizeView Policy="@CustomAccess.ResetPassword" Context="innerContext">
+                        <MudTooltip Text="Restablecer contraseña" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
+                            <MudIconButton OnClick="@(async _ => await ResetPasswordAsync(context.Item))"
+                                           Icon="@Icons.Material.Outlined.Password" Size="@Size.Small" Color="Color.Primary"
+                                           Disabled="@(context.Item.UserId == FonbecClaim.UserId)" />
+                        </MudTooltip>
+                    </AuthorizeView>
                 </CellTemplate>
             </TemplateColumn>
         </Columns>

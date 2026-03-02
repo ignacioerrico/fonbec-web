@@ -55,6 +55,7 @@ public static class ConfigureServices
         services.AddScoped<IStudentService, StudentService>();
         services.AddScoped<ISponsorService, SponsorService>();
         services.AddScoped<ISponsorshipService, SponsorshipService>();
+        services.AddScoped<ICompanyService, CompanyService>();
 
         services.AddScoped<IChapterRepository, ChapterRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
@@ -64,6 +65,7 @@ public static class ConfigureServices
 
         // add shared service
         services.AddScoped<StudentStateServicePayloadModel>();
+        services.AddScoped<ICompanyRepository, CompanyRepository>();
     }
 
     public static void RegisterPolicies(IServiceCollection services)

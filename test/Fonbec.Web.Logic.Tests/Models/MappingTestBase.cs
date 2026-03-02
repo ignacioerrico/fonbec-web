@@ -14,7 +14,11 @@ public abstract class MappingTestBase
     protected MappingTestBase()
     {
         // Mapster configuration
-        Config = new TypeAdapterConfig();
+        Config = new TypeAdapterConfig
+        {
+            AllowImplicitSourceInheritance = true,
+            AllowImplicitDestinationInheritance = true,
+        };
         var assembly = System.Reflection.Assembly.Load("Fonbec.Web.Logic");
         
         Config.Scan(assembly);

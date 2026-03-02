@@ -1,8 +1,8 @@
-﻿using Fonbec.Web.Ui.Components;
+﻿using Fonbec.Web.Logic.Authorization;
+using Fonbec.Web.Ui.Components;
 using Fonbec.Web.Ui.Components.Pages;
 using Microsoft.AspNetCore.Components;
 using System.Reflection;
-using Fonbec.Web.Logic.Authorization;
 
 namespace Fonbec.Web.Ui.Authorization;
 
@@ -23,6 +23,7 @@ public static class PageAccessDiscovery
             .OrderBy(pai => pai.Codename)
             .ToList();
 
-        return results;
+        // Concatenate the results with the list of custom accesses
+        return [..results, ..CustomAccess.List];
     }
 }

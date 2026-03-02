@@ -20,4 +20,11 @@ public static class MaxLength
     {
         public const int Name = 30;
     }
+
+    public static class Company
+    {
+        public const int Name = 30;
+        public const int Email = 128;
+        public const int PhoneNumber = 20;
+    }
 }

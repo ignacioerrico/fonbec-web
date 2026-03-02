@@ -27,8 +27,6 @@ public class AllStudentsDataModel(Auditable auditable) : AuditableDataModel(audi
 
     public string? StudentEmail { get; set; }
 
-    public string? StudentNotes { get; set; }
-
     public EducationLevel StudentCurrentEducationLevel { get; set; }
 
     public DateTime? StudentSecondarySchoolStartYear { get; set; }

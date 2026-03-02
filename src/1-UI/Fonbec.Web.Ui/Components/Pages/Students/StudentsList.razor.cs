@@ -16,6 +16,8 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
 {
     private List<StudentsListViewModel> _viewModels = [];
 
+    private StudentsListViewModel _originalViewModel = new();
+
     private IEnumerable<string> _allEducationLevels = [];
 
     private IEnumerable<string> _allFacilitators = [];
@@ -53,35 +55,51 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
     private bool Filter(StudentsListViewModel viewModel) =>
         string.IsNullOrWhiteSpace(_searchString)
         || $"{viewModel.StudentFirstName} {viewModel.StudentLastName}".ContainsIgnoringAccents(_searchString)
-        || (!string.IsNullOrWhiteSpace(viewModel.StundentNickName)
-            && $"{viewModel.StundentNickName} {viewModel.StudentLastName}".ContainsIgnoringAccents(_searchString))
+        || (!string.IsNullOrEmpty(viewModel.StudentNickName)
+            && $"{viewModel.StudentNickName} {viewModel.StudentLastName}".ContainsIgnoringAccents(_searchString))
         || viewModel.FacilitatorFullName.ContainsIgnoringAccents(_searchString)
-        || (!string.IsNullOrWhiteSpace(viewModel.StudentPhoneNumber)
-            && viewModel.StudentPhoneNumber.ContainsIgnoringAccents(_searchString));
+        || (!string.IsNullOrEmpty(viewModel.StudentEmail)
+            && viewModel.StudentEmail.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+        || (!string.IsNullOrEmpty(viewModel.StudentPhoneNumber)
+            && viewModel.StudentPhoneNumber.ContainsIgnoringSpaces(_searchString));
 
-    private async Task CommittedItemChangesAsync(StudentsListViewModel viewModel)
+    private void StartedEditingItem(StudentsListViewModel originalViewModel) =>
+        _originalViewModel = originalViewModel.DeepClone();
+
+    private async Task CommittedItemChangesAsync(StudentsListViewModel modifiedViewModel)
     {
+        if (_originalViewModel.IsEqualTo(modifiedViewModel))
+        {
+            Snackbar.Add("No se realizaron cambios.", Severity.Info);
+            return;
+        }
+
         var updateStudentInputModel = new UpdateStudentInputModel(
-            viewModel.StudentId,
-            viewModel.StudentFirstName,
-            viewModel.StudentLastName,
-            viewModel.StundentNickName,
-            viewModel.StudentEmail,
-            viewModel.StudentPhoneNumber,
-            viewModel.StudentNotes,
-            viewModel.StudentSecondarySchoolStartYear,
-            viewModel.StudentUniversityStartYear,
-            viewModel.FacilitatorId,
+            modifiedViewModel.StudentId,
+            modifiedViewModel.StudentFirstName,
+            modifiedViewModel.StudentLastName,
+            modifiedViewModel.StudentNickName,
+            modifiedViewModel.StudentEmail,
+            modifiedViewModel.StudentPhoneNumber,
+            modifiedViewModel.Notes,
+            modifiedViewModel.StudentSecondarySchoolStartYear,
+            modifiedViewModel.StudentUniversityStartYear,
+            modifiedViewModel.FacilitatorId,
             FonbecClaim.UserId
         );
 
+        Loading = true;
+
         var result = await StudentService.UpdateStudentAsync(updateStudentInputModel);
+        
+        Loading = false;
+
         if (!result.AnyAffectedRows)
         {
             Snackbar.Add("No se pudo actualizar el becario.", Severity.Error);
         }
 
-        _viewModels.Single(vm => vm.StudentId == viewModel.StudentId).LastUpdatedOnUtc = DateTime.Now;
+        _viewModels.Single(vm => vm.StudentId == modifiedViewModel.StudentId).LastUpdatedOnUtc = DateTime.Now;
     }
 
     private string StudentFullName(StudentsListViewModel viewModel) =>

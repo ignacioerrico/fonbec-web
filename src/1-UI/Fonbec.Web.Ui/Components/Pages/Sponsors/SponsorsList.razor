@@ -64,7 +64,7 @@
                           Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
         </ToolBarContent>
         <Columns>
-            <PropertyColumn Property="@(vm => _sortByLastName ? vm.SponsorLastName : vm.SponsorFirstName)" Title="Nombre">
+            <PropertyColumn Property="@(vm => $"{vm.SponsorFirstName} {vm.SponsorLastName} {vm.SponsorNickName} {vm.SponsorLastName}")" Title="Nombre">
                 <CellTemplate>
                     <AuditableItemDisplay Id="@context.Item.SponsorId"
                                           ItemName="@SponsorFullName(context.Item)"
