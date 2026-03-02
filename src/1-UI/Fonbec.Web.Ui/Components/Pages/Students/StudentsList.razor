@@ -1,10 +1,12 @@
 ﻿@attribute [Route(NavRoutes.Students)]
 @attribute [Authorize(Policy = nameof(StudentsList))]
 @inherits AuthenticationRequiredComponentBase
+@inject StudentStateServicePayloadModel StudentChapterId
 
 @using Fonbec.Web.DataAccess.Constants
 @using Fonbec.Web.DataAccess.Entities.Enums
 @using Fonbec.Web.Logic.Models.Students
+@using Fonbec.Web.Ui.Models.Student
 
 <PageHeader Title="Becarios" />
 
@@ -148,12 +150,13 @@
 				                           Icon="@Icons.Material.Outlined.Edit" Size="@Size.Small" Color="Color.Primary" />
 			            </MudTooltip>
 
-		
+						<!--Mostrar a ignacio-->
 						<MudTooltip Text="Apadrinar" Arrow="true" Placement="Placement.Bottom"Color="Color.Primary"> 
 							<MudIconButton Href="@NavRoutes.SponsorshipCreate(context.Item.StudentId)"
 										   Icon="@Icons.Material.Outlined.People" 
 										   Size="@Size.Small" 
-										   Color="Color.Default" /> 
+										   Color="Color.Default"
+										   OnClick="@(() => StudentChapterId.SetChapter(context.Item.ChapterId))"/>
 						</MudTooltip>
 
 		            </AuthorizeView>

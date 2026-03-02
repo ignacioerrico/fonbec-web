@@ -1,9 +1,11 @@
 ﻿using Fonbec.Web.DataAccess.Constants;
+using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models.Students;
 using Fonbec.Web.Logic.Models.Students.Input;
 using Fonbec.Web.Logic.Services;
+using Fonbec.Web.Ui.Constants;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
@@ -15,6 +17,7 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
     private List<StudentsListViewModel> _viewModels = [];
 
     private IEnumerable<string> _allEducationLevels = [];
+
     private IEnumerable<string> _allFacilitators = [];
 
     private string _searchString = string.Empty;

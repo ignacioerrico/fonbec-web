@@ -12,8 +12,8 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Fonbec.Web.DataAccess.Migrations
 {
     [DbContext(typeof(FonbecWebDbContext))]
-    [Migration("20260216221306_addSponsorship")]
-    partial class addSponsorship
+    [Migration("20260301133939_AddSponsorship")]
+    partial class AddSponsorship
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)

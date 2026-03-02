@@ -31,7 +31,8 @@
 				   @bind-Date="_bindModel.SponsorshipStartDate"
 				   Placeholder="Select Date"
 				   Clearable="true"
-				   Required="true"/>
+				   Required="true"
+				   MinDate="@DateTime.Today" />
 
 	<MudCheckBox @bind-Value="_knowEndDate"
 				 Label="Conozco la fecha de fin"
@@ -42,23 +43,21 @@
 				   Disabled="@(!_knowEndDate)"
 				   @bind-Date="_bindModel.SponsorshipEndDate"
 				   Placeholder="Select Date"
-				   Clearable="true"/>
+				   Clearable="true"
+				   MinDate="_bindModel.SponsorshipStartDate" />
 </MudForm>
 
 <MudStack Row="true" Class="pt-4">
-	@if (_knowEndDate &&
-		_bindModel.SponsorshipEndDate.HasValue &&
-		_bindModel.SponsorshipEndDate < _bindModel.SponsorshipStartDate)
-
+	@if (DatesAreInvalid)
 	{
-			<MudAlert 
-				Severity="Severity.Error">
-				La fecha de fin no puede ser menor a la fecha de inicio
-			</MudAlert>
+		<MudAlert Severity="Severity.Error">
+			La fecha de fin no puede ser menor a la fecha de inicio
+		</MudAlert>
 	}
 	
+	<!--Question for Ignacio, validations in UI is enough?-->
 	<MudButton OnClick="Save"
-			   Disabled="SaveButtonDisabled"
+			   Disabled="SaveButtonDisabled || DatesAreInvalid"
 			   Variant="Variant.Filled"
 			   StartIcon="@Icons.Material.Filled.Save"
 			   Color="Color.Primary">

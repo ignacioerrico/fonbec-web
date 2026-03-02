@@ -25,6 +25,13 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
                                        || _saving
                                        || IsFormDisabled
                                        || !_formValidationSucceeded;
+
+    // para que no me deje crear si no se cumple la condicion de la fecha
+    private bool DatesAreInvalid =>
+    _knowEndDate &&
+    _bindModel.SponsorshipEndDate.HasValue &&
+    _bindModel.SponsorshipEndDate < _bindModel.SponsorshipStartDate;
+
     [Parameter]
     public int StudentId { get; set; }
 

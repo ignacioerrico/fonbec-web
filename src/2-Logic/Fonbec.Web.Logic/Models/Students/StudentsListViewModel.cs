@@ -21,6 +21,9 @@ public class StudentsListViewModel : AuditableViewModel
     public DateTime? StudentSecondarySchoolStartYear { get; set; }
     public DateTime? StudentUniversityStartYear { get; set; }
     public string StudentPhoneNumber { get; set; } = string.Empty;
+
+    // added
+    public int ChapterId { get; set; }
 }
 
 public class StudentsListViewModelMappingDefinitions : IRegister
@@ -42,6 +45,7 @@ public class StudentsListViewModelMappingDefinitions : IRegister
             .Map(dest => dest.StudentCurrentEducationLevel, src => src.StudentCurrentEducationLevel.EnumToString())
             .Map(dest => dest.StudentSecondarySchoolStartYear, src => src.StudentSecondarySchoolStartYear)
             .Map(dest => dest.StudentUniversityStartYear, src => src.StudentUniversityStartYear)
-            .Map(dest => dest.StudentPhoneNumber, src => src.StudentPhoneNumber ?? string.Empty);
+            .Map(dest => dest.StudentPhoneNumber, src => src.StudentPhoneNumber ?? string.Empty)
+            .Map(dest => dest.ChapterId, src => src.ChapterId);
     }
 }

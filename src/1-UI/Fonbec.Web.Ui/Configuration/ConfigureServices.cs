@@ -7,6 +7,7 @@ using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Logic.Util;
 using Fonbec.Web.Ui.Account.Communication;
 using Fonbec.Web.Ui.Authorization;
+using Fonbec.Web.Ui.Models.Student;
 using Fonbec.Web.Ui.Options;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -53,11 +54,16 @@ public static class ConfigureServices
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IStudentService, StudentService>();
         services.AddScoped<ISponsorService, SponsorService>();
+        services.AddScoped<ISponsorshipService, SponsorshipService>();
 
         services.AddScoped<IChapterRepository, ChapterRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IStudentRepository, StudentRepository>();
         services.AddScoped<ISponsorRepository, SponsorRepository>();
+        services.AddScoped<ISponsorshipRepository, SponsorshipRepository>();
+
+        // add shared service
+        services.AddScoped<StudentStateServicePayloadModel>();
     }
 
     public static void RegisterPolicies(IServiceCollection services)

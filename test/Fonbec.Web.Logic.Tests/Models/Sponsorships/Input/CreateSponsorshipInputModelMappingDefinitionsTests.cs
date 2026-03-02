@@ -26,5 +26,24 @@ public class CreateSponsorshipInputModelMappingDefinitionsTests : MappingTestBas
         result.SponsorshipEndDate.Should().Be(new DateTime(2020, 1, 1));
         result.CreatedById.Should().Be(99);
     }
+    [Fact]
+    public void Map_All_Fields_Correctly_When_StartDate_Is_Empty()
+    {
+        var input = new CreateSponsorshipInputModel(
+            StudentId: 1,
+            SponsorId: 1,
+            SponsorshipStartDate: null,
+            SponsorshipEndDate: new DateTime(2020, 1, 1),
+            CreatedById: 99
+        );
+
+        var result = input.Adapt<CreateSponsorshipInputDataModel>(Config);
+
+        result.StudentId.Should().Be(1);
+        result.SponsorId.Should().Be(1);
+        result.SponsorshipStartDate.Should().Be(DateTime.MinValue);
+        result.SponsorshipEndDate.Should().Be(new DateTime(2020, 1, 1));
+        result.CreatedById.Should().Be(99);
+    }
 
 }
