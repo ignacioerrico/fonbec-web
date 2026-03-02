@@ -77,7 +77,7 @@
                                           AuditableViewModel="@context.Item" />
                     @if (!string.IsNullOrWhiteSpace(context.Item.SponsorNickName))
                     {
-                        <span> (@context.Item.SponsorNickName)</span>  
+                        <span>(<em>@context.Item.SponsorNickName</em>)</span>
                     }
                 </CellTemplate>
                 <EditTemplate>
