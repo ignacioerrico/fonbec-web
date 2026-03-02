@@ -13,8 +13,6 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
 {
     private readonly CompanyCreateBindModel _bindModel = new();
 
-    private bool _anySponsors;
-
     private bool _formValidationSucceeded;
 
     private bool _saving;

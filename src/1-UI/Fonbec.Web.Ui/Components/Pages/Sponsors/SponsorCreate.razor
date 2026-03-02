@@ -40,6 +40,8 @@
 	<MudTextField T="string" Label="Información adicional" @bind-Value="_bindModel.SponsorNotes" Immediate="true"
 				  MaxLength="MaxLength.Auditable.Notes" />
 
+	<CompanySelector @bind-SelectedCompanyId="_bindModel.CompanyId" />
+
 </MudForm>
 
 <MudStack Row="true" Class="pt-4">

@@ -19,4 +19,6 @@ public class SponsorCreateBindModel
     public string SponsorNotes { get; set; } = null!;
 
     public string SponsorEmail { get; set; } = null!;
+
+    public int CompanyId { get; set; }
 }

@@ -6,7 +6,7 @@ using Fonbec.Web.DataAccess.DataModels.Companies.Input;
 using Fonbec.Web.Logic.Models.Companies.Input;
 using Mapster;
 
-namespace Fonbec.Web.Logic.Tests.Models.Companies;
+namespace Fonbec.Web.Logic.Tests.Models.Companies.Input;
 
 public class CreateCompanyInputModelMappingDefinitionsTests : MappingTestBase
 {
