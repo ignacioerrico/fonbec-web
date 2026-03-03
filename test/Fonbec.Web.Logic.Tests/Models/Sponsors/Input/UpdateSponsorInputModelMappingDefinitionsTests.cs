@@ -160,7 +160,7 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorFirstName: "John",
             SponsorLastName: "Doe",
             SponsorNickName: "Johnny",
-            SponsorGender: Gender.Female,  // Testing Female
+            SponsorGender: Gender.Female,
             SponsorPhoneNumber: "555-1234",
             SponsorEmail: "john@example.com",
             UpdatedById: 2
