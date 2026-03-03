@@ -32,6 +32,7 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
                 SponsorFirstName = s.FirstName,
                 SponsorLastName = s.LastName,
                 SponsorNickName = s.NickName,
+                SponsorGender = s.Gender,
                 SponsorPhoneNumber = s.PhoneNumber,
                 SponsorEmail = s.Email,
                 IsSponsorActive = s.IsActive,
