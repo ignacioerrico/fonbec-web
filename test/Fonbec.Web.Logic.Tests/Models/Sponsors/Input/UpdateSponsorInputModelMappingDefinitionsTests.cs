@@ -171,27 +171,6 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
         result.SponsorGender.Should().Be(Gender.Female);
     }
 
-    [Theory]
-    [InlineData("")]
-    [InlineData("   ")]
-    public void Does_Not_Map_SponsorEmail_When_Null_Or_Whitespace(string email)
-    {
-        var input = new UpdateSponsorInputModel(
-            SponsorId: 1,
-            SponsorFirstName: "John",
-            SponsorLastName: "Doe",
-            SponsorNickName: "Johnny",
-            SponsorGender: Gender.Male,
-            SponsorPhoneNumber: "555-1234",
-            SponsorEmail: email,
-            UpdatedById: 2
-        );
-
-        var result = input.Adapt<UpdateSponsorInputDataModel>(Config);
-
-        result.SponsorEmail.Should().BeNull();
-    }
-
     [Fact]
     public void InputModel_SponsorEmail_IsTrimmedAndLowered()
     {
@@ -214,7 +193,7 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
     [Theory]
     [InlineData("")]
     [InlineData("   ")]
-    public void Does_Not_Map_SponsorPhoneNumber_When_Null_Or_Whitespace(string phone)
+    public void Does_Not_Map_SponsorPhoneNumber_When_Empty_Or_Whitespace(string phone)
     {
         var input = new UpdateSponsorInputModel(
             SponsorId: 1,

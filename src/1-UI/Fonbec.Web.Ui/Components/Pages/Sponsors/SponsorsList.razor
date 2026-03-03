@@ -50,10 +50,10 @@
     <MudDataGrid T="SponsorsListViewModel"
                  Items="_viewModels"
                  Dense="true" Hover="true" Striped="true" Bordered="true"
-                 ReadOnly="false"   
-                 CommittedItemChanges="@(async viewModel => await CommittedItemChangesAsync(viewModel))"  
-                 EditMode="DataGridEditMode.Form" 
-                 EditTrigger="DataGridEditTrigger.Manual" 
+                 ReadOnly="false"
+                 CommittedItemChanges="@(async viewModel => await CommittedItemChangesAsync(viewModel))"
+                 EditMode="DataGridEditMode.Form"
+                 EditTrigger="DataGridEditTrigger.Manual"
                  QuickFilter="Filter"
                  Filterable="true"
                  FilterMode="DataGridFilterMode.ColumnFilterRow"
@@ -99,6 +99,7 @@
                                   MaxLength="MaxLength.FonbecWebUser.NickName" />
                 </EditTemplate>
             </PropertyColumn>
+
             <PropertyColumn Property="vm => vm.SponsorGender" Title="Sexo" Hidden="true">
                 <EditTemplate>
                     <MudSelect T="Gender" @bind-Value="context.Item.SponsorGender" Class="mt-4"
@@ -138,9 +139,9 @@
                 <CellTemplate>
                     <AuthorizeView Policy="@nameof(SponsorCreate)" Context="innerContext">
                         <MudTooltip Text="Editar" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
-                            <MudIconButton OnClick="@context.Actions.StartEditingItemAsync" 
+                            <MudIconButton OnClick="@context.Actions.StartEditingItemAsync"
                                            Disabled="@(!context.Item.IsSponsorActive)"
-                                           Icon="@Icons.Material.Outlined.Edit" 
+                                           Icon="@Icons.Material.Outlined.Edit"
                                            Size="@Size.Small"
                                            Color="Color.Primary" />
                         </MudTooltip>

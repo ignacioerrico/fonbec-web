@@ -31,6 +31,7 @@ public partial class SponsorsList : AuthenticationRequiredComponentBase
 
         Loading = false;
     }
+
     /// <summary>
     /// Called by MudTable to determine if a row should be displayed
     /// </summary>
@@ -52,6 +53,7 @@ public partial class SponsorsList : AuthenticationRequiredComponentBase
 
     private void StartedEditingItem(SponsorsListViewModel originalViewModel) =>
        _originalViewModel = originalViewModel.DeepClone();
+
     private async Task CommittedItemChangesAsync(SponsorsListViewModel modifiedViewModel)
     {
         if (_originalViewModel.IsEqualTo(modifiedViewModel))
@@ -77,15 +79,15 @@ public partial class SponsorsList : AuthenticationRequiredComponentBase
 
         Loading = false;
 
-        if (!result.AnyAffectedRows)
-        {
-            Snackbar.Add("No se pudo actualizar el padrino.", Severity.Error);
-        }
-        else
+        if (result.AnyAffectedRows)
         {
             // Update timestamp in UI
             _viewModels.Single(vm => vm.SponsorId == modifiedViewModel.SponsorId).LastUpdatedOnUtc = DateTime.Now;
             Snackbar.Add("Padrino actualizado correctamente.", Severity.Success);
+        }
+        else
+        {
+            Snackbar.Add("No se pudo actualizar el padrino.", Severity.Error);
         }
     }
 }

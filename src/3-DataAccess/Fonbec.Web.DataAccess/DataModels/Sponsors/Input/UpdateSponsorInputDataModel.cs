@@ -10,6 +10,6 @@ public class UpdateSponsorInputDataModel
     public string? SponsorNickName { get; set; }
     public Gender SponsorGender { get; set; }
     public string? SponsorPhoneNumber { get; set; }
-    public string? SponsorEmail { get; set; }
+    public string SponsorEmail { get; set; } = string.Empty;
     public int UpdatedById { get; set; }
 }

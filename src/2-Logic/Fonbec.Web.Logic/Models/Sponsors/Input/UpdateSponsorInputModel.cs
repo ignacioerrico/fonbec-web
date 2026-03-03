@@ -28,8 +28,7 @@ public class UpdateSponsorInputModelMappingDefinitions : IRegister
                 src => !string.IsNullOrWhiteSpace(src.SponsorNickName))
             .Map(dest => dest.SponsorGender, src => src.SponsorGender)
             .Map(dest => dest.SponsorPhoneNumber, src => src.SponsorPhoneNumber.NullOrTrimmed())
-            .Map(dest => dest.SponsorEmail, src => src.SponsorEmail.Trim().ToLower(),
-                src => !string.IsNullOrWhiteSpace(src.SponsorEmail))
+            .Map(dest => dest.SponsorEmail, src => src.SponsorEmail.Trim().ToLower())
             .Map(dest => dest.UpdatedById, src => src.UpdatedById);
     }
 }

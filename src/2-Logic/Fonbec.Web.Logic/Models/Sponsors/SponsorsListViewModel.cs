@@ -14,6 +14,7 @@ public class SponsorsListViewModel : AuditableViewModel, IDetectChanges<Sponsors
     public string SponsorLastName { get; set; } = string.Empty;
 
     public string SponsorNickName { get; set; } = string.Empty;
+
     public Gender SponsorGender { get; set; }
 
     public string SponsorPhoneNumber { get; set; } = string.Empty;
@@ -21,6 +22,7 @@ public class SponsorsListViewModel : AuditableViewModel, IDetectChanges<Sponsors
     public string SponsorEmail { get; set; } = string.Empty;
 
     public bool IsSponsorActive { get; set; }
+
     public bool IsIdenticalTo(SponsorsListViewModel other)
     {
         return SponsorFirstName == other.SponsorFirstName.NormalizeText()
@@ -41,6 +43,7 @@ public class SponsorsListViewModelMappingDefinitions : IRegister
             .Map(dest => dest.SponsorFirstName, src => src.SponsorFirstName)
             .Map(dest => dest.SponsorLastName, src => src.SponsorLastName)
             .Map(dest => dest.SponsorNickName, src => src.SponsorNickName ?? string.Empty)
+            .Map(dest => dest.SponsorGender, src => src.SponsorGender)
             .Map(dest => dest.SponsorPhoneNumber, src => src.SponsorPhoneNumber ?? string.Empty)
             .Map(dest => dest.SponsorEmail, src => src.SponsorEmail)
             .Map(dest => dest.IsSponsorActive, src => src.IsSponsorActive);
