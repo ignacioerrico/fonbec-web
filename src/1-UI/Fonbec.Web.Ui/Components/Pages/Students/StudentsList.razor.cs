@@ -94,12 +94,16 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
         
         Loading = false;
 
-        if (!result.AnyAffectedRows)
+        if (result.AnyAffectedRows)
+        {
+            // Update timestamp in UI
+            _viewModels.Single(vm => vm.StudentId == modifiedViewModel.StudentId).LastUpdatedOnUtc = DateTime.Now;
+            Snackbar.Add("Padrino actualizado correctamente.", Severity.Success);
+        }
+        else
         {
             Snackbar.Add("No se pudo actualizar el becario.", Severity.Error);
         }
-
-        _viewModels.Single(vm => vm.StudentId == modifiedViewModel.StudentId).LastUpdatedOnUtc = DateTime.Now;
     }
 
     private string StudentFullName(StudentsListViewModel viewModel) =>

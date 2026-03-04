@@ -13,6 +13,7 @@ public interface ISponsorService
     Task<List<SponsorsListViewModel>> GetAllSponsorsAsync(int? chapterId);
     Task<CrudResult> CreateSponsorAsync(CreateSponsorInputModel createSponsorInputModel);
     Task<List<SelectableModel<int>>> GetAllSponsorsForSelectionAsync(int studentChapterId);
+    Task<CrudResult> UpdateSponsorAsync(UpdateSponsorInputModel inputModel);
 }
 
 public class SponsorService(ISponsorRepository sponsorRepository) : ISponsorService
@@ -37,5 +38,12 @@ public class SponsorService(ISponsorRepository sponsorRepository) : ISponsorServ
         return await GetAllSponsorsAsync(studentChapterId)
         .ContinueWith(s => s.Result.Adapt<List<SelectableModel<int>>>());
          
+    }
+}
+    public async Task<CrudResult> UpdateSponsorAsync(UpdateSponsorInputModel inputModel)
+    {
+        var dataModel = inputModel.Adapt<UpdateSponsorInputDataModel>();
+        var affectedRows = await sponsorRepository.UpdateSponsorAsync(dataModel);
+        return new CrudResult(affectedRows);
     }
 }
