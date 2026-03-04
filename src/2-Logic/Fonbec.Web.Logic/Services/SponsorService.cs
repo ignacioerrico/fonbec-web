@@ -34,12 +34,10 @@ public class SponsorService(ISponsorRepository sponsorRepository) : ISponsorServ
 
     public async Task<List<SelectableModel<int>>> GetAllSponsorsForSelectionAsync(int studentChapterId)
     {
-        // modified
         return await GetAllSponsorsAsync(studentChapterId)
         .ContinueWith(s => s.Result.Adapt<List<SelectableModel<int>>>());
          
     }
-}
     public async Task<CrudResult> UpdateSponsorAsync(UpdateSponsorInputModel inputModel)
     {
         var dataModel = inputModel.Adapt<UpdateSponsorInputDataModel>();
