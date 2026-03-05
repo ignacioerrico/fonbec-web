@@ -17,21 +17,15 @@ public partial class CompanySelector
     public EventCallback<int?> SelectedCompanyIdChanged { get; set; }
 
     [Inject]
-    public ICompanyService companyService { get; set; } = null!;
+    private ICompanyService CompanyService { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
-        var companies = await companyService.GetAllCompaniesForSelectionAsync();
-
-        _dataLoaded = true;
+        var companies = await CompanyService.GetAllCompaniesForSelectionAsync();
 
         _companies.AddRange(companies);
 
-        if (companies.Count > 0)
-        {
-            SelectedCompanyId = companies.First().Key;
-            await OnSelectedValueChanged(SelectedCompanyId);
-        }
+        _dataLoaded = true;
 
         await base.OnInitializedAsync();
     }
