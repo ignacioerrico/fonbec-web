@@ -1,10 +1,6 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Fonbec.Web.DataAccess.DataModels.Companies.Input;
+﻿using Fonbec.Web.DataAccess.DataModels.Companies.Input;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Models;
-using Fonbec.Web.Logic.Models.Chapters;
 using Fonbec.Web.Logic.Models.Companies;
 using Fonbec.Web.Logic.Models.Companies.Input;
 using Fonbec.Web.Logic.Models.Results;
@@ -14,27 +10,21 @@ namespace Fonbec.Web.Logic.Services;
 
 public interface ICompanyService
 {
-    Task<CrudResult> CreateCompanyAsync(CreateCompanyInputModel inputModel);
-    Task<bool> CompanyNameExistsAsync(string companyName);
-    Task<List<SelectableModel<int>>> GetAllCompaniesForSelectionAsync();
     Task<List<CompaniesListViewModel>> GetAllCompaniesAsync();
+    Task<List<SelectableModel<int>>> GetAllCompaniesForSelectionAsync();
+    Task<bool> CompanyNameExistsAsync(string companyName);
+    Task<CrudResult> CreateCompanyAsync(CreateCompanyInputModel inputModel);
 }
 
 public class CompanyService(ICompanyRepository companyRepository) : ICompanyService
 {
-    public async Task<CrudResult> CreateCompanyAsync(CreateCompanyInputModel inputModel)
-    {
-        var inputDataModel = inputModel.Adapt<CreateCompanyInputDataModel>();
-        var affectedRows = await companyRepository.CreateCompanyAsync(inputDataModel);
-        return new CrudResult(affectedRows);
-    }
-
     public async Task<List<CompaniesListViewModel>> GetAllCompaniesAsync()
     {
         var allCompaniesDataModel = await companyRepository.GetAllCompaniesAsync();
         var allCompaniesListViewModel = allCompaniesDataModel.Adapt<List<CompaniesListViewModel>>();
         return allCompaniesListViewModel;
     }
+
     public async Task<List<SelectableModel<int>>> GetAllCompaniesForSelectionAsync()
     {
         return await GetAllCompaniesAsync()
@@ -46,4 +36,10 @@ public class CompanyService(ICompanyRepository companyRepository) : ICompanyServ
         return await companyRepository.CompanyNameExistsAsync(companyName);
     }
 
+    public async Task<CrudResult> CreateCompanyAsync(CreateCompanyInputModel inputModel)
+    {
+        var inputDataModel = inputModel.Adapt<CreateCompanyInputDataModel>();
+        var affectedRows = await companyRepository.CreateCompanyAsync(inputDataModel);
+        return new CrudResult(affectedRows);
+    }
 }

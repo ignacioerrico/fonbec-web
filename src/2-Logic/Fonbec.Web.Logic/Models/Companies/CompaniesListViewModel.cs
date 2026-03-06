@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Fonbec.Web.DataAccess.DataModels.Companies;
+﻿using Fonbec.Web.DataAccess.DataModels.Companies;
 using Fonbec.Web.Logic.ExtensionMethods;
 using Mapster;
 
@@ -35,6 +32,3 @@ public class CompanyListViewModelMappingDefinitions : IRegister
             .Map(dest => dest.DisplayName, src => src.CompanyName);
     }
 }
-
-
-

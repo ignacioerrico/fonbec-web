@@ -14,11 +14,11 @@ public class SponsorCreateBindModel
 
     public Gender SponsorGender { get; set; }
 
-    public string SponsorPhoneNumber { get; set; } = null!;
-
-    public string SponsorNotes { get; set; } = null!;
-
     public string SponsorEmail { get; set; } = null!;
 
+    public string SponsorPhoneNumber { get; set; } = null!;
+
     public int? CompanyId { get; set; }
+
+    public string SponsorNotes { get; set; } = null!;
 }

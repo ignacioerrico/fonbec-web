@@ -1,8 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-
-namespace Fonbec.Web.DataAccess.DataModels.Companies;
+﻿namespace Fonbec.Web.DataAccess.DataModels.Companies;
 
 public class AllCompaniesDataModel
 {
@@ -13,6 +9,4 @@ public class AllCompaniesDataModel
     public string? CompanyEmail { get; set; }
 
     public string? CompanyPhoneNumber { get; set; }
-
 }
-

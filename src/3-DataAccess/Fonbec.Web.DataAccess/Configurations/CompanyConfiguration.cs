@@ -1,7 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using Fonbec.Web.DataAccess.Configurations.Abstract;
+﻿using Fonbec.Web.DataAccess.Configurations.Abstract;
 using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.Entities;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
@@ -27,4 +24,3 @@ internal class CompanyConfiguration : AuditableEntityTypeConfiguration<Company>
         base.Configure(builder);
     }
 }
-

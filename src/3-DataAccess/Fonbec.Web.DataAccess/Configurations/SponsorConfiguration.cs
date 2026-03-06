@@ -4,6 +4,7 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Fonbec.Web.DataAccess.Configurations;
+
 internal class SponsorConfiguration : UserWithoutAccountConfiguration<Sponsor>
 {
     public override void Configure(EntityTypeBuilder<Sponsor> builder)

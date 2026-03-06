@@ -11,10 +11,10 @@ public record CreateSponsorInputModel(
     string SponsorLastName,
     string SponsorNickName,
     Gender SponsorGender,
-    string SponsorPhoneNumber,
-    string SponsorNotes,
     string SponsorEmail,
-    int? CompanyId,
+    string SponsorPhoneNumber,
+    int? SponsorCompanyId,
+    string SponsorNotes,
     int CreatedById
 );
 
@@ -29,11 +29,10 @@ public class CreateSponsorInputModelMappingDefinitions : IRegister
             .Map(dest => dest.SponsorNickName, src => src.SponsorNickName.NormalizeText(),
                 srcCond => !string.IsNullOrWhiteSpace(srcCond.SponsorNickName))
             .Map(dest => dest.SponsorGender, src => src.SponsorGender)
-            .Map(dest => dest.SponsorPhoneNumber, src => src.SponsorPhoneNumber.NullOrTrimmed())
-            .Map(dest => dest.SponsorNotes, src => src.SponsorNotes.NullOrTrimmed())
             .Map(dest => dest.SponsorEmail, src => src.SponsorEmail.MustBeNonEmpty().Trim().ToLower())
-            .Map(dest => dest.CompanyId, src => src.CompanyId)
+            .Map(dest => dest.SponsorPhoneNumber, src => src.SponsorPhoneNumber.NullOrTrimmed())
+            .Map(dest => dest.SponsorCompanyId, src => src.SponsorCompanyId)
+            .Map(dest => dest.SponsorNotes, src => src.SponsorNotes.NullOrTrimmed())
             .Map(dest => dest.CreatedById, src => src.CreatedById);
-
     }
 }
