@@ -1,12 +1,16 @@
-﻿<LoadingIndicator Loading="!_dataLoaded" LoadingText="Cargando datos" />
+﻿<LoadingIndicator Loading="!_dataLoaded" />
 
-<MudSelect Label="Mediador" T="int"
-		   Value="SelectedFacilitatorId" ValueChanged="OnSelectedValueChanged"
+<MudSelect T="int" Label="Mediador"
+		   Value="SelectedFacilitatorId"
+		   ValueChanged="OnSelectedValueChanged"
+		   ToStringFunc="MapKeyToDisplayName"
 		   Disabled="!_dataLoaded"
 		   Required="true" RequiredError="Este es un campo obligatorio."
            Variant="Variant.Filled" AnchorOrigin="Origin.BottomLeft">
 	@foreach (var facilitator in _facilitators)
 	{
-		<MudSelectItem T="int" Value="@facilitator.Key">@facilitator.DisplayName</MudSelectItem>
+		<MudSelectItem T="int" Value="facilitator.Key">
+			@facilitator.DisplayName
+		</MudSelectItem>
 	}
 </MudSelect>

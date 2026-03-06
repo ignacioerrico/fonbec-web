@@ -1,5 +1,6 @@
 ﻿using Fonbec.Web.DataAccess.DataModels.Sponsors.Input;
 using Fonbec.Web.DataAccess.Repositories;
+using Fonbec.Web.Logic.Models;
 using Fonbec.Web.Logic.Models.Results;
 using Fonbec.Web.Logic.Models.Sponsors;
 using Fonbec.Web.Logic.Models.Sponsors.Input;
@@ -10,7 +11,9 @@ namespace Fonbec.Web.Logic.Services;
 public interface ISponsorService
 {
     Task<List<SponsorsListViewModel>> GetAllSponsorsAsync(int? chapterId);
+    Task<List<SelectableModel<int>>> GetAllSponsorsForSelectionAsync(int? chapterId);
     Task<CrudResult> CreateSponsorAsync(CreateSponsorInputModel createSponsorInputModel);
+    Task<CrudResult> UpdateSponsorAsync(UpdateSponsorInputModel inputModel);
 }
 
 public class SponsorService(ISponsorRepository sponsorRepository) : ISponsorService
@@ -22,10 +25,23 @@ public class SponsorService(ISponsorRepository sponsorRepository) : ISponsorServ
         return allSponsorsListViewModel;
     }
 
+    public async Task<List<SelectableModel<int>>> GetAllSponsorsForSelectionAsync(int? chapterId)
+    {
+        return await GetAllSponsorsAsync(chapterId)
+            .ContinueWith(s => s.Result.Adapt<List<SelectableModel<int>>>());
+    }
+
     public async Task<CrudResult> CreateSponsorAsync(CreateSponsorInputModel inputModel)
     {
         var inputDataModel = inputModel.Adapt<CreateSponsorInputDataModel>();
         var affectedRows = await sponsorRepository.CreateSponsorAsync(inputDataModel);
+        return new CrudResult(affectedRows);
+    }
+
+    public async Task<CrudResult> UpdateSponsorAsync(UpdateSponsorInputModel inputModel)
+    {
+        var dataModel = inputModel.Adapt<UpdateSponsorInputDataModel>();
+        var affectedRows = await sponsorRepository.UpdateSponsorAsync(dataModel);
         return new CrudResult(affectedRows);
     }
 }
