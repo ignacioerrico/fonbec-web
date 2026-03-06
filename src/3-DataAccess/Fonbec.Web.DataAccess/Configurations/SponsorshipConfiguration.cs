@@ -11,18 +11,19 @@ internal class SponsorshipConfiguration : AuditableEntityTypeConfiguration<Spons
     {
         builder.HasKey(s => s.SponsorshipId);
 
-        // N-M relation
         builder.HasOne(s => s.Student)
             .WithMany(s => s.Sponsorships)
             .HasForeignKey(s => s.StudentId)
             .OnDelete(DeleteBehavior.NoAction);
+
         builder.HasOne(s => s.Sponsor)
             .WithMany(s => s.Sponsorships)
             .HasForeignKey(s => s.SponsorId)
             .OnDelete(DeleteBehavior.NoAction);
 
         builder.Property(s => s.StartDate)
-            .IsRequired(true);
+            .IsRequired();
+
         builder.Property(s => s.EndDate)
             .IsRequired(false);
 

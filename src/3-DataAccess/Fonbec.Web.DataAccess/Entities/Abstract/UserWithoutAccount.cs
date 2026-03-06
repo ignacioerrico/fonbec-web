@@ -22,7 +22,4 @@ public abstract class UserWithoutAccount : Auditable
     public Chapter Chapter { get; set; } = null!;
 
     public string FullName() => $"{FirstName} {LastName}";
-
-    // relation with sponsorship
-    public List<Sponsorship>? Sponsorships { get; set; }
 }

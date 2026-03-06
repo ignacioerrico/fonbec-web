@@ -7,9 +7,15 @@ namespace Fonbec.Web.DataAccess.Repositories;
 
 public interface ISponsorRepository
 {
-    // falta pasarle filtro chapterId
+    /// <summary>
+    /// Get all sponsors that have not been (soft) deleted.
+    /// </summary>
+    /// <param name="chapterId">Use <c>null</c> to get all sponsors for all chapters.</param>
+    /// <returns>A list of <see cref="AllSponsorsDataModel"/></returns>
     Task<List<AllSponsorsDataModel>> GetAllSponsorsAsync(int? chapterId);
+    
     Task<int> CreateSponsorAsync(CreateSponsorInputDataModel dataModel);
+    
     Task<int> UpdateSponsorAsync(UpdateSponsorInputDataModel dataModel);
 }
 

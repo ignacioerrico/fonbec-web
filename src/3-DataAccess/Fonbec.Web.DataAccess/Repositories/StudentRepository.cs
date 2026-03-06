@@ -27,6 +27,7 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             .Where(s => s.IsActive)
             .Select(s => new AllStudentsDataModel(s)
             {
+                ChapterId = s.ChapterId,
                 StudentId = s.Id,
                 StudentFirstName = s.FirstName,
                 StudentLastName = s.LastName,
@@ -43,7 +44,6 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
                 StudentSecondarySchoolStartYear = s.SecondarySchoolStartYear,
                 StudentUniversityStartYear = s.UniversityStartYear,
                 StudentPhoneNumber = s.PhoneNumber,
-                ChapterId = s.ChapterId
             })
             .OrderBy(s => s.StudentFirstName)
             .ThenBy(s => s.StudentLastName)

@@ -1,75 +1,75 @@
 ﻿@page "/becarios/{studentId:int}/padrinos/alta"
-@attribute [Authorize(Policy = nameof(SponsorshipCreate))] 
-@inherits AuthenticationRequiredComponentBase 
+@attribute [Authorize(Policy = nameof(SponsorshipCreate))]
+@inherits AuthenticationRequiredComponentBase
 
 @using Fonbec.Web.DataAccess.Constants
 
-<PageHeader Title="Apadrinar" /> 
+<PageHeader Title="Asignar padrino" />
 
-@if (!_anySponsors) 
+@if (!_anySponsors)
 {
-	<MudAlert Severity="Severity.Error"> No hay Padrinos. Para apadrinar se requiere 
-
-		<MudLink 
-			Href="@NavRoutes.SponsorCreate" 
-			Typo="Typo.body2"> al menos un padrino 
-		</MudLink>. 
-
-	</MudAlert>
+    <MudAlert Severity="Severity.Error">
+        No hay padrinos. Para asignar un padrino se requiere
+        <MudLink Href="@NavRoutes.SponsorCreate"
+                 Typo="Typo.body2">
+            al menos un padrino
+        </MudLink>.
+    </MudAlert>
 }
 
-<LoadingIndicator Loading="Loading" />
+<MudForm @bind-IsValid="_formValidationSucceeded"
+         Disabled="!_anySponsors">
+    <MudItem xs="12" sm="3">
+        <StudentSelector SelectedStudentId="StudentId"
+                         ChapterId="FonbecClaim.ChapterId" />
+        
+        <SponsorSelector @bind-SelectedSponsorId="_bindModel.SelectedSponsorId"
+                         ChapterId="FonbecClaim.ChapterId"
+                         OnSponsorsLoaded="OnSponsorsLoaded" />
 
-<MudForm @bind-IsValid="_formValidationSucceeded" 
-				Disabled="IsFormDisabled">
+        <MudDatePicker Label="Fecha de inicio"
+                       @bind-Date="_bindModel.SponsorshipStartDate"
+                       OpenTo="OpenTo.Month" FixDay="1" DateFormat="\P\r\i\n\c\i\p\i\o\ \d\e\ MMM yyyy"
+                       Required="true"
+                       MaxDate="_isEndDateKnown && _bindModel.SponsorshipEndDate.HasValue ? _bindModel.SponsorshipEndDate.Value : DateTime.MaxValue" />
 
-	<SponsorSelector @bind-SelectedSponsorId="_bindModel.SponsorId" 
-					OnSponsorsLoaded="OnSponsorsLoaded" />
+        <MudCheckBox T="bool"
+                     Value="_isEndDateKnown"
+                     ValueChanged="OnIsEndDateKnownCheckBoxChanged"
+                     Label="Conozco la fecha de fin"
+                     Color="Color.Primary" />
 
-	<MudDatePicker Label="Fecha Inicio"
-				   Editable="true"
-				   @bind-Date="_bindModel.SponsorshipStartDate"
-				   Placeholder="Select Date"
-				   Clearable="true"
-				   Required="true"
-				   MinDate="@DateTime.Today" />
+        <MudDatePicker Label="Fecha de fin"
+                       Date="_bindModel.SponsorshipEndDate"
+                       DateChanged="OnEndDateChanged"
+                       OpenTo="OpenTo.Month" FixDay="1" DateFormat="\F\i\n\ \d\e\ MMM yyyy"
+                       Required="_isEndDateKnown"
+                       Disabled="!_isEndDateKnown"
+                       MinDate="_bindModel.SponsorshipStartDate" />
 
-	<MudCheckBox @bind-Value="_knowEndDate"
-				 Label="Conozco la fecha de fin"
-				 Color="Color.Primary" />
+        <MudTextField T="string" Label="Información adicional"
+                      @bind-Value="_bindModel.SponsorshipNotes"
+                      Immediate="true"
+                      MaxLength="MaxLength.Auditable.Notes" />
 
-	<MudDatePicker Label="Fecha Fin"
-				   Editable="true"
-				   Disabled="@(!_knowEndDate)"
-				   @bind-Date="_bindModel.SponsorshipEndDate"
-				   Placeholder="Select Date"
-				   Clearable="true"
-				   MinDate="_bindModel.SponsorshipStartDate" />
+    </MudItem>
 </MudForm>
 
 <MudStack Row="true" Class="pt-4">
-	@if (DatesAreInvalid)
-	{
-		<MudAlert Severity="Severity.Error">
-			La fecha de fin no puede ser menor a la fecha de inicio
-		</MudAlert>
-	}
-	
-	<!--Question for Ignacio, validations in UI is enough?-->
-	<MudButton OnClick="Save"
-			   Disabled="SaveButtonDisabled || DatesAreInvalid"
-			   Variant="Variant.Filled"
-			   StartIcon="@Icons.Material.Filled.Save"
-			   Color="Color.Primary">
-			   Crear
-	</MudButton>
+    <MudButton OnClick="Save"
+               Disabled="SaveButtonDisabled"
+               Variant="Variant.Filled"
+               StartIcon="@Icons.Material.Filled.Save"
+               Color="Color.Primary">
+        Crear
+    </MudButton>
 
-	<MudButton Href="@NavRoutes.Students"
-			   Variant="Variant.Filled"
-			   Color="Color.Default"
-			   Class="ms-4">
-			   Cancelar
-	</MudButton>
+    <MudButton Href="@NavRoutes.Students"
+               Variant="Variant.Filled"
+               Color="Color.Default"
+               Class="ms-4">
+        Cancelar
+    </MudButton>
 
 </MudStack>
 

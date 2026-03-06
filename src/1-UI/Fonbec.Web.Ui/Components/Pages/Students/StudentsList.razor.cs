@@ -1,11 +1,9 @@
 ﻿using Fonbec.Web.DataAccess.Constants;
-using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models.Students;
 using Fonbec.Web.Logic.Models.Students.Input;
 using Fonbec.Web.Logic.Services;
-using Fonbec.Web.Ui.Constants;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
@@ -91,7 +89,7 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
         Loading = true;
 
         var result = await StudentService.UpdateStudentAsync(updateStudentInputModel);
-        
+
         Loading = false;
 
         if (result.AnyAffectedRows)

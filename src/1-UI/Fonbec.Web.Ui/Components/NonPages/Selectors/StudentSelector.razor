@@ -1,13 +1,13 @@
 ﻿<LoadingIndicator Loading="!_dataLoaded" />
 
-<MudSelect T="int" Label="Padrino"
-           Value="SelectedSponsorId"
+<MudSelect T="int" Label="Becario"
+           Value="SelectedStudentId"
            ValueChanged="OnSelectedValueChanged"
            ToStringFunc="MapKeyToDisplayName"
            Disabled="!_dataLoaded"
            Required="true" RequiredError="Este es un campo obligatorio."
            Variant="Variant.Filled" AnchorOrigin="Origin.BottomLeft">
-    @foreach (var sponsor in _sponsors)
+    @foreach (var sponsor in _students)
     {
         <MudSelectItem T="int" Value="sponsor.Key">
             @sponsor.DisplayName

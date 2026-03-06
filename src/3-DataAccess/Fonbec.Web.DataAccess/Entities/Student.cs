@@ -5,9 +5,9 @@ namespace Fonbec.Web.DataAccess.Entities;
 
 public class Student : UserWithoutAccount
 {
-    public List<Sponsorship> Sponsorships { get; set; }
-
     public string? Email { get; set; }
+
+    public List<Sponsorship> Sponsorships { get; set; } = [];
 
     // | SecondarySchoolStartYear | UniversityStartYear |
     // +--------------------------+---------------------|

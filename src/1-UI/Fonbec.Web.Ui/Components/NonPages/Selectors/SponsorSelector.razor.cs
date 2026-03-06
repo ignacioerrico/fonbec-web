@@ -1,15 +1,17 @@
 ﻿using Fonbec.Web.Logic.Models;
 using Fonbec.Web.Logic.Services;
-using Fonbec.Web.Ui.Models.Student;
 using Microsoft.AspNetCore.Components;
-using Fonbec.Web.Ui.Components.Pages.Sponsors;
+
 namespace Fonbec.Web.Ui.Components.NonPages.Selectors;
 
 public partial class SponsorSelector
 {
+    private readonly List<SelectableModel<int>> _sponsors = [];
+
     private bool _dataLoaded;
 
-    private readonly List<SelectableModel<int>> _sponsors = [];
+    [Parameter]
+    public int? ChapterId { get; set; }
 
     [Parameter]
     public int SelectedSponsorId { get; set; }
@@ -18,7 +20,7 @@ public partial class SponsorSelector
     public EventCallback<int> SelectedSponsorIdChanged { get; set; }
 
     /// <summary>
-    /// Callback invoked when sponsors are loaded. The int parameter indicates the number of chapters loaded.
+    /// Callback invoked when sponsors are loaded. The int parameter indicates the number of sponsors loaded.
     /// </summary>
     [Parameter]
     public EventCallback<int> OnSponsorsLoaded { get; set; }
@@ -26,29 +28,34 @@ public partial class SponsorSelector
     [Inject]
     public ISponsorService SponsorService { get; set; } = null!;
 
-    [Inject]
-    public StudentStateServicePayloadModel StudentChapterId { get; set; }    
-    protected override async Task OnInitializedAsync() 
+    protected override async Task OnInitializedAsync()
     {
-        var sponsors = await SponsorService.GetAllSponsorsForSelectionAsync(StudentChapterId.ChapterId); 
-        
-        _dataLoaded = true; 
-        
-        _sponsors.AddRange(sponsors); 
-        
-        await OnSponsorsLoaded.InvokeAsync(sponsors.Count); 
-        
-        if (sponsors.Count > 0) 
-        {
-            SelectedSponsorId = sponsors.First().Key; 
-            await OnSelectedValueChanged(SelectedSponsorId); 
-        } 
+        _dataLoaded = false;
 
-        await base.OnInitializedAsync(); }
-   
-    private async Task OnSelectedValueChanged(int selectedSponsorId)
-    {
-        await SelectedSponsorIdChanged.InvokeAsync(selectedSponsorId);
+        var sponsors = await SponsorService.GetAllSponsorsForSelectionAsync(ChapterId);
+
+        _dataLoaded = true;
+
+        _sponsors.AddRange(sponsors);
+
+        await OnSponsorsLoaded.InvokeAsync(sponsors.Count);
+
+        if (sponsors.Count > 0)
+        {
+            if (SelectedSponsorId == 0)
+            {
+                SelectedSponsorId = sponsors.First().Key;
+            }
+
+            await OnSelectedValueChanged(SelectedSponsorId);
+        }
+
+        await base.OnInitializedAsync();
     }
-    
+
+    private async Task OnSelectedValueChanged(int selectedSponsorId) =>
+        await SelectedSponsorIdChanged.InvokeAsync(selectedSponsorId);
+
+    private string? MapKeyToDisplayName(int key) =>
+        _sponsors.FirstOrDefault(s => s.Key == key)?.DisplayName;
 }

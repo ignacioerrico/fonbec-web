@@ -11,8 +11,8 @@ namespace Fonbec.Web.Logic.Services;
 public interface ISponsorService
 {
     Task<List<SponsorsListViewModel>> GetAllSponsorsAsync(int? chapterId);
+    Task<List<SelectableModel<int>>> GetAllSponsorsForSelectionAsync(int? chapterId);
     Task<CrudResult> CreateSponsorAsync(CreateSponsorInputModel createSponsorInputModel);
-    Task<List<SelectableModel<int>>> GetAllSponsorsForSelectionAsync(int studentChapterId);
     Task<CrudResult> UpdateSponsorAsync(UpdateSponsorInputModel inputModel);
 }
 
@@ -25,6 +25,12 @@ public class SponsorService(ISponsorRepository sponsorRepository) : ISponsorServ
         return allSponsorsListViewModel;
     }
 
+    public async Task<List<SelectableModel<int>>> GetAllSponsorsForSelectionAsync(int? chapterId)
+    {
+        return await GetAllSponsorsAsync(chapterId)
+            .ContinueWith(s => s.Result.Adapt<List<SelectableModel<int>>>());
+    }
+
     public async Task<CrudResult> CreateSponsorAsync(CreateSponsorInputModel inputModel)
     {
         var inputDataModel = inputModel.Adapt<CreateSponsorInputDataModel>();
@@ -32,12 +38,6 @@ public class SponsorService(ISponsorRepository sponsorRepository) : ISponsorServ
         return new CrudResult(affectedRows);
     }
 
-    public async Task<List<SelectableModel<int>>> GetAllSponsorsForSelectionAsync(int studentChapterId)
-    {
-        return await GetAllSponsorsAsync(studentChapterId)
-        .ContinueWith(s => s.Result.Adapt<List<SelectableModel<int>>>());
-         
-    }
     public async Task<CrudResult> UpdateSponsorAsync(UpdateSponsorInputModel inputModel)
     {
         var dataModel = inputModel.Adapt<UpdateSponsorInputDataModel>();

@@ -5,10 +5,12 @@ namespace Fonbec.Web.DataAccess.DataModels.Students;
 
 public class AllStudentsDataModel(Auditable auditable) : AuditableDataModel(auditable)
 {
+    public int ChapterId { get; set; }
+
     public int StudentId { get; set; }
 
     public string StudentFirstName { get; set; } = null!;
-    
+
     public string StudentLastName { get; set; } = null!;
 
     public string? StundentNickName { get; set; }
@@ -34,5 +36,4 @@ public class AllStudentsDataModel(Auditable auditable) : AuditableDataModel(audi
     public DateTime? StudentUniversityStartYear { get; set; }
 
     public string? StudentPhoneNumber { get; set; }
-    public int ChapterId { get; set; }
 }

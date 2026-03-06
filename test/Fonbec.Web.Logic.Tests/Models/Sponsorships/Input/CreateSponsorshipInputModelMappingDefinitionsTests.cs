@@ -11,39 +11,38 @@ public class CreateSponsorshipInputModelMappingDefinitionsTests : MappingTestBas
     public void Maps_All_Fields_Correctly_When_All_Values_Present()
     {
         var input = new CreateSponsorshipInputModel(
-            StudentId: 1,
-            SponsorId: 1, 
-            SponsorshipStartDate: new DateTime(2020, 1, 1),
-            SponsorshipEndDate: new DateTime(2020, 1, 1),
+            StudentId: 314,
+            SponsorId: 512,
+            SponsorshipStartDate: new DateTime(1996, 6, 19),
+            SponsorshipEndDate: new DateTime(1996, 7, 3),
+            SponsorshipNotes: "A nut for a jar of tuna",
             CreatedById: 99
         );
 
         var result = input.Adapt<CreateSponsorshipInputDataModel>(Config);
 
-        result.StudentId.Should().Be( 1 );
-        result.SponsorId.Should().Be( 1 );
-        result.SponsorshipStartDate.Should().Be(new DateTime(2020, 1, 1));
-        result.SponsorshipEndDate.Should().Be(new DateTime(2020, 1, 1));
+        result.StudentId.Should().Be(314);
+        result.SponsorId.Should().Be(512);
+        result.SponsorshipStartDate.Should().BeSameDateAs(new DateTime(1996, 6, 19));
+        result.SponsorshipEndDate.Should().BeSameDateAs(new DateTime(1996, 7, 3));
+        result.SponsorshipNotes.Should().Be("A nut for a jar of tuna");
         result.CreatedById.Should().Be(99);
     }
+
     [Fact]
-    public void Map_All_Fields_Correctly_When_StartDate_Is_Empty()
+    public void InputModel_SponsorshipNotes_IsTrimmed()
     {
         var input = new CreateSponsorshipInputModel(
-            StudentId: 1,
-            SponsorId: 1,
-            SponsorshipStartDate: null,
-            SponsorshipEndDate: new DateTime(2020, 1, 1),
+            StudentId: 314,
+            SponsorId: 512,
+            SponsorshipStartDate: new DateTime(1996, 6, 19),
+            SponsorshipEndDate: new DateTime(1996, 7, 3),
+            SponsorshipNotes: "   A nut for a jar of tuna    ",
             CreatedById: 99
         );
 
         var result = input.Adapt<CreateSponsorshipInputDataModel>(Config);
 
-        result.StudentId.Should().Be(1);
-        result.SponsorId.Should().Be(1);
-        result.SponsorshipStartDate.Should().Be(DateTime.MinValue);
-        result.SponsorshipEndDate.Should().Be(new DateTime(2020, 1, 1));
-        result.CreatedById.Should().Be(99);
+        result.SponsorshipNotes.Should().Be("A nut for a jar of tuna");
     }
-
 }
