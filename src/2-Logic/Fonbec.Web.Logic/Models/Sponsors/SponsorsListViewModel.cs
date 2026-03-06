@@ -47,5 +47,10 @@ public class SponsorsListViewModelMappingDefinitions : IRegister
             .Map(dest => dest.SponsorPhoneNumber, src => src.SponsorPhoneNumber ?? string.Empty)
             .Map(dest => dest.SponsorEmail, src => src.SponsorEmail)
             .Map(dest => dest.IsSponsorActive, src => src.IsSponsorActive);
+
+        // Mapping required for the SponsorSelector component
+        config.NewConfig<SponsorsListViewModel, SelectableModel<int>>()
+            .Map(dest => dest.Key, src => src.SponsorId)
+            .Map(dest => dest.DisplayName, src => $"{src.SponsorFirstName} {src.SponsorLastName}");
     }
 }

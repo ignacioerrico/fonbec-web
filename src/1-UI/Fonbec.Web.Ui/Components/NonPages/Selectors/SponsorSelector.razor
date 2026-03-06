@@ -1,0 +1,16 @@
+﻿<LoadingIndicator Loading="!_dataLoaded" />
+
+<MudSelect T="int" Label="Padrino"
+           Value="SelectedSponsorId"
+           ValueChanged="OnSelectedValueChanged"
+           ToStringFunc="MapKeyToDisplayName"
+           Disabled="!_dataLoaded"
+           Required="true" RequiredError="Este es un campo obligatorio."
+           Variant="Variant.Filled" AnchorOrigin="Origin.BottomLeft">
+    @foreach (var sponsor in _sponsors)
+    {
+        <MudSelectItem T="int" Value="sponsor.Key">
+            @sponsor.DisplayName
+        </MudSelectItem>
+    }
+</MudSelect>

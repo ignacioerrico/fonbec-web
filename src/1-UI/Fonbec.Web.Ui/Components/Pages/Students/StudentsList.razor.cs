@@ -17,6 +17,7 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
     private StudentsListViewModel _originalViewModel = new();
 
     private IEnumerable<string> _allEducationLevels = [];
+
     private IEnumerable<string> _allFacilitators = [];
 
     private string _searchString = string.Empty;
@@ -88,7 +89,7 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
         Loading = true;
 
         var result = await StudentService.UpdateStudentAsync(updateStudentInputModel);
-        
+
         Loading = false;
 
         if (result.AnyAffectedRows)
