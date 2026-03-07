@@ -1,12 +1,9 @@
-﻿using System;
-using System.Collections.Generic;
-using System.Text;
-using FluentAssertions;
+﻿using FluentAssertions;
 using Fonbec.Web.DataAccess.DataModels.Companies.Input;
 using Fonbec.Web.Logic.Models.Companies.Input;
 using Mapster;
 
-namespace Fonbec.Web.Logic.Tests.Models.Companies;
+namespace Fonbec.Web.Logic.Tests.Models.Companies.Input;
 
 public class CreateCompanyInputModelMappingDefinitionsTests : MappingTestBase
 {

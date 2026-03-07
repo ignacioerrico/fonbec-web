@@ -61,10 +61,11 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             LastName = dataModel.SponsorLastName,
             NickName = dataModel.SponsorNickName,
             Gender = dataModel.SponsorGender,
-            PhoneNumber = dataModel.SponsorPhoneNumber,
-            Notes = dataModel.SponsorNotes,
             Email = dataModel.SponsorEmail,
-            CreatedById = dataModel.CreatedById
+            PhoneNumber = dataModel.SponsorPhoneNumber,
+            CompanyId = dataModel.SponsorCompanyId,
+            Notes = dataModel.SponsorNotes,
+            CreatedById = dataModel.CreatedById,
         };
 
         db.Sponsors.Add(sponsor);
