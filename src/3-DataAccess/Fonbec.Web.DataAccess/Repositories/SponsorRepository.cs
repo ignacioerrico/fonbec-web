@@ -30,6 +30,7 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             .Include(s => s.LastUpdatedBy)
             .Include(s => s.DisabledBy)
             .Include(s => s.ReenabledBy)
+            .Include(s => s.Company)
             .Where(s => !s.IsDeleted
                         && (!chapterId.HasValue || s.ChapterId == chapterId))
             .Select(s => new AllSponsorsDataModel(s)
@@ -42,6 +43,8 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
                 SponsorPhoneNumber = s.PhoneNumber,
                 SponsorEmail = s.Email,
                 IsSponsorActive = s.IsActive,
+                SponsorCompanyName = s.Company == null ? null : s.Company.Name,
+                SponsorCompanyId = s.CompanyId,
             })
             .OrderBy(sdm => sdm.SponsorFirstName)
             .ThenBy(sdm => sdm.SponsorLastName)

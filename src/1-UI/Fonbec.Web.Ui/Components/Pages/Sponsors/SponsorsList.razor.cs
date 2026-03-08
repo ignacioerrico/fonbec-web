@@ -18,6 +18,7 @@ public partial class SponsorsList : AuthenticationRequiredComponentBase
 
     private bool _sortByLastName;
 
+    private IEnumerable<string> _allCompanies = [];
     [Inject]
     public ISponsorService SponsorService { get; set; } = null!;
 
