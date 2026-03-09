@@ -19,6 +19,7 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorGender: Gender.Male,
             SponsorPhoneNumber: "555-1234",
             SponsorEmail: "john@example.com",
+            SponsorCompanyId: 10,
             UpdatedById: 2
         );
 
@@ -31,6 +32,7 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
         result.SponsorGender.Should().Be(Gender.Male);
         result.SponsorPhoneNumber.Should().Be("555-1234");
         result.SponsorEmail.Should().Be("john@example.com");
+        result.SponsorCompanyId.Should().Be(10);
         result.UpdatedById.Should().Be(2);
     }
 
@@ -45,6 +47,7 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorGender: Gender.Male,
             SponsorPhoneNumber: "555-1234",
             SponsorEmail: "john@example.com",
+            SponsorCompanyId: 10,
             UpdatedById: 2
         );
 
@@ -65,6 +68,7 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorGender: Gender.Male,
             SponsorPhoneNumber: "555-1234",
             SponsorEmail: "john@example.com",
+            SponsorCompanyId: 10,
             UpdatedById: 2
         );
 
@@ -84,6 +88,7 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorGender: Gender.Male,
             SponsorPhoneNumber: "555-1234",
             SponsorEmail: "john@example.com",
+            SponsorCompanyId: 10,
             UpdatedById: 2
         );
 
@@ -104,6 +109,7 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorGender: Gender.Male,
             SponsorPhoneNumber: "555-1234",
             SponsorEmail: "john@example.com",
+            SponsorCompanyId: 10,
             UpdatedById: 2
         );
 
@@ -125,6 +131,7 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorGender: Gender.Male,
             SponsorPhoneNumber: "555-1234",
             SponsorEmail: "john@example.com",
+            SponsorCompanyId: 10,
             UpdatedById: 2
         );
 
@@ -144,6 +151,7 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorGender: Gender.Male,
             SponsorPhoneNumber: "555-1234",
             SponsorEmail: "john@example.com",
+            SponsorCompanyId: 10,
             UpdatedById: 2
         );
 
@@ -163,6 +171,7 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorGender: Gender.Female,
             SponsorPhoneNumber: "555-1234",
             SponsorEmail: "john@example.com",
+            SponsorCompanyId: 10,
             UpdatedById: 2
         );
 
@@ -182,6 +191,7 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorGender: Gender.Male,
             SponsorPhoneNumber: "555-1234",
             SponsorEmail: "  JOHn@Example.Com   ",
+            SponsorCompanyId: 10,
             UpdatedById: 2
         );
 
@@ -203,6 +213,7 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorGender: Gender.Male,
             SponsorPhoneNumber: phone,
             SponsorEmail: "john@example.com",
+            SponsorCompanyId: 10,
             UpdatedById: 2
         );
 
@@ -222,6 +233,7 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorGender: Gender.Male,
             SponsorPhoneNumber: "  555-1234   ",
             SponsorEmail: "john@example.com",
+            SponsorCompanyId: 10,
             UpdatedById: 2
         );
 
@@ -241,11 +253,32 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorGender: Gender.Male,
             SponsorPhoneNumber: "555-1234",
             SponsorEmail: "john@example.com",
+            SponsorCompanyId: 10,
             UpdatedById: 99
         );
 
         var result = input.Adapt<UpdateSponsorInputDataModel>(Config);
 
         result.UpdatedById.Should().Be(99);
+    }
+
+    [Fact]
+    public void InputModel_CompanyId_IsMappedToNull_WhenNull()
+    {
+        var input = new UpdateSponsorInputModel(
+            SponsorId: 1,
+            SponsorFirstName: "John",
+            SponsorLastName: "Doe",
+            SponsorNickName: "Johnny",
+            SponsorGender: Gender.Male,
+            SponsorPhoneNumber: "555-1234",
+            SponsorEmail: "john@example.com",
+            SponsorCompanyId: null,
+            UpdatedById: 99
+        );
+
+        var result = input.Adapt<UpdateSponsorInputDataModel>(Config);
+
+        result.SponsorCompanyId.Should().BeNull();
     }
 }

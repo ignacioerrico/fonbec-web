@@ -14,6 +14,8 @@ public partial class SponsorsList : AuthenticationRequiredComponentBase
     private List<SponsorsListViewModel> _viewModels = [];
     private SponsorsListViewModel _originalViewModel = new();
 
+    private IEnumerable<string> _allCompanyNames = [];
+
     private string _searchString = string.Empty;
 
     private bool _sortByLastName;
@@ -30,6 +32,11 @@ public partial class SponsorsList : AuthenticationRequiredComponentBase
         _viewModels = await SponsorService.GetAllSponsorsAsync(FonbecClaim.ChapterId);
 
         Loading = false;
+
+        _allCompanyNames = _viewModels
+            .Select(vm => vm.SponsorCompanyName)
+            .Distinct()
+            .OrderBy(name => name);
     }
 
     /// <summary>
@@ -70,6 +77,7 @@ public partial class SponsorsList : AuthenticationRequiredComponentBase
             modifiedViewModel.SponsorGender,
             modifiedViewModel.SponsorPhoneNumber,
             modifiedViewModel.SponsorEmail,
+            modifiedViewModel.SponsorCompanyId,
             FonbecClaim.UserId
         );
 
