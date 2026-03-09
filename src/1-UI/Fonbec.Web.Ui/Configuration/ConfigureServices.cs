@@ -53,23 +53,17 @@ public static class ConfigureServices
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IStudentService, StudentService>();
         services.AddScoped<ISponsorService, SponsorService>();
-<<<<<<< HEAD
         services.AddScoped<IPlannedDeliveryService, PlannedDeliveyService>();
-=======
         services.AddScoped<ISponsorshipService, SponsorshipService>();
         services.AddScoped<ICompanyService, CompanyService>();
->>>>>>> 9fddc86275d8b28e60466369b1eac3118f8bf6a1
-
         services.AddScoped<IChapterRepository, ChapterRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
         services.AddScoped<IStudentRepository, StudentRepository>();
         services.AddScoped<ISponsorRepository, SponsorRepository>();
-<<<<<<< HEAD
         services.AddScoped<IPlannedDeliveryRepository, PlannedDeliveryRepository>();
-=======
         services.AddScoped<ISponsorshipRepository, SponsorshipRepository>();
         services.AddScoped<ICompanyRepository, CompanyRepository>();
->>>>>>> 9fddc86275d8b28e60466369b1eac3118f8bf6a1
+
     }
 
     public static void RegisterPolicies(IServiceCollection services)
