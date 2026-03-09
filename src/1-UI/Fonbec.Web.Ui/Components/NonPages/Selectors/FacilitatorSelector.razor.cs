@@ -1,4 +1,5 @@
 ﻿using Fonbec.Web.DataAccess.Constants;
+using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.Logic.Models;
 using Fonbec.Web.Logic.Services;
 using Microsoft.AspNetCore.Components;
@@ -7,9 +8,9 @@ namespace Fonbec.Web.Ui.Components.NonPages.Selectors;
 
 public partial class FacilitatorSelector
 {
-    private bool _dataLoaded;
-
     private readonly List<SelectableModel<int>> _facilitators = [];
+
+    private bool _dataLoaded;
 
     [Parameter]
     public int SelectedFacilitatorId { get; set; }
@@ -28,8 +29,8 @@ public partial class FacilitatorSelector
 
     protected override async Task OnInitializedAsync()
     {
-        await base.OnInitializedAsync();
-        
+        _dataLoaded = false;
+
         var facilitators = await UserService.GetAllUsersInRoleForSelectionAsync(FonbecRole.Uploader);
 
         _dataLoaded = true;
@@ -37,21 +38,23 @@ public partial class FacilitatorSelector
         _facilitators.AddRange(facilitators);
 
         await OnFacilitatorsLoaded.InvokeAsync(facilitators.Count);
-    }
 
-    protected override async Task OnParametersSetAsync()
-    {
-        await base.OnParametersSetAsync();
-
-        if (SelectedFacilitatorId == 0 && _facilitators.Count > 0)
+        if (facilitators.Count > 0)
         {
-            SelectedFacilitatorId = _facilitators.First().Key;
+            if (SelectedFacilitatorId == 0)
+            {
+                SelectedFacilitatorId = facilitators.First().Key;
+            }
+
             await OnSelectedValueChanged(SelectedFacilitatorId);
         }
+
+        await base.OnInitializedAsync();
     }
 
-    private async Task OnSelectedValueChanged(int selectedFacilitatorId)
-    {
+    private async Task OnSelectedValueChanged(int selectedFacilitatorId) =>
         await SelectedFacilitatorIdChanged.InvokeAsync(selectedFacilitatorId);
-    }
+
+    private string? MapKeyToDisplayName(int key) =>
+        _facilitators.FirstOrDefault(s => s.Key == key)?.DisplayName;
 }

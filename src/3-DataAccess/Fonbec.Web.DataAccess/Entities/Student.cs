@@ -7,6 +7,8 @@ public class Student : UserWithoutAccount
 {
     public string? Email { get; set; }
 
+    public List<Sponsorship> Sponsorships { get; set; } = [];
+
     // | SecondarySchoolStartYear | UniversityStartYear |
     // +--------------------------+---------------------|
     // | NULL                     | NULL                | Student is in primary school
@@ -40,4 +42,5 @@ public class Student : UserWithoutAccount
                 : EducationLevel.PrimarySchool;
         }
     }
+
 }

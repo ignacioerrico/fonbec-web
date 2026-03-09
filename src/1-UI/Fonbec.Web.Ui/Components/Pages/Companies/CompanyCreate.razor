@@ -1,0 +1,35 @@
+﻿@using Fonbec.Web.DataAccess.Constants
+@attribute [Route(NavRoutes.CompanyCreate)]
+@attribute [Authorize(Policy = nameof(CompanyCreate))]
+@inherits AuthenticationRequiredComponentBase
+
+<PageHeader Title="Alta de empresa" />
+
+<LoadingIndicator Loading="Loading" />
+
+<MudForm @bind-IsValid="@_formValidationSucceeded">
+
+	<MudTextField T="string" Label="Nombre" @bind-Value="_bindModel.CompanyName" Immediate="true"
+				  Required="true" RequiredError="Este es un campo obligatorio."
+				  MaxLength="MaxLength.Company.Name" />
+
+	<MudTextField T="string" Label="Correo electrónico" @bind-Value="_bindModel.CompanyEmail" Immediate="true"
+				  MaxLength="MaxLength.Company.Email" />
+
+	<MudTextField T="string" Label="Teléfono" @bind-Value="_bindModel.CompanyPhoneNumber" Immediate="true"
+				  MaxLength="MaxLength.Company.PhoneNumber" />
+
+</MudForm>
+
+<MudStack Row="true" Class="pt-4">
+	<MudButton OnClick="Save" Disabled="SaveButtonDisabled"
+			   Variant="Variant.Filled" Color="Color.Primary">
+		Crear
+	</MudButton>
+	<MudButton Href="@NavRoutes.Chapters"
+			   Variant="Variant.Filled" Color="Color.Default" Class="ms-4">
+		Cancelar
+	</MudButton>
+</MudStack>
+
+<LoadingIndicator Loading="_saving" LoadingText="Guardando los datos" />
