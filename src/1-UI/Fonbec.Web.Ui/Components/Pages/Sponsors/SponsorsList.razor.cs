@@ -30,6 +30,11 @@ public partial class SponsorsList : AuthenticationRequiredComponentBase
 
         _viewModels = await SponsorService.GetAllSponsorsAsync(FonbecClaim.ChapterId);
 
+        _allCompanies = _viewModels
+        .Select(vm => vm.SponsorCompanyName)
+        .Distinct()
+        .OrderBy(name => name);
+
         Loading = false;
     }
 
@@ -71,6 +76,7 @@ public partial class SponsorsList : AuthenticationRequiredComponentBase
             modifiedViewModel.SponsorGender,
             modifiedViewModel.SponsorPhoneNumber,
             modifiedViewModel.SponsorEmail,
+            modifiedViewModel.SponsorCompanyId,
             FonbecClaim.UserId
         );
 

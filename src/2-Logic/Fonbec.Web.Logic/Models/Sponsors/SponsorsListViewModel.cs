@@ -25,7 +25,7 @@ public class SponsorsListViewModel : AuditableViewModel, IDetectChanges<Sponsors
 
     public string SponsorCompanyName { get; set; } = string.Empty;
 
-    public int SponsorCompanyId { get; set; } = string.Empty;
+    public int? SponsorCompanyId { get; set; }
 
     public bool IsIdenticalTo(SponsorsListViewModel other)
     {
@@ -36,7 +36,7 @@ public class SponsorsListViewModel : AuditableViewModel, IDetectChanges<Sponsors
                && SponsorEmail == other.SponsorEmail.Trim().ToLower()
                && SponsorPhoneNumber == other.SponsorPhoneNumber.NullOrTrimmed()
                && SponsorCompanyName == other.SponsorCompanyName.NullOrTrimmed()
-               && SponsorCompanyId == other.SponsorCompanyId.NullOrTrimmed();
+               && SponsorCompanyId == other.SponsorCompanyId;
     }
 }
 

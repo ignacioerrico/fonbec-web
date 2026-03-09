@@ -11,5 +11,7 @@ public class UpdateSponsorInputDataModel
     public Gender SponsorGender { get; set; }
     public string? SponsorPhoneNumber { get; set; }
     public string SponsorEmail { get; set; } = string.Empty;
+
+    public int? SponsorCompanyId { get; set; }
     public int UpdatedById { get; set; }
 }

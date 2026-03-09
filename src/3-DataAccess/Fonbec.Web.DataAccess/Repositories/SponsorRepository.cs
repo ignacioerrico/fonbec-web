@@ -93,6 +93,7 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
         sponsorDb.PhoneNumber = dataModel.SponsorPhoneNumber;
         sponsorDb.Email = dataModel.SponsorEmail;
         sponsorDb.LastUpdatedById = dataModel.UpdatedById;
+        sponsorDb.CompanyId = dataModel.SponsorCompanyId;
 
         db.Sponsors.Update(sponsorDb);
         return await db.SaveChangesAsync();
