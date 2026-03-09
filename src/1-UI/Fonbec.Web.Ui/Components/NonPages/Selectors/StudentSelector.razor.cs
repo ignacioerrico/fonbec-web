@@ -8,10 +8,13 @@ public partial class StudentSelector
 {
     private readonly List<SelectableModel<int>> _students = [];
 
-    private bool _dataLoaded;
+    private bool _loading;
 
     [Parameter]
     public int? ChapterId { get; set; }
+
+    [Parameter]
+    public bool SelectFirstItemOnLoad { get; set; }
 
     [Parameter]
     public int SelectedStudentId { get; set; }
@@ -23,24 +26,24 @@ public partial class StudentSelector
     /// Callback invoked when students are loaded. The int parameter indicates the number of students loaded.
     /// </summary>
     [Parameter]
-    public EventCallback<int> OnStudentsLoaded { get; set; }
+    public EventCallback<int> NumberOfStudentsLoaded { get; set; }
 
     [Inject]
     public IStudentService StudentService { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
-        _dataLoaded = false;
+        _loading = true;
 
         var students = await StudentService.GetAllStudentsForSelectionAsync(ChapterId);
 
-        _dataLoaded = true;
+        _loading = false;
 
         _students.AddRange(students);
 
-        await OnStudentsLoaded.InvokeAsync(students.Count);
+        await NumberOfStudentsLoaded.InvokeAsync(students.Count);
 
-        if (students.Count > 0)
+        if (SelectFirstItemOnLoad && students.Count > 0)
         {
             if (SelectedStudentId == 0)
             {
@@ -51,6 +54,16 @@ public partial class StudentSelector
         }
 
         await base.OnInitializedAsync();
+    }
+
+    private async Task<IEnumerable<int>> Search(string value, CancellationToken token)
+    {
+        var result = string.IsNullOrEmpty(value)
+            ? _students.Select(c => c.Key)
+            : _students.Where(c => c.DisplayName.Contains(value, StringComparison.OrdinalIgnoreCase))
+                           .Select(c => c.Key);
+
+        return await Task.FromResult(result);
     }
 
     private async Task OnSelectedValueChanged(int selectedSponsorId) =>

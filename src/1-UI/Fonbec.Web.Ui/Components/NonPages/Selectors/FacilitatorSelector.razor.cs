@@ -1,5 +1,4 @@
 ﻿using Fonbec.Web.DataAccess.Constants;
-using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.Logic.Models;
 using Fonbec.Web.Logic.Services;
 using Microsoft.AspNetCore.Components;
@@ -10,7 +9,10 @@ public partial class FacilitatorSelector
 {
     private readonly List<SelectableModel<int>> _facilitators = [];
 
-    private bool _dataLoaded;
+    private bool _loading;
+
+    [Parameter]
+    public bool SelectFirstItemOnLoad { get; set; }
 
     [Parameter]
     public int SelectedFacilitatorId { get; set; }
@@ -22,24 +24,24 @@ public partial class FacilitatorSelector
     /// Callback invoked when facilitators are loaded. The int parameter indicates the number of facilitators loaded.
     /// </summary>
     [Parameter]
-    public EventCallback<int> OnFacilitatorsLoaded { get; set; }
+    public EventCallback<int> NumberOfFacilitatorsLoaded { get; set; }
 
     [Inject]
     public IUserService UserService { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
-        _dataLoaded = false;
+        _loading = true;
 
         var facilitators = await UserService.GetAllUsersInRoleForSelectionAsync(FonbecRole.Uploader);
 
-        _dataLoaded = true;
+        _loading = false;
 
         _facilitators.AddRange(facilitators);
 
-        await OnFacilitatorsLoaded.InvokeAsync(facilitators.Count);
+        await NumberOfFacilitatorsLoaded.InvokeAsync(facilitators.Count);
 
-        if (facilitators.Count > 0)
+        if (SelectFirstItemOnLoad && facilitators.Count > 0)
         {
             if (SelectedFacilitatorId == 0)
             {
@@ -50,6 +52,16 @@ public partial class FacilitatorSelector
         }
 
         await base.OnInitializedAsync();
+    }
+
+    private async Task<IEnumerable<int>> Search(string value, CancellationToken token)
+    {
+        var result = string.IsNullOrEmpty(value)
+            ? _facilitators.Select(c => c.Key)
+            : _facilitators.Where(c => c.DisplayName.Contains(value, StringComparison.OrdinalIgnoreCase))
+                           .Select(c => c.Key);
+
+        return await Task.FromResult(result);
     }
 
     private async Task OnSelectedValueChanged(int selectedFacilitatorId) =>

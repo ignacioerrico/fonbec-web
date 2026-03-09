@@ -1,16 +1,10 @@
-﻿<LoadingIndicator Loading="!_dataLoaded" />
+﻿<LoadingIndicator Loading="_loading" />
 
-<MudSelect T="int" Label="Padrino"
-           Value="SelectedSponsorId"
-           ValueChanged="OnSelectedValueChanged"
-           ToStringFunc="MapKeyToDisplayName"
-           Disabled="!_dataLoaded"
-           Required="true" RequiredError="Este es un campo obligatorio."
-           Variant="Variant.Filled" AnchorOrigin="Origin.BottomLeft">
-    @foreach (var sponsor in _sponsors)
-    {
-        <MudSelectItem T="int" Value="sponsor.Key">
-            @sponsor.DisplayName
-        </MudSelectItem>
-    }
-</MudSelect>
+<MudAutocomplete T="int" Label="Padrino"
+                 SearchFunc="Search"
+                 Value="SelectedSponsorId"
+                 ValueChanged="OnSelectedValueChanged"
+                 ToStringFunc="MapKeyToDisplayName"
+                 Disabled="_loading"
+                 Required="true" RequiredError="Este es un campo obligatorio."
+                 Variant="Variant.Filled" AnchorOrigin="Origin.BottomLeft" />

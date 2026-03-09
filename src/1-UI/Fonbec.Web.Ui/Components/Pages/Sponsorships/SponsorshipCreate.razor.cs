@@ -33,7 +33,7 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
     [Inject]
     public ISponsorshipService SponsorshipService { get; set; } = null!;
 
-    private async Task OnSponsorsLoaded(int sponsorsCount) =>
+    private async Task NumberOfSponsorsLoaded(int sponsorsCount) =>
         _anySponsors = sponsorsCount > 0;
 
     private void OnIsEndDateKnownCheckBoxChanged(bool isEndDateKnown)
@@ -54,6 +54,11 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
 
     private async Task Save()
     {
+        if (_bindModel.SelectedSponsorId == 0)
+        {
+            Snackbar.Add("El padrino no es válido.", Severity.Error);
+        }
+
         var createSponsorshipInputModel = new CreateSponsorshipInputModel(
             StudentId,
             _bindModel.SelectedSponsorId,

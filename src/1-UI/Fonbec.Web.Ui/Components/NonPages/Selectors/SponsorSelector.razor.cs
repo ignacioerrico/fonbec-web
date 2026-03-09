@@ -8,10 +8,13 @@ public partial class SponsorSelector
 {
     private readonly List<SelectableModel<int>> _sponsors = [];
 
-    private bool _dataLoaded;
+    private bool _loading;
 
     [Parameter]
     public int? ChapterId { get; set; }
+
+    [Parameter]
+    public bool SelectFirstItemOnLoad { get; set; }
 
     [Parameter]
     public int SelectedSponsorId { get; set; }
@@ -23,24 +26,24 @@ public partial class SponsorSelector
     /// Callback invoked when sponsors are loaded. The int parameter indicates the number of sponsors loaded.
     /// </summary>
     [Parameter]
-    public EventCallback<int> OnSponsorsLoaded { get; set; }
+    public EventCallback<int> NumberOfSponsorsLoaded { get; set; }
 
     [Inject]
     public ISponsorService SponsorService { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
-        _dataLoaded = false;
+        _loading = true;
 
         var sponsors = await SponsorService.GetAllSponsorsForSelectionAsync(ChapterId);
 
-        _dataLoaded = true;
+        _loading = false;
 
         _sponsors.AddRange(sponsors);
 
-        await OnSponsorsLoaded.InvokeAsync(sponsors.Count);
+        await NumberOfSponsorsLoaded.InvokeAsync(sponsors.Count);
 
-        if (sponsors.Count > 0)
+        if (SelectFirstItemOnLoad && sponsors.Count > 0)
         {
             if (SelectedSponsorId == 0)
             {
@@ -51,6 +54,16 @@ public partial class SponsorSelector
         }
 
         await base.OnInitializedAsync();
+    }
+
+    private async Task<IEnumerable<int>> Search(string value, CancellationToken token)
+    {
+        var result = string.IsNullOrEmpty(value)
+            ? _sponsors.Select(c => c.Key)
+            : _sponsors.Where(c => c.DisplayName.Contains(value, StringComparison.OrdinalIgnoreCase))
+                       .Select(c => c.Key);
+
+        return await Task.FromResult(result);
     }
 
     private async Task OnSelectedValueChanged(int selectedSponsorId) =>
