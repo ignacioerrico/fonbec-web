@@ -13,9 +13,9 @@ public interface ISponsorRepository
     /// <param name="chapterId">Use <c>null</c> to get all sponsors for all chapters.</param>
     /// <returns>A list of <see cref="AllSponsorsDataModel"/></returns>
     Task<List<AllSponsorsDataModel>> GetAllSponsorsAsync(int? chapterId);
-    
+
     Task<int> CreateSponsorAsync(CreateSponsorInputDataModel dataModel);
-    
+
     Task<int> UpdateSponsorAsync(UpdateSponsorInputDataModel dataModel);
 }
 
@@ -43,8 +43,7 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
                 SponsorPhoneNumber = s.PhoneNumber,
                 SponsorEmail = s.Email,
                 IsSponsorActive = s.IsActive,
-                SponsorCompanyName = s.Company == null ? null : s.Company.Name,
-                SponsorCompanyId = s.CompanyId,
+                SponsorCompany = s.Company,
             })
             .OrderBy(sdm => sdm.SponsorFirstName)
             .ThenBy(sdm => sdm.SponsorLastName)
@@ -92,8 +91,8 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
         sponsorDb.Gender = dataModel.SponsorGender;
         sponsorDb.PhoneNumber = dataModel.SponsorPhoneNumber;
         sponsorDb.Email = dataModel.SponsorEmail;
-        sponsorDb.LastUpdatedById = dataModel.UpdatedById;
         sponsorDb.CompanyId = dataModel.SponsorCompanyId;
+        sponsorDb.LastUpdatedById = dataModel.UpdatedById;
 
         db.Sponsors.Update(sponsorDb);
         return await db.SaveChangesAsync();

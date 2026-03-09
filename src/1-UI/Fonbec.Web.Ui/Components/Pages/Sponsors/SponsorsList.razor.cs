@@ -14,11 +14,12 @@ public partial class SponsorsList : AuthenticationRequiredComponentBase
     private List<SponsorsListViewModel> _viewModels = [];
     private SponsorsListViewModel _originalViewModel = new();
 
+    private IEnumerable<string> _allCompanyNames = [];
+
     private string _searchString = string.Empty;
 
     private bool _sortByLastName;
 
-    private IEnumerable<string> _allCompanies = [];
     [Inject]
     public ISponsorService SponsorService { get; set; } = null!;
 
@@ -30,12 +31,12 @@ public partial class SponsorsList : AuthenticationRequiredComponentBase
 
         _viewModels = await SponsorService.GetAllSponsorsAsync(FonbecClaim.ChapterId);
 
-        _allCompanies = _viewModels
-        .Select(vm => vm.SponsorCompanyName)
-        .Distinct()
-        .OrderBy(name => name);
-
         Loading = false;
+
+        _allCompanyNames = _viewModels
+            .Select(vm => vm.SponsorCompanyName)
+            .Distinct()
+            .OrderBy(name => name);
     }
 
     /// <summary>

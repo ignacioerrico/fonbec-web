@@ -32,8 +32,8 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
         result.SponsorGender.Should().Be(Gender.Male);
         result.SponsorPhoneNumber.Should().Be("555-1234");
         result.SponsorEmail.Should().Be("john@example.com");
-        result.UpdatedById.Should().Be(2);
         result.SponsorCompanyId.Should().Be(10);
+        result.UpdatedById.Should().Be(2);
     }
 
     [Fact]
@@ -263,7 +263,7 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
     }
 
     [Fact]
-    public void Does_Not_Map_SponsorCompanyId_When_Null()
+    public void InputModel_CompanyId_IsMappedToNull_WhenNull()
     {
         var input = new UpdateSponsorInputModel(
             SponsorId: 1,

@@ -30,7 +30,7 @@ public class UpdateSponsorInputModelMappingDefinitions : IRegister
             .Map(dest => dest.SponsorGender, src => src.SponsorGender)
             .Map(dest => dest.SponsorPhoneNumber, src => src.SponsorPhoneNumber.NullOrTrimmed())
             .Map(dest => dest.SponsorEmail, src => src.SponsorEmail.Trim().ToLower())
-            .Map(dest => dest.UpdatedById, src => src.UpdatedById)
-            .Map(dest => dest.SponsorCompanyId, src => src.SponsorCompanyId);
+            .Map(dest => dest.SponsorCompanyId, src => src.SponsorCompanyId)
+            .Map(dest => dest.UpdatedById, src => src.UpdatedById);
     }
 }

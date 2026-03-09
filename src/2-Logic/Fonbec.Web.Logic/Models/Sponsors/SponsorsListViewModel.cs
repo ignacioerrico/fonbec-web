@@ -23,9 +23,9 @@ public class SponsorsListViewModel : AuditableViewModel, IDetectChanges<Sponsors
 
     public bool IsSponsorActive { get; set; }
 
-    public string SponsorCompanyName { get; set; } = string.Empty;
-
     public int? SponsorCompanyId { get; set; }
+
+    public string SponsorCompanyName { get; set; } = string.Empty;
 
     public bool IsIdenticalTo(SponsorsListViewModel other)
     {
@@ -34,8 +34,7 @@ public class SponsorsListViewModel : AuditableViewModel, IDetectChanges<Sponsors
                && SponsorNickName == other.SponsorNickName.NormalizeText()
                && SponsorGender == other.SponsorGender
                && SponsorEmail == other.SponsorEmail.Trim().ToLower()
-               && SponsorPhoneNumber == other.SponsorPhoneNumber.NullOrTrimmed()
-               && SponsorCompanyName == other.SponsorCompanyName.NullOrTrimmed()
+               && SponsorPhoneNumber == other.SponsorPhoneNumber.Trim()
                && SponsorCompanyId == other.SponsorCompanyId;
     }
 }
@@ -51,8 +50,9 @@ public class SponsorsListViewModelMappingDefinitions : IRegister
             .Map(dest => dest.SponsorNickName, src => src.SponsorNickName ?? string.Empty)
             .Map(dest => dest.SponsorGender, src => src.SponsorGender)
             .Map(dest => dest.SponsorPhoneNumber, src => src.SponsorPhoneNumber ?? string.Empty)
-            .Map(dest => dest.SponsorCompanyName, src => src.SponsorCompanyName ?? string.Empty)
-            .Map(dest => dest.SponsorCompanyId, src => src.SponsorCompanyId) 
+            .Map(dest => dest.SponsorCompanyId, src => src.SponsorCompany!.Id, srcCond => srcCond.SponsorCompany != null)
+            .Map(dest => dest.SponsorCompanyName, src => src.SponsorCompany!.Name, srcCond => srcCond.SponsorCompany != null)
+            .Map(dest => dest.SponsorCompanyName, src => string.Empty, srcCond => srcCond.SponsorCompany == null)
             .Map(dest => dest.SponsorEmail, src => src.SponsorEmail)
             .Map(dest => dest.IsSponsorActive, src => src.IsSponsorActive);
 

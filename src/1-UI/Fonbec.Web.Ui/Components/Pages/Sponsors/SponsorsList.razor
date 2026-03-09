@@ -6,7 +6,6 @@
 @using Fonbec.Web.DataAccess.Entities.Enums
 @using Fonbec.Web.Logic.Models.Sponsors
 
-
 <PageHeader Title="Padrinos" />
 
 <MudStack StretchItems="StretchItems.Middle" Row="true">
@@ -142,10 +141,18 @@
                 </EditTemplate>
                 <FilterTemplate>
                     <FilterByList T="SponsorsListViewModel"
-                                  AllItems="_allCompanies"
+                                  AllItems="_allCompanyNames"
                                   FilterContext="context"
                                   FilterBy="@(vm => vm.SponsorCompanyName)" />
                 </FilterTemplate>
+            </PropertyColumn>
+
+            <PropertyColumn Property="vm => vm.Notes" Title="Información adicional" Hidden="true" Required="false">
+                <EditTemplate>
+                    <MudTextField T="string" @bind-Value="context.Item.Notes" Immediate="true"
+                                  Label="Información adicional" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                  MaxLength="MaxLength.Auditable.Notes" />
+                </EditTemplate>
             </PropertyColumn>
 
             <TemplateColumn Title="Acciones" Filterable="false" Sortable="false">
