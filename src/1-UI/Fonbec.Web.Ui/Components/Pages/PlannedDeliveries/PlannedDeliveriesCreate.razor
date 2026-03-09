@@ -1,0 +1,44 @@
+﻿@attribute [Route(NavRoutes.PlannnedDeliveryCreate)]
+@attribute [Authorize(Policy = nameof(PlannedDeliveriesCreate))]
+@inherits AuthenticationRequiredComponentBase
+
+@using Fonbec.Web.DataAccess.Constants
+
+<PageHeader Title="Planned delivery" />
+
+<LoadingIndicator Loading="Loading" />
+
+<MudForm @bind-IsValid="@_formValidationSucceeded">
+	<MudNumericField Label="Enter the chapter Id" @bind-Value="_bindModel.ChapterId" 
+		Required="true" RequiredError="Please entre a chapter id"/> 
+
+	<MudDatePicker Label="StartsOn" 
+		@bind-Date="_bindModel.StartsOn"
+		MinDate="@_minDate"
+		OpenTo="OpenTo.Month" 
+		FixDay="1"
+		DateFormat="MM/yyyy"
+		/>	
+
+	<MudSwitch T="bool" Label="completed?" @bind-Value="_bindModel.Completed" 
+				Color="Color.Success"
+		class="pt-2"
+	/>
+</MudForm>
+
+<MudStack Row="true" Class="pt-4">
+	<MudButton OnClick="Save" Disabled="SaveButtonDisabled"
+	           Variant="Variant.Filled" Color="Color.Primary">
+		Crear
+	</MudButton>
+	<MudButton Href="@NavRoutes.PlannedDeliveries"
+	           Variant="Variant.Filled" Color="Color.Default" Class="ms-4">
+		Cancelar
+	</MudButton>
+</MudStack>
+
+<LoadingIndicator Loading="_saving" LoadingText="Guardando los datos" />
+
+
+
+

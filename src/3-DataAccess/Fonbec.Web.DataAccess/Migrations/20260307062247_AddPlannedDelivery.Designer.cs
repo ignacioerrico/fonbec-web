@@ -4,6 +4,7 @@ using Fonbec.Web.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Fonbec.Web.DataAccess.Migrations
 {
     [DbContext(typeof(FonbecWebDbContext))]
-    partial class FonbecWebDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260307062247_AddPlannedDelivery")]
+    partial class AddPlannedDelivery
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -245,7 +248,7 @@ namespace Fonbec.Web.DataAccess.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
-                    b.Property<int?>("ChapterId")
+                    b.Property<int>("ChapterId")
                         .HasColumnType("int");
 
                     b.Property<bool>("Completed")
@@ -285,8 +288,6 @@ namespace Fonbec.Web.DataAccess.Migrations
                         .HasColumnType("datetime2");
 
                     b.HasKey("Id");
-
-                    b.HasIndex("ChapterId");
 
                     b.HasIndex("CreatedById");
 
@@ -656,10 +657,6 @@ namespace Fonbec.Web.DataAccess.Migrations
 
             modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.PlannedDelivery", b =>
                 {
-                    b.HasOne("Fonbec.Web.DataAccess.Entities.Chapter", "Chapter")
-                        .WithMany()
-                        .HasForeignKey("ChapterId");
-
                     b.HasOne("Fonbec.Web.DataAccess.Entities.FonbecWebUser", "CreatedBy")
                         .WithMany()
                         .HasForeignKey("CreatedById")
@@ -677,8 +674,6 @@ namespace Fonbec.Web.DataAccess.Migrations
                     b.HasOne("Fonbec.Web.DataAccess.Entities.FonbecWebUser", "ReenabledBy")
                         .WithMany()
                         .HasForeignKey("ReenabledById");
-
-                    b.Navigation("Chapter");
 
                     b.Navigation("CreatedBy");
 
