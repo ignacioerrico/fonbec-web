@@ -9,8 +9,11 @@ public class Sponsorship : Auditable
     public int StudentId { get; set; }
     public Student Student { get; set; } = null!;
 
-    public int SponsorId { get; set; }
-    public Sponsor Sponsor { get; set; } = null!;
+    public int? SponsorId { get; set; }
+    public Sponsor Sponsor { get; set; } 
+
+    public int? CompanyId { get; set; }
+    public Company Company { get; set; }
 
     public DateTime StartDate { get; set; }
 

@@ -7,7 +7,8 @@ namespace Fonbec.Web.Logic.Models.Sponsorships.Input;
 public record CreateSponsorshipInputModel
 (
     int StudentId,
-    int SponsorId,
+    int? SponsorId,
+    //int? CompanyId,
     DateTime SponsorshipStartDate,
     DateTime? SponsorshipEndDate,
     string SponsorshipNotes,
@@ -21,6 +22,7 @@ public class CreateSponsorshipInputModelMappsingDefinitions : IRegister
         config.NewConfig<CreateSponsorshipInputModel, CreateSponsorshipInputDataModel>()
             .Map(dest => dest.StudentId, src => src.StudentId)
             .Map(dest => dest.SponsorId, src => src.SponsorId)
+            //.Map(dest => dest.CompanyId, src => src.CompanyId)
             .Map(dest => dest.SponsorshipStartDate, src => src.SponsorshipStartDate)
             .Map(dest => dest.SponsorshipEndDate, src => src.SponsorshipEndDate)
             .Map(dest => dest.SponsorshipNotes, src => src.SponsorshipNotes.NullOrTrimmed())

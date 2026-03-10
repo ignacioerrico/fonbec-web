@@ -21,6 +21,11 @@ internal class SponsorshipConfiguration : AuditableEntityTypeConfiguration<Spons
             .HasForeignKey(s => s.SponsorId)
             .OnDelete(DeleteBehavior.NoAction);
 
+        builder.HasOne(s => s.Company)
+            .WithMany(c => c.Sponsorships)
+            .HasForeignKey(s => s.CompanyId)
+            .OnDelete(DeleteBehavior.NoAction);
+
         builder.Property(s => s.StartDate)
             .IsRequired();
 

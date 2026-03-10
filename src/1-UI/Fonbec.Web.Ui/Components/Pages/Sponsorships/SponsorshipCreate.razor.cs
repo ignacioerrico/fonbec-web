@@ -51,7 +51,6 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
         _bindModel.SponsorshipEndDate = endDate is DateTime d
             ? new DateTime(d.Year, d.Month, DateTime.DaysInMonth(d.Year, d.Month))
             : null;
-
     private async Task Save()
     {
         var createSponsorshipInputModel = new CreateSponsorshipInputModel(
