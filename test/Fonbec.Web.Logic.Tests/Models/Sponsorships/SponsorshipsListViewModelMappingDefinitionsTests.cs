@@ -41,6 +41,7 @@ public class SponsorshipsListViewModelMappingDefinitionsTests : MappingTestBase
         viewModel.SponsorOrCompanyName.Should().Be("Sponsor");
         viewModel.IsCompany.Should().BeFalse();
     }
+
     [Fact]
     public void Maps_All_Fields_Correctly_From_AllSponsorshipsDataModel_For_Company()
     {
