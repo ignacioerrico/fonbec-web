@@ -36,7 +36,7 @@ public class SponsorshipRepository(IDbContextFactory<FonbecWebDbContext> dbConte
     {
         await using var db = await dbContext.CreateDbContextAsync();
 
-        var query = db.Sponsorships
+        var allSponsorships = await db.Sponsorships
             .Include(s => s.CreatedBy)
             .Include(s => s.LastUpdatedBy)
             .Include(s => s.DisabledBy)
@@ -44,9 +44,7 @@ public class SponsorshipRepository(IDbContextFactory<FonbecWebDbContext> dbConte
             .Include(s => s.Sponsor)
             .Include(s => s.Company)
             .Include(s => s.Student)
-            .Where(s => s.StudentId == studentId);
-
-        var allSponsorships = await query
+            .Where(s => s.StudentId == studentId)
             .Select(s => new AllSponsorshipsDataModel(s)
             {
                 StudentId = s.StudentId,

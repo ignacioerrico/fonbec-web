@@ -8,7 +8,7 @@
 
 
 <PageHeader Title="@($"Padrinos de: {StudentFullName}")" />
-
+@*
 <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
 
     <MudTooltip Text="Lista de becarios" Arrow="true" Placement="Placement.Bottom">
@@ -33,7 +33,7 @@
 
     <MudSpacer />
 </MudStack>
-@*
+*@
     <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
 
     <MudButton Href="@NavRoutes.Students"
@@ -55,7 +55,6 @@
     <MudSpacer />
 
 </MudStack>
-*@
 <LoadingIndicator Loading="Loading"
                   If="!_viewModels.Any()"
                   ThenDisplay="No tiene padrinos aun." />

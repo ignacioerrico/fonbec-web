@@ -10,7 +10,6 @@ public class AllSponsorshipsDataModel(Auditable auditable) : AuditableDataModel(
     public DateTime SponsorshipStartDate { get; set; }
     public DateTime? SponsorshipEndDate { get; set; }
     public string? SponsorshipNotes { get; set; }
-    public int CreatedById { get; set; }
     public string SponsorshipState { get; set; }
     public string? SponsorFullName { get; set; }
     public string StudentFullName { get; set; }
