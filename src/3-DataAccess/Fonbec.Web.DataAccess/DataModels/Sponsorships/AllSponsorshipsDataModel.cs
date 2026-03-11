@@ -1,17 +1,20 @@
-﻿using Fonbec.Web.DataAccess.Entities.Abstract;
+﻿using Fonbec.Web.DataAccess.Entities;
+using Fonbec.Web.DataAccess.Entities.Abstract;
 
 namespace Fonbec.Web.DataAccess.DataModels.Sponsorships;
 
-public class AllSponsorshipsDataModel(Auditable auditable) : AuditableDataModel(auditable)
+public class AllSponsorshipsDataModel
 {
-    public int StudentId { get; set; }
-    public int? SponsorId { get; set; }
-    public int? CompanyId { get; set; }
+    public string? StudentFullName { get; set; }
+
+    public List<AllSponsorshipsSponsorshipsDataModel> Sponsorships { get; set; } = [];
+}
+
+public class AllSponsorshipsSponsorshipsDataModel(Auditable auditable) : AuditableDataModel(auditable)
+{
+    public int SponsorshipId { get; set; }
+    public Sponsor? Sponsor { get; set; }
+    public Company? Company { get; set; }
     public DateTime SponsorshipStartDate { get; set; }
     public DateTime? SponsorshipEndDate { get; set; }
-    public string? SponsorshipNotes { get; set; }
-    public string SponsorshipState { get; set; }
-    public string? SponsorFullName { get; set; }
-    public string StudentFullName { get; set; }
-    public string? CompanyName { get; set; }
 }

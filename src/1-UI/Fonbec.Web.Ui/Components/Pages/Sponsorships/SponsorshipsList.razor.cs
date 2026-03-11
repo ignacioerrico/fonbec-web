@@ -2,17 +2,14 @@
 using Fonbec.Web.Logic.Models.Sponsorships;
 using Fonbec.Web.Logic.Services;
 using Microsoft.AspNetCore.Components;
-using Microsoft.EntityFrameworkCore;
 
 namespace Fonbec.Web.Ui.Components.Pages.Sponsorships;
 
-[PageMetadata(nameof(SponsorshipsList), "Padrinos del becario", [FonbecRole.Manager])]
+[PageMetadata(nameof(SponsorshipsList), "Lista de padrinos de un becario", [FonbecRole.Manager])]
 
 public partial class SponsorshipsList : AuthenticationRequiredComponentBase
 {
-    private List<SponsorshipsListViewModel> _viewModels = [];
-
-    private string StudentFullName = "";
+    private SponsorshipsListViewModel _viewModel = new();
 
     [Inject]
     public ISponsorshipService SponsorshipService { get; set; } = null!;
@@ -26,11 +23,8 @@ public partial class SponsorshipsList : AuthenticationRequiredComponentBase
 
         Loading = true;
 
-        _viewModels = await SponsorshipService.GetAllSponsorshipsAsync(StudentId);
-
-        StudentFullName = _viewModels.FirstOrDefault()?.StudentFullName ?? "";
+        _viewModel = await SponsorshipService.GetAllSponsorshipsAsync(StudentId);
 
         Loading = false;
     }
-
 }

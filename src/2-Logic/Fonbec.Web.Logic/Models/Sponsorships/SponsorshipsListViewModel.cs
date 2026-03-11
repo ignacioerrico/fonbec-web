@@ -3,21 +3,22 @@ using Mapster;
 
 namespace Fonbec.Web.Logic.Models.Sponsorships;
 
-public class SponsorshipsListViewModel : AuditableViewModel
+public class SponsorshipsListViewModel
 {
-    public int StudentId { get; set; }
-    public int? SponsorId { get; set; }
-    public int? CompanyId { get; set; }
+    public string StudentFullName { get; set; } = null!;
+
+    public List<SponsorshipsSponsorshipsListViewModel> Sponsorships { get; set; } = [];
+}
+
+public class SponsorshipsSponsorshipsListViewModel : AuditableViewModel
+{
+    public int SponsorshipId { get; set; }
+    public bool IsSponsoredByCompany { get; set; }
+    public string SponsorshipFullName { get; set; } = null!;
     public DateTime SponsorshipStartDate { get; set; }
+    public string SponsorshipStartDateString { get; set; } = null!;
     public DateTime? SponsorshipEndDate { get; set; }
-    public string SponsorshipNotes { get; set; } = string.Empty;
-    public string SponsorshipState { get; set; } = string.Empty;
-    public string SponsorFullName { get; set; } = string.Empty;
-    public string StudentFullName { get; set; } = string.Empty;
-    public string CompanyName { get; set; } = string.Empty;
-    public string SponsorOrCompanyName => 
-                  SponsorId.HasValue? SponsorFullName : CompanyName;
-    public bool IsCompany => CompanyId.HasValue;
+    public string SponsorshipEndDateString { get; set; } = null!;
 }
 
 public class SponsorshipsListViewModelMappingDefinitions : IRegister
@@ -25,15 +26,17 @@ public class SponsorshipsListViewModelMappingDefinitions : IRegister
     public void Register(TypeAdapterConfig config)
     {
         config.NewConfig<AllSponsorshipsDataModel, SponsorshipsListViewModel>()
-            .Map(dest => dest.SponsorId, src => src.SponsorId)
-            .Map(dest => dest.StudentId, src => src.StudentId)
-            .Map(dest => dest.CompanyId, src => src.CompanyId)
-            .Map(dest => dest.SponsorshipStartDate, src => src.SponsorshipStartDate)
-            .Map(dest => dest.SponsorshipEndDate, src => src.SponsorshipEndDate)
-            .Map(dest => dest.SponsorshipNotes, src => src.SponsorshipNotes ?? string.Empty)
-            .Map(dest => dest.SponsorshipState, src => src.SponsorshipState)
-            .Map(dest => dest.SponsorFullName, src => src.SponsorFullName ?? string.Empty)
             .Map(dest => dest.StudentFullName, src => src.StudentFullName)
-            .Map(dest => dest.CompanyName, src => src.CompanyName ?? string.Empty);
+            .Map(dest => dest.Sponsorships, src => src.Sponsorships);
+
+        config.NewConfig<AllSponsorshipsSponsorshipsDataModel, SponsorshipsSponsorshipsListViewModel>()
+            .Map(dest => dest.SponsorshipId, src => src.SponsorshipId)
+            .Map(dest => dest.IsSponsoredByCompany, src => src.Sponsor == null && src.Company != null)
+            .Map(dest => dest.SponsorshipFullName, src => src.Sponsor!.FullName(), srcCond => srcCond.Sponsor != null && srcCond.Company == null)
+            .Map(dest => dest.SponsorshipFullName, src => src.Company!.Name, srcCond => srcCond.Sponsor == null && srcCond.Company != null)
+            .Map(dest => dest.SponsorshipStartDate, src => src.SponsorshipStartDate)
+            .Map(dest => dest.SponsorshipStartDateString, src => src.SponsorshipStartDate.ToString("MM/yyyy"))
+            .Map(dest => dest.SponsorshipEndDate, src => src.SponsorshipEndDate)
+            .Map(dest => dest.SponsorshipEndDateString, src => src.SponsorshipEndDate.HasValue ? src.SponsorshipEndDate.Value.ToString("MM/yyyy") : "—");
     }
 }

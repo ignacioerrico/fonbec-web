@@ -9,7 +9,7 @@ internal class SponsorshipConfiguration : AuditableEntityTypeConfiguration<Spons
 {
     public override void Configure(EntityTypeBuilder<Sponsorship> builder)
     {
-        builder.HasKey(s => s.SponsorshipId);
+        builder.HasKey(s => s.Id);
 
         builder.HasOne(s => s.Student)
             .WithMany(s => s.Sponsorships)

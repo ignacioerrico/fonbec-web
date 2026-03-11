@@ -19,11 +19,14 @@ public static class NavRoutes
     public const string Sponsors = "/padrinos";
 
     public const string SponsorCreate = $"{Sponsors}/alta";
-    public static string Sponsorship(int studentId) => $"/becarios/{studentId}/padrinos";
-    public static string SponsorshipCreate(int studentId) => $"{Sponsorship(studentId)}/alta";
+
+    public static string Sponsorships(int studentId) => $"/becarios/{studentId}/padrinos";
+
+    public static string SponsorshipCreate(int studentId) => $"{Sponsorships(studentId)}/alta";
 
     public const string Companies = "/empresas";
 
     public const string CompanyCreate = $"{Companies}/alta";
+
     public static string UsersUserIdPermissions(int userId) => $"{Users}/{userId}/permisos";
 }

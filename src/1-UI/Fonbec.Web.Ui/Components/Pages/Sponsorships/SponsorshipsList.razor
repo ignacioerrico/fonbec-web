@@ -1,16 +1,13 @@
 ﻿@page "/becarios/{studentId:int}/padrinos"
-@using Fonbec.Web.Logic.Models.Sponsorships
 @using Microsoft.EntityFrameworkCore
-
-@inject NavigationManager Navigation
+@using Fonbec.Web.Logic.Models.Sponsorships
 @attribute [Authorize(Policy = nameof(SponsorshipsList))]
 @inherits AuthenticationRequiredComponentBase
+@inject NavigationManager Navigation
 
+<PageHeader Title="@($"Padrinos de: {_viewModel.StudentFullName}")" />
 
-<PageHeader Title="@($"Padrinos de: {StudentFullName}")" />
-
-    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
-
+<MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
     <MudButton Href="@NavRoutes.Students"
                StartIcon="@Icons.Material.Filled.ArrowBack"
                Variant="Variant.Text"
@@ -23,28 +20,27 @@
                    StartIcon="@Icons.Material.Filled.Add"
                    Variant="Variant.Filled"
                    Color="Color.Primary">
-            Apadrinar
+            Asignar nuevo padrino
         </MudButton>
     </AuthorizeView>
 
     <MudSpacer />
+</MudStack>
 
-    </MudStack>
 <LoadingIndicator Loading="Loading"
-                  If="!_viewModels.Any()"
-                  ThenDisplay="No tiene padrinos aun." />
+                  If="!_viewModel.Sponsorships.Any()"
+                  ThenDisplay="No tiene ningún padrino asignado." />
 
-@if (_viewModels.Any())
+@if (_viewModel.Sponsorships.Any())
 {
-    <MudDataGrid T="SponsorshipsListViewModel"
-                 Items="_viewModels"
+    <MudDataGrid T="SponsorshipsSponsorshipsListViewModel"
+                 Items="_viewModel.Sponsorships"
                  Dense="true" Hover="true" Striped="true" Bordered="true">
-        
         <Columns>
-            <TemplateColumn Title="Padrino">
+            <PropertyColumn Property="svm => svm.SponsorshipFullName" Title="Padrino">
                 <CellTemplate>
-                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
-                        @if (context.Item.IsCompany)
+                    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+                        @if (context.Item.IsSponsoredByCompany)
                         {
                             <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Small" />
                         }
@@ -52,26 +48,31 @@
                         {
                             <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" />
                         }
-                        <MudText Typo="Typo.body2">@context.Item.SponsorOrCompanyName</MudText>
+
+                        <AuditableItemDisplay Id="@context.Item.SponsorshipId"
+                                              ItemName="@context.Item.SponsorshipFullName"
+                                              IsActive="true"
+                                              AuditableViewModel="@context.Item" />
                     </MudStack>
-                </CellTemplate>
-            </TemplateColumn>
-
-            <TemplateColumn Title="Estado"> 
-                <CellTemplate>
-                    - <!--to do-->
-                </CellTemplate>
-            </TemplateColumn>
-
-            <PropertyColumn Property="vm => vm.SponsorshipStartDate" Title="Desde" Required="false">
-                <CellTemplate>
-                    <MudText Typo="Typo.body2">@(context.Item.SponsorshipStartDate.ToString("dd/MM/yyyy"))</MudText>
                 </CellTemplate>
             </PropertyColumn>
 
-            <PropertyColumn Property="vm => vm.SponsorshipEndDate" Title="Hasta" Required="false">
+            <TemplateColumn Title="Estado">
                 <CellTemplate>
-                    <MudText Typo="Typo.body2">@(context.Item.SponsorshipEndDate?.ToString("dd/MM/yyyy") ?? "-")</MudText>
+                    <!-- TODO -->
+                    &mdash;
+                </CellTemplate>
+            </TemplateColumn>
+
+            <PropertyColumn Property="svm => svm.SponsorshipStartDate" Title="Desde" Required="false">
+                <CellTemplate>
+                    <MudText Typo="Typo.body2">@(context.Item.SponsorshipStartDateString)</MudText>
+                </CellTemplate>
+            </PropertyColumn>
+
+            <PropertyColumn Property="svm => svm.SponsorshipEndDate" Title="Hasta" Required="false">
+                <CellTemplate>
+                    <MudText Typo="Typo.body2">@(context.Item.SponsorshipEndDateString)</MudText>
                 </CellTemplate>
             </PropertyColumn>
 
@@ -89,7 +90,7 @@
             </TemplateColumn>
         </Columns>
         <PagerContent>
-            <MudDataGridPager T="SponsorshipsListViewModel" RowsPerPageString="Filas por página:" InfoFormat="{first_item}-{last_item} of {all_items}" />
+            <MudDataGridPager T="SponsorshipsSponsorshipsListViewModel" RowsPerPageString="Filas por página:" InfoFormat="{first_item}-{last_item} of {all_items}" />
         </PagerContent>
     </MudDataGrid>
 }
