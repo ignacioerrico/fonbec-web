@@ -17,7 +17,7 @@ namespace Fonbec.Web.DataAccess.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.4")
+                .HasAnnotation("ProductVersion", "10.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -76,7 +76,7 @@ namespace Fonbec.Web.DataAccess.Migrations
 
                     b.HasIndex("ReenabledById");
 
-                    b.ToTable("Chapters");
+                    b.ToTable("Chapters", (string)null);
                 });
 
             modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.Company", b =>
@@ -141,7 +141,7 @@ namespace Fonbec.Web.DataAccess.Migrations
 
                     b.HasIndex("ReenabledById");
 
-                    b.ToTable("Companies");
+                    b.ToTable("Companies", (string)null);
                 });
 
             modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.FonbecWebRole", b =>
@@ -391,7 +391,7 @@ namespace Fonbec.Web.DataAccess.Migrations
 
                     b.HasIndex("ReenabledById");
 
-                    b.ToTable("Sponsors");
+                    b.ToTable("Sponsors", (string)null);
                 });
 
             modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.Sponsorship", b =>
@@ -464,7 +464,7 @@ namespace Fonbec.Web.DataAccess.Migrations
 
                     b.HasIndex("StudentId");
 
-                    b.ToTable("Sponsorships");
+                    b.ToTable("Sponsorships", (string)null);
                 });
 
             modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.Student", b =>
@@ -562,7 +562,7 @@ namespace Fonbec.Web.DataAccess.Migrations
 
                     b.HasIndex("ReenabledById");
 
-                    b.ToTable("Students");
+                    b.ToTable("Students", (string)null);
                 });
 
             modelBuilder.Entity("Microsoft.AspNetCore.Identity.IdentityRoleClaim<int>", b =>
