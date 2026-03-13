@@ -10,7 +10,7 @@ namespace Fonbec.Web.Logic.Services;
 
 public interface IStudentService
 {
-    Task<List<StudentsListViewModel>> GetAllStudentsAsync();
+    Task<List<StudentsListViewModel>> GetAllStudentsAsync(int? chapterId);
     Task<List<SelectableModel<int>>> GetAllStudentsForSelectionAsync(int? chapterId);
     Task<CrudResult> CreateStudentAsync(CreateStudentInputModel inputModel);
     Task<CrudResult> UpdateStudentAsync(UpdateStudentInputModel inputModel);
@@ -18,17 +18,16 @@ public interface IStudentService
 
 public class StudentService(IStudentRepository studentRepository) : IStudentService
 {
-    public async Task<List<StudentsListViewModel>> GetAllStudentsAsync()
+    public async Task<List<StudentsListViewModel>> GetAllStudentsAsync(int? chapterId)
     {
-        var allStudentsDataModel = await studentRepository.GetAllStudentsAsync();
+        var allStudentsDataModel = await studentRepository.GetAllStudentsAsync(chapterId);
         var studentsListViewModel = allStudentsDataModel.Adapt<List<StudentsListViewModel>>();
         return studentsListViewModel;
     }
 
     public async Task<List<SelectableModel<int>>> GetAllStudentsForSelectionAsync(int? chapterId)
     {
-        // TODO: get students should be filtered by chapter
-        return await GetAllStudentsAsync()
+        return await GetAllStudentsAsync(chapterId)
             .ContinueWith(s => s.Result.Adapt<List<SelectableModel<int>>>());
     }
 
