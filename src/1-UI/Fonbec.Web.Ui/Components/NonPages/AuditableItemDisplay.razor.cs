@@ -12,10 +12,10 @@ public partial class AuditableItemDisplay
     [Parameter, EditorRequired]
     public string ItemName { get; set; } = string.Empty;
 
-    [Parameter, EditorRequired]
+    [Parameter]
     public string? Email { get; set; }
 
-    [Parameter, EditorRequired]
+    [Parameter]
     public bool IsActive { get; set; }
 
     [Parameter]
