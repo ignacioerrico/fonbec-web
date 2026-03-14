@@ -1,5 +1,4 @@
 ﻿using Fonbec.Web.DataAccess.Constants;
-using Fonbec.Web.Logic.Models.Chapters.Input;
 using Fonbec.Web.Logic.Models.Companies.Input;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Ui.Constants;
@@ -8,7 +7,7 @@ using Microsoft.AspNetCore.Components;
 using MudBlazor;
 namespace Fonbec.Web.Ui.Components.Pages.Companies;
 
-[PageMetadata(nameof(CompanyCreate), "Crear y actualizar empresas", [FonbecRole.Admin, FonbecRole.Manager])]
+[PageMetadata(nameof(CompanyCreate), "Crear y actualizar empresas", [FonbecRole.Manager])]
 public partial class CompanyCreate : AuthenticationRequiredComponentBase
 {
     private readonly CompanyCreateBindModel _bindModel = new();
@@ -50,7 +49,7 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
 
             NavigationManager.NavigateTo(NavRoutes.Companies);
         }
-        _saving = false;
 
+        _saving = false;
     }
 }

@@ -1,7 +1,7 @@
-﻿@using Fonbec.Web.DataAccess.Constants
-@attribute [Route(NavRoutes.CompanyCreate)]
+﻿@attribute [Route(NavRoutes.CompanyCreate)]
 @attribute [Authorize(Policy = nameof(CompanyCreate))]
 @inherits AuthenticationRequiredComponentBase
+@using Fonbec.Web.DataAccess.Constants
 
 <PageHeader Title="Alta de empresa" />
 

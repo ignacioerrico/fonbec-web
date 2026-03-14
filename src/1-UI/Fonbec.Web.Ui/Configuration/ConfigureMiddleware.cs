@@ -58,8 +58,10 @@ public static class ConfigureMiddleware
 
         // Prepare claim value containing all page codenames
         var allPages = scope.ServiceProvider.GetRequiredService<List<PageAccessInfo>>();
-        var claimValues = allPages.Select(c => c.Codename);
-        var allClaims = string.Join(',', claimValues);
+        var adminCodenames = allPages.Where(pai => pai.Roles.Contains(FonbecRole.Admin))
+            .Select(pai => pai.Codename)
+            .OrderBy(cn => cn);
+        var adminCodenamesClaim = string.Join(',', adminCodenames);
 
         // Ensure roles exist
         foreach (var roleName in FonbecRole.AllRoles)
@@ -92,8 +94,8 @@ public static class ConfigureMiddleware
         {
             // Admin user already exists
 
-            // Ensure Admin has all permissions
-            await UpdateClaim(userManager, adminUser, allClaims);
+            // Ensure Admin has the correct value in the custom claim of type "FonbecAuth"
+            await UpdateClaim(userManager, adminUser, adminCodenamesClaim);
 
             return;
         }
@@ -137,8 +139,8 @@ public static class ConfigureMiddleware
             Halt("Could not add Admin role to admin user: ", roleAssignmentResult.Errors);
         }
 
-        // Add all existing permissions to the custom claim of type "FonbecAuth"
-        await AddClaim(userManager, adminUser, allClaims);
+        // Add value to the custom claim of type "FonbecAuth"
+        await AddClaim(userManager, adminUser, adminCodenamesClaim);
     }
 
     private static async Task UpdateClaim(UserManager<FonbecWebUser> userManager, FonbecWebUser adminUser, string newClaimValue)
