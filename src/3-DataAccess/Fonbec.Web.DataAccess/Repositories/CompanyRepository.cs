@@ -60,6 +60,7 @@ public class CompanyRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
         };
 
         db.Companies.Add(company);
-        return await db.SaveChangesAsync();
+        await db.SaveChangesAsync();
+        return company.Id;
     }
 }

@@ -15,14 +15,22 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
 
     private bool _formValidationSucceeded;
 
+    private bool _loadingTable;
+
+    private int selectedSponsorId;
+
     private bool _saving;
 
     [Inject]
     private ICompanyService CompanyService { get; set; } = null!;
+
+    [Inject]
+    private ISponsorService SponsorService { get; set; } = null!;
     private bool SaveButtonDisabled => Loading
                                        || _saving
                                        || !_formValidationSucceeded;
-
+    private bool AddSponsorButtonDisabled => _loadingTable
+                                       || selectedSponsorId == 0;
     private async Task Save()
     {
         _saving = true;
@@ -31,6 +39,7 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
             _bindModel.CompanyName,
             _bindModel.CompanyEmail,
             _bindModel.CompanyPhoneNumber,
+            _bindModel.CompanySponsors,
             FonbecClaim.UserId);
 
         var companyNameExists = await CompanyService.CompanyNameExistsAsync(createCompanyInputModel.CompanyName);
@@ -52,5 +61,30 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
         }
         _saving = false;
 
+    }
+
+    private async Task AddSponsor()
+    {
+        _loadingTable = true;
+
+        var sponsorAdd = await SponsorService.GetSponsorByIdAsync(selectedSponsorId);
+        if (sponsorAdd == null)
+        {
+            Snackbar.Add("No se pudo encontrar el padrino seleccionado.", Severity.Error);
+
+        } else if (_bindModel.CompanySponsors.Any(s => s.IsIdenticalTo(sponsorAdd)))
+        {
+            Snackbar.Add("El padrino seleccionado ya está asociado a la empresa.", Severity.Warning);
+        }
+        else
+        {
+            _bindModel.CompanySponsors.Add(sponsorAdd);
+        }
+
+        _loadingTable = false;
+    }
+
+    private async Task RemoveSponsor(int sponsorId) { 
+        _bindModel.CompanySponsors.RemoveAll(s => s.SponsorId == sponsorId);
     }
 }

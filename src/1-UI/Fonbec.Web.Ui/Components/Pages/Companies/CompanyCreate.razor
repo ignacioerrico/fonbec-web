@@ -18,6 +18,34 @@
 
 	<MudTextField T="string" Label="Teléfono" @bind-Value="_bindModel.CompanyPhoneNumber" Immediate="true"
 				  MaxLength="MaxLength.Company.PhoneNumber" />
+	<MudStack Row="true" Class="pt-4">
+		<SponsorSelector @bind-SelectedSponsorId="selectedSponsorId" />
+		<MudSpacer />
+		<MudButton OnClick="AddSponsor" Disabled="AddSponsorButtonDisabled"
+				   Variant="Variant.Filled" Color="Color.Primary">
+			Agregar
+		</MudButton>
+	</MudStack>
+
+	@if (_bindModel.CompanySponsors != null && _bindModel.CompanySponsors.Any())
+	{
+		<MudTable Items="_bindModel.CompanySponsors" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loadingTable">
+			<HeaderContent>
+				<MudTh>Nombre completo</MudTh>
+			</HeaderContent>
+			<RowTemplate>
+				<MudTd DataLabel="Nombre completo">
+					<MudStack Row="true" AlignItems="AlignItems.Center">
+						<MudText>@context.SponsorFullName</MudText>
+						<MudSpacer />
+						<MudTooltip Text="Eliminar" Arrow="true" Placement="Placement.Bottom" Color="Color.Error" Delay="500">
+							<MudIconButton Icon="@Icons.Material.Outlined.Delete" Color="Color.Error" OnClick="@(() => RemoveSponsor(context.SponsorId))" />
+						</MudTooltip>
+					</MudStack>
+				</MudTd>
+			</RowTemplate>
+		</MudTable>
+	}
 
 </MudForm>
 

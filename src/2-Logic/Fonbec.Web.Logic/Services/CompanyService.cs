@@ -16,7 +16,7 @@ public interface ICompanyService
     Task<CrudResult> CreateCompanyAsync(CreateCompanyInputModel inputModel);
 }
 
-public class CompanyService(ICompanyRepository companyRepository) : ICompanyService
+public class CompanyService(ICompanyRepository companyRepository, ISponsorRepository sponsorRepository) : ICompanyService
 {
     public async Task<List<CompaniesListViewModel>> GetAllCompaniesAsync()
     {
@@ -39,7 +39,9 @@ public class CompanyService(ICompanyRepository companyRepository) : ICompanyServ
     public async Task<CrudResult> CreateCompanyAsync(CreateCompanyInputModel inputModel)
     {
         var inputDataModel = inputModel.Adapt<CreateCompanyInputDataModel>();
-        var affectedRows = await companyRepository.CreateCompanyAsync(inputDataModel);
+        var companyId = await companyRepository.CreateCompanyAsync(inputDataModel);
+        var sponsorsId = inputModel.CompanySponsors.Select(s => s.SponsorId).ToList();
+        var affectedRows = await sponsorRepository.LinkSponsorCompanyAsync(companyId, sponsorsId);
         return new CrudResult(affectedRows);
     }
 }

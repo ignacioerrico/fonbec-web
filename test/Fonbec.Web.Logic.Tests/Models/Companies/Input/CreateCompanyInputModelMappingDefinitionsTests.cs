@@ -14,6 +14,7 @@ public class CreateCompanyInputModelMappingDefinitionsTests : MappingTestBase
             CompanyName: "Test Company",
             CompanyEmail: "test@hotmail.com",
             CompanyPhoneNumber: "123456789",
+            CompanySponsors: [],
             CreatedById: 42
         );
 
@@ -32,7 +33,9 @@ public class CreateCompanyInputModelMappingDefinitionsTests : MappingTestBase
             CompanyName: string.Empty,
             CompanyEmail: "test@gmail.com",
             CompanyPhoneNumber: "123456789",
+            CompanySponsors: [],
             CreatedById: 42
+
         );
 
         var result = () => input.Adapt<CreateCompanyInputDataModel>(Config);
@@ -48,6 +51,7 @@ public class CreateCompanyInputModelMappingDefinitionsTests : MappingTestBase
             CompanyName: "Test Company",
             CompanyEmail:" test@gmail.com  ",
             CompanyPhoneNumber: "123456789",
+            CompanySponsors: [],
             CreatedById: 42
         );
 
@@ -63,6 +67,7 @@ public class CreateCompanyInputModelMappingDefinitionsTests : MappingTestBase
             CompanyName: "Test Company",
             CompanyEmail: string.Empty,
             CompanyPhoneNumber: string.Empty,
+            CompanySponsors: [],
             CreatedById: 42
         );
 

@@ -1,7 +1,10 @@
-﻿using Fonbec.Web.DataAccess.DataModels.Sponsors;
+﻿using Fonbec.Web.DataAccess.DataModels.Companies;
+using Fonbec.Web.DataAccess.DataModels.Companies.Input;
+using Fonbec.Web.DataAccess.DataModels.Sponsors;
 using Fonbec.Web.DataAccess.DataModels.Sponsors.Input;
 using Fonbec.Web.DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
+using static Fonbec.Web.DataAccess.Constants.MaxLength;
 
 namespace Fonbec.Web.DataAccess.Repositories;
 
@@ -17,6 +20,8 @@ public interface ISponsorRepository
     Task<int> CreateSponsorAsync(CreateSponsorInputDataModel dataModel);
 
     Task<int> UpdateSponsorAsync(UpdateSponsorInputDataModel dataModel);
+    Task<CreateCompanySponsorDataModel> GetSponsorByIdAsync(int sponsorId);
+    Task<int> LinkSponsorCompanyAsync(int companyId, List<int> sponsorsIds);
 }
 
 public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : ISponsorRepository
@@ -95,6 +100,43 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
         sponsorDb.LastUpdatedById = dataModel.UpdatedById;
 
         db.Sponsors.Update(sponsorDb);
+        return await db.SaveChangesAsync();
+    }
+
+    public async Task<CreateCompanySponsorDataModel> GetSponsorByIdAsync(int sponsorId) //Esperar a el cambio de SponsorSelector
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var sponsor = await db.Sponsors
+            .Include(s => s.CreatedBy)
+            .Include(s => s.LastUpdatedBy)
+            .Include(s => s.DisabledBy)
+            .Include(s => s.ReenabledBy)
+            .Where(s => !s.IsDeleted && s.Id == sponsorId)
+            .Select(s => new CreateCompanySponsorDataModel
+            {
+                SponsorId = s.Id,
+                FirstName = s.FirstName,
+                LastName = s.LastName,
+                CreatedBy = s.CreatedBy,
+                LastUpdatedBy = s.LastUpdatedBy,
+                DisabledBy = s.DisabledBy,
+                ReenabledBy = s.ReenabledBy
+            }).FirstOrDefaultAsync();
+
+        return sponsor;
+    }
+
+    public async Task<int> LinkSponsorCompanyAsync(int companyId, List<int> sponsorsId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var sponsors = await db.Sponsors
+            .Where(s => sponsorsId.Contains(s.Id))
+            .ToListAsync();
+
+        sponsors.ForEach(s => s.CompanyId = companyId);
+        db.Sponsors.UpdateRange(sponsors);
         return await db.SaveChangesAsync();
     }
 }
