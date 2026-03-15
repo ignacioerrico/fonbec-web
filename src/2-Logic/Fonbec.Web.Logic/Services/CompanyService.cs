@@ -14,6 +14,7 @@ public interface ICompanyService
     Task<List<SelectableModel<int>>> GetAllCompaniesForSelectionAsync();
     Task<bool> CompanyNameExistsAsync(string companyName);
     Task<CrudResult> CreateCompanyAsync(CreateCompanyInputModel inputModel);
+    Task<CrudResult> CreateCompanyWithPointsOfContactAsync(CreateCompanyWithPointsOfContactInputModel inputModel);
 }
 
 public class CompanyService(ICompanyRepository companyRepository) : ICompanyService
@@ -40,6 +41,13 @@ public class CompanyService(ICompanyRepository companyRepository) : ICompanyServ
     {
         var inputDataModel = inputModel.Adapt<CreateCompanyInputDataModel>();
         var affectedRows = await companyRepository.CreateCompanyAsync(inputDataModel);
+        return new CrudResult(affectedRows);
+    }
+
+    public async Task<CrudResult> CreateCompanyWithPointsOfContactAsync(CreateCompanyWithPointsOfContactInputModel inputModel)
+    {
+        var inputDataModel = inputModel.Adapt<CreateCompanyWithPointsOfContactInputDataModel>();
+        var affectedRows = await companyRepository.CreateCompanyWithPointsOfContactAsync(inputDataModel);
         return new CrudResult(affectedRows);
     }
 }
