@@ -1,16 +1,10 @@
-﻿<LoadingIndicator Loading="!_dataLoaded" />
+﻿<LoadingIndicator Loading="_loading" />
 
-<MudSelect T="int" Label="Mediador"
-		   Value="SelectedFacilitatorId"
-		   ValueChanged="OnSelectedValueChanged"
-		   ToStringFunc="MapKeyToDisplayName"
-		   Disabled="!_dataLoaded"
-		   Required="true" RequiredError="Este es un campo obligatorio."
-           Variant="Variant.Filled" AnchorOrigin="Origin.BottomLeft">
-	@foreach (var facilitator in _facilitators)
-	{
-		<MudSelectItem T="int" Value="facilitator.Key">
-			@facilitator.DisplayName
-		</MudSelectItem>
-	}
-</MudSelect>
+<MudAutocomplete T="int" Label="Mediador"
+                 SearchFunc="Search"
+                 Value="SelectedFacilitatorId"
+                 ValueChanged="OnSelectedValueChanged"
+                 ToStringFunc="MapKeyToDisplayName"
+                 Disabled="_loading"
+                 Required="true" RequiredError="Este es un campo obligatorio."
+                 Variant="Variant.Filled" AnchorOrigin="Origin.BottomLeft" />

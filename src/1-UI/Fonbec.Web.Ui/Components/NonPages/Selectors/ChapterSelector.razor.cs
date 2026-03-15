@@ -6,13 +6,16 @@ namespace Fonbec.Web.Ui.Components.NonPages.Selectors;
 
 public partial class ChapterSelector
 {
-    private bool _dataLoaded;
-
     private readonly List<SelectableModel<int>> _chapters = [];
+
+    private bool _loading;
 
     [Parameter]
     public int SelectedChapterId { get; set; }
-    
+
+    [Parameter]
+    public bool SelectFirstItemOnLoad { get; set; }
+
     [Parameter]
     public EventCallback<int> SelectedChapterIdChanged { get; set; }
 
@@ -20,22 +23,24 @@ public partial class ChapterSelector
     /// Callback invoked when chapters are loaded. The int parameter indicates the number of chapters loaded.
     /// </summary>
     [Parameter]
-    public EventCallback<int> OnChaptersLoaded { get; set; }
+    public EventCallback<int> NumberOfChaptersLoaded { get; set; }
 
     [Inject]
     public IChapterService ChapterService { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
+        _loading = true;
+        
         var chapters = await ChapterService.GetAllChaptersForSelectionAsync();
 
-        _dataLoaded = true;
+        _loading = false;
 
         _chapters.AddRange(chapters);
 
-        await OnChaptersLoaded.InvokeAsync(chapters.Count);
+        await NumberOfChaptersLoaded.InvokeAsync(chapters.Count);
 
-        if (chapters.Count > 0)
+        if (SelectFirstItemOnLoad && chapters.Count > 0)
         {
             SelectedChapterId = chapters.First().Key;
             await OnSelectedValueChanged(SelectedChapterId);
@@ -44,8 +49,19 @@ public partial class ChapterSelector
         await base.OnInitializedAsync();
     }
 
-    private async Task OnSelectedValueChanged(int selectedChapterId)
+    private async Task<IEnumerable<int>> Search(string value, CancellationToken token)
     {
-        await SelectedChapterIdChanged.InvokeAsync(selectedChapterId);
+        var result = string.IsNullOrEmpty(value)
+            ? _chapters.Select(c => c.Key)
+            : _chapters.Where(c => c.DisplayName.Contains(value, StringComparison.OrdinalIgnoreCase))
+                           .Select(c => c.Key);
+
+        return await Task.FromResult(result);
     }
+
+    private async Task OnSelectedValueChanged(int selectedChapterId) =>
+        await SelectedChapterIdChanged.InvokeAsync(selectedChapterId);
+
+    private string? MapKeyToDisplayName(int key) =>
+        _chapters.FirstOrDefault(s => s.Key == key)?.DisplayName;
 }

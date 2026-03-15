@@ -9,4 +9,6 @@ public class Company : Auditable
     public string? Email { get; set; }
     public string? PhoneNumber { get; set; }
     public List<Sponsor>? Sponsors { get; set; }
+    public List<Sponsorship> Sponsorships { get; set; } = [];
+
 }

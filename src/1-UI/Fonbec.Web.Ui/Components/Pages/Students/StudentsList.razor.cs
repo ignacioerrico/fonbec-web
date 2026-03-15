@@ -33,7 +33,7 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
 
         Loading = true;
 
-        _viewModels = await StudentService.GetAllStudentsAsync();
+        _viewModels = await StudentService.GetAllStudentsAsync(FonbecClaim.ChapterId);
 
         _allEducationLevels = Enum.GetValues<EducationLevel>()
             .Select(el => el.EnumToString());

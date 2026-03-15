@@ -1,4 +1,5 @@
-﻿using Fonbec.Web.DataAccess.Entities.Abstract;
+﻿using Fonbec.Web.DataAccess.Entities;
+using Fonbec.Web.DataAccess.Entities.Abstract;
 using Fonbec.Web.DataAccess.Entities.Enums;
 
 namespace Fonbec.Web.DataAccess.DataModels.Sponsors;
@@ -20,4 +21,6 @@ public class AllSponsorsDataModel(Auditable auditable) : AuditableDataModel(audi
     public string SponsorEmail { get; set; } = null!;
 
     public bool IsSponsorActive { get; set; }
+
+    public Company? SponsorCompany { get; set; }
 }

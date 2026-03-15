@@ -32,11 +32,30 @@ public partial class StudentCreate : AuthenticationRequiredComponentBase
     private async Task OnChaptersLoaded(int chaptersCount) =>
         _anyChapters = chaptersCount > 0;
 
-    private async Task OnFacilitatorsLoaded(int totalFacilitators) =>
+    private async Task NumberOfFacilitatorsLoaded(int totalFacilitators) =>
         _anyFacilitators = totalFacilitators > 0;
 
     private async Task Save()
     {
+        if (FonbecClaim.ChapterId is null)
+        {
+            if (_bindModel.ChapterId == 0)
+            {
+                Snackbar.Add("La filial no es válida.", Severity.Error);
+                return;
+            }
+        }
+        else
+        {
+            _bindModel.ChapterId = FonbecClaim.ChapterId.Value;
+        }
+
+        if (_bindModel.FacilitatorId == 0)
+        {
+            Snackbar.Add("El mediador no es válido.", Severity.Error);
+            return;
+        }
+
         _saving = true;
 
         var createStudentInputModel = new CreateStudentInputModel(
