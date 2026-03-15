@@ -31,6 +31,19 @@ public partial class SponsorCreate : AuthenticationRequiredComponentBase
 
     private async Task Save()
     {
+        if (FonbecClaim.ChapterId is null)
+        {
+            if (_bindModel.ChapterId == 0)
+            {
+                Snackbar.Add("La filial no es válida.", Severity.Error);
+                return;
+            }
+        }
+        else
+        {
+            _bindModel.ChapterId = FonbecClaim.ChapterId.Value;
+        }
+
         _saving = true;
 
         var createSponsorInputModel = new CreateSponsorInputModel(

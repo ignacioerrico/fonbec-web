@@ -15,7 +15,7 @@
 
 <MudForm @bind-IsValid="@_formValidationSucceeded" Disabled="!_anyChapters">
     <ChapterSelector @bind-SelectedChapterId="_bindModel.ChapterId"
-                     OnChaptersLoaded="OnChaptersLoaded" />
+                     NumberOfChaptersLoaded="OnChaptersLoaded" />
 
     <MudTextField T="string" Label="Nombre" @bind-Value="_bindModel.SponsorFirstName" Immediate="true" AutoFocus="_anyChapters"
                   Required="true" RequiredError="Este es un campo obligatorio."

@@ -7,7 +7,7 @@ namespace Fonbec.Web.Logic.Models.Sponsorships.Input;
 public record CreateSponsorshipInputModel
 (
     int StudentId,
-    int SponsorId,
+    int? SponsorId,
     DateTime SponsorshipStartDate,
     DateTime? SponsorshipEndDate,
     string SponsorshipNotes,

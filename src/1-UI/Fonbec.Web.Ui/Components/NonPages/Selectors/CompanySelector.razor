@@ -1,17 +1,10 @@
-﻿<LoadingIndicator Loading="!_dataLoaded" />
+﻿<LoadingIndicator Loading="_loading" />
 
-<MudSelect T="int?" Label="Empresa"
-           Value="SelectedCompanyId"
-           ValueChanged="OnSelectedValueChanged"
-           ToStringFunc="MapKeyToDisplayName"
-           Disabled="!_dataLoaded"
-           Clearable="true"
-           Placeholder="Seleccione una empresa"
-           Variant="Variant.Filled" AnchorOrigin="Origin.BottomLeft">
-    @foreach (var company in _companies)
-    {
-        <MudSelectItem T="int?" Value="company.Key">
-            @company.DisplayName
-        </MudSelectItem>
-    }
-</MudSelect>
+<MudAutocomplete T="int?" Label="Empresa"
+                 SearchFunc="Search"
+                 Value="SelectedCompanyId"
+                 ValueChanged="OnSelectedValueChanged"
+                 ToStringFunc="MapKeyToDisplayName"
+                 Disabled="_loading"
+                 Clearable="true"
+                 Variant="Variant.Filled" AnchorOrigin="Origin.BottomLeft" />

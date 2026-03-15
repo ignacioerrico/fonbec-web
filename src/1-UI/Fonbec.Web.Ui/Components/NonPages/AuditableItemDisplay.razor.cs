@@ -6,10 +6,10 @@ namespace Fonbec.Web.Ui.Components.NonPages;
 
 public partial class AuditableItemDisplay
 {
-    [Parameter]
+    [Parameter, EditorRequired]
     public int Id { get; set; }
 
-    [Parameter]
+    [Parameter, EditorRequired]
     public string ItemName { get; set; } = string.Empty;
 
     [Parameter]
@@ -21,6 +21,6 @@ public partial class AuditableItemDisplay
     [Parameter]
     public Color Color { get; set; } = Color.Primary;
 
-    [Parameter]
+    [Parameter, EditorRequired]
     public AuditableViewModel AuditableViewModel { get; set; } = null!;
 }
