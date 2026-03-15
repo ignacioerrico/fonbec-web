@@ -31,6 +31,4 @@ public static class NavRoutes
     public const string PlannedDeliveries = $"/PlannedDeliveries";
 
     public const string PlannnedDeliveryCreate = $"{PlannedDeliveries}/alta";
-
-
 }
