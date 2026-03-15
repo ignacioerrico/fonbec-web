@@ -1,5 +1,5 @@
 ﻿@attribute [Route(NavRoutes.PlannnedDeliveryCreate)]
-@attribute [Authorize(Policy = nameof(PlannedDeliveriesCreate))]
+@attribute [Authorize(Policy = nameof(PlannedDeliveryCreate))]
 @inherits AuthenticationRequiredComponentBase
 
 @using Fonbec.Web.DataAccess.Constants
@@ -9,8 +9,7 @@
 <LoadingIndicator Loading="Loading" />
 
 <MudForm @bind-IsValid="@_formValidationSucceeded">
-	<MudNumericField Label="Enter the chapter Id" @bind-Value="_bindModel.ChapterId" 
-		Required="true" RequiredError="Please entre a chapter id"/> 
+
 
 	<MudDatePicker Label="StartsOn" 
 		@bind-Date="_bindModel.StartsOn"
@@ -18,12 +17,19 @@
 		OpenTo="OpenTo.Month" 
 		FixDay="1"
 		DateFormat="MM/yyyy"
-		/>	
+		Validation="@ValidateMonth"
+		Immediate="true" />	
+
+	<MudTextField T="string" Label="Additional Information" @bind-Value="_bindModel.PlannedDeliveryNotes" Immediate="true"
+				  Required="false"
+				  MaxLength="MaxLength.Auditable.Notes"
+				  />
 
 	<MudSwitch T="bool" Label="completed?" @bind-Value="_bindModel.Completed" 
 				Color="Color.Success"
 		class="pt-2"
 	/>
+
 </MudForm>
 
 <MudStack Row="true" Class="pt-4">

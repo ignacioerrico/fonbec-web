@@ -2,9 +2,9 @@
 {
 	public class PlannedDeliveryCreateBindModel
 	{
-		public int ChapterId { get; set; }
 		public DateTime? StartsOn { get; set; } 
-		public bool Completed { get; set; }
+		public bool Completed { get; set; } 
+		public string? PlannedDeliveryNotes { get; set; }
 		
 	}
 }

@@ -10,9 +10,8 @@ namespace Fonbec.Web.DataAccess.DataModels.PlannedDelivery.Input;
 		public int ChapterId { get; set; }
 		public DateTime DeliverableStartsOn { get; set; }
 		public bool IsCompleted { get; set; }
-		public string? DeliverableNotes { get; set; }
+		public string? PlannedDeliveryNotes { get; set; }
 		public int CreatedById { get; set; }
-
 }
 
 	

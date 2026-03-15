@@ -1,12 +1,12 @@
 ﻿@attribute [Route(NavRoutes.PlannedDeliveries)]
-@attribute [Authorize(Policy = nameof(PlannedDeliveriesCreate))]
+@attribute [Authorize(Policy = nameof(PlannedDeliveriesList))]
 @inherits AuthenticationRequiredComponentBase
 
 @using Fonbec.Web.Logic.Models.PlannedDeliveries
 
 <PageHeader Title="Planned Deliveries" />
 
-<AuthorizeView Policy="@nameof(PlannedDeliveriesCreate)">
+<AuthorizeView Policy="@nameof(PlannedDeliveryCreate)">
 	<MudTooltip Text="Add planned delivery"
 			Arrow="true" Placement="Placement.Right"
 			Color="Color.Primary">

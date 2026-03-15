@@ -7,6 +7,7 @@
 @using Fonbec.Web.Ui.Components.Pages.Users
 @using Fonbec.Web.Ui.Components.Pages.Sponsors
 @using Fonbec.Web.Ui.Components.Pages.Companies
+@using Fonbec.Web.Ui.Components.Pages.PlannedDeliveries
 
 <MudNavMenu>
     <MudNavLink Href="" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Home">Home</MudNavLink>
@@ -26,7 +27,7 @@
                 <MudNavLink Href="@NavRoutes.Sponsors" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.SupervisorAccount">Padrinos</MudNavLink>
             </AuthorizeView>
 
-            <AuthorizeView Policy="@nameof(SponsorsList)">
+            <AuthorizeView Policy="@nameof(PlannedDeliveriesList)">
                 <MudNavLink Href="@NavRoutes.PlannedDeliveries" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.SupervisorAccount">Planned Delivery</MudNavLink>
             </AuthorizeView>
 

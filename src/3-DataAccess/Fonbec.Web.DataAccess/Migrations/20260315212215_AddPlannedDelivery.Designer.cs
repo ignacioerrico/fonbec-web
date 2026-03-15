@@ -12,15 +12,15 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Fonbec.Web.DataAccess.Migrations
 {
     [DbContext(typeof(FonbecWebDbContext))]
-    [Migration("20260306031744_Test")]
-    partial class Test
+    [Migration("20260315212215_AddPlannedDelivery")]
+    partial class AddPlannedDelivery
     {
         /// <inheritdoc />
         protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.3")
+                .HasAnnotation("ProductVersion", "10.0.5")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -305,6 +305,68 @@ namespace Fonbec.Web.DataAccess.Migrations
                     b.ToTable("AspNetUsers", (string)null);
                 });
 
+            modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.PlannedDelivery", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int?>("ChapterId")
+                        .HasColumnType("int");
+
+                    b.Property<bool>("Completed")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("CreatedById")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int?>("DisabledById")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("DisabledOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsActive")
+                        .HasColumnType("bit");
+
+                    b.Property<int?>("LastUpdatedById")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("LastUpdatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<string>("Notes")
+                        .HasColumnType("nvarchar(max)");
+
+                    b.Property<int?>("ReenabledById")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("ReenabledOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime>("StartsOn")
+                        .HasColumnType("datetime2");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChapterId");
+
+                    b.HasIndex("CreatedById");
+
+                    b.HasIndex("DisabledById");
+
+                    b.HasIndex("LastUpdatedById");
+
+                    b.HasIndex("ReenabledById");
+
+                    b.ToTable("PlannedDeliveries");
+                });
+
             modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.Sponsor", b =>
                 {
                     b.Property<int>("Id")
@@ -314,6 +376,9 @@ namespace Fonbec.Web.DataAccess.Migrations
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
 
                     b.Property<int>("ChapterId")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("CompanyId")
                         .HasColumnType("int");
 
                     b.Property<int>("CreatedById")
@@ -380,6 +445,8 @@ namespace Fonbec.Web.DataAccess.Migrations
                     b.HasKey("Id");
 
                     b.HasIndex("ChapterId");
+
+                    b.HasIndex("CompanyId");
 
                     b.HasIndex("CreatedById");
 
@@ -757,13 +824,11 @@ namespace Fonbec.Web.DataAccess.Migrations
                     b.Navigation("ReenabledBy");
                 });
 
-            modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.Sponsor", b =>
+            modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.PlannedDelivery", b =>
                 {
                     b.HasOne("Fonbec.Web.DataAccess.Entities.Chapter", "Chapter")
                         .WithMany()
-                        .HasForeignKey("ChapterId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .HasForeignKey("ChapterId");
 
                     b.HasOne("Fonbec.Web.DataAccess.Entities.FonbecWebUser", "CreatedBy")
                         .WithMany()
@@ -784,6 +849,50 @@ namespace Fonbec.Web.DataAccess.Migrations
                         .HasForeignKey("ReenabledById");
 
                     b.Navigation("Chapter");
+
+                    b.Navigation("CreatedBy");
+
+                    b.Navigation("DisabledBy");
+
+                    b.Navigation("LastUpdatedBy");
+
+                    b.Navigation("ReenabledBy");
+                });
+
+            modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.Sponsor", b =>
+                {
+                    b.HasOne("Fonbec.Web.DataAccess.Entities.Chapter", "Chapter")
+                        .WithMany()
+                        .HasForeignKey("ChapterId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Fonbec.Web.DataAccess.Entities.Company", "Company")
+                        .WithMany("Sponsors")
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("Fonbec.Web.DataAccess.Entities.FonbecWebUser", "CreatedBy")
+                        .WithMany()
+                        .HasForeignKey("CreatedById")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Fonbec.Web.DataAccess.Entities.FonbecWebUser", "DisabledBy")
+                        .WithMany()
+                        .HasForeignKey("DisabledById");
+
+                    b.HasOne("Fonbec.Web.DataAccess.Entities.FonbecWebUser", "LastUpdatedBy")
+                        .WithMany()
+                        .HasForeignKey("LastUpdatedById");
+
+                    b.HasOne("Fonbec.Web.DataAccess.Entities.FonbecWebUser", "ReenabledBy")
+                        .WithMany()
+                        .HasForeignKey("ReenabledById");
+
+                    b.Navigation("Chapter");
+
+                    b.Navigation("Company");
 
                     b.Navigation("CreatedBy");
 
@@ -933,6 +1042,11 @@ namespace Fonbec.Web.DataAccess.Migrations
                         .HasForeignKey("UserId")
                         .OnDelete(DeleteBehavior.Cascade)
                         .IsRequired();
+                });
+
+            modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.Company", b =>
+                {
+                    b.Navigation("Sponsors");
                 });
 
             modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.FonbecWebUser", b =>

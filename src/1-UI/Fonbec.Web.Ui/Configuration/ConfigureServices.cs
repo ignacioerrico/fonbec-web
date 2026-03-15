@@ -53,7 +53,7 @@ public static class ConfigureServices
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<IStudentService, StudentService>();
         services.AddScoped<ISponsorService, SponsorService>();
-        services.AddScoped<IPlannedDeliveryService, PlannedDeliveyService>();
+        services.AddScoped<IPlannedDeliveryService, PlannedDeliveryService>();
         services.AddScoped<ISponsorshipService, SponsorshipService>();
         services.AddScoped<ICompanyService, CompanyService>();
         services.AddScoped<IChapterRepository, ChapterRepository>();

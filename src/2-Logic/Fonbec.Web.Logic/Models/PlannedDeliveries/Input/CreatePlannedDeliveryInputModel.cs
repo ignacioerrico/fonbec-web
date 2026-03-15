@@ -7,8 +7,9 @@ namespace Fonbec.Web.Logic.Models.PlannedDeliveries.Input;
 public record CreatePlannedDeliveryInputModel(
 	DateTime? DeliverableStartsOn,
 	bool IsCompleted,
-	int ChapterId,
-	int CreatedById
+	int? ChapterId,
+	int CreatedById,
+	string? PlannedDeliveryNotes
 );
 public class CreatePlannedDeliveryInputModelMappingDefinitions : IRegister
 {
@@ -18,7 +19,8 @@ public class CreatePlannedDeliveryInputModelMappingDefinitions : IRegister
 			.Map(dest => dest.DeliverableStartsOn, src => src.DeliverableStartsOn)
 			.Map(dest => dest.IsCompleted, src => src.IsCompleted)
 			.Map(dest => dest.ChapterId, src => src.ChapterId)
-			.Map(dest => dest.CreatedById, src => src.CreatedById);
+			.Map(dest => dest.CreatedById, src => src.CreatedById)
+            .Map(dest => dest.PlannedDeliveryNotes, src => src.PlannedDeliveryNotes); ;
 	}
 }
 
