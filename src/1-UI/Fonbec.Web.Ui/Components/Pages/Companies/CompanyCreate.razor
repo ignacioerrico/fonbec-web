@@ -1,63 +1,86 @@
-﻿@using Fonbec.Web.DataAccess.Constants
-@attribute [Route(NavRoutes.CompanyCreate)]
+﻿@attribute [Route(NavRoutes.CompanyCreate)]
 @attribute [Authorize(Policy = nameof(CompanyCreate))]
 @inherits AuthenticationRequiredComponentBase
+
+@using Fonbec.Web.DataAccess.Constants
+@using Fonbec.Web.Logic.Models
 
 <PageHeader Title="Alta de empresa" />
 
 <LoadingIndicator Loading="Loading" />
 
 <MudForm @bind-IsValid="@_formValidationSucceeded">
+    <MudTextField T="string" Label="Nombre" @bind-Value="_bindModel.CompanyName" Immediate="true"
+                  Required="true" RequiredError="Este es un campo obligatorio."
+                  MaxLength="MaxLength.Company.Name" />
 
-	<MudTextField T="string" Label="Nombre" @bind-Value="_bindModel.CompanyName" Immediate="true"
-				  Required="true" RequiredError="Este es un campo obligatorio."
-				  MaxLength="MaxLength.Company.Name" />
+    <MudTextField T="string" Label="Correo electrónico" @bind-Value="_bindModel.CompanyEmail" Immediate="true"
+                  MaxLength="MaxLength.Company.Email" />
 
-	<MudTextField T="string" Label="Correo electrónico" @bind-Value="_bindModel.CompanyEmail" Immediate="true"
-				  MaxLength="MaxLength.Company.Email" />
-
-	<MudTextField T="string" Label="Teléfono" @bind-Value="_bindModel.CompanyPhoneNumber" Immediate="true"
-				  MaxLength="MaxLength.Company.PhoneNumber" />
-	<MudStack Row="true" Class="pt-4">
-		<SponsorSelector @bind-SelectedSponsorId="selectedSponsorId" />
-		<MudSpacer />
-		<MudButton OnClick="AddSponsor" Disabled="AddSponsorButtonDisabled"
-				   Variant="Variant.Filled" Color="Color.Primary">
-			Agregar
-		</MudButton>
-	</MudStack>
-
-	@if (_bindModel.CompanySponsors != null && _bindModel.CompanySponsors.Any())
-	{
-		<MudTable Items="_bindModel.CompanySponsors" Hover="true" Breakpoint="Breakpoint.Sm" Loading="@_loadingTable">
-			<HeaderContent>
-				<MudTh>Nombre completo</MudTh>
-			</HeaderContent>
-			<RowTemplate>
-				<MudTd DataLabel="Nombre completo">
-					<MudStack Row="true" AlignItems="AlignItems.Center">
-						<MudText>@context.SponsorFullName</MudText>
-						<MudSpacer />
-						<MudTooltip Text="Eliminar" Arrow="true" Placement="Placement.Bottom" Color="Color.Error" Delay="500">
-							<MudIconButton Icon="@Icons.Material.Outlined.Delete" Color="Color.Error" OnClick="@(() => RemoveSponsor(context.SponsorId))" />
-						</MudTooltip>
-					</MudStack>
-				</MudTd>
-			</RowTemplate>
-		</MudTable>
-	}
-
+    <MudTextField T="string" Label="Teléfono" @bind-Value="_bindModel.CompanyPhoneNumber" Immediate="true"
+                  MaxLength="MaxLength.Company.PhoneNumber" />
 </MudForm>
 
+<MudCheckBox @bind-Value="_linkSponsors" Label="Quiero vincular padrinos a esta empresa" />
+
+@if (_linkSponsors)
+{
+    <MudPaper Class="pa-2 ma-2" Outlined="true">
+        <MudStack Row="true">
+            <SponsorSelector SelectedSponsorChanged="OnSelectedSponsorChanged"
+                             Required="false"
+                             ClearWhenValueChanged="true" />
+
+            <MudButton OnClick="RemoveAllSponsors"
+                       Disabled="_bindModel.Sponsors.Count == 0"
+                       Variant="Variant.Filled" Color="Color.Primary"
+                       Class="mt-2">
+                Quitar todos
+            </MudButton>
+        </MudStack>
+
+        @if (_bindModel.Sponsors is { Count: 0 })
+        {
+            <MudText Typo="Typo.body2" Class="mt-2">No hay padrinos vinculados.</MudText>
+        }
+        else if (_bindModel.Sponsors is { Count: 1 })
+        {
+            <MudText Typo="Typo.body2" Class="mt-2"><strong>Un</strong> padrino vinculado.</MudText>
+        }
+        else
+        {
+            <MudText Typo="Typo.body2" Class="mt-2"><strong>@_bindModel.Sponsors.Count</strong> padrinos vinculados.</MudText>
+        }
+
+        <MudDataGrid T="SelectableModel<int>"
+                     Items="_bindModel.Sponsors"
+                     Loading="Loading"
+                     Dense="true" Hover="true" Striped="true" Bordered="true"
+                     Class="mt-2">
+            <Columns>
+                <PropertyColumn Property="sm => sm.DisplayName" Title="Padrinos de la empresa" />
+                <TemplateColumn Title="Acciones">
+                    <CellTemplate>
+                        <MudTooltip Text="Quitar de la lista" Arrow="true" Placement="Placement.Bottom" Color="Color.Error" Delay="500">
+                            <MudIconButton OnClick="@(() => RemoveSponsor(context.Item))"
+                                           Icon="@Icons.Material.Outlined.Delete" Size="@Size.Small" Color="Color.Error" />
+                        </MudTooltip>
+                    </CellTemplate>
+                </TemplateColumn>
+            </Columns>
+        </MudDataGrid>
+    </MudPaper>
+}
+
 <MudStack Row="true" Class="pt-4">
-	<MudButton OnClick="Save" Disabled="SaveButtonDisabled"
-			   Variant="Variant.Filled" Color="Color.Primary">
-		Crear
-	</MudButton>
-	<MudButton Href="@NavRoutes.Chapters"
-			   Variant="Variant.Filled" Color="Color.Default" Class="ms-4">
-		Cancelar
-	</MudButton>
+    <MudButton OnClick="Save" Disabled="SaveButtonDisabled"
+               Variant="Variant.Filled" Color="Color.Primary">
+        Crear
+    </MudButton>
+    <MudButton Href="@NavRoutes.Companies"
+               Variant="Variant.Filled" Color="Color.Default" Class="ms-4">
+        Cancelar
+    </MudButton>
 </MudStack>
 
 <LoadingIndicator Loading="_saving" LoadingText="Guardando los datos" />

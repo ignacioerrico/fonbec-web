@@ -23,8 +23,9 @@
         <StudentSelector @bind-SelectedStudentId="StudentId"
                          ChapterId="FonbecClaim.ChapterId" />
 
-        <SponsorSelector @bind-SelectedSponsorId="_bindModel.SelectedSponsorId"
+        <SponsorSelector @bind-SelectedSponsor="_bindModel.SelectedSponsor"
                          ChapterId="FonbecClaim.ChapterId"
+                         Required="true"
                          NumberOfSponsorsLoaded="NumberOfSponsorsLoaded" />
 
         <MudDatePicker Label="Fecha de inicio"

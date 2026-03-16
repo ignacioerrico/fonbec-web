@@ -54,14 +54,14 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
 
     private async Task Save()
     {
-        if (_bindModel.SelectedSponsorId == 0)
+        if (_bindModel.SelectedSponsor is null || _bindModel.SelectedSponsor.Key == 0)
         {
             Snackbar.Add("El padrino no es válido.", Severity.Error);
         }
 
         var createSponsorshipInputModel = new CreateSponsorshipInputModel(
             StudentId,
-            _bindModel.SelectedSponsorId,
+            _bindModel.SelectedSponsor,
             _bindModel.SponsorshipStartDate!.Value,
             _bindModel.SponsorshipEndDate,
             _bindModel.SponsorshipNotes,

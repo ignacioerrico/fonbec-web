@@ -1,5 +1,6 @@
 ﻿using Fonbec.Web.DataAccess.DataModels.Companies.Input;
 using Fonbec.Web.DataAccess.Repositories;
+using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models;
 using Fonbec.Web.Logic.Models.Companies;
 using Fonbec.Web.Logic.Models.Companies.Input;
@@ -33,15 +34,23 @@ public class CompanyService(ICompanyRepository companyRepository, ISponsorReposi
 
     public async Task<bool> CompanyNameExistsAsync(string companyName)
     {
-        return await companyRepository.CompanyNameExistsAsync(companyName);
+        var normalizedCompanyName = companyName.NormalizeText();
+        return await companyRepository.CompanyNameExistsAsync(normalizedCompanyName);
     }
 
     public async Task<CrudResult> CreateCompanyAsync(CreateCompanyInputModel inputModel)
     {
         var inputDataModel = inputModel.Adapt<CreateCompanyInputDataModel>();
+
         var companyId = await companyRepository.CreateCompanyAsync(inputDataModel);
-        var sponsorsId = inputModel.CompanySponsors.Select(s => s.SponsorId).ToList();
-        var affectedRows = await sponsorRepository.LinkSponsorCompanyAsync(companyId, sponsorsId);
+
+        int affectedRows = 0;
+
+        if (inputDataModel.SponsorIds.Count > 0)
+        {
+            affectedRows = await sponsorRepository.LinkSponsorsToCompanyAsync(inputDataModel.SponsorIds, companyId);
+        }
+
         return new CrudResult(affectedRows);
     }
 }

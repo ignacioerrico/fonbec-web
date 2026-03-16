@@ -1,7 +1,6 @@
-﻿namespace Fonbec.Web.Ui.Models.Company;
-using Fonbec.Web.DataAccess.Entities;
-using Fonbec.Web.Logic.Models.Companies;
-using Fonbec.Web.Logic.Models.Sponsors;
+﻿using Fonbec.Web.Logic.Models;
+
+namespace Fonbec.Web.Ui.Models.Company;
 
 public class CompanyCreateBindModel
 {
@@ -11,7 +10,5 @@ public class CompanyCreateBindModel
 
     public string CompanyPhoneNumber { get; set; } = null!;
 
-    public List<CreateCompanySponsorsListViewModel> CompanySponsors { get; set; } = [];
-
+    public List<SelectableModel<int>> Sponsors { get; set; } = [];
 }
-
