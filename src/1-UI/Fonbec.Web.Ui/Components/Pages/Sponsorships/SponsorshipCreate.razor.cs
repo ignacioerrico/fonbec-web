@@ -1,4 +1,5 @@
 ﻿using Fonbec.Web.DataAccess.Constants;
+using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.Logic.Models.Sponsorships.Input;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Ui.Constants;
@@ -15,10 +16,11 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
 
     private bool _saving;
     private bool _anySponsors;
+    private bool _anyCompanies;
     private bool _formValidationSucceeded;
     private bool _isEndDateKnown;
     private bool SaveButtonDisabled => _saving
-                                       || !_anySponsors
+                                       || !_anyEntitiesAvailable
                                        || !_formValidationSucceeded
                                        || !DateSelectionIsValid;
 
@@ -26,6 +28,8 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
         _bindModel.SponsorshipStartDate is DateTime start
         && (!_isEndDateKnown
             || (_bindModel.SponsorshipEndDate is DateTime end && start < end));
+    private bool _anyEntitiesAvailable =>
+    _bindModel.SponsorshipType == SponsorshipType.Sponsor ? _anySponsors : _anyCompanies;
 
     [Parameter]
     public int StudentId { get; set; }
@@ -35,6 +39,9 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
 
     private async Task NumberOfSponsorsLoaded(int sponsorsCount) =>
         _anySponsors = sponsorsCount > 0;
+
+    private async Task NumberOfCompaniesLoaded(int companiesCount) =>
+        _anyCompanies = companiesCount > 0;
 
     private void OnIsEndDateKnownCheckBoxChanged(bool isEndDateKnown)
     {
@@ -46,22 +53,30 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
             _bindModel.SponsorshipEndDate = null;
         }
     }
-
     private void OnEndDateChanged(DateTime? endDate) =>
         _bindModel.SponsorshipEndDate = endDate is DateTime d
             ? new DateTime(d.Year, d.Month, DateTime.DaysInMonth(d.Year, d.Month))
             : null;
-
     private async Task Save()
     {
-        if (_bindModel.SelectedSponsorId == 0)
+        int? sponsorId = null;
+        int? companyId = null;
+
+        if (_bindModel.SponsorshipType == SponsorshipType.Sponsor)
+            sponsorId = _bindModel.SelectedSponsorId;
+        else
+            companyId = _bindModel.SelectedCompanyId;
+
+        if ((sponsorId ?? companyId) == 0)
         {
-            Snackbar.Add("El padrino no es válido.", Severity.Error);
+            Snackbar.Add("La selección no es válida.", Severity.Error);
+            return;
         }
 
         var createSponsorshipInputModel = new CreateSponsorshipInputModel(
             StudentId,
-            _bindModel.SelectedSponsorId,
+            sponsorId,
+            companyId,
             _bindModel.SponsorshipStartDate!.Value,
             _bindModel.SponsorshipEndDate,
             _bindModel.SponsorshipNotes,

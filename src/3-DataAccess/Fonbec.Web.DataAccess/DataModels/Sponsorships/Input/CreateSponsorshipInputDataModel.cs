@@ -1,9 +1,12 @@
-﻿namespace Fonbec.Web.DataAccess.DataModels.Sponsorships.Input;
+﻿using Fonbec.Web.DataAccess.Entities.Enums;
+
+namespace Fonbec.Web.DataAccess.DataModels.Sponsorships.Input;
 
 public class CreateSponsorshipInputDataModel
 {
     public int StudentId { get; set; }
     public int? SponsorId { get; set; }
+    public int? CompanyId { get; set; }
     public DateTime SponsorshipStartDate { get; set; }
     public DateTime? SponsorshipEndDate { get; set; }
     public string? SponsorshipNotes { get; set; }

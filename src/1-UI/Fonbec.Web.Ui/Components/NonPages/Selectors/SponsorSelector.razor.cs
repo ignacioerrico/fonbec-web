@@ -16,11 +16,12 @@ public partial class SponsorSelector
     [Parameter]
     public bool SelectFirstItemOnLoad { get; set; }
 
+    // voy a cambiar esto...
     [Parameter]
-    public int SelectedSponsorId { get; set; }
+    public int? SelectedSponsorId { get; set; }
 
     [Parameter]
-    public EventCallback<int> SelectedSponsorIdChanged { get; set; }
+    public EventCallback<int?> SelectedSponsorIdChanged { get; set; }
 
     /// <summary>
     /// Callback invoked when sponsors are loaded. The int parameter indicates the number of sponsors loaded.
@@ -56,19 +57,20 @@ public partial class SponsorSelector
         await base.OnInitializedAsync();
     }
 
-    private async Task<IEnumerable<int>> Search(string value, CancellationToken token)
+    // CAMBIOS de tipo
+    private async Task<IEnumerable<int?>> Search(string value, CancellationToken token)
     {
         var result = string.IsNullOrEmpty(value)
-            ? _sponsors.Select(c => c.Key)
+            ? _sponsors.Select(c => (int?)c.Key)
             : _sponsors.Where(c => c.DisplayName.Contains(value, StringComparison.OrdinalIgnoreCase))
-                       .Select(c => c.Key);
+                       .Select(c => (int?)c.Key);
 
         return await Task.FromResult(result);
     }
 
-    private async Task OnSelectedValueChanged(int selectedSponsorId) =>
+    private async Task OnSelectedValueChanged(int? selectedSponsorId) =>
         await SelectedSponsorIdChanged.InvokeAsync(selectedSponsorId);
 
-    private string? MapKeyToDisplayName(int key) =>
+    private string? MapKeyToDisplayName(int? key) =>
         _sponsors.FirstOrDefault(s => s.Key == key)?.DisplayName;
 }

@@ -1,8 +1,11 @@
-﻿namespace Fonbec.Web.Ui.Models.Sponsorship;
+﻿using Fonbec.Web.DataAccess.Entities.Enums;
+
+namespace Fonbec.Web.Ui.Models.Sponsorship;
 
 public class SponsorshipCreateBindModel
 {
-    public int SelectedSponsorId { get; set; }
+    public int? SelectedSponsorId { get; set; }
+    public int? SelectedCompanyId { get; set; }
 
     // Normally this wouldn't be nullable, but MudDatePicker requires it to be nullable.
     public DateTime? SponsorshipStartDate { get; set; }
@@ -12,4 +15,8 @@ public class SponsorshipCreateBindModel
     public string SponsorshipNotes { get; set; } = string.Empty;
 
     public int CreatedById { get; set; }
+
+    // We only have this for the toggle button
+    public SponsorshipType SponsorshipType { get; set; }
+
 }

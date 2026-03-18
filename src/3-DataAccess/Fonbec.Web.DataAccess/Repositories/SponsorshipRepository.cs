@@ -58,6 +58,8 @@ public class SponsorshipRepository(IDbContextFactory<FonbecWebDbContext> dbConte
         {
             StudentId = inputDataModel.StudentId,
             SponsorId = inputDataModel.SponsorId,
+            // added
+            CompanyId = inputDataModel.CompanyId,
             StartDate = inputDataModel.SponsorshipStartDate,
             EndDate = inputDataModel.SponsorshipEndDate,
             Notes = inputDataModel.SponsorshipNotes,
