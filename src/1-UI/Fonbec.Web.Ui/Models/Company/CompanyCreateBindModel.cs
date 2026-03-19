@@ -9,6 +9,7 @@ public class CompanyCreateBindModel
     public string CompanyEmail { get; set; } = null!;
 
     public string CompanyPhoneNumber { get; set; } = null!;
+    public List<PointOfContactBindModel> PointsOfContact { get; set; } = [];
 
     public List<SelectableModel<int>> Sponsors { get; set; } = [];
 }

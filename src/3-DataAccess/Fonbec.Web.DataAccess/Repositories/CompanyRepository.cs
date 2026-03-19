@@ -10,6 +10,7 @@ public interface ICompanyRepository
     Task<List<AllCompaniesDataModel>> GetAllCompaniesAsync();
     Task<bool> CompanyNameExistsAsync(string companyName);
     Task<int> CreateCompanyAsync(CreateCompanyInputDataModel dataModel);
+    Task<int> CreateCompanyWithPointsOfContactAsync(CreateCompanyWithPointsOfContactInputDataModel dataModel);
 }
 
 public class CompanyRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : ICompanyRepository
@@ -63,5 +64,30 @@ public class CompanyRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
         await db.SaveChangesAsync();
 
         return company.Id;
+    }
+
+    public async Task<int> CreateCompanyWithPointsOfContactAsync(CreateCompanyWithPointsOfContactInputDataModel dataModel)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var company = new Company
+        {
+            Name = dataModel.CompanyName,
+            PhoneNumber = dataModel.CompanyPhoneNumber,
+            Email = dataModel.CompanyEmail,
+            CreatedById = dataModel.CreatedById,
+            PointsOfContact = dataModel.PointsOfContact.Select(poc => new PointOfContact
+            {
+                FirstName = poc.FirstName,
+                LastName = poc.LastName,
+                NickName = poc.NickName,
+                Email = poc.Email,
+                PhoneNumber = poc.PhoneNumber,
+                CreatedById = poc.CreatedById
+            }).ToList()
+        };
+
+        db.Companies.Add(company);
+        return await db.SaveChangesAsync();
     }
 }
