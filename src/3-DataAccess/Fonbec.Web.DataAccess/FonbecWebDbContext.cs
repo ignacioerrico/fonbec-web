@@ -23,6 +23,7 @@ public sealed class FonbecWebDbContext : IdentityDbContext<FonbecWebUser, Fonbec
     internal DbSet<Sponsorship> Sponsorships => Set<Sponsorship>();
 
     internal DbSet<Company> Companies => Set<Company>();
+    internal DbSet<PointOfContact> PointsOfContact => Set<PointOfContact>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {
