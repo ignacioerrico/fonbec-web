@@ -56,7 +56,14 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
         )).ToList();
 
         CrudResult result;
+        var companyNameExists = await CompanyService.CompanyNameExistsAsync(_bindModel.CompanyName);
+        if (companyNameExists)
+        {
+            _saving = false;
 
+            Snackbar.Add("Ya existe una empresa con ese nombre.", Severity.Error);
+            return;
+        }
         if (pointsOfContact.Any())
         {
             var createCompanyInputModel = new CreateCompanyWithPointsOfContactInputModel(
@@ -70,42 +77,26 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
         }
         else
         {
+            var sponsors = _linkSponsors
+                ? _bindModel.Sponsors
+                : [];
+
             var createCompanyInputModel = new CreateCompanyInputModel(
                 _bindModel.CompanyName,
-                _bindModel.CompanyEmail ?? string.Empty,
-                _bindModel.CompanyPhoneNumber ?? string.Empty,
-                FonbecClaim.UserId
-            );
+                _bindModel.CompanyEmail,
+                _bindModel.CompanyPhoneNumber,
+                sponsors,
+                FonbecClaim.UserId);
+
             result = await CompanyService.CreateCompanyAsync(createCompanyInputModel);
-        }
-        var companyNameExists = await CompanyService.CompanyNameExistsAsync(_bindModel.CompanyName);
-        if (companyNameExists)
-        {
+
             _saving = false;
 
-            Snackbar.Add("Ya existe una empresa con ese nombre.", Severity.Error);
-            return;
-        }
-
-        var sponsors = _linkSponsors
-            ? _bindModel.Sponsors
-            : [];
-
-        var createCompanyInputModel = new CreateCompanyInputModel(
-            _bindModel.CompanyName,
-            _bindModel.CompanyEmail,
-            _bindModel.CompanyPhoneNumber,
-            sponsors,
-            FonbecClaim.UserId);
-
-        var result = await CompanyService.CreateCompanyAsync(createCompanyInputModel);
-
-        _saving = false;
-
-        if (!result.AnyAffectedRows)
-        {
-            Snackbar.Add("No se pudo crear la empresa.", Severity.Error);
-            return;
+            if (!result.AnyAffectedRows)
+            {
+                Snackbar.Add("No se pudo crear la empresa.", Severity.Error);
+                return;
+            }
         }
 
         NavigationManager.NavigateTo(NavRoutes.Companies);
@@ -122,17 +113,7 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
         {
             Snackbar.Add("El padrino ya fue agregado.", Severity.Warning);
             return;
-        if (result.AnyAffectedRows)
-        {
-            Snackbar.Add("Empresa creada exitosamente.", Severity.Success);
-            NavigationManager.NavigateTo(NavRoutes.Companies);
         }
-        else
-        {
-            Snackbar.Add("No se pudo crear la empresa.", Severity.Error);
-            _saving = false;
-        }
-
         _bindModel.Sponsors.Add(sponsor);
     }
 
