@@ -56,6 +56,18 @@ public class CompanyRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             Name = dataModel.CompanyName,
             PhoneNumber = dataModel.CompanyPhoneNumber,
             Email = dataModel.CompanyEmail,
+            Notes = dataModel.CompanyNotes,
+            PointsOfContact = dataModel.PointsOfContact.Select(poc =>
+                new PointOfContact
+                {
+                    FirstName = poc.PocFirstName,
+                    LastName = poc.PocLastName,
+                    NickName = poc.PocNickName,
+                    Email = poc.PocEmail,
+                    PhoneNumber = poc.PocPhoneNumber,
+                    Notes = poc.PocNotes,
+                    CreatedById = dataModel.CreatedById,
+                }).ToList(),
             CreatedById = dataModel.CreatedById,
         };
 
