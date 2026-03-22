@@ -33,8 +33,8 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
     private void AddPointOfContact() =>
         _bindModel.PointsOfContact.Add(new());
 
-    private void RemovePointOfContact(Guid id) =>
-        _bindModel.PointsOfContact.RemoveAll(poc => poc.Id == id);
+    private void RemovePointOfContact(Guid tempId) =>
+        _bindModel.PointsOfContact.RemoveAll(poc => poc.TempId == tempId);
 
     private async Task Save()
     {

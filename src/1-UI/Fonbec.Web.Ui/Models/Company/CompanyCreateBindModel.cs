@@ -15,7 +15,7 @@ public class CompanyCreateBindModel
 
 public class CompanyCreatePointOfContactBindModel
 {
-    public Guid Id { get; set; } = Guid.NewGuid();
+    public Guid TempId { get; set; } = Guid.NewGuid();
     public string PocFirstName { get; set; } = null!;
     public string PocLastName { get; set; } = string.Empty;
     public string PocNickName { get; set; } = string.Empty;
