@@ -12,6 +12,12 @@ public static class NavRoutes
 
     public const string UserCreate = $"{Users}/alta";
 
+    public static string UsersUserIdPermissions(int userId) => $"{Users}/{userId}/permisos";
+
+    public const string PlannedDeliveries = "/planificaciones";
+
+    public const string PlannnedDeliveryCreate = $"{PlannedDeliveries}/alta";
+
     public const string Students = "/becarios";
 
     public const string StudentCreate = $"{Students}/alta";
@@ -20,16 +26,11 @@ public static class NavRoutes
 
     public const string SponsorCreate = $"{Sponsors}/alta";
 
-    public static string UsersUserIdPermissions(int userId) => $"{Users}/{userId}/permisos";
-    public static string Sponsorship(int studentId) => $"/becarios/{studentId}/padrinos";
-    public static string SponsorshipCreate(int studentId) => $"{Sponsorship(studentId)}/alta";
     public static string Sponsorships(int studentId) => $"/becarios/{studentId}/padrinos";
-        
+
+    public static string SponsorshipCreate(int studentId) => $"{Sponsorships(studentId)}/alta";
+
     public const string Companies = "/empresas";
 
     public const string CompanyCreate = $"{Companies}/alta";
-
-    public const string PlannedDeliveries = $"/PlannedDeliveries";
-
-    public const string PlannnedDeliveryCreate = $"{PlannedDeliveries}/alta";
 }

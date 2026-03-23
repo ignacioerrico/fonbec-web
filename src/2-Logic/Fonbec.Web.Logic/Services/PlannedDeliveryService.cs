@@ -8,24 +8,27 @@ namespace Fonbec.Web.Logic.Services;
 
 public interface IPlannedDeliveryService
 {
-	Task<CrudResult> CreatePlannedDeliveryAsync(CreatePlannedDeliveryInputModel inputModel);
-    Task<List<DateTime>> GetPlannedDeliveryDatesAsync(int? chapterId);
+    Task<List<DateTime>> GetPlannedDeliveryDatesAsync(int? chapterId, DateTime? from = null);
+    Task<CrudResult> CreatePlannedDeliveryAsync(CreatePlannedDeliveryInputModel inputModel);
 }
+
 public class PlannedDeliveryService(IPlannedDeliveryRepository plannedDeliveryRepository) : IPlannedDeliveryService
 {
-	public async Task<List<DateTime>> GetPlannedDeliveryDatesAsync(int? chapterId)
-	{
-        if (chapterId is null or 0)
+    public async Task<List<DateTime>> GetPlannedDeliveryDatesAsync(int? chapterId, DateTime? from = null)
+    {
+        if (chapterId is null or <= 0)
         {
-            return [];
+            throw new ArgumentNullException(nameof(chapterId));
         }
-        var presentDates = await plannedDeliveryRepository.GetPlannedDeliveryDatesAsync(chapterId.Value);
-		return presentDates.ToList();
-	}
+
+        var plannedDeliveryDates = await plannedDeliveryRepository.GetPlannedDeliveryDatesAsync(chapterId.Value, from);
+        return plannedDeliveryDates;
+    }
+
     public async Task<CrudResult> CreatePlannedDeliveryAsync(CreatePlannedDeliveryInputModel inputModel)
-	{
+    {
         var inputDataModel = inputModel.Adapt<CreatePlannedDeliveryInputDataModel>();
-		var affectedRows = await plannedDeliveryRepository.CreatePlannedDeliveryAsync(inputDataModel);
-		return new CrudResult(affectedRows);
-	}
+        var affectedRows = await plannedDeliveryRepository.CreatePlannedDeliveryAsync(inputDataModel);
+        return new CrudResult(affectedRows);
+    }
 }

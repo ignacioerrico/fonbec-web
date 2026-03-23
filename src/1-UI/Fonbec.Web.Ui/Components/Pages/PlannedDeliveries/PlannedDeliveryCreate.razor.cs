@@ -8,69 +8,89 @@ using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.Pages.PlannedDeliveries;
 
-[PageMetadata(nameof(PlannedDeliveryCreate), "Create planned delivery", [FonbecRole.Admin, FonbecRole.Manager])]
+[PageMetadata(nameof(PlannedDeliveryCreate), "Crear planificación de envío", [FonbecRole.Manager])]
 public partial class PlannedDeliveryCreate : AuthenticationRequiredComponentBase
 {
     private readonly PlannedDeliveryCreateBindModel _bindModel = new();
 
-    private bool _formValidationSucceeded;
-    public bool Completed { get; set; } = false;
+    private readonly DateTime _minDate = new(DateTime.Now.Year, DateTime.Now.Month, 1);
 
-    private DateTime _minDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
-    private List<DateTime> _viewDates = [];
+    private bool _formValidationSucceeded;
 
     private bool _saving;
+
+    private List<DateTime> _existingPlansDates = [];
+
     private bool SaveButtonDisabled => Loading
-                               || _saving
-                               || !_formValidationSucceeded;
-
-    protected override async Task OnInitializedAsync()
-    {
-        await base.OnInitializedAsync();
-        Loading = true;
-        _viewDates = await PlannedDeliveryService.GetPlannedDeliveryDatesAsync(FonbecClaim.ChapterId);
-        Loading = false;
-
-    }
-
-    private string? ValidateMonth(DateTime? selectedDate)
-    {
-        if (selectedDate == null) return null;
-
-        bool alreadyExists = _viewDates.Any(d =>
-            d.Year == selectedDate.Value.Year &&
-            d.Month == selectedDate.Value.Month);
-
-        return alreadyExists
-            ? $"A delivery is already planned for {selectedDate.Value:MMMM yyyy}"
-            : null;
-    }
+                                       || _saving
+                                       || !_formValidationSucceeded;
 
     [Inject]
     public IPlannedDeliveryService PlannedDeliveryService { get; set; } = null!;
 
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        if (!FonbecClaim.ChapterId.HasValue)
+        {
+            Snackbar.Add("Esta página requiere un usuario que pertenezca a una filial.", Severity.Error);
+            NavigationManager.NavigateTo(NavRoutes.PlannedDeliveries);
+        }
+
+        var currentMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
+
+        Loading = true;
+
+        _existingPlansDates = await PlannedDeliveryService.GetPlannedDeliveryDatesAsync(FonbecClaim.ChapterId, from: currentMonth);
+
+        Loading = false;
+    }
+
+    private string? ValidatePlanIsNotDuplicate(DateTime? selectedDate)
+    {
+        if (selectedDate is null)
+        {
+            return null;
+        }
+
+        var planDateExists = _existingPlansDates.Any(d =>
+            d.Year == selectedDate.Value.Year
+            && d.Month == selectedDate.Value.Month);
+
+        return planDateExists
+            ? "Ya existe una planificación para este mes y año."
+            : null;
+    }
+
     private async Task Save()
     {
-        _saving = true;
+        var chapterId = FonbecClaim.ChapterId
+                        ?? throw new NullReferenceException(nameof(FonbecClaim.ChapterId));
+
+        if (!_bindModel.PlanStartsOn.HasValue)
+        {
+            return;
+        }
 
         var createPlannedDeliveryInputModel = new CreatePlannedDeliveryInputModel(
-            _bindModel.StartsOn,
-            _bindModel.Completed,
-            FonbecClaim.ChapterId,
-            FonbecClaim.UserId,
-            _bindModel.PlannedDeliveryNotes
-            );
+            chapterId,
+            _bindModel.PlanStartsOn.Value,
+            _bindModel.PlanNotes,
+            FonbecClaim.UserId);
+
+        _saving = true;
 
         var result = await PlannedDeliveryService.CreatePlannedDeliveryAsync(createPlannedDeliveryInputModel);
+
+        _saving = false;
+
         if (!result.AnyAffectedRows)
         {
-            Snackbar.Add(result.Message ?? "Save failed", Severity.Error);
-            _saving = false;
+            Snackbar.Add("No se pudo crear la planificación.", Severity.Error);
             return;
         }
 
         NavigationManager.NavigateTo(NavRoutes.PlannedDeliveries);
     }
-
 }
-

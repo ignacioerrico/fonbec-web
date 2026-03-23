@@ -1,10 +1,7 @@
-﻿namespace Fonbec.Web.Ui.Models.PlannedDelivery
+﻿namespace Fonbec.Web.Ui.Models.PlannedDelivery;
+
+public class PlannedDeliveryCreateBindModel
 {
-	public class PlannedDeliveryCreateBindModel
-	{
-		public DateTime? StartsOn { get; set; } 
-		public bool Completed { get; set; } 
-		public string? PlannedDeliveryNotes { get; set; }
-		
-	}
+    public DateTime? PlanStartsOn { get; set; }
+    public string PlanNotes { get; set; } = string.Empty;
 }

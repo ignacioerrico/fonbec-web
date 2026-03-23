@@ -4,47 +4,36 @@
 
 @using Fonbec.Web.DataAccess.Constants
 
-<PageHeader Title="Planned delivery" />
+<PageHeader Title="Planificación de envío" />
 
 <LoadingIndicator Loading="Loading" />
 
 <MudForm @bind-IsValid="@_formValidationSucceeded">
+    <MudDatePicker Label="Mes y Año"
+                   @bind-Date="_bindModel.PlanStartsOn"
+                   MinDate="_minDate"
+                   OpenTo="OpenTo.Month"
+                   FixDay="1"
+                   DateFormat="MMMM \d\e yyyy"
+                   TitleDateFormat="MMM yyyy"
+                   Culture="@System.Globalization.CultureInfo.GetCultureInfo("es-AR")"
+                   Required="true" RequiredError="Se debe especificar el mes y el año de recolección de cartas."
+                   Validation="(Func<DateTime?, string?>)ValidatePlanIsNotDuplicate" />
 
-
-	<MudDatePicker Label="StartsOn" 
-		@bind-Date="_bindModel.StartsOn"
-		MinDate="@_minDate"
-		OpenTo="OpenTo.Month" 
-		FixDay="1"
-		DateFormat="MM/yyyy"
-		Validation="@ValidateMonth"
-		Immediate="true" />	
-
-	<MudTextField T="string" Label="Additional Information" @bind-Value="_bindModel.PlannedDeliveryNotes" Immediate="true"
-				  Required="false"
-				  MaxLength="MaxLength.Auditable.Notes"
-				  />
-
-	<MudSwitch T="bool" Label="completed?" @bind-Value="_bindModel.Completed" 
-				Color="Color.Success"
-		class="pt-2"
-	/>
-
+    <MudTextField T="string" Label="Notas"
+                  @bind-Value="_bindModel.PlanNotes"
+                  MaxLength="MaxLength.Auditable.Notes" />
 </MudForm>
 
 <MudStack Row="true" Class="pt-4">
-	<MudButton OnClick="Save" Disabled="SaveButtonDisabled"
-	           Variant="Variant.Filled" Color="Color.Primary">
-		Crear
-	</MudButton>
-	<MudButton Href="@NavRoutes.PlannedDeliveries"
-	           Variant="Variant.Filled" Color="Color.Default" Class="ms-4">
-		Cancelar
-	</MudButton>
+    <MudButton OnClick="Save" Disabled="SaveButtonDisabled"
+               Variant="Variant.Filled" Color="Color.Primary">
+        Crear
+    </MudButton>
+    <MudButton Href="@NavRoutes.PlannedDeliveries"
+               Variant="Variant.Filled" Color="Color.Default" Class="ms-4">
+        Cancelar
+    </MudButton>
 </MudStack>
 
 <LoadingIndicator Loading="_saving" LoadingText="Guardando los datos" />
-
-
-
-
