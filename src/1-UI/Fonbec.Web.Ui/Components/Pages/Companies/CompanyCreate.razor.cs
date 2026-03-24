@@ -1,14 +1,14 @@
 ﻿using Fonbec.Web.DataAccess.Constants;
-using Fonbec.Web.Logic.Models.Chapters.Input;
 using Fonbec.Web.Logic.Models.Companies.Input;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Ui.Constants;
 using Fonbec.Web.Ui.Models.Company;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
+
 namespace Fonbec.Web.Ui.Components.Pages.Companies;
 
-[PageMetadata(nameof(CompanyCreate), "Crear y actualizar empresas", [FonbecRole.Admin, FonbecRole.Manager])]
+[PageMetadata(nameof(CompanyCreate), "Crear y actualizar empresas", [FonbecRole.Manager])]
 public partial class CompanyCreate : AuthenticationRequiredComponentBase
 {
     private readonly CompanyCreateBindModel _bindModel = new();
@@ -17,40 +17,62 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
 
     private bool _saving;
 
+    private bool _addPointOfContact;
+
     [Inject]
     private ICompanyService CompanyService { get; set; } = null!;
+
     private bool SaveButtonDisabled => Loading
                                        || _saving
                                        || !_formValidationSucceeded;
 
+    private bool CanAddPointOfContact =>
+        _bindModel.PointsOfContact.All(poc =>
+            !string.IsNullOrWhiteSpace(poc.PocFirstName));
+
+    private void AddPointOfContact() =>
+        _bindModel.PointsOfContact.Add(new());
+
+    private void RemovePointOfContact(Guid tempId) =>
+        _bindModel.PointsOfContact.RemoveAll(poc => poc.TempId == tempId);
+
     private async Task Save()
     {
-        _saving = true;
+        var pointsOfContact = _bindModel.PointsOfContact
+            .Where(poc => !string.IsNullOrWhiteSpace(poc.PocFirstName))
+            .Select(poc =>
+                new CreateCompanyPointOfContactInputModel(
+                    poc.PocFirstName,
+                    poc.PocLastName,
+                    poc.PocNickName,
+                    poc.PocEmail,
+                    poc.PocPhoneNumber,
+                    poc.PocNotes
+                ))
+            .ToList();
 
         var createCompanyInputModel = new CreateCompanyInputModel(
             _bindModel.CompanyName,
             _bindModel.CompanyEmail,
             _bindModel.CompanyPhoneNumber,
-            FonbecClaim.UserId);
+            _bindModel.CompanyNotes,
+            pointsOfContact,
+            FonbecClaim.UserId
+        );
 
-        var companyNameExists = await CompanyService.CompanyNameExistsAsync(createCompanyInputModel.CompanyName);
-        if (companyNameExists)
-        {
-            Snackbar.Add("Ya existe una empresa con ese nombre.", Severity.Error);
-        }
-        else
-        {
-            var result = await CompanyService.CreateCompanyAsync(createCompanyInputModel);
-            if (!result.AnyAffectedRows)
-            {
-                Snackbar.Add("No se pudo crear la empresa.", Severity.Error);
-            }
+        _saving = true;
 
-            _saving = false;
+        var result = await CompanyService.CreateCompanyAsync(createCompanyInputModel);
 
-            NavigationManager.NavigateTo(NavRoutes.Companies);
-        }
         _saving = false;
 
+        if (!result.AnyAffectedRows)
+        {
+            Snackbar.Add("No se pudo crear la empresa.", Severity.Error);
+            return;
+        }
+
+        Snackbar.Add("Empresa creada exitosamente.", Severity.Success);
+        NavigationManager.NavigateTo(NavRoutes.Companies);
     }
 }

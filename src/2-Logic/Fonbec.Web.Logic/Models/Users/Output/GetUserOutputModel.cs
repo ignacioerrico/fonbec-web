@@ -10,6 +10,7 @@ public class GetUserOutputModel
 
     public string? UserNickName { get; set; }
 
+    public string UserRole { get; set; } = null!;
     public string UserRoleTranslated { get; set; } = null!;
 }
 
@@ -20,6 +21,7 @@ public class GetUserOutputModelMappingDefinitions : IRegister
         config.NewConfig<GetUserOutputDataModel, GetUserOutputModel>()
             .Map(dest => dest.UserFullName, src => src.UserFullName)
             .Map(dest => dest.UserNickName, src => src.UserNickName)
+            .Map(dest => dest.UserRole, src => src.UserRole)
             .Map(dest => dest.UserRoleTranslated, src => FonbecRole.Translator[src.UserRole]);
     }
 }

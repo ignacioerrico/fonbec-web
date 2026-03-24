@@ -36,7 +36,9 @@ public partial class UserPermissions : AuthenticationRequiredComponentBase
 
         var fonbecAuthClaim = await UserService.GetFonbecAuthClaim(UserId);
 
-        foreach (var page in AllPages)
+        var pagesUserHasAccessTo = AllPages.Where(p => p.Roles.Contains(_userData.UserRole));
+
+        foreach (var page in pagesUserHasAccessTo)
         {
             var checkBoxItem = new UserPermissionsBindModel
             {
