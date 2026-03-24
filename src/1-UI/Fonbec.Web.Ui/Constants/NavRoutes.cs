@@ -12,6 +12,12 @@ public static class NavRoutes
 
     public const string UserCreate = $"{Users}/alta";
 
+    public static string UsersUserIdPermissions(int userId) => $"{Users}/{userId}/permisos";
+
+    public const string PlannedDeliveries = "/planificaciones";
+
+    public const string PlannnedDeliveryCreate = $"{PlannedDeliveries}/alta";
+
     public const string Students = "/becarios";
 
     public const string StudentCreate = $"{Students}/alta";
@@ -27,6 +33,4 @@ public static class NavRoutes
     public const string Companies = "/empresas";
 
     public const string CompanyCreate = $"{Companies}/alta";
-
-    public static string UsersUserIdPermissions(int userId) => $"{Users}/{userId}/permisos";
 }
