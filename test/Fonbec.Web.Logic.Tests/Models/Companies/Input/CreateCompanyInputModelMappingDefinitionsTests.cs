@@ -14,7 +14,11 @@ public class CreateCompanyInputModelMappingDefinitionsTests : MappingTestBase
             CompanyName: "Test Company",
             CompanyEmail: "test@hotmail.com",
             CompanyPhoneNumber: "123456789",
-            Sponsors: [],
+            Sponsors: [
+                new(7, "First sponsor"),
+                new(11, "Second sponsor"),
+                new(13, "Third sponsor"),
+                ],
             CreatedById: 42
         );
 
@@ -23,6 +27,7 @@ public class CreateCompanyInputModelMappingDefinitionsTests : MappingTestBase
         result.CompanyName.Should().Be("Test Company");
         result.CompanyEmail.Should().Be("test@hotmail.com");
         result.CompanyPhoneNumber.Should().Be("123456789");
+        result.SponsorIds.Should().Equal(7, 11, 13);
         result.CreatedById.Should().Be(42);
     }
 
@@ -35,7 +40,6 @@ public class CreateCompanyInputModelMappingDefinitionsTests : MappingTestBase
             CompanyPhoneNumber: "123456789",
             Sponsors: [],
             CreatedById: 42
-
         );
 
         var result = () => input.Adapt<CreateCompanyInputDataModel>(Config);
@@ -49,7 +53,7 @@ public class CreateCompanyInputModelMappingDefinitionsTests : MappingTestBase
     {
         var input = new CreateCompanyInputModel(
             CompanyName: "Test Company",
-            CompanyEmail:" test@gmail.com  ",
+            CompanyEmail: " test@gmail.com  ",
             CompanyPhoneNumber: "123456789",
             Sponsors: [],
             CreatedById: 42
