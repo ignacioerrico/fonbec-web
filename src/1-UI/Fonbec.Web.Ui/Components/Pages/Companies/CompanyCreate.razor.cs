@@ -21,6 +21,8 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
 
     private bool _linkSponsors;
 
+    private bool _addPointsOfContact;
+
     [Inject]
     private ICompanyService CompanyService { get; set; } = null!;
 
@@ -44,8 +46,6 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
 
     private async Task Save()
     {
-        _saving = true;
-
         var pointsOfContact = _bindModel.PointsOfContact.Select(poc => new CreatePointOfContactInputModel(
             poc.FirstName,
             poc.LastName,
@@ -55,8 +55,10 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
             FonbecClaim.UserId
         )).ToList();
 
-        CrudResult result;
+        _saving = true;
+
         var companyNameExists = await CompanyService.CompanyNameExistsAsync(_bindModel.CompanyName);
+
         if (companyNameExists)
         {
             _saving = false;
@@ -64,6 +66,8 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
             Snackbar.Add("Ya existe una empresa con ese nombre.", Severity.Error);
             return;
         }
+
+        CrudResult result;
         if (pointsOfContact.Any())
         {
             var createCompanyInputModel = new CreateCompanyWithPointsOfContactInputModel(
@@ -114,8 +118,16 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
             Snackbar.Add("El padrino ya fue agregado.", Severity.Warning);
             return;
         }
+
         _bindModel.Sponsors.Add(sponsor);
     }
+
+    private string QtySponsorsInfo => _bindModel.Sponsors.Count switch
+    {
+        0 => "No hay padrinos vinculados.",
+        1 => "<strong>Un</strong> padrino vinculado.",
+        _ => $"<strong>{_bindModel.Sponsors.Count}</strong> padrinos vinculados."
+    };
 
     private void RemoveSponsor(SelectableModel<int> sponsor) =>
         _bindModel.Sponsors.Remove(sponsor);

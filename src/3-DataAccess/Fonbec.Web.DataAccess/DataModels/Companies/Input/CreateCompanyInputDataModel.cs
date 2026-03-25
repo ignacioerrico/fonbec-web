@@ -9,5 +9,6 @@ public class CreateCompanyInputDataModel
     public string? CompanyPhoneNumber { get; set; }
 
     public List<int> SponsorIds { get; set; } = [];
+
     public int CreatedById { get; set; }
 }

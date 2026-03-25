@@ -45,6 +45,11 @@ public class CompanyService(ICompanyRepository companyRepository, ISponsorReposi
 
         var companyId = await companyRepository.CreateCompanyAsync(inputDataModel);
 
+        if (companyId == 0)
+        {
+            return new CrudResult();
+        }
+
         int affectedRows = 0;
 
         if (inputDataModel.SponsorIds.Count > 0)

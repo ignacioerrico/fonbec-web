@@ -6,170 +6,168 @@
 @using Fonbec.Web.Logic.Models
 
 <PageHeader Title="Alta de empresa" />
+
 <LoadingIndicator Loading="Loading" />
+
 <MudForm @bind-IsValid="@_formValidationSucceeded">
+    <MudCard>
+        <MudCardContent>
+            <MudText Typo="Typo.h6">Información de la empresa</MudText>
 
-	<MudCard>
-		<MudCardContent>
-			<MudText Typo="Typo.h6">Información de la empresa</MudText>
+            <MudTextField T="string"
+                          Label="Nombre"
+                          @bind-Value="_bindModel.CompanyName"
+                          Immediate="true"
+                          Required="true"
+                          RequiredError="Este es un campo obligatorio."
+                          MaxLength="@MaxLength.Company.Name" />
 
-			<MudTextField T="string"
-						  Label="Nombre"
-						  @bind-Value="_bindModel.CompanyName"
-						  Immediate="true"
-						  Required="true"
-						  RequiredError="Este es un campo obligatorio."
-						  MaxLength="@MaxLength.Company.Name" />
+            <MudTextField T="string"
+                          Label="Correo electrónico"
+                          @bind-Value="_bindModel.CompanyEmail"
+                          Immediate="true"
+                          MaxLength="@MaxLength.Company.Email" />
 
-			<MudTextField T="string"
-						  Label="Correo electrónico"
-						  @bind-Value="_bindModel.CompanyEmail"
-						  Immediate="true"
-						  MaxLength="@MaxLength.Company.Email" />
+            <MudTextField T="string"
+                          Label="Teléfono"
+                          @bind-Value="_bindModel.CompanyPhoneNumber"
+                          Immediate="true"
+                          MaxLength="@MaxLength.Company.PhoneNumber" />
+        </MudCardContent>
+    </MudCard>
 
-			<MudTextField T="string"
-						  Label="Teléfono"
-						  @bind-Value="_bindModel.CompanyPhoneNumber"
-						  Immediate="true"
-						  MaxLength="@MaxLength.Company.PhoneNumber" />
-		</MudCardContent>
-	</MudCard>
-	<MudCheckBox @bind-Value="_linkSponsors" Label="Quiero vincular padrinos a esta empresa" />
-	@if (_linkSponsors)
-	{
-		<MudPaper Class="pa-2 ma-2" Outlined="true">
-			<MudStack Row="true">
-				<SponsorSelector SelectedSponsorChanged="OnSelectedSponsorChanged"
-								 Required="false"
-								 ClearWhenValueChanged="true" />
+    <MudCheckBox @bind-Value="_addPointsOfContact" Label="Quiero agregar puntos de contacto" />
 
-				<MudButton OnClick="RemoveAllSponsors"
-						   Disabled="_bindModel.Sponsors.Count == 0"
-						   Variant="Variant.Filled" Color="Color.Primary"
-						   Class="mt-2">
-					Quitar todos
-				</MudButton>
-			</MudStack>
+    @if (_addPointsOfContact)
+    {
+        <MudCard Class="mt-4">
+            <MudCardContent>
+                <MudText Typo="Typo.h6">Puntos de contacto</MudText>
 
-			@if (_bindModel.Sponsors is { Count: 0 })
-			{
-				<MudText Typo="Typo.body2" Class="mt-2">No hay padrinos vinculados.</MudText>
-			}
-			else if (_bindModel.Sponsors is { Count: 1 })
-			{
-				<MudText Typo="Typo.body2" Class="mt-2"><strong>Un</strong> padrino vinculado.</MudText>
-			}
-			else
-			{
-				<MudText Typo="Typo.body2" Class="mt-2"><strong>@_bindModel.Sponsors.Count</strong> padrinos vinculados.</MudText>
-			}
+                <MudText Typo="Typo.body2" Class="mb-4">
+                    Personas de contacto para consultas administrativas sobre los patrocinios
+                </MudText>
 
-			<MudDataGrid T="SelectableModel<int>"
-						 Items="_bindModel.Sponsors"
-						 Loading="Loading"
-						 Dense="true" Hover="true" Striped="true" Bordered="true"
-						 Class="mt-2">
-				<Columns>
-					<PropertyColumn Property="sm => sm.DisplayName" Title="Padrinos de la empresa" />
-					<TemplateColumn Title="Acciones">
-						<CellTemplate>
-							<MudTooltip Text="Quitar de la lista" Arrow="true" Placement="Placement.Bottom" Color="Color.Error" Delay="500">
-								<MudIconButton OnClick="@(() => RemoveSponsor(context.Item))"
-											   Icon="@Icons.Material.Outlined.Delete" Size="@Size.Small" Color="Color.Error" />
-							</MudTooltip>
-						</CellTemplate>
-					</TemplateColumn>
-				</Columns>
-			</MudDataGrid>
-		</MudPaper>
-	}
+                @if (_bindModel.PointsOfContact.Any())
+                {
+                    <MudTable Items="_bindModel.PointsOfContact" Dense="true" Hover="true">
+                        <HeaderContent>
+                            <MudTh>Nombre *</MudTh>
+                            <MudTh>Apellido *</MudTh>
+                            <MudTh>Apodo</MudTh>
+                            <MudTh>Email</MudTh>
+                            <MudTh>Teléfono</MudTh>
+                            <MudTh></MudTh>
+                        </HeaderContent>
 
-	<MudCard Class="mt-4">
-		<MudCardContent>
-			<MudText Typo="Typo.h6">Puntos de contacto</MudText>
-			<MudText Typo="Typo.body2" Class="mb-4">
-				Personas de contacto para consultas administrativas sobre los patrocinios
-			</MudText>
+                        <RowTemplate>
+                            <MudTd>
+                                <MudTextField @bind-Value="context.FirstName"
+                                              Required="true"
+                                              RequiredError="El nombre es obligatorio"
+                                              MaxLength="@MaxLength.PointOfContact.FirstName" />
+                            </MudTd>
 
-			@if (_bindModel.PointsOfContact.Any())
-			{
-				<MudTable Items="_bindModel.PointsOfContact" Dense="true" Hover="true">
+                            <MudTd>
+                                <MudTextField @bind-Value="context.LastName"
+                                              Required="true"
+                                              RequiredError="El apellido es obligatorio"
+                                              MaxLength="@MaxLength.PointOfContact.LastName" />
+                            </MudTd>
 
-					<HeaderContent>
-						<MudTh>Nombre *</MudTh>
-						<MudTh>Apellido *</MudTh>
-						<MudTh>Apodo</MudTh>
-						<MudTh>Email</MudTh>
-						<MudTh>Teléfono</MudTh>
-						<MudTh></MudTh>
-					</HeaderContent>
+                            <MudTd>
+                                <MudTextField @bind-Value="context.NickName"
+                                              MaxLength="@MaxLength.PointOfContact.NickName" />
+                            </MudTd>
 
-					<RowTemplate>
-						<MudTd>
-							<MudTextField @bind-Value="context.FirstName"
-										  Required="true"
-										  RequiredError="El nombre es obligatorio"
-										  MaxLength="@MaxLength.PointOfContact.FirstName" />
-						</MudTd>
+                            <MudTd>
+                                <MudTextField @bind-Value="context.Email"
+                                              MaxLength="@MaxLength.PointOfContact.Email" />
+                            </MudTd>
 
-						<MudTd>
-							<MudTextField @bind-Value="context.LastName"
-										  Required="true"
-										  RequiredError="El apellido es obligatorio"
-										  MaxLength="@MaxLength.PointOfContact.LastName" />
-						</MudTd>
+                            <MudTd>
+                                <MudTextField @bind-Value="context.PhoneNumber"
+                                              MaxLength="@MaxLength.PointOfContact.PhoneNumber" />
+                            </MudTd>
 
-						<MudTd>
-							<MudTextField @bind-Value="context.NickName"
-										  MaxLength="@MaxLength.PointOfContact.NickName" />
-						</MudTd>
+                            <MudTd>
+                                <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                               Color="Color.Error"
+                                               OnClick="@(() => RemovePointOfContact(context.TempId))" />
+                            </MudTd>
+                        </RowTemplate>
+                    </MudTable>
+                }
+                else
+                {
+                    <MudText Class="my-4">No se han agregado puntos de contacto</MudText>
+                }
 
-						<MudTd>
-							<MudTextField @bind-Value="context.Email"
-										  MaxLength="@MaxLength.PointOfContact.Email" />
-						</MudTd>
+                <MudButton Class="mt-4"
+                           Variant="Variant.Outlined"
+                           Color="Color.Primary"
+                           StartIcon="@Icons.Material.Filled.Add"
+                           OnClick="AddPointOfContact">
+                    Agregar punto de contacto
+                </MudButton>
+            </MudCardContent>
+        </MudCard>
+    }
 
-						<MudTd>
-							<MudTextField @bind-Value="context.PhoneNumber"
-										  MaxLength="@MaxLength.PointOfContact.PhoneNumber" />
-						</MudTd>
+    <MudCheckBox @bind-Value="_linkSponsors" Label="Quiero vincular padrinos a esta empresa" />
 
-						<MudTd>
-							<MudIconButton Icon="@Icons.Material.Filled.Delete"
-										   Color="Color.Error"
-										   OnClick="@(() => RemovePointOfContact(context.TempId))" />
-						</MudTd>
+    @if (_linkSponsors)
+    {
+        <MudCard Class="mt-4">
+            <MudCardContent>
+                <MudStack Row="true">
+                    <SponsorSelector SelectedSponsorChanged="OnSelectedSponsorChanged"
+                                     IsRequired="false"
+                                     ClearWhenValueChanged="true" />
 
-					</RowTemplate>
-				</MudTable>
-			}
-			else
-			{
-				<MudText Class="my-4">No se han agregado puntos de contacto</MudText>
-			}
+                    <MudButton OnClick="RemoveAllSponsors"
+                               Disabled="_bindModel.Sponsors.Count == 0"
+                               Variant="Variant.Filled" Color="Color.Primary"
+                               Class="mt-2">
+                        Quitar todos
+                    </MudButton>
+                </MudStack>
 
-			<MudButton Class="mt-4"
-					   Variant="Variant.Outlined"
-					   Color="Color.Primary"
-					   StartIcon="@Icons.Material.Filled.Add"
-					   OnClick="AddPointOfContact">
-				Agregar punto de contacto
-			</MudButton>
-		</MudCardContent>
-	</MudCard>
+                <MudText Typo="Typo.body2" Class="mt-2">
+                    @((MarkupString)QtySponsorsInfo)
+                </MudText>
 
-	
+                <MudDataGrid T="SelectableModel<int>"
+                             Items="_bindModel.Sponsors"
+                             Loading="Loading"
+                             Dense="true" Hover="true" Striped="true" Bordered="true"
+                             Class="mt-2">
+                    <Columns>
+                        <PropertyColumn Property="sm => sm.DisplayName" Title="Padrinos de la empresa" />
+                        <TemplateColumn Title="Acciones">
+                            <CellTemplate>
+                                <MudTooltip Text="Quitar de la lista" Arrow="true" Placement="Placement.Bottom" Color="Color.Error" Delay="500">
+                                    <MudIconButton OnClick="@(() => RemoveSponsor(context.Item))"
+                                                   Icon="@Icons.Material.Outlined.Delete" Size="@Size.Small" Color="Color.Error" />
+                                </MudTooltip>
+                            </CellTemplate>
+                        </TemplateColumn>
+                    </Columns>
+                </MudDataGrid>
+            </MudCardContent>
+        </MudCard>
+    }
 
-	<MudStack Row="true" Class="pt-4">
-		<MudButton OnClick="Save" Disabled="SaveButtonDisabled"
-				   Variant="Variant.Filled" Color="Color.Primary">
-			Crear
-		</MudButton>
-		<MudButton Href="@NavRoutes.Companies"
-				   Variant="Variant.Filled" Color="Color.Default" Class="ms-4">
-			Cancelar
-		</MudButton>
-	</MudStack>
+    <MudStack Row="true" Class="pt-4">
+        <MudButton OnClick="Save" Disabled="SaveButtonDisabled"
+                   Variant="Variant.Filled" Color="Color.Primary">
+            Crear
+        </MudButton>
+        <MudButton Href="@NavRoutes.Companies"
+                   Variant="Variant.Filled" Color="Color.Default" Class="ms-4">
+            Cancelar
+        </MudButton>
+    </MudStack>
 
-	<LoadingIndicator Loading="_saving" LoadingText="Guardando los datos" />
+    <LoadingIndicator Loading="_saving" LoadingText="Guardando los datos" />
 </MudForm>

@@ -61,9 +61,11 @@ public class CompanyRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
         };
 
         db.Companies.Add(company);
-        await db.SaveChangesAsync();
+        var affectedRows = await db.SaveChangesAsync();
 
-        return company.Id;
+        return affectedRows == 0
+            ? 0
+            : company.Id;
     }
 
     public async Task<int> CreateCompanyWithPointsOfContactAsync(CreateCompanyWithPointsOfContactInputDataModel dataModel)

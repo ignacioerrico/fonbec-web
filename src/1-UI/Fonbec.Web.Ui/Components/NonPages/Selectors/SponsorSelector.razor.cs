@@ -17,7 +17,7 @@ public partial class SponsorSelector
     public int? ChapterId { get; set; }
 
     [Parameter]
-    public bool Required { get; set; }
+    public bool IsRequired { get; set; }
 
     [Parameter]
     public bool SelectFirstItemOnLoad { get; set; }
