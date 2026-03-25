@@ -17,7 +17,6 @@ internal class PointOfContactConfiguration : AuditableEntityTypeConfiguration<Po
             .HasMaxLength(MaxLength.PointOfContact.FirstName);
 
         builder.Property(poc => poc.LastName)
-            .IsRequired()
             .HasMaxLength(MaxLength.PointOfContact.LastName);
 
         builder.Property(poc => poc.NickName)

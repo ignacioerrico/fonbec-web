@@ -51,6 +51,7 @@ public static class ConfigureServices
 
         services.AddScoped<IChapterService, ChapterService>();
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<IPlannedDeliveryService, PlannedDeliveryService>();
         services.AddScoped<IStudentService, StudentService>();
         services.AddScoped<ISponsorService, SponsorService>();
         services.AddScoped<ISponsorshipService, SponsorshipService>();
@@ -58,6 +59,7 @@ public static class ConfigureServices
 
         services.AddScoped<IChapterRepository, ChapterRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<IPlannedDeliveryRepository, PlannedDeliveryRepository>();
         services.AddScoped<IStudentRepository, StudentRepository>();
         services.AddScoped<ISponsorRepository, SponsorRepository>();
         services.AddScoped<ISponsorshipRepository, SponsorshipRepository>();

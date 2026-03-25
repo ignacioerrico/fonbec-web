@@ -1,7 +1,6 @@
 ﻿using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.Logic.Models;
 using Fonbec.Web.Logic.Models.Companies.Input;
-using Fonbec.Web.Logic.Models.Results;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Ui.Constants;
 using Fonbec.Web.Ui.Models.Company;
@@ -10,7 +9,7 @@ using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.Pages.Companies;
 
-[PageMetadata(nameof(CompanyCreate), "Crear y actualizar empresas", [FonbecRole.Admin, FonbecRole.Manager])]
+[PageMetadata(nameof(CompanyCreate), "Crear y actualizar empresas", [FonbecRole.Manager])]
 public partial class CompanyCreate : AuthenticationRequiredComponentBase
 {
     private readonly CompanyCreateBindModel _bindModel = new();
@@ -19,9 +18,9 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
 
     private bool _saving;
 
-    private bool _linkSponsors;
-
     private bool _addPointsOfContact;
+
+    private bool _linkSponsors;
 
     [Inject]
     private ICompanyService CompanyService { get; set; } = null!;
@@ -31,34 +30,34 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
                                        || (_linkSponsors && _bindModel.Sponsors.Count == 0)
                                        || !_formValidationSucceeded;
 
+    private bool CanAddPointOfContact =>
+        _bindModel.PointsOfContact.All(poc =>
+            !string.IsNullOrWhiteSpace(poc.PocFirstName));
 
-    private void AddPointOfContact()
-    {
-        _bindModel.PointsOfContact.Add(new PointOfContactBindModel());
-    }
-    private void RemovePointOfContact(Guid tempId)
-    {
-        var poc = _bindModel.PointsOfContact.FirstOrDefault(p => p.TempId == tempId);
+    private void AddPointOfContact() =>
+        _bindModel.PointsOfContact.Add(new());
 
-        if (poc != null)
-            _bindModel.PointsOfContact.Remove(poc);
-    }
+    private void RemovePointOfContact(Guid tempId) =>
+        _bindModel.PointsOfContact.RemoveAll(poc => poc.TempId == tempId);
+
+    private string QtySponsorsInfo => _bindModel.Sponsors.Count switch
+    {
+        0 => "No hay padrinos vinculados.",
+        1 => "<strong>Un</strong> padrino vinculado.",
+        _ => $"<strong>{_bindModel.Sponsors.Count}</strong> padrinos vinculados."
+    };
+
+    private void RemoveSponsor(SelectableModel<int> sponsor) =>
+        _bindModel.Sponsors.Remove(sponsor);
+
+    private void RemoveAllSponsors() =>
+        _bindModel.Sponsors.Clear();
 
     private async Task Save()
     {
-        var pointsOfContact = _bindModel.PointsOfContact.Select(poc => new CreatePointOfContactInputModel(
-            poc.FirstName,
-            poc.LastName,
-            poc.NickName,
-            poc.Email,
-            poc.PhoneNumber,
-            FonbecClaim.UserId
-        )).ToList();
-
         _saving = true;
 
         var companyNameExists = await CompanyService.CompanyNameExistsAsync(_bindModel.CompanyName);
-
         if (companyNameExists)
         {
             _saving = false;
@@ -67,40 +66,43 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
             return;
         }
 
-        CrudResult result;
-        if (pointsOfContact.Any())
+        var pointsOfContact = _addPointsOfContact
+            ? _bindModel.PointsOfContact
+                .Where(poc => !string.IsNullOrWhiteSpace(poc.PocFirstName))
+                .Select(poc =>
+                    new CreateCompanyPointOfContactInputModel(
+                        poc.PocFirstName,
+                        poc.PocLastName,
+                        poc.PocNickName,
+                        poc.PocEmail,
+                        poc.PocPhoneNumber,
+                        poc.PocNotes
+                    ))
+                .ToList()
+            : [];
+
+        var sponsors = _linkSponsors
+            ? _bindModel.Sponsors
+            : [];
+
+        var createCompanyInputModel = new CreateCompanyInputModel(
+            _bindModel.CompanyName,
+            _bindModel.CompanyEmail,
+            _bindModel.CompanyPhoneNumber,
+            _bindModel.CompanyNotes,
+            pointsOfContact,
+            sponsors,
+            FonbecClaim.UserId
+        );
+
+        var result = await CompanyService.CreateCompanyAsync(createCompanyInputModel);
+
+        _saving = false;
+
+        if (!result.AnyAffectedRows)
         {
-            var createCompanyInputModel = new CreateCompanyWithPointsOfContactInputModel(
-                _bindModel.CompanyName,
-                _bindModel.CompanyEmail ?? string.Empty,
-                _bindModel.CompanyPhoneNumber ?? string.Empty,
-                FonbecClaim.UserId,
-                pointsOfContact
-            );
-            result = await CompanyService.CreateCompanyWithPointsOfContactAsync(createCompanyInputModel);
-        }
-        else
-        {
-            var sponsors = _linkSponsors
-                ? _bindModel.Sponsors
-                : [];
-
-            var createCompanyInputModel = new CreateCompanyInputModel(
-                _bindModel.CompanyName,
-                _bindModel.CompanyEmail,
-                _bindModel.CompanyPhoneNumber,
-                sponsors,
-                FonbecClaim.UserId);
-
-            result = await CompanyService.CreateCompanyAsync(createCompanyInputModel);
-
-            _saving = false;
-
-            if (!result.AnyAffectedRows)
-            {
-                Snackbar.Add("No se pudo crear la empresa.", Severity.Error);
-                return;
-            }
+            Snackbar.Add("No se pudo crear la empresa.", Severity.Error);
+            return;
         }
 
         NavigationManager.NavigateTo(NavRoutes.Companies);
@@ -121,17 +123,4 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
 
         _bindModel.Sponsors.Add(sponsor);
     }
-
-    private string QtySponsorsInfo => _bindModel.Sponsors.Count switch
-    {
-        0 => "No hay padrinos vinculados.",
-        1 => "<strong>Un</strong> padrino vinculado.",
-        _ => $"<strong>{_bindModel.Sponsors.Count}</strong> padrinos vinculados."
-    };
-
-    private void RemoveSponsor(SelectableModel<int> sponsor) =>
-        _bindModel.Sponsors.Remove(sponsor);
-
-    private void RemoveAllSponsors() =>
-        _bindModel.Sponsors.Clear();
 }
