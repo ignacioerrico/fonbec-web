@@ -3,6 +3,7 @@
 @inherits AuthenticationRequiredComponentBase
 
 @using Fonbec.Web.DataAccess.Constants
+@using Fonbec.Web.Logic.Models
 
 <PageHeader Title="Alta de empresa" />
 
@@ -38,11 +39,11 @@
         </MudCardContent>
     </MudCard>
 
-    <MudCheckBox @bind-Value="_addPointOfContact">
-        Agregar contactos administrativos.
+    <MudCheckBox @bind-Value="_addPointsOfContact">
+        Agregar contactos administrativos
     </MudCheckBox>
 
-    @if (_addPointOfContact)
+    @if (_addPointsOfContact)
     {
         <MudCard Class="mt-4">
             <MudCardContent>
@@ -68,6 +69,7 @@
                         <RowTemplate>
                             <MudTd>
                                 <MudTextField @bind-Value="context.PocFirstName"
+                                              Label="Nombre"
                                               Immediate="true"
                                               Required="true"
                                               RequiredError="El nombre es obligatorio"
@@ -76,26 +78,31 @@
 
                             <MudTd>
                                 <MudTextField @bind-Value="context.PocLastName"
+                                              Label="Apellido"
                                               MaxLength="@MaxLength.PointOfContact.LastName" />
                             </MudTd>
 
                             <MudTd>
                                 <MudTextField @bind-Value="context.PocNickName"
+                                              Label="Apodo"
                                               MaxLength="@MaxLength.PointOfContact.NickName" />
                             </MudTd>
 
                             <MudTd>
                                 <MudTextField @bind-Value="context.PocEmail"
+                                              Label="Correo electrónico"
                                               MaxLength="@MaxLength.PointOfContact.Email" />
                             </MudTd>
 
                             <MudTd>
                                 <MudTextField @bind-Value="context.PocPhoneNumber"
+                                              Label="Teléfono"
                                               MaxLength="@MaxLength.PointOfContact.PhoneNumber" />
                             </MudTd>
 
                             <MudTd>
                                 <MudTextField @bind-Value="context.PocNotes"
+                                              Label="Notas"
                                               MaxLength="@MaxLength.Auditable.Notes" />
                             </MudTd>
 
@@ -105,12 +112,11 @@
                                                OnClick="@(() => RemovePointOfContact(context.TempId))" />
                             </MudTd>
                         </RowTemplate>
-
                     </MudTable>
                 }
                 else
                 {
-                    <MudText Class="my-4">No hay puntos de contacto.</MudText>
+                    <MudText Class="my-4">No hay contactos administrativos.</MudText>
                 }
 
                 <MudButton OnClick="AddPointOfContact"
@@ -124,17 +130,63 @@
             </MudCardContent>
         </MudCard>
     }
+
+    <MudCheckBox @bind-Value="_linkSponsors">
+        Vincular padrinos a esta empresa
+    </MudCheckBox>
+
+    @if (_linkSponsors)
+    {
+        <MudCard Class="mt-4">
+            <MudCardContent>
+                <MudStack Row="true">
+                    <SponsorSelector SelectedSponsorChanged="OnSelectedSponsorChanged"
+                                     IsRequired="false"
+                                     ClearWhenValueChanged="true" />
+
+                    <MudButton OnClick="RemoveAllSponsors"
+                               Disabled="_bindModel.Sponsors.Count == 0"
+                               Variant="Variant.Filled" Color="Color.Primary"
+                               Class="mt-2">
+                        Quitar todos
+                    </MudButton>
+                </MudStack>
+
+                <MudText Typo="Typo.body2" Class="mt-2">
+                    @((MarkupString)QtySponsorsInfo)
+                </MudText>
+
+                <MudDataGrid T="SelectableModel<int>"
+                             Items="_bindModel.Sponsors"
+                             Loading="Loading"
+                             Dense="true" Hover="true" Striped="true" Bordered="true"
+                             Class="mt-2">
+                    <Columns>
+                        <PropertyColumn Property="sm => sm.DisplayName" Title="Padrinos de la empresa" />
+                        <TemplateColumn Title="Acciones">
+                            <CellTemplate>
+                                <MudTooltip Text="Quitar de la lista" Arrow="true" Placement="Placement.Bottom" Color="Color.Error" Delay="500">
+                                    <MudIconButton OnClick="@(() => RemoveSponsor(context.Item))"
+                                                   Icon="@Icons.Material.Outlined.Delete" Size="@Size.Small" Color="Color.Error" />
+                                </MudTooltip>
+                            </CellTemplate>
+                        </TemplateColumn>
+                    </Columns>
+                </MudDataGrid>
+            </MudCardContent>
+        </MudCard>
+    }
+
+    <MudStack Row="true" Class="pt-4">
+        <MudButton OnClick="Save" Disabled="SaveButtonDisabled"
+                   Variant="Variant.Filled" Color="Color.Primary">
+            Crear
+        </MudButton>
+        <MudButton Href="@NavRoutes.Companies"
+                   Variant="Variant.Filled" Color="Color.Default" Class="ms-4">
+            Cancelar
+        </MudButton>
+    </MudStack>
+
+    <LoadingIndicator Loading="_saving" LoadingText="Guardando los datos" />
 </MudForm>
-
-<MudStack Row="true" Class="pt-4">
-    <MudButton OnClick="Save" Disabled="SaveButtonDisabled"
-               Variant="Variant.Filled" Color="Color.Primary">
-        Crear
-    </MudButton>
-    <MudButton Href="@NavRoutes.Companies"
-               Variant="Variant.Filled" Color="Color.Default" Class="ms-4">
-        Cancelar
-    </MudButton>
-</MudStack>
-
-<LoadingIndicator Loading="_saving" LoadingText="Guardando los datos" />

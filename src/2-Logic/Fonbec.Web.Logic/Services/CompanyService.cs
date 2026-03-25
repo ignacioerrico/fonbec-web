@@ -1,5 +1,6 @@
 ﻿using Fonbec.Web.DataAccess.DataModels.Companies.Input;
 using Fonbec.Web.DataAccess.Repositories;
+using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models;
 using Fonbec.Web.Logic.Models.Companies;
 using Fonbec.Web.Logic.Models.Companies.Input;
@@ -16,7 +17,7 @@ public interface ICompanyService
     Task<CrudResult> CreateCompanyAsync(CreateCompanyInputModel inputModel);
 }
 
-public class CompanyService(ICompanyRepository companyRepository) : ICompanyService
+public class CompanyService(ICompanyRepository companyRepository, ISponsorRepository sponsorRepository) : ICompanyService
 {
     public async Task<List<CompaniesListViewModel>> GetAllCompaniesAsync()
     {
@@ -33,13 +34,28 @@ public class CompanyService(ICompanyRepository companyRepository) : ICompanyServ
 
     public async Task<bool> CompanyNameExistsAsync(string companyName)
     {
-        return await companyRepository.CompanyNameExistsAsync(companyName);
+        var normalizedCompanyName = companyName.NormalizeText();
+        return await companyRepository.CompanyNameExistsAsync(normalizedCompanyName);
     }
 
     public async Task<CrudResult> CreateCompanyAsync(CreateCompanyInputModel inputModel)
     {
         var inputDataModel = inputModel.Adapt<CreateCompanyInputDataModel>();
-        var affectedRows = await companyRepository.CreateCompanyAsync(inputDataModel);
+
+        var companyId = await companyRepository.CreateCompanyAsync(inputDataModel);
+
+        if (companyId == 0)
+        {
+            return new CrudResult();
+        }
+
+        int affectedRows = 0;
+
+        if (inputDataModel.SponsorIds.Count > 0)
+        {
+            affectedRows = await sponsorRepository.LinkSponsorsToCompanyAsync(inputDataModel.SponsorIds, companyId);
+        }
+
         return new CrudResult(affectedRows);
     }
 }

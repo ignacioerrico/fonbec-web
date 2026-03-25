@@ -30,6 +30,11 @@ public class CreateCompanyInputModelMappingDefinitionsTests : MappingTestBase
                     PocPhoneNumber: "987654321",
                     PocNotes: "Notes about second POC"),
             ],
+            Sponsors: [
+                new(7, "First sponsor"),
+                new(11, "Second sponsor"),
+                new(13, "Third sponsor"),
+                ],
             CreatedById: 42
         );
 
@@ -41,7 +46,7 @@ public class CreateCompanyInputModelMappingDefinitionsTests : MappingTestBase
         result.CompanyNotes.Should().Be("Important notes go here");
 
         result.PointsOfContact.Should().HaveCount(2);
-        
+
         result.PointsOfContact[0].PocFirstName.Should().Be("John");
         result.PointsOfContact[0].PocLastName.Should().Be("Doe");
         result.PointsOfContact[0].PocNickName.Should().Be("Buddy");
@@ -56,6 +61,7 @@ public class CreateCompanyInputModelMappingDefinitionsTests : MappingTestBase
         result.PointsOfContact[1].PocPhoneNumber.Should().Be("987654321");
         result.PointsOfContact[1].PocNotes.Should().Be("Notes about second POC");
 
+        result.SponsorIds.Should().Equal(7, 11, 13);
         result.CreatedById.Should().Be(42);
     }
 
@@ -68,6 +74,7 @@ public class CreateCompanyInputModelMappingDefinitionsTests : MappingTestBase
             CompanyPhoneNumber: "123456789",
             CompanyNotes: "Important notes go here",
             PointsOfContact: [],
+            Sponsors: [],
             CreatedById: 42
         );
 
@@ -86,6 +93,7 @@ public class CreateCompanyInputModelMappingDefinitionsTests : MappingTestBase
             CompanyPhoneNumber: "123456789",
             CompanyNotes: "Important notes go here",
             PointsOfContact: [],
+            Sponsors: [],
             CreatedById: 42
         );
 
@@ -103,6 +111,7 @@ public class CreateCompanyInputModelMappingDefinitionsTests : MappingTestBase
             CompanyPhoneNumber: "  123456789   ",
             CompanyNotes: "Important notes go here",
             PointsOfContact: [],
+            Sponsors: [],
             CreatedById: 42
         );
 
@@ -120,6 +129,7 @@ public class CreateCompanyInputModelMappingDefinitionsTests : MappingTestBase
             CompanyPhoneNumber: "   ",
             CompanyNotes: " ",
             PointsOfContact: [],
+            Sponsors: [],
             CreatedById: 42
         );
 
@@ -139,6 +149,7 @@ public class CreateCompanyInputModelMappingDefinitionsTests : MappingTestBase
             CompanyPhoneNumber: "314159265",
             CompanyNotes: "Important notes go here",
             PointsOfContact: [],
+            Sponsors: [],
             CreatedById: 42
         );
 
@@ -164,6 +175,7 @@ public class CreateCompanyInputModelMappingDefinitionsTests : MappingTestBase
                     PocPhoneNumber: "  314159265  ",
                     PocNotes: "  sOMe notES  "),
             ],
+            Sponsors: [],
             CreatedById: 42
         );
 
@@ -196,6 +208,7 @@ public class CreateCompanyInputModelMappingDefinitionsTests : MappingTestBase
                     PocPhoneNumber: "123456789",
                     PocNotes: "Notes about POC"),
             ],
+            Sponsors: [],
             CreatedById: 42
         );
 
@@ -222,6 +235,7 @@ public class CreateCompanyInputModelMappingDefinitionsTests : MappingTestBase
                     PocPhoneNumber: string.Empty,
                     PocNotes: "Notes about POC"),
             ],
+            Sponsors: [],
             CreatedById: 42
         );
 

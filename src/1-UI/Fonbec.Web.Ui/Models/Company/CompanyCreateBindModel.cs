@@ -1,4 +1,6 @@
-﻿namespace Fonbec.Web.Ui.Models.Company;
+﻿using Fonbec.Web.Logic.Models;
+
+namespace Fonbec.Web.Ui.Models.Company;
 
 public class CompanyCreateBindModel
 {
@@ -11,6 +13,8 @@ public class CompanyCreateBindModel
     public string CompanyNotes { get; set; } = string.Empty;
 
     public List<CompanyCreatePointOfContactBindModel> PointsOfContact { get; set; } = [new()];
+
+    public List<SelectableModel<int>> Sponsors { get; set; } = [];
 }
 
 public class CompanyCreatePointOfContactBindModel

@@ -10,6 +10,7 @@ public record CreateCompanyInputModel(
     string CompanyPhoneNumber,
     string CompanyNotes,
     List<CreateCompanyPointOfContactInputModel> PointsOfContact,
+    List<SelectableModel<int>> Sponsors,
     int CreatedById
 );
 
@@ -32,6 +33,7 @@ public class CreateCompanyInputModelMappingDefinitions : IRegister
             .Map(dest => dest.CompanyPhoneNumber, src => src.CompanyPhoneNumber.NullOrTrimmed())
             .Map(dest => dest.CompanyNotes, src => src.CompanyNotes.NullOrTrimmed())
             .Map(dest => dest.PointsOfContact, src => src.PointsOfContact)
+            .Map(dest => dest.SponsorIds, src => src.Sponsors.Select(sm => sm.Key))
             .Map(dest => dest.CreatedById, src => src.CreatedById);
 
         config.NewConfig<CreateCompanyPointOfContactInputModel, CreateCompanyPointOfContactInputDataModel>()

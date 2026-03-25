@@ -12,6 +12,8 @@ public class CreateCompanyInputDataModel
 
     public List<CreateCompanyPointOfContactInputDataModel> PointsOfContact { get; set; } = [];
 
+    public List<int> SponsorIds { get; set; } = [];
+
     public int CreatedById { get; set; }
 }
 
