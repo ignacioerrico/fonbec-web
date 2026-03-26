@@ -79,7 +79,8 @@
                 @if (_bindModel.SponsorshipType == SponsorshipType.Company)
                 {
                     <CompanySelector @bind-SelectedCompanyId="_bindModel.SelectedCompanyId"
-                                     NumberOfCompaniesLoaded="NumberOfCompaniesLoaded" />
+                                     NumberOfCompaniesLoaded="NumberOfCompaniesLoaded" 
+                                     IsRequired="true" />
                 }
 
                 <MudDatePicker Label="Fecha de inicio"

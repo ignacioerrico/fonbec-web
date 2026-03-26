@@ -1,7 +1,4 @@
-﻿using Fonbec.Web.DataAccess.Entities.Enums;
-
-namespace Fonbec.Web.DataAccess.DataModels.Sponsorships.Input;
-
+﻿namespace Fonbec.Web.DataAccess.DataModels.Sponsorships.Input;
 public class CreateSponsorshipInputDataModel
 {
     public int StudentId { get; set; }

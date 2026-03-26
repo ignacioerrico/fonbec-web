@@ -1,11 +1,9 @@
-﻿using Fonbec.Web.DataAccess.Entities;
-using Fonbec.Web.Logic.Models;
+﻿using Fonbec.Web.Logic.Models;
 using Fonbec.Web.Logic.Services;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.NonPages.Selectors;
-
 public partial class CompanySelector
 {
     private readonly List<SelectableModel<int>> _companies = [];
@@ -15,7 +13,6 @@ public partial class CompanySelector
     [Parameter]
     public int? SelectedCompanyId { get; set; }
 
-    // agrego esto
     [Parameter]
     public bool SelectFirstItemOnLoad { get; set; }
 
@@ -28,20 +25,21 @@ public partial class CompanySelector
     [Parameter]
     public EventCallback<int> NumberOfCompaniesLoaded { get; set; }
 
+    [Parameter]
+    public bool IsRequired { get; set; }
+
     [Inject]
     private ICompanyService CompanyService { get; set; } = null!;
     protected override async Task OnInitializedAsync()
     {
         _loading = true;
 
-        // no deberia traer solo las del encargado/estudiante?????
         var companies = await CompanyService.GetAllCompaniesForSelectionAsync();
 
         _loading = false;
 
         _companies.AddRange(companies);
 
-        // uso esto
         await NumberOfCompaniesLoaded.InvokeAsync(companies.Count);
         if (SelectFirstItemOnLoad && companies.Count > 0)
         {

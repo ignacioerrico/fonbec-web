@@ -18,7 +18,6 @@ public partial class SponsorCreate : AuthenticationRequiredComponentBase
     private bool _formValidationSucceeded;
 
     private bool _saving;
-
     private bool SaveButtonDisabled => Loading
                                        || _saving
                                        || !_formValidationSucceeded;

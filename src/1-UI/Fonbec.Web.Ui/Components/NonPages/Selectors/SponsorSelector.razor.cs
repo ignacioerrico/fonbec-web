@@ -16,7 +16,6 @@ public partial class SponsorSelector
     [Parameter]
     public bool SelectFirstItemOnLoad { get; set; }
 
-    // voy a cambiar esto...
     [Parameter]
     public int? SelectedSponsorId { get; set; }
 
@@ -26,6 +25,7 @@ public partial class SponsorSelector
     /// <summary>
     /// Callback invoked when sponsors are loaded. The int parameter indicates the number of sponsors loaded.
     /// </summary>
+    /// 
     [Parameter]
     public EventCallback<int> NumberOfSponsorsLoaded { get; set; }
 
@@ -56,8 +56,6 @@ public partial class SponsorSelector
 
         await base.OnInitializedAsync();
     }
-
-    // CAMBIOS de tipo
     private async Task<IEnumerable<int?>> Search(string value, CancellationToken token)
     {
         var result = string.IsNullOrEmpty(value)
