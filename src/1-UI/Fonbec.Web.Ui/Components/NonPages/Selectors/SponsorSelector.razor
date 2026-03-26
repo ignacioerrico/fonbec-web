@@ -1,11 +1,13 @@
-﻿<LoadingIndicator Loading="_loading" />
+﻿@using Fonbec.Web.Logic.Models
 
-@*Cambios*@
-<MudAutocomplete T="int?" Label="Padrino"
+<LoadingIndicator Loading="_loading" />
+
+<MudAutocomplete @ref="_autocomplete"
+                 T="SelectableModel<int>" Label="Padrino"
                  SearchFunc="Search"
-                 Value="SelectedSponsorId"
+                 Value="SelectedSponsor"
                  ValueChanged="OnSelectedValueChanged"
                  ToStringFunc="MapKeyToDisplayName"
                  Disabled="_loading"
-                 Required="true" RequiredError="Este es un campo obligatorio."
+                 Required="IsRequired" RequiredError="Este es un campo obligatorio."
                  Variant="Variant.Filled" AnchorOrigin="Origin.BottomLeft" />

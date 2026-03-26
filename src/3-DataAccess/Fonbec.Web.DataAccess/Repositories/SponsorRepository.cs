@@ -17,6 +17,14 @@ public interface ISponsorRepository
     Task<int> CreateSponsorAsync(CreateSponsorInputDataModel dataModel);
 
     Task<int> UpdateSponsorAsync(UpdateSponsorInputDataModel dataModel);
+
+    /// <summary>
+    /// Links a group of sponsors to a company.
+    /// </summary>
+    /// <param name="sponsorsIds">IDs of the sponsors to link</param>
+    /// <param name="companyId">ID of the company to link to</param>
+    /// <returns></returns>
+    Task<int> LinkSponsorsToCompanyAsync(List<int> sponsorsIds, int companyId);
 }
 
 public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : ISponsorRepository
@@ -95,6 +103,20 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
         sponsorDb.LastUpdatedById = dataModel.UpdatedById;
 
         db.Sponsors.Update(sponsorDb);
+        return await db.SaveChangesAsync();
+    }
+
+    public async Task<int> LinkSponsorsToCompanyAsync(List<int> sponsorIds, int companyId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var sponsorsDb = await db.Sponsors
+            .Where(s => sponsorIds.Contains(s.Id))
+            .ToListAsync();
+
+        sponsorsDb.ForEach(s => s.CompanyId = companyId);
+
+        db.Sponsors.UpdateRange(sponsorsDb);
         return await db.SaveChangesAsync();
     }
 }

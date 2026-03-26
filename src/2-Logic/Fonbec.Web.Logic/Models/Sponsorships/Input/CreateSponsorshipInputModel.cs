@@ -8,6 +8,10 @@ public record CreateSponsorshipInputModel
     int StudentId,
     int? SponsorId,
     int? CompanyId,
+
+public record CreateSponsorshipInputModel(
+    int StudentId,
+    SelectableModel<int>? Sponsor,
     DateTime SponsorshipStartDate,
     DateTime? SponsorshipEndDate,
     string SponsorshipNotes,
@@ -29,6 +33,8 @@ public class CreateSponsorshipInputModelMappsingDefinitions : IRegister
             .Map(dest => dest.StudentId, src => src.StudentId)
             .Map(dest => dest.SponsorId, src => src.SponsorId)
             .Map(dest => dest.CompanyId, src => src.CompanyId)
+            .Map(dest => dest.SponsorId, src => src.Sponsor!.Key, srcCond => srcCond.Sponsor != null)
+            .Map(dest => dest.SponsorId, src => (int?)null, srcCond => srcCond.Sponsor == null)
             .Map(dest => dest.SponsorshipStartDate, src => src.SponsorshipStartDate)
             .Map(dest => dest.SponsorshipEndDate, src => src.SponsorshipEndDate)
             .Map(dest => dest.SponsorshipNotes, src => src.SponsorshipNotes.NullOrTrimmed())

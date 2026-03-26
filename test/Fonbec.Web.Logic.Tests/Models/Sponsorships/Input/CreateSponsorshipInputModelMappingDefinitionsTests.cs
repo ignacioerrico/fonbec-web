@@ -1,5 +1,6 @@
 ﻿using FluentAssertions;
 using Fonbec.Web.DataAccess.DataModels.Sponsorships.Input;
+using Fonbec.Web.Logic.Models;
 using Fonbec.Web.Logic.Models.Sponsorships.Input;
 using Mapster;
 
@@ -14,6 +15,7 @@ public class CreateSponsorshipInputModelMappingDefinitionsTests : MappingTestBas
             StudentId: 314,
             SponsorId: 512,
             CompanyId: null,
+            Sponsor: new SelectableModel<int>(512, "Maxwell Smart"),
             SponsorshipStartDate: new DateTime(1996, 6, 19),
             SponsorshipEndDate: new DateTime(1996, 7, 3),
             SponsorshipNotes: "A nut for a jar of tuna",
@@ -56,12 +58,30 @@ public class CreateSponsorshipInputModelMappingDefinitionsTests : MappingTestBas
     }
 
     [Fact]
+    public void InputModel_Sponsor_IsMappedToNull_WhenNull()
+    {
+        var input = new CreateSponsorshipInputModel(
+            StudentId: 314,
+            Sponsor: null,
+            SponsorshipStartDate: new DateTime(1996, 6, 19),
+            SponsorshipEndDate: new DateTime(1996, 7, 3),
+            SponsorshipNotes: "A nut for a jar of tuna",
+            CreatedById: 99
+        );
+
+        var result = input.Adapt<CreateSponsorshipInputDataModel>(Config);
+
+        result.SponsorId.Should().BeNull();
+    }
+
+    [Fact]
     public void InputModel_SponsorshipNotes_IsTrimmed()
     {
         var input = new CreateSponsorshipInputModel(
             StudentId: 314,
             SponsorId: 512,
             CompanyId: null,
+            Sponsor: new SelectableModel<int>(512, "Maxwell Smart"),
             SponsorshipStartDate: new DateTime(1996, 6, 19),
             SponsorshipEndDate: new DateTime(1996, 7, 3),
             SponsorshipNotes: "   A nut for a jar of tuna    ",
