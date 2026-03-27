@@ -1,5 +1,4 @@
-﻿using Fonbec.Web.DataAccess.Entities;
-using Fonbec.Web.Logic.Models;
+﻿using Fonbec.Web.Logic.Models;
 using Fonbec.Web.Logic.Services;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
@@ -13,9 +12,11 @@ public partial class CompanySelector
     private bool _loading;
 
     [Parameter]
+    public bool IsRequired { get; set; }
+
+    [Parameter]
     public int? SelectedCompanyId { get; set; }
 
-    // agrego esto
     [Parameter]
     public bool SelectFirstItemOnLoad { get; set; }
 
@@ -34,15 +35,14 @@ public partial class CompanySelector
     {
         _loading = true;
 
-        // no deberia traer solo las del encargado/estudiante?????
         var companies = await CompanyService.GetAllCompaniesForSelectionAsync();
 
         _loading = false;
 
         _companies.AddRange(companies);
 
-        // uso esto
         await NumberOfCompaniesLoaded.InvokeAsync(companies.Count);
+
         if (SelectFirstItemOnLoad && companies.Count > 0)
         {
             if (SelectedCompanyId == 0)

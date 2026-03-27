@@ -19,8 +19,9 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
     private bool _anyCompanies;
     private bool _formValidationSucceeded;
     private bool _isEndDateKnown;
+
     private bool SaveButtonDisabled => _saving
-                                       || !_anyEntitiesAvailable
+                                       || !AnySponsorsOrCompanies
                                        || !_formValidationSucceeded
                                        || !DateSelectionIsValid;
 
@@ -28,8 +29,11 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
         _bindModel.SponsorshipStartDate is DateTime start
         && (!_isEndDateKnown
             || (_bindModel.SponsorshipEndDate is DateTime end && start < end));
-    private bool _anyEntitiesAvailable =>
-    _bindModel.SponsorshipType == SponsorshipType.Sponsor ? _anySponsors : _anyCompanies;
+
+    private bool AnySponsorsOrCompanies =>
+        _bindModel.SponsorshipType == SponsorshipType.Sponsor
+            ? _anySponsors
+            : _anyCompanies;
 
     [Parameter]
     public int StudentId { get; set; }
@@ -53,30 +57,33 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
             _bindModel.SponsorshipEndDate = null;
         }
     }
+
     private void OnEndDateChanged(DateTime? endDate) =>
         _bindModel.SponsorshipEndDate = endDate is DateTime d
             ? new DateTime(d.Year, d.Month, DateTime.DaysInMonth(d.Year, d.Month))
             : null;
+
+    private void OnSponsorshipTypeChanged(SponsorshipType sponsorshipType)
+    {
+        _bindModel.SponsorshipType = sponsorshipType;
+
+        // This ensures that only one is not null (and either a sponsor or a company is selected)
+        if (sponsorshipType == SponsorshipType.Sponsor)
+        {
+            _bindModel.SelectedCompanyId = null;
+        }
+        else if (sponsorshipType == SponsorshipType.Company)
+        {
+            _bindModel.SelectedSponsor = null;
+        }
+    }
+
     private async Task Save()
     {
-        int? sponsorId = null;
-        int? companyId = null;
-
-        if (_bindModel.SponsorshipType == SponsorshipType.Sponsor)
-            sponsorId = _bindModel.SelectedSponsorId;
-        else
-            companyId = _bindModel.SelectedCompanyId;
-
-        if ((sponsorId ?? companyId) == 0)
-        {
-            Snackbar.Add("La selección no es válida.", Severity.Error);
-            return;
-        }
-
         var createSponsorshipInputModel = new CreateSponsorshipInputModel(
             StudentId,
-            sponsorId,
-            companyId,
+            _bindModel.SelectedSponsor,
+            _bindModel.SelectedCompanyId,
             _bindModel.SponsorshipStartDate!.Value,
             _bindModel.SponsorshipEndDate,
             _bindModel.SponsorshipNotes,
@@ -88,13 +95,12 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
 
         _saving = false;
 
-        if (result.AnyAffectedRows)
-        {
-            NavigationManager.NavigateTo(NavRoutes.Students);
-        }
-        else
+        if (!result.AnyAffectedRows)
         {
             Snackbar.Add("No se pudo crear la asignación.", Severity.Error);
+            return;
         }
+
+        NavigationManager.NavigateTo(NavRoutes.Students);
     }
 }

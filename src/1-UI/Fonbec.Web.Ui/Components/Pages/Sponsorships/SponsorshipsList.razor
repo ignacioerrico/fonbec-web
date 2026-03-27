@@ -1,11 +1,11 @@
 ﻿@page "/becarios/{studentId:int}/padrinos"
-@using Microsoft.EntityFrameworkCore
-@using Fonbec.Web.Logic.Models.Sponsorships
 @attribute [Authorize(Policy = nameof(SponsorshipsList))]
 @inherits AuthenticationRequiredComponentBase
-@inject NavigationManager Navigation
 
-<PageHeader Title="@($"Padrinos de: {_viewModel.StudentFullName}")" />
+@using Fonbec.Web.Logic.Models.Sponsorships
+@using Microsoft.EntityFrameworkCore
+
+<PageHeader Title="@($"Padrinos de {_viewModel.StudentFullName}")" />
 
 <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
     <MudButton Href="@NavRoutes.Students"

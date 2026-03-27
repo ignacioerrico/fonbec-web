@@ -5,4 +5,3 @@ public enum SponsorshipType : byte
     Sponsor,
     Company
 }
-    

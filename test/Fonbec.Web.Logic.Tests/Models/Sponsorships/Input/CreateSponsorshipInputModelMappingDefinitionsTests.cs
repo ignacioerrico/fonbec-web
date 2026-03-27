@@ -13,9 +13,8 @@ public class CreateSponsorshipInputModelMappingDefinitionsTests : MappingTestBas
     {
         var input = new CreateSponsorshipInputModel(
             StudentId: 314,
-            SponsorId: 512,
-            CompanyId: null,
             Sponsor: new SelectableModel<int>(512, "Maxwell Smart"),
+            CompanyId: null,
             SponsorshipStartDate: new DateTime(1996, 6, 19),
             SponsorshipEndDate: new DateTime(1996, 7, 3),
             SponsorshipNotes: "A nut for a jar of tuna",
@@ -38,7 +37,7 @@ public class CreateSponsorshipInputModelMappingDefinitionsTests : MappingTestBas
     {
         var input = new CreateSponsorshipInputModel(
             StudentId: 314,
-            SponsorId: null,
+            Sponsor: null,
             CompanyId: 777,
             SponsorshipStartDate: new DateTime(1996, 6, 19),
             SponsorshipEndDate: new DateTime(1996, 7, 3),
@@ -58,39 +57,21 @@ public class CreateSponsorshipInputModelMappingDefinitionsTests : MappingTestBas
     }
 
     [Fact]
-    public void InputModel_Sponsor_IsMappedToNull_WhenNull()
-    {
-        var input = new CreateSponsorshipInputModel(
-            StudentId: 314,
-            Sponsor: null,
-            SponsorshipStartDate: new DateTime(1996, 6, 19),
-            SponsorshipEndDate: new DateTime(1996, 7, 3),
-            SponsorshipNotes: "A nut for a jar of tuna",
-            CreatedById: 99
-        );
-
-        var result = input.Adapt<CreateSponsorshipInputDataModel>(Config);
-
-        result.SponsorId.Should().BeNull();
-    }
-
-    [Fact]
     public void InputModel_SponsorshipNotes_IsTrimmed()
     {
         var input = new CreateSponsorshipInputModel(
             StudentId: 314,
-            SponsorId: 512,
-            CompanyId: null,
             Sponsor: new SelectableModel<int>(512, "Maxwell Smart"),
+            CompanyId: null,
             SponsorshipStartDate: new DateTime(1996, 6, 19),
             SponsorshipEndDate: new DateTime(1996, 7, 3),
-            SponsorshipNotes: "   A nut for a jar of tuna    ",
+            SponsorshipNotes: "   A nut for a JAR of tuna    ",
             CreatedById: 99
         );
 
         var result = input.Adapt<CreateSponsorshipInputDataModel>(Config);
 
-        result.SponsorshipNotes.Should().Be("A nut for a jar of tuna");
+        result.SponsorshipNotes.Should().Be("A nut for a JAR of tuna");
     }
 
     [Fact]
@@ -98,7 +79,7 @@ public class CreateSponsorshipInputModelMappingDefinitionsTests : MappingTestBas
     {
         var input = new CreateSponsorshipInputModel(
             StudentId: 314,
-            SponsorId: 512,
+            Sponsor: new SelectableModel<int>(512, "Maxwell Smart"),
             CompanyId: null,
             SponsorshipStartDate: new DateTime(1996, 6, 19),
             SponsorshipEndDate: null,
@@ -112,11 +93,11 @@ public class CreateSponsorshipInputModelMappingDefinitionsTests : MappingTestBas
     }
 
     [Fact]
-    public void Thrown_Exception_When_Company_And_Sponsor_Ausent()
+    public void InputModel_Throws_Exception_When_Company_And_Sponsor_Are_Both_Null()
     {
         var input = new CreateSponsorshipInputModel(
             StudentId: 314,
-            SponsorId: null,
+            Sponsor: null,
             CompanyId: null,
             SponsorshipStartDate: new DateTime(1996, 6, 19),
             SponsorshipEndDate: new DateTime(1996, 7, 3),
@@ -131,11 +112,11 @@ public class CreateSponsorshipInputModelMappingDefinitionsTests : MappingTestBas
     }
 
     [Fact]
-    public void Thrown_Exception_When_Both_Company_And_Sponsor_Present()
+    public void InputModel_Throws_Exception_When_Company_And_Sponsor_Are_Both_NotNull()
     {
         var input = new CreateSponsorshipInputModel(
             StudentId: 314,
-            SponsorId: 123,
+            Sponsor: new SelectableModel<int>(512, "Maxwell Smart"),
             CompanyId: 124,
             SponsorshipStartDate: new DateTime(1996, 6, 19),
             SponsorshipEndDate: new DateTime(1996, 7, 3),
@@ -148,5 +129,4 @@ public class CreateSponsorshipInputModelMappingDefinitionsTests : MappingTestBas
         result.Should().Throw<InvalidOperationException>()
             .WithMessage("Business rule violation: only one of SponsorId or CompanyId must be null");
     }
-
 }
