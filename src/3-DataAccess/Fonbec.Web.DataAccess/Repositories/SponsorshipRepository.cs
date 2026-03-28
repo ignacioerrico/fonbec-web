@@ -8,7 +8,6 @@ namespace Fonbec.Web.DataAccess.Repositories;
 public interface ISponsorshipRepository
 {
     Task<AllSponsorshipsDataModel> GetAllSponsorshipsAsync(int studentId);
-    
     Task<int> CreateSponsorshipAsync(CreateSponsorshipInputDataModel inputDataModel);
 }
 
@@ -58,6 +57,7 @@ public class SponsorshipRepository(IDbContextFactory<FonbecWebDbContext> dbConte
         {
             StudentId = inputDataModel.StudentId,
             SponsorId = inputDataModel.SponsorId,
+            CompanyId = inputDataModel.CompanyId,
             StartDate = inputDataModel.SponsorshipStartDate,
             EndDate = inputDataModel.SponsorshipEndDate,
             Notes = inputDataModel.SponsorshipNotes,

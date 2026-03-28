@@ -12,7 +12,13 @@ public partial class CompanySelector
     private bool _loading;
 
     [Parameter]
+    public bool IsRequired { get; set; }
+
+    [Parameter]
     public int? SelectedCompanyId { get; set; }
+
+    [Parameter]
+    public bool SelectFirstItemOnLoad { get; set; }
 
     [Parameter]
     public EventCallback<int?> SelectedCompanyIdChanged { get; set; }
@@ -25,7 +31,6 @@ public partial class CompanySelector
 
     [Inject]
     private ICompanyService CompanyService { get; set; } = null!;
-
     protected override async Task OnInitializedAsync()
     {
         _loading = true;
@@ -37,6 +42,16 @@ public partial class CompanySelector
         _companies.AddRange(companies);
 
         await NumberOfCompaniesLoaded.InvokeAsync(companies.Count);
+
+        if (SelectFirstItemOnLoad && companies.Count > 0)
+        {
+            if (SelectedCompanyId == 0)
+            {
+                SelectedCompanyId = companies.First().Key;
+            }
+
+            await OnSelectedValueChanged(SelectedCompanyId);
+        }
 
         await base.OnInitializedAsync();
     }

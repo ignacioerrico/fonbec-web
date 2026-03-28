@@ -65,7 +65,7 @@ public partial class SponsorSelector
         await base.OnInitializedAsync();
     }
 
-    private async Task<IEnumerable<SelectableModel<int>>> Search(string value, CancellationToken token)
+    private async Task<IEnumerable<SelectableModel<int>?>> Search(string value, CancellationToken token)
     {
         var result = string.IsNullOrEmpty(value)
             ? _sponsors
@@ -74,7 +74,7 @@ public partial class SponsorSelector
         return await Task.FromResult(result);
     }
 
-    private async Task OnSelectedValueChanged(SelectableModel<int> selectedSponsor)
+    private async Task OnSelectedValueChanged(SelectableModel<int>? selectedSponsor)
     {
         await SelectedSponsorChanged.InvokeAsync(selectedSponsor);
 

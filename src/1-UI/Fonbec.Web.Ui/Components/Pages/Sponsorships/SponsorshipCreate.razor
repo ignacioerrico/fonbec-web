@@ -3,75 +3,131 @@
 @inherits AuthenticationRequiredComponentBase
 
 @using Fonbec.Web.DataAccess.Constants
+@using Fonbec.Web.DataAccess.Entities.Enums
 
-<PageHeader Title="Asignar padrino" />
+<PageHeader Title="Alta de apadrinamiento" />
 
-@if (!_anySponsors)
-{
-    <MudAlert Severity="Severity.Error">
-        No hay padrinos. Para asignar un padrino se requiere
-        <MudLink Href="@NavRoutes.SponsorCreate"
-                 Typo="Typo.body2">
-            al menos un padrino
-        </MudLink>.
-    </MudAlert>
-}
+<MudPaper Class="pa-6 mt-4" Elevation="1">
+    @if (!AnySponsorsOrCompanies)
+    {
+        <MudAlert Severity="Severity.Error" Class="mb-4">
+            @if (_bindModel.SponsorshipType == SponsorshipType.Sponsor)
+            {
+                <span>
+                    No hay padrinos. Para asignar un padrino se requiere
+                    <MudLink Href="@NavRoutes.SponsorCreate" Typo="Typo.body2">
+                        al menos un padrino
+                    </MudLink>.
+                </span>
+            }
+            else if (_bindModel.SponsorshipType == SponsorshipType.Company)
+            {
+                <span>
+                    No hay empresas. Para asignar una empresa se requiere
+                    <MudLink Href="@NavRoutes.CompanyCreate" Typo="Typo.body2">
+                        al menos una empresa
+                    </MudLink>.
+                </span>
+            }
+        </MudAlert>
+    }
 
-<MudForm @bind-IsValid="_formValidationSucceeded"
-         Disabled="!_anySponsors">
-    <MudItem xs="12" sm="3">
-        <StudentSelector @bind-SelectedStudentId="StudentId"
-                         ChapterId="FonbecClaim.ChapterId" />
+    <MudStack>
+        <MudToggleGroup T="SponsorshipType"
+                        SelectionMode="SelectionMode.SingleSelection"
+                        Value="_bindModel.SponsorshipType"
+                        ValueChanged="OnSponsorshipTypeChanged"
+                        Color="Color.Primary"
+                        Style="align-self: flex-start;"
+                        CheckMark>
+            <MudToggleItem Value="SponsorshipType.Sponsor"
+                           Text="Padrino"
+                           SelectedIcon="@Icons.Material.Filled.Person" />
 
-        <SponsorSelector @bind-SelectedSponsor="_bindModel.SelectedSponsor"
-                         ChapterId="FonbecClaim.ChapterId"
-                         IsRequired="true"
-                         NumberOfSponsorsLoaded="NumberOfSponsorsLoaded" />
+            <MudToggleItem Value="SponsorshipType.Company"
+                           Text="Empresa"
+                           SelectedIcon="@Icons.Material.Filled.Business" />
+        </MudToggleGroup>
 
-        <MudDatePicker Label="Fecha de inicio"
-                       @bind-Date="_bindModel.SponsorshipStartDate"
-                       OpenTo="OpenTo.Month" FixDay="1" DateFormat="\P\r\i\n\c\i\p\i\o\ \d\e\ MMM yyyy"
-                       Required="true"
-                       MaxDate="_isEndDateKnown && _bindModel.SponsorshipEndDate.HasValue ? _bindModel.SponsorshipEndDate.Value : DateTime.MaxValue" />
+        <MudDivider />
 
-        <MudCheckBox T="bool"
-                     Value="_isEndDateKnown"
-                     ValueChanged="OnIsEndDateKnownCheckBoxChanged"
-                     Label="Conozco la fecha de fin"
-                     Color="Color.Primary" />
+        <MudForm @bind-IsValid="_formValidationSucceeded"
+                 Disabled="!AnySponsorsOrCompanies">
+            <MudStack>
+                <StudentSelector @bind-SelectedStudentId="StudentId"
+                                 ChapterId="FonbecClaim.ChapterId" />
 
-        <MudDatePicker Label="Fecha de fin"
-                       Date="_bindModel.SponsorshipEndDate"
-                       DateChanged="OnEndDateChanged"
-                       OpenTo="OpenTo.Month" FixDay="1" DateFormat="\F\i\n\ \d\e\ MMM yyyy"
-                       Required="_isEndDateKnown"
-                       Disabled="!_isEndDateKnown"
-                       MinDate="_bindModel.SponsorshipStartDate" />
+                @if (_bindModel.SponsorshipType == SponsorshipType.Sponsor)
+                {
+                    <SponsorSelector @bind-SelectedSponsor="_bindModel.SelectedSponsor"
+                                     IsRequired="true"
+                                     ChapterId="FonbecClaim.ChapterId"
+                                     NumberOfSponsorsLoaded="NumberOfSponsorsLoaded" />
+                }
+                else if (_bindModel.SponsorshipType == SponsorshipType.Company)
+                {
+                    <CompanySelector @bind-SelectedCompanyId="_bindModel.SelectedCompanyId"
+                                     IsRequired="true"
+                                     NumberOfCompaniesLoaded="NumberOfCompaniesLoaded" />
+                }
 
-        <MudTextField T="string" Label="Información adicional"
-                      @bind-Value="_bindModel.SponsorshipNotes"
-                      Immediate="true"
-                      MaxLength="MaxLength.Auditable.Notes" />
+                <MudDatePicker Label="Fecha de inicio"
+                               @bind-Date="_bindModel.SponsorshipStartDate"
+                               OpenTo="OpenTo.Month"
+                               FixDay="1"
+                               DateFormat="\P\r\i\n\c\i\p\i\o\ \d\e\ MMMM yyyy"
+                               TitleDateFormat="MMM yyyy"
+                               Culture="@System.Globalization.CultureInfo.GetCultureInfo("es-AR")"
+                               Required="true"
+                               MaxDate="_bindModel.SponsorshipEndDate" />
 
-    </MudItem>
-</MudForm>
+                <MudCheckBox T="bool"
+                             Value="_isEndDateKnown"
+                             ValueChanged="OnIsEndDateKnownCheckBoxChanged"
+                             Label="Conozco la fecha de fin"
+                             Color="Color.Primary" />
 
-<MudStack Row="true" Class="pt-4">
-    <MudButton OnClick="Save"
-               Disabled="SaveButtonDisabled"
-               Variant="Variant.Filled"
-               StartIcon="@Icons.Material.Filled.Save"
-               Color="Color.Primary">
-        Crear
-    </MudButton>
+                @if (_isEndDateKnown)
+                {
+                    <MudDatePicker Label="Fecha de fin"
+                                   Date="_bindModel.SponsorshipEndDate"
+                                   DateChanged="OnEndDateChanged"
+                                   OpenTo="OpenTo.Month"
+                                   FixDay="1"
+                                   DateFormat="\F\i\n\ \d\e\ MMMM yyyy"
+                                   TitleDateFormat="MMM yyyy"
+                                   Culture="@System.Globalization.CultureInfo.GetCultureInfo("es-AR")"
+                                   Required="_isEndDateKnown"
+                                   Disabled="!_isEndDateKnown"
+                                   MinDate="_bindModel.SponsorshipStartDate" />
+                }
 
-    <MudButton Href="@NavRoutes.Sponsorships(StudentId)"
-               Variant="Variant.Filled"
-               Color="Color.Default"
-               Class="ms-4">
-        Cancelar
-    </MudButton>
+                <MudTextField T="string"
+                              Label="Información adicional"
+                              @bind-Value="_bindModel.SponsorshipNotes"
+                              Immediate="true"
+                              MaxLength="MaxLength.Auditable.Notes" />
+            </MudStack>
+        </MudForm>
 
-</MudStack>
+        <MudDivider />
+
+        <MudStack Row="true">
+            <MudButton OnClick="Save"
+                       Disabled="SaveButtonDisabled"
+                       Variant="Variant.Filled"
+                       StartIcon="@Icons.Material.Filled.Save"
+                       Color="Color.Primary">
+                Crear
+            </MudButton>
+
+            <MudButton Href="@NavRoutes.Sponsorships(StudentId)"
+                       Variant="Variant.Filled"
+                       Color="Color.Default">
+                Cancelar
+            </MudButton>
+        </MudStack>
+    </MudStack>
+</MudPaper>
 
 <LoadingIndicator Loading="_saving" LoadingText="Guardando los datos" />
