@@ -15,6 +15,7 @@ public partial class SponsorsList : AuthenticationRequiredComponentBase
     private SponsorsListViewModel _originalViewModel = new();
 
     private IEnumerable<string> _allCompanyNames = [];
+    private IEnumerable<string> _allChapters = [];
 
     private string _searchString = string.Empty;
 
@@ -36,6 +37,11 @@ public partial class SponsorsList : AuthenticationRequiredComponentBase
         _allCompanyNames = _viewModels
             .Select(vm => vm.SponsorCompanyName)
             .Distinct()
+            .OrderBy(name => name);
+
+        _allChapters = _viewModels
+            .Select(vm => vm.SponsorChapterName)
+            .Distinct() 
             .OrderBy(name => name);
     }
 

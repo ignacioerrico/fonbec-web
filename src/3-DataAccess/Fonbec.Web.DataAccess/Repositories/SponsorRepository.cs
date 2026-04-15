@@ -52,6 +52,7 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
                 SponsorEmail = s.Email,
                 IsSponsorActive = s.IsActive,
                 SponsorCompany = s.Company,
+                SponsorChapterName = s.Chapter.Name,
             })
             .OrderBy(sdm => sdm.SponsorFirstName)
             .ThenBy(sdm => sdm.SponsorLastName)

@@ -32,7 +32,7 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
                 StudentId = s.Id,
                 StudentFirstName = s.FirstName,
                 StudentLastName = s.LastName,
-                StundentNickName = s.NickName,
+                StudentNickName = s.NickName,
                 StudentGender = s.Gender,
                 IsStudentActive = s.IsActive,
                 FacilitatorId = s.Facilitator.Id,
@@ -45,6 +45,7 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
                 StudentSecondarySchoolStartYear = s.SecondarySchoolStartYear,
                 StudentUniversityStartYear = s.UniversityStartYear,
                 StudentPhoneNumber = s.PhoneNumber,
+                StudentChapterName = s.Chapter.Name,
             })
             .OrderBy(s => s.StudentFirstName)
             .ThenBy(s => s.StudentLastName)

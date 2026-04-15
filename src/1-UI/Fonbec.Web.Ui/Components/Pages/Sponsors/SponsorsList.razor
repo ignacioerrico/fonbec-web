@@ -138,6 +138,15 @@
                 </EditTemplate>
             </PropertyColumn>
 
+            <PropertyColumn Property="vm => vm.SponsorChapterName" Title="Filial" Editable="false" Hidden="@(FonbecClaim.ChapterId is not null)">
+                <FilterTemplate>
+                    <FilterByList T="SponsorsListViewModel"
+                                  AllItems="_allChapters"
+                                  FilterContext="context"
+                                  FilterBy="@(vm => vm.SponsorChapterName)" />
+                </FilterTemplate>
+            </PropertyColumn>
+
             <TemplateColumn Title="Acciones" Filterable="false" Sortable="false">
                 <CellTemplate>
                     <AuthorizeView Policy="@nameof(SponsorCreate)" Context="innerContext">
