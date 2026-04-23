@@ -1,5 +1,6 @@
 ﻿using Fonbec.Web.DataAccess.DataModels.PlannedDelivery.Input;
 using Fonbec.Web.DataAccess.Repositories;
+using Fonbec.Web.Logic.Models.PlannedDeliveries;
 using Fonbec.Web.Logic.Models.PlannedDeliveries.Input;
 using Fonbec.Web.Logic.Models.Results;
 using Mapster;
@@ -28,7 +29,7 @@ public class PlannedDeliveryService(IPlannedDeliveryRepository plannedDeliveryRe
     public async Task<CrudResult> CreatePlannedDeliveryAsync(CreatePlannedDeliveryInputModel inputModel)
     {
         var inputDataModel = inputModel.Adapt<CreatePlannedDeliveryInputDataModel>();
-        var affectedRows = await plannedDeliveryRepository.CreatePlannedDeliveryAsync(inputDataModel);
-        return new CrudResult(affectedRows);
-    }
+		var affectedRows = await plannedDeliveryRepository.CreatePlannedDeliveryAsync(inputDataModel);
+		return new CrudResult(affectedRows);
+	}
 }
