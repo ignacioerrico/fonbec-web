@@ -7,16 +7,16 @@ namespace Fonbec.Web.Logic.Models.PlannedDeliveries;
 public class PlannedDeliveriesListViewModel : AuditableViewModel, IDetectChanges<PlannedDeliveriesListViewModel>
 {
     public int PlannedDeliveryId { get; init; }
-    public DateTime PlannedDeliveryStartsOn { get; set; }
+    public DateTime PlanStartsOn { get; set; }
     public bool IsPlannedDeliveryCompleted { get; set; }
     public bool IsIdenticalTo(PlannedDeliveriesListViewModel other) =>
-        PlannedDeliveryStartsOn == other.PlannedDeliveryStartsOn
+        PlanStartsOn == other.PlanStartsOn
         && IsPlannedDeliveryCompleted == other.IsPlannedDeliveryCompleted;
 
     public string StatusText => IsPlannedDeliveryCompleted ? "Completed" : "Not completed";
-    public string PlannedDeliveryStartsOnText => PlannedDeliveryStartsOn.ToString("MMMM, yyyy");
-    public DateOnly PlannedDeliveryMonthYearDate =>
-    new DateOnly(PlannedDeliveryStartsOn.Year, PlannedDeliveryStartsOn.Month, PlannedDeliveryStartsOn.Day);
+    public DateOnly PlanStartsOnDate =>
+    new DateOnly(PlanStartsOn.Year, PlanStartsOn.Month, PlanStartsOn.Day);
+    public string PlanStartsOnText => PlanStartsOn.ToString("MMMM, yyyy");
 
 }
 
@@ -25,13 +25,12 @@ public class PlannedDeliveriesListViewModelMappingDefinitions : IRegister
     public void Register(TypeAdapterConfig config)
     {
         config.NewConfig<AllPlannedDeliveriesDataModel, PlannedDeliveriesListViewModel>()
-            .Map(dest => dest.PlannedDeliveryId, src => src.PlannedDeliveryId)
-            .Map(dest => dest.PlannedDeliveryStartsOn, src => src.PlannedDeliveryStartsOn)
-            .Map(dest => dest.IsPlannedDeliveryCompleted, src => src.IsPlannedDeliveryCompleted);
+            .Map(dest => dest.PlannedDeliveryId, src => src.PlanId)
+            .Map(dest => dest.PlanStartsOn, src => src.PlanStartsOn);
 
         config.NewConfig<PlannedDeliveriesListViewModel, SelectableModel<DateTime>>()
-            .Map(dest => dest.Key, src => src.PlannedDeliveryStartsOn)
-            .Map(dest => dest.DisplayName, src => src.PlannedDeliveryStartsOn.ToString("yyyy-MM-dd"));
+            .Map(dest => dest.Key, src => src.PlanStartsOn)
+            .Map(dest => dest.DisplayName, src => src.PlanStartsOn.ToString("yyyy-MM"));
     }
 }
 

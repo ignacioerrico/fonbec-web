@@ -15,3 +15,70 @@
                 Color="Color.Primary" />
     </MudTooltip>
 </AuthorizeView>
+
+<LoadingIndicator Loading="Loading"
+                  If="!_viewModels.Any()"
+                  ThenDisplay="No planned deliveries available." />
+
+@if (_viewModels.Any())
+{
+    <MudDataGrid T="PlannedDeliveriesListViewModel"
+                 Items="_viewModels"
+                 Dense="true" Hover="true" Striped="true" Bordered="true"
+                 ReadOnly="false"
+                 CommittedItemChanges="@(async viewModel => await CommittedItemChangesAsync(viewModel))"
+                 EditMode="DataGridEditMode.Form"
+                 EditTrigger="DataGridEditTrigger.Manual"
+                 QuickFilter="Filter"
+                 Filterable="true"
+                 FilterMode="DataGridFilterMode.ColumnFilterRow"
+                 FilterCaseSensitivity="DataGridFilterCaseSensitivity.CaseInsensitive"
+                 StartedEditingItem="StartedEditingItem"
+                 SortMode="SortMode.Multiple"
+                 Class="mt-4">
+        <ToolBarContent>
+            <MudTextField T="string" @bind-Value="_searchString"
+                          Placeholder="Buscar"
+                          Clearable="true" Immediate="true"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
+        </ToolBarContent>
+        <Columns>
+            <PropertyColumn Property="vm => vm.PlanStartsOnDate"
+                            Title="StartsOn"
+                            InitialDirection="SortDirection.Ascending">
+                <CellTemplate>
+                    <AuditableItemDisplay Id="@context.Item.PlannedDeliveryId"
+                                          ItemName="@context.Item.PlanStartsOnText"
+                                          IsActive="@context.Item.IsPlannedDeliveryCompleted"
+                                          AuditableViewModel="@context.Item" />
+                </CellTemplate>
+                <EditTemplate>
+                    <MudDatePicker @bind-Value="@context.Item.PlanStartsOn" Immediate="true"
+                                   Label="StartsOn"
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense"
+                                   OpenTo="OpenTo.Month"
+                                   MinDate="@_minDate"
+                                   FixDay="1"
+                                   DateFormat="MM/yyyy"
+                                   Validation="@ValidateMonth" />
+                </EditTemplate>
+            </PropertyColumn>
+            <PropertyColumn Property="vm => vm.StatusText" Title="Status" Editable="false" />
+
+            <TemplateColumn Title="Acciones" Filterable="false" Sortable="false">
+                <CellTemplate>
+                    <AuthorizeView Policy="@nameof(PlannedDeliveryCreate)" Context="innerContext">
+                        <MudTooltip Text="Editar" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
+                            <MudIconButton OnClick="@context.Actions.StartEditingItemAsync"
+                                           Icon="@Icons.Material.Outlined.Edit" Size="@Size.Small" Color="Color.Primary" />
+                        </MudTooltip>
+                    </AuthorizeView>
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+        <PagerContent>
+            <MudDataGridPager T="PlannedDeliveriesListViewModel" RowsPerPageString="Filas por página:" InfoFormat="{first_item}-{last_item} of {all_items}" />
+        </PagerContent>
+    </MudDataGrid>
+}

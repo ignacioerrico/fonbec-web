@@ -11,6 +11,8 @@ public interface IPlannedDeliveryService
 {
     Task<List<DateTime>> GetPlannedDeliveryDatesAsync(int? chapterId, DateTime? from = null);
     Task<CrudResult> CreatePlannedDeliveryAsync(CreatePlannedDeliveryInputModel inputModel);
+    Task<List<PlannedDeliveriesListViewModel>> GetAllPlannedDeliveriesAsync();
+    Task<CrudResult> UpdatePlannedDeliveryAsync(UpdatePlannedDeliveryInputModel inputModel);
 }
 
 public class PlannedDeliveryService(IPlannedDeliveryRepository plannedDeliveryRepository) : IPlannedDeliveryService
@@ -32,4 +34,17 @@ public class PlannedDeliveryService(IPlannedDeliveryRepository plannedDeliveryRe
 		var affectedRows = await plannedDeliveryRepository.CreatePlannedDeliveryAsync(inputDataModel);
 		return new CrudResult(affectedRows);
 	}
+    public async Task<List<PlannedDeliveriesListViewModel>> GetAllPlannedDeliveriesAsync()
+    {
+        var allPlannedDeliveriesDataModel = await plannedDeliveryRepository.GetAllPlannedDeliveriesAsync();
+        var plannedDeliveriesListViewModel = allPlannedDeliveriesDataModel.Adapt<List<PlannedDeliveriesListViewModel>>();
+        return plannedDeliveriesListViewModel;
+    }
+    public async Task<CrudResult> UpdatePlannedDeliveryAsync(UpdatePlannedDeliveryInputModel inputModel)
+    {
+        var updatePlannedDeliveryInputDataModel = inputModel.Adapt<UpdatePlannedDeliveryInputDataModel>();
+        var affectedRows = await plannedDeliveryRepository.UpdatePlannedDeliveryAsync(updatePlannedDeliveryInputDataModel);
+        return new CrudResult(affectedRows);
+    }
+
 }

@@ -10,7 +10,9 @@ public interface IPlannedDeliveryRepository
 {
     Task<List<DateTime>> GetPlannedDeliveryDatesAsync(int chapterId, DateTime? from);
     Task<int> CreatePlannedDeliveryAsync(CreatePlannedDeliveryInputDataModel dataModel);
-    Task<List<DateTime>> GetPlannedDeliveryDatesAsync(int chapterId);
+    Task<int> UpdatePlannedDeliveryAsync(UpdatePlannedDeliveryInputDataModel dataModel);
+    Task<List<AllPlannedDeliveriesDataModel>> GetAllPlannedDeliveriesAsync();
+
 
 }
 
@@ -61,9 +63,8 @@ public class PlannedDeliveryRepository(IDbContextFactory<FonbecWebDbContext> dbC
             return 0;
         }
 
-        plannedDelivery.StartsOn = dataModel.PlannedDeliveryUpdateStartsOn;
-        plannedDelivery.Completed = dataModel.PlannedDeliveryUpdateIsCompleted;
-        plannedDelivery.Notes = dataModel.PlannedDeliveryUpdateNotes;
+        plannedDelivery.StartsOn = dataModel.PlanStartsOn;
+        plannedDelivery.Notes = dataModel.PlanNotes;
         plannedDelivery.LastUpdatedById = dataModel.UpdatedById;
 
         db.PlannedDeliveries.Update(plannedDelivery);
@@ -71,5 +72,21 @@ public class PlannedDeliveryRepository(IDbContextFactory<FonbecWebDbContext> dbC
 
     }
 
+    public async Task<List<AllPlannedDeliveriesDataModel>> GetAllPlannedDeliveriesAsync()
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var allPlannedDeliveries = await db.PlannedDeliveries
+            .Include(ch => ch.CreatedBy)
+            .Include(ch => ch.LastUpdatedBy)
+            .Include(ch => ch.DisabledBy)
+            .Include(ch => ch.ReenabledBy)
+            .Select(pd => new AllPlannedDeliveriesDataModel(pd)
+            {
+                PlanStartsOn = pd.StartsOn
+            })
+            .ToListAsync();
+        return allPlannedDeliveries;
+    }
 }
 
