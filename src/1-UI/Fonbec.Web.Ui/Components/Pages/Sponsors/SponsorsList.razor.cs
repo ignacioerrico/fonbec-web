@@ -8,7 +8,7 @@ using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.Pages.Sponsors;
 
-[PageMetadata(nameof(SponsorsList), "Lista de padrinos", [FonbecRole.Manager])]
+[PageMetadata(nameof(SponsorsList), "Lista de padrinos", [FonbecRole.Admin])] 
 public partial class SponsorsList : AuthenticationRequiredComponentBase
 {
     private List<SponsorsListViewModel> _viewModels = [];
