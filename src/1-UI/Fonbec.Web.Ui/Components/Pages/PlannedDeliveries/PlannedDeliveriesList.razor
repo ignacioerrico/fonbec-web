@@ -61,7 +61,7 @@
                                    MinDate="@_minDate"
                                    FixDay="1"
                                    DateFormat="MM/yyyy"
-                                   Validation="@ValidateMonth" />
+                                   Validation="@ValidatePlanIsNotDuplicate" />
                 </EditTemplate>
             </PropertyColumn>
             <PropertyColumn Property="vm => vm.StatusText" Title="Status" Editable="false" />

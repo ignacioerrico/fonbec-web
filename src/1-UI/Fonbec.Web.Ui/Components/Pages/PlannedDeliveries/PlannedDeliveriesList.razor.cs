@@ -12,11 +12,14 @@ namespace Fonbec.Web.Ui.Components.Pages.PlannedDeliveries;
 public partial class PlannedDeliveriesList : AuthenticationRequiredComponentBase
 {
     private List<PlannedDeliveriesListViewModel> _viewModels = [];
-    private PlannedDeliveriesListViewModel _originalViewModel = new();
-    private string _searchString = string.Empty;
-    private DateTime _minDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
 
-    private List<DateTime> _viewDates = [];
+    private PlannedDeliveriesListViewModel _originalViewModel = new();
+
+    private string _searchString = string.Empty;
+
+    private readonly DateTime _minDate = new DateTime(DateTime.Now.Year, DateTime.Now.Month, 1);
+
+    private List<DateTime> _existingPlansDates = [];
 
     [Inject]
     public IPlannedDeliveryService PlannedDeliveryService { get; set; } = null!;
@@ -28,14 +31,14 @@ public partial class PlannedDeliveriesList : AuthenticationRequiredComponentBase
         Loading = true;
 
         _viewModels = await PlannedDeliveryService.GetAllPlannedDeliveriesAsync();
-        _viewDates = await PlannedDeliveryService.GetPlannedDeliveryDatesAsync(FonbecClaim.ChapterId);
+        _existingPlansDates = await PlannedDeliveryService.GetPlannedDeliveryDatesAsync(FonbecClaim.ChapterId);
 
         Loading = false;
     }
 
     private bool Filter(PlannedDeliveriesListViewModel viewModel) =>
         string.IsNullOrWhiteSpace(_searchString)
-        || viewModel.StatusText.ContainsIgnoringAccents(_searchString);
+        || viewModel.PlanStartsOnText.ContainsIgnoringAccents(_searchString);
 
     private void StartedEditingItem(PlannedDeliveriesListViewModel originalViewModel) =>
     _originalViewModel = originalViewModel.DeepClone();
@@ -70,16 +73,16 @@ public partial class PlannedDeliveriesList : AuthenticationRequiredComponentBase
         _viewModels.Single(vm => vm.PlannedDeliveryId == modifiedViewModel.PlannedDeliveryId).LastUpdatedOnUtc = DateTime.Now;
     }
 
-    private string? ValidateMonth(DateTime? selectedDate)
+    private string? ValidatePlanIsNotDuplicate(DateTime? selectedDate)
     {
         if (selectedDate == null) return null;
 
-        bool alreadyExists = _viewDates.Any(d =>
+        bool alreadyExists = _existingPlansDates.Any(d =>
             d.Year == selectedDate.Value.Year &&
             d.Month == selectedDate.Value.Month);
 
         return alreadyExists
-            ? $"A delivery is already planned for {selectedDate.Value:MMMM yyyy}"
+            ? "Ya existe una planificación para este mes y año."
             : null;
     }
 }
