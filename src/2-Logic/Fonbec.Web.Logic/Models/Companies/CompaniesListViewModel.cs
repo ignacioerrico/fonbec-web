@@ -1,4 +1,5 @@
 ﻿using Fonbec.Web.DataAccess.DataModels.Companies;
+using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.Logic.ExtensionMethods;
 using Mapster;
 
@@ -11,6 +12,8 @@ public class CompaniesListViewModel : AuditableViewModel, IDetectChanges<Compani
     public string CompanyEmail { get; set; } = string.Empty;
     public string CompanyPhoneNumber { get; set; } = string.Empty;
     public string CompanyNotes { get; set; } = string.Empty;
+    public List<Sponsor> CompanySponsors { get; set; } = [];
+    public List<PointOfContact> CompanyPOCs { get; set; } = [];
 
     public bool IsIdenticalTo(CompaniesListViewModel other) =>
         CompanyName == other.CompanyName.NormalizeText()
@@ -24,11 +27,14 @@ public class CompanyListViewModelMappingDefinitions : IRegister
     public void Register(TypeAdapterConfig config)
     {
         config.NewConfig<AllCompaniesDataModel, CompaniesListViewModel>()
+            .MaxDepth(1)
             .Map(dest => dest.CompanyId, src => src.CompanyId)
             .Map(dest => dest.CompanyName, src => src.CompanyName)
             .Map(dest => dest.CompanyEmail, src => src.CompanyEmail)
             .Map(dest => dest.CompanyPhoneNumber, src => src.CompanyPhoneNumber)
-            .Map(dest => dest.CompanyNotes, src => src.CompanyNotes);
+            .Map(dest => dest.CompanyNotes, src => src.CompanyNotes)
+            .Map(dest => dest.CompanyPOCs, src => src.CompanyPOCs)
+            .Map(dest => dest.CompanySponsors, src => src.CompanySponsors);
 
         config.NewConfig<CompaniesListViewModel, SelectableModel<int>>()
             .Map(dest => dest.Key, src => src.CompanyId)

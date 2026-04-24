@@ -70,13 +70,15 @@
 								  MaxLength="MaxLength.FonbecWebUser.PhoneNumber" />
 				</EditTemplate>
 			</PropertyColumn>
-			<PropertyColumn Property="vm => vm.CompanyNotes" Title="Información adicional" Required="false" Hidden="false">
+			<PropertyColumn Property="vm => vm.CompanyNotes" Title="Información adicional" Required="false">
 				<EditTemplate>
 					<MudTextField T="string" @bind-Value="context.Item.CompanyNotes" Immediate="true"
 								  Label="Notas personales" Variant="Variant.Outlined" Margin="Margin.Dense"
 								  MaxLength="MaxLength.Auditable.Notes" />
 				</EditTemplate>
 			</PropertyColumn>
+			<PropertyColumn Property="vm => vm.CompanyPOCs.Count" Title="Contactos Administrativos" />
+			<PropertyColumn Property="vm => vm.CompanySponsors.Count" Title="Padrinos" />
 			<TemplateColumn Title="Acciones" Filterable="false" Sortable="false">
 				<CellTemplate>
 					<AuthorizeView Policy="@nameof(CompaniesList)" Context="innerContext">

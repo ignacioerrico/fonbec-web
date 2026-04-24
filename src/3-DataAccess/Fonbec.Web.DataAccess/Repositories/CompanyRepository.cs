@@ -26,12 +26,14 @@ public class CompanyRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             .Include(c => c.DisabledBy)
             .Include(c => c.ReenabledBy)
             .Where(c => c.IsActive)
-            .Select(c => new AllCompaniesDataModel
+            .Select(c => new AllCompaniesDataModel(c)
             {
                 CompanyId = c.Id,
                 CompanyName = c.Name,
                 CompanyPhoneNumber = c.PhoneNumber,
                 CompanyEmail = c.Email,
+                CompanySponsors = c.Sponsors,
+                CompanyPOCs = c.PointsOfContact
             })
             .OrderBy(c => c.CompanyName)
             .ToListAsync();
