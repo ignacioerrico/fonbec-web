@@ -7,14 +7,16 @@ namespace Fonbec.Web.Logic.Models.Companies;
 public class CompaniesListViewModel : AuditableViewModel, IDetectChanges<CompaniesListViewModel>
 {
     public int CompanyId { get; set; }
-    public string CompanyName { get; init; } = string.Empty;
-    public string CompanyEmail { get; init; } = string.Empty;
-    public string CompanyPhoneNumber { get; init; } = string.Empty;
+    public string CompanyName { get; set; } = string.Empty;
+    public string CompanyEmail { get; set; } = string.Empty;
+    public string CompanyPhoneNumber { get; set; } = string.Empty;
+    public string CompanyNotes { get; set; } = string.Empty;
 
     public bool IsIdenticalTo(CompaniesListViewModel other) =>
         CompanyName == other.CompanyName.NormalizeText()
         && CompanyEmail == other.CompanyEmail.NullOrTrimmed()
-        && CompanyPhoneNumber == other.CompanyPhoneNumber.NullOrTrimmed();
+        && CompanyPhoneNumber == other.CompanyPhoneNumber.NullOrTrimmed()
+        && CompanyNotes == other.CompanyNotes.NullOrTrimmed();
 }
 
 public class CompanyListViewModelMappingDefinitions : IRegister
@@ -25,7 +27,8 @@ public class CompanyListViewModelMappingDefinitions : IRegister
             .Map(dest => dest.CompanyId, src => src.CompanyId)
             .Map(dest => dest.CompanyName, src => src.CompanyName)
             .Map(dest => dest.CompanyEmail, src => src.CompanyEmail)
-            .Map(dest => dest.CompanyPhoneNumber, src => src.CompanyPhoneNumber);
+            .Map(dest => dest.CompanyPhoneNumber, src => src.CompanyPhoneNumber)
+            .Map(dest => dest.CompanyNotes, src => src.CompanyNotes);
 
         config.NewConfig<CompaniesListViewModel, SelectableModel<int>>()
             .Map(dest => dest.Key, src => src.CompanyId)

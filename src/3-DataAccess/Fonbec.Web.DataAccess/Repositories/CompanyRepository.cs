@@ -10,6 +10,8 @@ public interface ICompanyRepository
     Task<List<AllCompaniesDataModel>> GetAllCompaniesAsync();
     Task<bool> CompanyNameExistsAsync(string companyName);
     Task<int> CreateCompanyAsync(CreateCompanyInputDataModel dataModel);
+
+    Task<int> UpdateCompanyAsync(UpdateCompanyInputDataModel dataModel);
 }
 
 public class CompanyRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : ICompanyRepository
@@ -77,5 +79,26 @@ public class CompanyRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
         return affectedRows == 0
             ? 0
             : company.Id;
+    }
+
+    public async Task<int> UpdateCompanyAsync(UpdateCompanyInputDataModel dataModel)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var companyDb = await db.Companies.FindAsync(dataModel.CompanyId);
+
+        if (companyDb is not { IsActive: true })
+        {
+            return 0;
+        }
+
+        companyDb.Name = dataModel.CompanyUpdatedName;
+        companyDb.Email = dataModel.CompanyUpdatedEmail;
+        companyDb.PhoneNumber = dataModel.CompanyUpdatedPhoneNumber;
+        companyDb.Notes = dataModel.CompanyUpdatedNotes;
+        companyDb.LastUpdatedById = dataModel.UpdatedById;
+
+        db.Companies.Update(companyDb);
+        return await db.SaveChangesAsync();
     }
 }

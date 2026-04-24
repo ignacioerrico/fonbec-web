@@ -9,4 +9,6 @@ public class AllCompaniesDataModel
     public string? CompanyEmail { get; set; }
 
     public string? CompanyPhoneNumber { get; set; }
+
+    public string? CompanyNotes { get; set; }
 }

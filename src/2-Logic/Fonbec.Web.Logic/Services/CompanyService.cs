@@ -15,6 +15,8 @@ public interface ICompanyService
     Task<List<SelectableModel<int>>> GetAllCompaniesForSelectionAsync();
     Task<bool> CompanyNameExistsAsync(string companyName);
     Task<CrudResult> CreateCompanyAsync(CreateCompanyInputModel inputModel);
+
+    Task<CrudResult> UpdateCompanyAsync(UpdateCompanyInputModel inputModel);
 }
 
 public class CompanyService(ICompanyRepository companyRepository, ISponsorRepository sponsorRepository) : ICompanyService
@@ -57,5 +59,12 @@ public class CompanyService(ICompanyRepository companyRepository, ISponsorReposi
         }
 
         return new CrudResult(affectedRows);
+    }
+
+    public Task<CrudResult> UpdateCompanyAsync(UpdateCompanyInputModel inputModel)
+    {
+        var updateCompanyInputDataModel = inputModel.Adapt<UpdateCompanyInputDataModel>();
+        return companyRepository.UpdateCompanyAsync(updateCompanyInputDataModel)
+            .ContinueWith(t => new CrudResult(t.Result));
     }
 }
