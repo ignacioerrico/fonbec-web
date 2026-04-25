@@ -25,6 +25,8 @@ public class CompanyRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             .Include(c => c.LastUpdatedBy)
             .Include(c => c.DisabledBy)
             .Include(c => c.ReenabledBy)
+            .Include(c => c.PointsOfContact)
+            .Include(c => c.Sponsors)
             .Where(c => c.IsActive)
             .Select(c => new AllCompaniesDataModel(c)
             {

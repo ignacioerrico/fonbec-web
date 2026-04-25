@@ -44,6 +44,7 @@
 						  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
 		</ToolBarContent>
 		<Columns>
+			<HierarchyColumn/>
 			<PropertyColumn Property="vm => vm.CompanyName" Title="Nombre">
 				<CellTemplate>
 					<AuditableItemDisplay Id="@context.Item.CompanyId"
@@ -77,8 +78,12 @@
 								  MaxLength="MaxLength.Auditable.Notes" />
 				</EditTemplate>
 			</PropertyColumn>
-			<PropertyColumn Property="vm => vm.CompanyPOCs.Count" Title="Contactos Administrativos" />
-			<PropertyColumn Property="vm => vm.CompanySponsors.Count" Title="Padrinos" />
+			<PropertyColumn Property="vm => vm.CompanyPOCs.Count" Title="Contactos Administrativos" >
+				<EditTemplate/>
+			</PropertyColumn>
+			<PropertyColumn Property="vm => vm.CompanySponsors.Count" Title="Padrinos" >
+				<EditTemplate/>
+			</PropertyColumn>
 			<TemplateColumn Title="Acciones" Filterable="false" Sortable="false">
 				<CellTemplate>
 					<AuthorizeView Policy="@nameof(CompaniesList)" Context="innerContext">
@@ -92,6 +97,36 @@
 				</CellTemplate>
 			</TemplateColumn>
 		</Columns>
+		<ChildRowContent>
+			<MudText Typo="Typo.h5">Contactos adminstrativos</MudText>
+			@if ((context.Item.CompanyPOCs ?? []).Any())
+			{
+				<MudList T="string">
+					@foreach (var poc in context.Item.CompanyPOCs)
+					{
+						<MudListItem Text="@poc" />
+					}
+				</MudList>
+			} 
+			else 
+			{
+				<MudText>No hay contactos administrativos para esta empresa.</MudText>
+			}
+			<MudText Typo="Typo.h5">Padrinos</MudText>
+			@if ((context.Item.CompanySponsors ?? []).Any())
+			{
+				<MudList T="string">
+					@foreach (var sponsor in context.Item.CompanySponsors)
+					{
+						<MudListItem Text="@sponsor" />
+					}
+				</MudList>
+			} 
+			else 
+			{
+				<MudText>No hay padrinos vinculados a esta empresa.</MudText>
+			}
+		</ChildRowContent>
 		<PagerContent>
 			<MudDataGridPager T="CompaniesListViewModel" RowsPerPageString="Filas por página:" InfoFormat="{first_item}-{last_item} of {all_items}" />
 		</PagerContent>
