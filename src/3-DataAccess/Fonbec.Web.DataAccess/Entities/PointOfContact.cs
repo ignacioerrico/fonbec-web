@@ -14,5 +14,4 @@ public class PointOfContact : Auditable
 
     public int CompanyId { get; set; }
     public Company Company { get; set; } = null!;
-    public string FullName() => $"{FirstName} {LastName}";
 }
