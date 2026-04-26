@@ -9,7 +9,7 @@ using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.Pages.Students;
 
-[PageMetadata(nameof(StudentsList), "Lista de becarios", [FonbecRole.Admin])] 
+[PageMetadata(nameof(StudentsList), "Lista de becarios", [FonbecRole.Admin, FonbecRole.Manager])] 
 public partial class StudentsList : AuthenticationRequiredComponentBase
 {
     private List<StudentsListViewModel> _viewModels = [];
