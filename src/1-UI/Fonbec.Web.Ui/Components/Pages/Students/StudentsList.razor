@@ -81,6 +81,7 @@
                                   MaxLength="MaxLength.FonbecWebUser.NickName" />
                 </EditTemplate>
             </PropertyColumn>
+
             <PropertyColumn Property="vm => vm.StudentGender" Title="Sexo" Hidden="true">
                 <EditTemplate>
                     <MudSelect T="Gender" @bind-Value="context.Item.StudentGender" Class="mt-4"
@@ -90,6 +91,7 @@
                     </MudSelect>
                 </EditTemplate>
             </PropertyColumn>
+
             <PropertyColumn Property="vm => vm.FacilitatorFullName" Title="Mediador">
                 <EditTemplate>
                     <FacilitatorSelector @bind-SelectedFacilitatorId="context.Item.FacilitatorId" />
@@ -101,6 +103,7 @@
                                   FilterBy="@(vm => vm.FacilitatorFullName)" />
                 </FilterTemplate>
             </PropertyColumn>
+
             <PropertyColumn Property="vm => vm.StudentCurrentEducationLevel" Title="Nivel">
                 <EditTemplate>
                     <EducationLevelSelector @bind-SecondarySchoolStartYear="context.Item.StudentSecondarySchoolStartYear"
@@ -113,6 +116,7 @@
                                   FilterBy="@(vm => vm.StudentCurrentEducationLevel)" />
                 </FilterTemplate>
             </PropertyColumn>
+
             <PropertyColumn Property="vm => vm.StudentEmail" Title="Correo electrónico" Required="false">
                 <CellTemplate>
                     <MudLink Href="@($"mailto:{context.Item.StudentEmail}")">
@@ -125,6 +129,7 @@
                                   MaxLength="MaxLength.FonbecWebUser.Email" />
                 </EditTemplate>
             </PropertyColumn>
+
             <PropertyColumn Property="vm => vm.StudentPhoneNumber" Title="Teléfono" Required="false">
                 <EditTemplate>
                     <MudTextField T="string" @bind-Value="context.Item.StudentPhoneNumber" Immediate="true"
@@ -132,6 +137,7 @@
                                   MaxLength="MaxLength.FonbecWebUser.PhoneNumber" />
                 </EditTemplate>
             </PropertyColumn>
+
             <PropertyColumn Property="vm => vm.Notes" Title="Información adicional" Hidden="true" Required="false">
                 <EditTemplate>
                     <MudTextField T="string" @bind-Value="context.Item.Notes" Immediate="true"
@@ -139,6 +145,19 @@
                                   MaxLength="MaxLength.Auditable.Notes" />
                 </EditTemplate>
             </PropertyColumn>
+
+            <PropertyColumn Property="vm => vm.StudentChapterName" Title="Filiar"
+                            Editable="false" Hidden="@(FonbecClaim.ChapterId is not null)">
+                <EditTemplate>
+                </EditTemplate>
+                <FilterTemplate>
+                    <FilterByList T="StudentsListViewModel"
+                                  AllItems="_allChapters"
+                                  FilterContext="context"
+                                  FilterBy="@(vm => vm.StudentChapterName)" />
+                </FilterTemplate>
+            </PropertyColumn>
+
             <TemplateColumn Title="Acciones" Filterable="false" Sortable="false">
                 <CellTemplate>
                     <AuthorizeView Policy="@nameof(StudentCreate)" Context="innerContext">

@@ -17,7 +17,7 @@ public class StudentsListViewModelMappingDefinitionsTests : MappingTestBase
             StudentId = 10,
             StudentFirstName = "Jane",
             StudentLastName = "Smith",
-            StundentNickName = "JS",
+            StudentNickName = "JS",
             StudentGender = Gender.Female,
             IsStudentActive = true,
             FacilitatorId = 5,
@@ -29,7 +29,8 @@ public class StudentsListViewModelMappingDefinitionsTests : MappingTestBase
             StudentCurrentEducationLevel = EducationLevel.SecondarySchool,
             StudentSecondarySchoolStartYear = now,
             StudentUniversityStartYear = now.AddYears(2),
-            StudentPhoneNumber = "555-1234"
+            StudentPhoneNumber = "555-1234",
+            StudentChapterName = "Cordoba",
         };
 
         var viewModel = dataModel.Adapt<StudentsListViewModel>(Config);
@@ -49,6 +50,7 @@ public class StudentsListViewModelMappingDefinitionsTests : MappingTestBase
         viewModel.StudentSecondarySchoolStartYear.Should().Be(now);
         viewModel.StudentUniversityStartYear.Should().Be(now.AddYears(2));
         viewModel.StudentPhoneNumber.Should().Be("555-1234");
+        viewModel.StudentChapterName.Should().Be("Cordoba");
     }
 
     [Fact]
@@ -56,7 +58,7 @@ public class StudentsListViewModelMappingDefinitionsTests : MappingTestBase
     {
         var dataModel = new AllStudentsDataModel(Auditable)
         {
-            StundentNickName = null,
+            StudentNickName = null,
             FacilitatorEmail = null,
             StudentEmail = null,
             Notes = null,

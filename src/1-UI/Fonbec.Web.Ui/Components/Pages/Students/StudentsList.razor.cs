@@ -9,7 +9,7 @@ using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.Pages.Students;
 
-[PageMetadata(nameof(StudentsList), "Lista de becarios", [FonbecRole.Manager])]
+[PageMetadata(nameof(StudentsList), "Lista de becarios", [FonbecRole.Admin, FonbecRole.Manager])]
 public partial class StudentsList : AuthenticationRequiredComponentBase
 {
     private List<StudentsListViewModel> _viewModels = [];
@@ -19,6 +19,8 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
     private IEnumerable<string> _allEducationLevels = [];
 
     private IEnumerable<string> _allFacilitators = [];
+
+    private IEnumerable<string> _allChapters = [];
 
     private string _searchString = string.Empty;
 
@@ -41,6 +43,10 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
         _allFacilitators = _viewModels.Select(vm => vm.FacilitatorFullName)
             .Distinct()
             .OrderBy(fn => fn);
+
+        _allChapters = _viewModels.Select(vm => vm.StudentChapterName)
+            .Distinct()
+            .OrderBy(cn => cn);
 
         Loading = false;
     }

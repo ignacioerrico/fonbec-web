@@ -22,6 +22,7 @@ public class StudentsListViewModel : AuditableViewModel, IDetectChanges<Students
     public DateTime? StudentSecondarySchoolStartYear { get; set; }
     public DateTime? StudentUniversityStartYear { get; set; }
     public string StudentPhoneNumber { get; set; } = string.Empty;
+    public string StudentChapterName { get; set; } = string.Empty;
 
     public bool IsIdenticalTo(StudentsListViewModel other) =>
         StudentFirstName == other.StudentFirstName.NormalizeText()
@@ -44,7 +45,7 @@ public class StudentsListViewModelMappingDefinitions : IRegister
             .Map(dest => dest.StudentId, src => src.StudentId)
             .Map(dest => dest.StudentFirstName, src => src.StudentFirstName)
             .Map(dest => dest.StudentLastName, src => src.StudentLastName)
-            .Map(dest => dest.StudentNickName, src => src.StundentNickName ?? string.Empty)
+            .Map(dest => dest.StudentNickName, src => src.StudentNickName ?? string.Empty)
             .Map(dest => dest.StudentGender, src => src.StudentGender)
             .Map(dest => dest.IsStudentActive, src => src.IsStudentActive)
             .Map(dest => dest.FacilitatorId, src => src.FacilitatorId)
@@ -54,7 +55,8 @@ public class StudentsListViewModelMappingDefinitions : IRegister
             .Map(dest => dest.StudentCurrentEducationLevel, src => src.StudentCurrentEducationLevel.EnumToString())
             .Map(dest => dest.StudentSecondarySchoolStartYear, src => src.StudentSecondarySchoolStartYear)
             .Map(dest => dest.StudentUniversityStartYear, src => src.StudentUniversityStartYear)
-            .Map(dest => dest.StudentPhoneNumber, src => src.StudentPhoneNumber ?? string.Empty);
+            .Map(dest => dest.StudentPhoneNumber, src => src.StudentPhoneNumber ?? string.Empty)
+            .Map(dest => dest.StudentChapterName, src => src.StudentChapterName);
 
         // Mapping required for the StudentSelector component
         config.NewConfig<StudentsListViewModel, SelectableModel<int>>()
