@@ -115,4 +115,4 @@ public class StudentsListViewModelMappingDefinitionsTests : MappingTestBase
 
         result.Should().BeTrue();
     }
-}   
+}

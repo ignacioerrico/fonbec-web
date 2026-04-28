@@ -24,6 +24,7 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             .Include(s => s.LastUpdatedBy)
             .Include(s => s.DisabledBy)
             .Include(s => s.ReenabledBy)
+            .Include(s => s.Chapter)
             .Where(s => s.IsActive
                         && (chapterId == null || chapterId == s.ChapterId))
             .Select(s => new AllStudentsDataModel(s)

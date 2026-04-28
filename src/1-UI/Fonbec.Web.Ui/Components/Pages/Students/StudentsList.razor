@@ -146,7 +146,10 @@
                 </EditTemplate>
             </PropertyColumn>
 
-            <PropertyColumn Property="vm => vm.StudentChapterName" Title="Filiar" Hidden="@(FonbecClaim.ChapterId is not null)">
+            <PropertyColumn Property="vm => vm.StudentChapterName" Title="Filiar"
+                            Editable="false" Hidden="@(FonbecClaim.ChapterId is not null)">
+                <EditTemplate>
+                </EditTemplate>
                 <FilterTemplate>
                     <FilterByList T="StudentsListViewModel"
                                   AllItems="_allChapters"

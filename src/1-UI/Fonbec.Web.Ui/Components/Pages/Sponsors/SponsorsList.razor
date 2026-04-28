@@ -138,7 +138,10 @@
                 </EditTemplate>
             </PropertyColumn>
 
-            <PropertyColumn Property="vm => vm.SponsorChapterName" Title="Filial" Editable="false" Hidden="@(FonbecClaim.ChapterId is not null)">
+            <PropertyColumn Property="vm => vm.SponsorChapterName" Title="Filial"
+                            Editable="false" Hidden="@(FonbecClaim.ChapterId is not null)">
+                <EditTemplate>
+                </EditTemplate>
                 <FilterTemplate>
                     <FilterByList T="SponsorsListViewModel"
                                   AllItems="_allChapters"

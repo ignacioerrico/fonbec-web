@@ -8,7 +8,7 @@ using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.Pages.Sponsors;
 
-[PageMetadata(nameof(SponsorsList), "Lista de padrinos", [FonbecRole.Admin, FonbecRole.Manager])] 
+[PageMetadata(nameof(SponsorsList), "Lista de padrinos", [FonbecRole.Admin, FonbecRole.Manager])]
 public partial class SponsorsList : AuthenticationRequiredComponentBase
 {
     private List<SponsorsListViewModel> _viewModels = [];
@@ -41,7 +41,7 @@ public partial class SponsorsList : AuthenticationRequiredComponentBase
 
         _allChapters = _viewModels
             .Select(vm => vm.SponsorChapterName)
-            .Distinct() 
+            .Distinct()
             .OrderBy(name => name);
     }
 

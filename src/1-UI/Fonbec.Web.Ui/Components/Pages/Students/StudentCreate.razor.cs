@@ -8,7 +8,7 @@ using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.Pages.Students;
 
-[PageMetadata(nameof(StudentCreate), "Crear y actualizar becario", [FonbecRole.Manager])]
+[PageMetadata(nameof(StudentCreate), "Crear y actualizar becario", [FonbecRole.Admin, FonbecRole.Manager])]
 public partial class StudentCreate : AuthenticationRequiredComponentBase
 {
     private readonly StudentCreateBindModel _bindModel = new();
