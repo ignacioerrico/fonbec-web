@@ -18,7 +18,7 @@
 
 <LoadingIndicator Loading="Loading"
                   If="!_viewModels.Any()"
-                  ThenDisplay="No planned deliveries available." />
+                  ThenDisplay="No hay planificaciones de envíos." />
 
 @if (_viewModels.Any())
 {
@@ -29,42 +29,49 @@
                  CommittedItemChanges="@(async viewModel => await CommittedItemChangesAsync(viewModel))"
                  EditMode="DataGridEditMode.Form"
                  EditTrigger="DataGridEditTrigger.Manual"
-                 QuickFilter="Filter"
                  Filterable="true"
-                 FilterMode="DataGridFilterMode.ColumnFilterRow"
+                 FilterMode="DataGridFilterMode.Simple"
                  FilterCaseSensitivity="DataGridFilterCaseSensitivity.CaseInsensitive"
                  StartedEditingItem="StartedEditingItem"
                  SortMode="SortMode.Multiple"
                  Class="mt-4">
-        <ToolBarContent>
-            <MudTextField T="string" @bind-Value="_searchString"
-                          Placeholder="Buscar"
-                          Clearable="true" Immediate="true"
-                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
-        </ToolBarContent>
         <Columns>
-            <PropertyColumn Property="vm => vm.PlanStartsOnDate"
-                            Title="StartsOn"
-                            InitialDirection="SortDirection.Ascending">
+            <PropertyColumn Property="vm => vm.PlannedDeliveryStartsOn"
+                            Title="Mes y Año"
+                            InitialDirection="SortDirection.Descending"
+                            Filterable="false">
                 <CellTemplate>
                     <AuditableItemDisplay Id="@context.Item.PlannedDeliveryId"
-                                          ItemName="@context.Item.PlanStartsOnText"
-                                          IsActive="@context.Item.IsPlannedDeliveryCompleted"
+                                          ItemName="@context.Item.PlannedDeliveryStartsOnText"
+                                          IsActive="true"
                                           AuditableViewModel="@context.Item" />
                 </CellTemplate>
                 <EditTemplate>
-                    <MudDatePicker @bind-Value="@context.Item.PlanStartsOn" Immediate="true"
-                                   Label="StartsOn"
-                                   Variant="Variant.Outlined"
-                                   Margin="Margin.Dense"
-                                   OpenTo="OpenTo.Month"
+                    <MudDatePicker Label="Mes y Año"
+                                   @bind-Date="@_plannedDeliveryStartsOn"
                                    MinDate="@_minDate"
+                                   OpenTo="OpenTo.Month"
                                    FixDay="1"
-                                   DateFormat="MM/yyyy"
-                                   Validation="@ValidatePlanIsNotDuplicate" />
+                                   DateFormat="MMMM \d\e yyyy"
+                                   TitleDateFormat="MMM yyyy"
+                                   Culture="@System.Globalization.CultureInfo.GetCultureInfo("es-AR")"
+                                   Required="true" RequiredError="Se debe especificar el mes y el año de recolección de cartas."
+                                   Validation="@((Func<DateTime?, string>)ValidatePlanIsNotDuplicate)"
+                                   Variant="Variant.Outlined"
+                                   Margin="Margin.Dense" />
                 </EditTemplate>
             </PropertyColumn>
-            <PropertyColumn Property="vm => vm.StatusText" Title="Status" Editable="false" />
+
+            <PropertyColumn Property="vm => vm.PlannedDeliveryStatusText" Title="Estado">
+                <CellTemplate>
+                    @context.Item.PlannedDeliveryStatusText
+                    @(context.Item.IsPlannedDeliveryCompleted ? CheckMarkEmoji : NineOClockEmoji )
+                </CellTemplate>
+                <EditTemplate>
+                </EditTemplate>
+            </PropertyColumn>
+
+            <PropertyColumn Property="vm => vm.Notes" Hidden="true" />
 
             <TemplateColumn Title="Acciones" Filterable="false" Sortable="false">
                 <CellTemplate>

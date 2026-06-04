@@ -2,22 +2,41 @@
 using Fonbec.Web.DataAccess.DataModels.PlannedDelivery.Input;
 using Fonbec.Web.DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
-using System.Reflection.Metadata.Ecma335;
 
 namespace Fonbec.Web.DataAccess.Repositories;
 
 public interface IPlannedDeliveryRepository
 {
+    Task<List<AllPlannedDeliveriesDataModel>> GetAllPlannedDeliveriesAsync();
     Task<List<DateTime>> GetPlannedDeliveryDatesAsync(int chapterId, DateTime? from);
     Task<int> CreatePlannedDeliveryAsync(CreatePlannedDeliveryInputDataModel dataModel);
     Task<int> UpdatePlannedDeliveryAsync(UpdatePlannedDeliveryInputDataModel dataModel);
-    Task<List<AllPlannedDeliveriesDataModel>> GetAllPlannedDeliveriesAsync();
-
-
 }
 
 public class PlannedDeliveryRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : IPlannedDeliveryRepository
 {
+    public async Task<List<AllPlannedDeliveriesDataModel>> GetAllPlannedDeliveriesAsync()
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var allPlannedDeliveries = await db.PlannedDeliveries
+            .AsNoTracking()
+            .Include(pd => pd.CreatedBy)
+            .Include(pd => pd.LastUpdatedBy)
+            .Include(pd => pd.DisabledBy)
+            .Include(pd => pd.ReenabledBy)
+            .Where(pd => pd.IsActive)
+            .OrderByDescending(pd => pd.StartsOn)
+            .Select(pd => new AllPlannedDeliveriesDataModel(pd)
+            {
+                PlannedDeliveryId = pd.Id,
+                PlannedDeliveryStartsOn = pd.StartsOn,
+                IsPlannedDeliveryCompleted = pd.Completed,
+            })
+            .ToListAsync();
+        return allPlannedDeliveries;
+    }
+
     public async Task<List<DateTime>> GetPlannedDeliveryDatesAsync(int chapterId, DateTime? from)
     {
         ArgumentOutOfRangeException.ThrowIfNegativeOrZero(chapterId);
@@ -63,30 +82,11 @@ public class PlannedDeliveryRepository(IDbContextFactory<FonbecWebDbContext> dbC
             return 0;
         }
 
-        plannedDelivery.StartsOn = dataModel.PlanStartsOn;
-        plannedDelivery.Notes = dataModel.PlanNotes;
+        plannedDelivery.StartsOn = dataModel.PlannedDeliveryStartsOn;
+        plannedDelivery.Notes = dataModel.PlannedDeliveryNotes;
         plannedDelivery.LastUpdatedById = dataModel.UpdatedById;
 
         db.PlannedDeliveries.Update(plannedDelivery);
         return await db.SaveChangesAsync();
-
-    }
-
-    public async Task<List<AllPlannedDeliveriesDataModel>> GetAllPlannedDeliveriesAsync()
-    {
-        await using var db = await dbContext.CreateDbContextAsync();
-
-        var allPlannedDeliveries = await db.PlannedDeliveries
-            .Include(ch => ch.CreatedBy)
-            .Include(ch => ch.LastUpdatedBy)
-            .Include(ch => ch.DisabledBy)
-            .Include(ch => ch.ReenabledBy)
-            .Select(pd => new AllPlannedDeliveriesDataModel(pd)
-            {
-                PlanStartsOn = pd.StartsOn
-            })
-            .ToListAsync();
-        return allPlannedDeliveries;
     }
 }
-
