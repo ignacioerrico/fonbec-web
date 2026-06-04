@@ -27,6 +27,8 @@ public class SponsorsListViewModel : AuditableViewModel, IDetectChanges<Sponsors
 
     public string SponsorCompanyName { get; set; } = string.Empty;
 
+    public string SponsorChapterName { get; set; } = string.Empty;
+
     public bool IsIdenticalTo(SponsorsListViewModel other)
     {
         return SponsorFirstName == other.SponsorFirstName.NormalizeText()
@@ -54,7 +56,8 @@ public class SponsorsListViewModelMappingDefinitions : IRegister
             .Map(dest => dest.SponsorCompanyName, src => src.SponsorCompany!.Name, srcCond => srcCond.SponsorCompany != null)
             .Map(dest => dest.SponsorCompanyName, src => string.Empty, srcCond => srcCond.SponsorCompany == null)
             .Map(dest => dest.SponsorEmail, src => src.SponsorEmail)
-            .Map(dest => dest.IsSponsorActive, src => src.IsSponsorActive);
+            .Map(dest => dest.IsSponsorActive, src => src.IsSponsorActive)
+            .Map(dest => dest.SponsorChapterName, src => src.SponsorChapterName);
 
         // Mapping required for the SponsorSelector component
         config.NewConfig<SponsorsListViewModel, SelectableModel<int>>()

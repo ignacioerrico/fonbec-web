@@ -8,7 +8,7 @@ using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.Pages.Sponsors;
 
-[PageMetadata(nameof(SponsorCreate), "Crear y actualizar padrino", [FonbecRole.Manager])]
+[PageMetadata(nameof(SponsorCreate), "Crear y actualizar padrino", [FonbecRole.Admin, FonbecRole.Manager])]
 public partial class SponsorCreate : AuthenticationRequiredComponentBase
 {
     private readonly SponsorCreateBindModel _bindModel = new();
