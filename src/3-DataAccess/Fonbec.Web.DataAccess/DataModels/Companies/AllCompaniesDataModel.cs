@@ -1,6 +1,9 @@
-﻿namespace Fonbec.Web.DataAccess.DataModels.Companies;
+﻿using Fonbec.Web.DataAccess.Entities;
+using Fonbec.Web.DataAccess.Entities.Abstract;
 
-public class AllCompaniesDataModel
+namespace Fonbec.Web.DataAccess.DataModels.Companies;
+
+public class AllCompaniesDataModel(Auditable auditable) : AuditableDataModel(auditable)
 {
     public int CompanyId { get; set; }
 
@@ -9,4 +12,8 @@ public class AllCompaniesDataModel
     public string? CompanyEmail { get; set; }
 
     public string? CompanyPhoneNumber { get; set; }
+
+    public List<Sponsor>? CompanySponsors { get; set; } = [];
+
+    public List<PointOfContact>? CompanyPointsOfContact { get; set; } = [];
 }
