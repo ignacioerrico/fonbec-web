@@ -15,5 +15,5 @@ public class AllCompaniesDataModel(Auditable auditable) : AuditableDataModel(aud
 
     public List<Sponsor>? CompanySponsors { get; set; } = [];
 
-    public List<PointOfContact>? CompanyPOCs { get; set; } = [];
+    public List<PointOfContact>? CompanyPointsOfContact { get; set; } = [];
 }

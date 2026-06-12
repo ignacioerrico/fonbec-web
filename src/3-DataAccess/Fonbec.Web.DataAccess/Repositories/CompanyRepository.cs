@@ -35,7 +35,7 @@ public class CompanyRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
                 CompanyPhoneNumber = c.PhoneNumber,
                 CompanyEmail = c.Email,
                 CompanySponsors = c.Sponsors,
-                CompanyPOCs = c.PointsOfContact
+                CompanyPointsOfContact = c.PointsOfContact
             })
             .OrderBy(c => c.CompanyName)
             .ToListAsync();

@@ -13,7 +13,7 @@ public class CompaniesListViewModel : AuditableViewModel, IDetectChanges<Compani
     public string CompanyPhoneNumber { get; set; } = string.Empty;
     public string CompanyNotes { get; set; } = string.Empty;
     public List<string> CompanySponsors { get; set; } = [];
-    public List<string> CompanyPOCs { get; set; } = [];
+    public List<string> CompanyPointsOfContact { get; set; } = [];
 
     public bool IsIdenticalTo(CompaniesListViewModel other) =>
         CompanyName == other.CompanyName.NormalizeText()
@@ -32,7 +32,7 @@ public class CompanyListViewModelMappingDefinitions : IRegister
             .Map(dest => dest.CompanyEmail, src => src.CompanyEmail ?? string.Empty)
             .Map(dest => dest.CompanyPhoneNumber, src => src.CompanyPhoneNumber ?? string.Empty)
             .Map(dest => dest.CompanyNotes, src => src.Notes ?? string.Empty)
-            .Map(dest => dest.CompanyPOCs, src => (src.CompanyPOCs ?? Enumerable.Empty<PointOfContact>()).Select(PocDisplayName).ToList())
+            .Map(dest => dest.CompanyPointsOfContact, src => (src.CompanyPointsOfContact ?? Enumerable.Empty<PointOfContact>()).Select(PocDisplayName).ToList())
             .Map(dest => dest.CompanySponsors, src => (src.CompanySponsors ?? Enumerable.Empty<Sponsor>()).Select(sponsor => sponsor.FullName()).ToList());
 
         config.NewConfig<CompaniesListViewModel, SelectableModel<int>>()

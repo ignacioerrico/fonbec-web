@@ -53,13 +53,13 @@ public class CompaniesListViewModelMappingDefinitionsTests : MappingTestBase
     {
         var dataModel = new AllCompaniesDataModel(Auditable)
         {
-            CompanyPOCs = null,
+            CompanyPointsOfContact = null,
             CompanySponsors = null,
         };
 
         var viewModel = dataModel.Adapt<CompaniesListViewModel>(Config);
 
-        viewModel.CompanyPOCs.Should().BeEmpty();
+        viewModel.CompanyPointsOfContact.Should().BeEmpty();
         viewModel.CompanySponsors.Should().BeEmpty();
     }
 
@@ -106,7 +106,7 @@ public class CompaniesListViewModelMappingDefinitionsTests : MappingTestBase
             CompanyName = "CompanyNamedsadssad",
             CompanyEmail = "Company Maaail",
             CompanyPhoneNumber = "12345",
-            CompanyPOCs =
+            CompanyPointsOfContact =
             [
                 new PointOfContact { FirstName = "John", LastName = "Doe", CompanyId = 314 },
                 new PointOfContact { FirstName = "Jane", LastName = "Smith", CompanyId = 314 }
@@ -120,7 +120,7 @@ public class CompaniesListViewModelMappingDefinitionsTests : MappingTestBase
 
         var viewModel = dataModel.Adapt<CompaniesListViewModel>(Config);
 
-        viewModel.CompanyPOCs.Should().ContainInOrder("John Doe", "Jane Smith");
+        viewModel.CompanyPointsOfContact.Should().ContainInOrder("John Doe", "Jane Smith");
         viewModel.CompanySponsors.Should().ContainInOrder("Alice Johnson", "Bob Brown");
     }
 }
