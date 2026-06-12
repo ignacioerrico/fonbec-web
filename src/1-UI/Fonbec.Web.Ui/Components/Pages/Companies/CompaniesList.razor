@@ -98,8 +98,8 @@
 			</TemplateColumn>
 		</Columns>
 		<ChildRowContent>
-			<MudText Typo="Typo.h5">Contactos adminstrativos</MudText>
-			@if ((context.Item.CompanyPOCs ?? []).Any())
+			<MudText Typo="Typo.h5">Contactos administrativos</MudText>
+			@if (context.Item.CompanyPOCs.Any())
 			{
 				<MudList T="string">
 					@foreach (var poc in context.Item.CompanyPOCs)
@@ -113,7 +113,7 @@
 				<MudText>No hay contactos administrativos para esta empresa.</MudText>
 			}
 			<MudText Typo="Typo.h5">Padrinos</MudText>
-			@if ((context.Item.CompanySponsors ?? []).Any())
+			@if (context.Item.CompanySponsors.Any())
 			{
 				<MudList T="string">
 					@foreach (var sponsor in context.Item.CompanySponsors)

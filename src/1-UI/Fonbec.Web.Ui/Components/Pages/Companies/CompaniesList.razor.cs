@@ -62,7 +62,7 @@ public partial class CompaniesList : AuthenticationRequiredComponentBase
 
         if (!result.AnyAffectedRows)
         {
-            Snackbar.Add("No se pudo actualizar la filial.", Severity.Error);
+            Snackbar.Add("No se pudo actualizar la empresa.", Severity.Error);
         }
 
         _viewModels.Single(vm => vm.CompanyId == modifiedViewModel.CompanyId).LastUpdatedOnUtc = DateTime.Now;

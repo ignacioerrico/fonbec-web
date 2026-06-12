@@ -13,8 +13,6 @@ public class AllCompaniesDataModel(Auditable auditable) : AuditableDataModel(aud
 
     public string? CompanyPhoneNumber { get; set; }
 
-    public string? CompanyNotes { get; set; }
-
     public List<Sponsor>? CompanySponsors { get; set; } = [];
 
     public List<PointOfContact>? CompanyPOCs { get; set; } = [];

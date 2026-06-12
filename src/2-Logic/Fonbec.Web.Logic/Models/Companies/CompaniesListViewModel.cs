@@ -12,8 +12,8 @@ public class CompaniesListViewModel : AuditableViewModel, IDetectChanges<Compani
     public string CompanyEmail { get; set; } = string.Empty;
     public string CompanyPhoneNumber { get; set; } = string.Empty;
     public string CompanyNotes { get; set; } = string.Empty;
-    public List<string>? CompanySponsors { get; set; } = [];
-    public List<string>? CompanyPOCs { get; set; } = [];
+    public List<string> CompanySponsors { get; set; } = [];
+    public List<string> CompanyPOCs { get; set; } = [];
 
     public bool IsIdenticalTo(CompaniesListViewModel other) =>
         CompanyName == other.CompanyName.NormalizeText()
@@ -27,17 +27,19 @@ public class CompanyListViewModelMappingDefinitions : IRegister
     public void Register(TypeAdapterConfig config)
     {
         config.NewConfig<AllCompaniesDataModel, CompaniesListViewModel>()
-            .MaxDepth(1)
             .Map(dest => dest.CompanyId, src => src.CompanyId)
             .Map(dest => dest.CompanyName, src => src.CompanyName)
-            .Map(dest => dest.CompanyEmail, src => src.CompanyEmail)
-            .Map(dest => dest.CompanyPhoneNumber, src => src.CompanyPhoneNumber)
-            .Map(dest => dest.CompanyNotes, src => src.CompanyNotes)
-            .Map(dest => dest.CompanyPOCs, src => src.CompanyPOCs.Select(poc => poc.FirstName).ToList())
-            .Map(dest => dest.CompanySponsors, src => src.CompanySponsors.Select(sponsor => sponsor.FullName()).ToList());
- 
+            .Map(dest => dest.CompanyEmail, src => src.CompanyEmail ?? string.Empty)
+            .Map(dest => dest.CompanyPhoneNumber, src => src.CompanyPhoneNumber ?? string.Empty)
+            .Map(dest => dest.CompanyNotes, src => src.Notes ?? string.Empty)
+            .Map(dest => dest.CompanyPOCs, src => (src.CompanyPOCs ?? Enumerable.Empty<PointOfContact>()).Select(PocDisplayName).ToList())
+            .Map(dest => dest.CompanySponsors, src => (src.CompanySponsors ?? Enumerable.Empty<Sponsor>()).Select(sponsor => sponsor.FullName()).ToList());
+
         config.NewConfig<CompaniesListViewModel, SelectableModel<int>>()
             .Map(dest => dest.Key, src => src.CompanyId)
             .Map(dest => dest.DisplayName, src => src.CompanyName);
     }
+
+    private static string PocDisplayName(PointOfContact poc) =>
+        string.IsNullOrWhiteSpace(poc.LastName) ? poc.FirstName : $"{poc.FirstName} {poc.LastName}";
 }
