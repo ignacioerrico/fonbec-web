@@ -8,7 +8,7 @@ using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.Pages.Companies;
 
-[PageMetadata(nameof(CompaniesList), "Lista de empresas", [FonbecRole.Admin, FonbecRole.Manager])]
+[PageMetadata(nameof(CompaniesList), "Lista de empresas", [FonbecRole.Manager])]
 public partial class CompaniesList : AuthenticationRequiredComponentBase
 {
     private List<CompaniesListViewModel> _viewModels = [];
