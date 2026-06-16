@@ -14,12 +14,12 @@ public interface ICompanyService
     Task<List<CompaniesListViewModel>> GetAllCompaniesAsync();
     Task<List<SelectableModel<int>>> GetAllCompaniesForSelectionAsync();
     Task<bool> CompanyNameExistsAsync(string companyName);
-    Task<CrudResult> CreateCompanyAsync(CreateCompanyInputModel inputModel);
+    Task<CreateCompanyResult> CreateCompanyAsync(CreateCompanyInputModel inputModel);
 
     Task<CrudResult> UpdateCompanyAsync(UpdateCompanyInputModel inputModel);
 }
 
-public class CompanyService(ICompanyRepository companyRepository, ISponsorRepository sponsorRepository) : ICompanyService
+public class CompanyService(ICompanyRepository companyRepository) : ICompanyService
 {
     public async Task<List<CompaniesListViewModel>> GetAllCompaniesAsync()
     {
@@ -40,25 +40,27 @@ public class CompanyService(ICompanyRepository companyRepository, ISponsorReposi
         return await companyRepository.CompanyNameExistsAsync(normalizedCompanyName);
     }
 
-    public async Task<CrudResult> CreateCompanyAsync(CreateCompanyInputModel inputModel)
+    public async Task<CreateCompanyResult> CreateCompanyAsync(CreateCompanyInputModel inputModel)
     {
         var inputDataModel = inputModel.Adapt<CreateCompanyInputDataModel>();
 
-        var companyId = await companyRepository.CreateCompanyAsync(inputDataModel);
+        var result = await companyRepository.CreateCompanyAsync(inputDataModel);
 
-        if (companyId == 0)
+        if (result.MissingSponsorIds is { Count: > 0 })
         {
-            return new CrudResult();
+            var sponsorsById = inputModel.Sponsors.ToDictionary(s => s.Key);
+            var missingSponsors = result.MissingSponsorIds
+                .Select(id => new MissingSponsor(
+                    id,
+                    sponsorsById.TryGetValue(id, out var sponsor) ? sponsor.DisplayName : string.Empty))
+                .ToList();
+
+            return new CreateCompanyResult(MissingSponsors: missingSponsors);
         }
 
-        int affectedRows = 0;
-
-        if (inputDataModel.SponsorIds.Count > 0)
-        {
-            affectedRows = await sponsorRepository.LinkSponsorsToCompanyAsync(inputDataModel.SponsorIds, companyId);
-        }
-
-        return new CrudResult(affectedRows);
+        return result.CompanyId == 0
+            ? new CreateCompanyResult()
+            : new CreateCompanyResult(1);
     }
 
     public Task<CrudResult> UpdateCompanyAsync(UpdateCompanyInputModel inputModel)

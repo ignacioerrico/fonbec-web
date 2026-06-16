@@ -99,6 +99,18 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
 
         _saving = false;
 
+        if (result.HasMissingSponsors)
+        {
+            var missingSponsorDetails = string.Join(
+                ", ",
+                result.MissingSponsors!.Select(s => $"{s.SponsorName} (ID {s.SponsorId})"));
+
+            Snackbar.Add(
+                $"No se pudo crear la empresa. Los siguientes padrinos no se encontraron en la base de datos: {missingSponsorDetails}.",
+                Severity.Error);
+            return;
+        }
+
         if (!result.AnyAffectedRows)
         {
             Snackbar.Add("No se pudo crear la empresa.", Severity.Error);
