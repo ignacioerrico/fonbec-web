@@ -75,6 +75,31 @@ public class CompanyRepositoryCreateTests
     }
 
     [Fact]
+    public async Task CreateCompanyAsync_Does_Not_Reassign_Sponsor_Already_Linked_To_Another_Company()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedAsync(factory, sponsorId: 1, existingCompanyId: 10);
+        var repository = new CompanyRepository(factory);
+
+        var result = await repository.CreateCompanyAsync(new CreateCompanyInputDataModel
+        {
+            CompanyName = "New Corp",
+            CreatedById = 1,
+            SponsorIds = [1],
+        });
+
+        result.MissingSponsorIds.Should().BeEquivalentTo([1]);
+        result.CompanyId.Should().Be(0);
+
+        await using var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        db.Set<Company>().Should().ContainSingle(c => c.Id == 10);
+        db.Set<Company>().Should().NotContain(c => c.Name == "New Corp");
+        var sponsor = await db.Set<Sponsor>()
+            .SingleAsync(s => s.Id == 1, TestContext.Current.CancellationToken);
+        sponsor.CompanyId.Should().Be(10);
+    }
+
+    [Fact]
     public async Task CreateCompanyAsync_Deduplicates_Sponsor_Ids()
     {
         var factory = CreateDbContextFactory();
@@ -102,7 +127,8 @@ public class CompanyRepositoryCreateTests
         TestDbContextFactory factory,
         int sponsorId = 1,
         int? secondSponsorId = null,
-        bool isSponsorDeleted = false)
+        bool isSponsorDeleted = false,
+        int? existingCompanyId = null)
     {
         await using var db = await factory.CreateDbContextAsync();
 
@@ -130,12 +156,25 @@ public class CompanyRepositoryCreateTests
         db.Users.Add(user);
         db.Set<Chapter>().Add(chapter);
 
+        if (existingCompanyId.HasValue)
+        {
+            db.Set<Company>().Add(new Company
+            {
+                Id = existingCompanyId.Value,
+                Name = "Existing Corp",
+                CreatedById = 1,
+                CreatedOnUtc = DateTime.UtcNow,
+                IsActive = true,
+            });
+        }
+
         db.Set<Sponsor>().Add(new Sponsor
         {
             Id = sponsorId,
             FirstName = "Alice",
             LastName = "Johnson",
             ChapterId = 1,
+            CompanyId = existingCompanyId,
             CreatedById = 1,
             CreatedOnUtc = DateTime.UtcNow,
             IsActive = true,

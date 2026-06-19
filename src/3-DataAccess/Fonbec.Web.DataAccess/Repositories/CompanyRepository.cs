@@ -63,7 +63,7 @@ public class CompanyRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             var sponsorIds = dataModel.SponsorIds.Distinct().ToList();
 
             var sponsors = await db.Sponsors
-                .Where(s => sponsorIds.Contains(s.Id) && !s.IsDeleted && s.IsActive)
+                .Where(s => sponsorIds.Contains(s.Id) && !s.IsDeleted && s.IsActive && s.CompanyId == null)
                 .ToListAsync();
 
             var foundIds = sponsors.Select(s => s.Id).ToHashSet();

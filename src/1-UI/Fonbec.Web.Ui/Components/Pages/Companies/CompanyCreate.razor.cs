@@ -106,7 +106,7 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
                 result.MissingSponsors!.Select(s => $"{s.SponsorName} (ID {s.SponsorId})"));
 
             Snackbar.Add(
-                $"No se pudo crear la empresa. Los siguientes padrinos no se encontraron en la base de datos: {missingSponsorDetails}.",
+                $"No se pudo crear la empresa. Los siguientes padrinos no están disponibles para vincular: {missingSponsorDetails}.",
                 Severity.Error);
             return;
         }
