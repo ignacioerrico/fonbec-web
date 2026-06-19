@@ -45,6 +45,14 @@ public partial class CompaniesList : AuthenticationRequiredComponentBase
             return;
         }
 
+        if (modifiedViewModel.CompanyName != _originalViewModel.CompanyName
+            && await CompanyService.CompanyNameExistsAsync(modifiedViewModel.CompanyName, modifiedViewModel.CompanyId))
+        {
+            Snackbar.Add("Ya existe una empresa con ese nombre.", Severity.Error);
+            RevertItemChanges(modifiedViewModel.CompanyId);
+            return;
+        }
+
         var updateCompanyInputModel = new UpdateCompanyInputModel(
             modifiedViewModel.CompanyId,
             modifiedViewModel.CompanyName,
@@ -63,8 +71,19 @@ public partial class CompaniesList : AuthenticationRequiredComponentBase
         if (!result.AnyAffectedRows)
         {
             Snackbar.Add("No se pudo actualizar la empresa.", Severity.Error);
+            RevertItemChanges(modifiedViewModel.CompanyId);
+            return;
         }
 
         _viewModels.Single(vm => vm.CompanyId == modifiedViewModel.CompanyId).LastUpdatedOnUtc = DateTime.Now;
+    }
+
+    private void RevertItemChanges(int companyId)
+    {
+        var index = _viewModels.FindIndex(vm => vm.CompanyId == companyId);
+        if (index >= 0)
+        {
+            _viewModels[index] = _originalViewModel.DeepClone();
+        }
     }
 }

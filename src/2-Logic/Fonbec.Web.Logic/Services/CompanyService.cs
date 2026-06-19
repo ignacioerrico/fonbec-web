@@ -13,7 +13,7 @@ public interface ICompanyService
 {
     Task<List<CompaniesListViewModel>> GetAllCompaniesAsync();
     Task<List<SelectableModel<int>>> GetAllCompaniesForSelectionAsync();
-    Task<bool> CompanyNameExistsAsync(string companyName);
+    Task<bool> CompanyNameExistsAsync(string companyName, int? excludeCompanyId = null);
     Task<CreateCompanyResult> CreateCompanyAsync(CreateCompanyInputModel inputModel);
 
     Task<CrudResult> UpdateCompanyAsync(UpdateCompanyInputModel inputModel);
@@ -34,10 +34,10 @@ public class CompanyService(ICompanyRepository companyRepository) : ICompanyServ
             .ContinueWith(t => t.Result.Adapt<List<SelectableModel<int>>>());
     }
 
-    public async Task<bool> CompanyNameExistsAsync(string companyName)
+    public async Task<bool> CompanyNameExistsAsync(string companyName, int? excludeCompanyId = null)
     {
         var normalizedCompanyName = companyName.NormalizeText();
-        return await companyRepository.CompanyNameExistsAsync(normalizedCompanyName);
+        return await companyRepository.CompanyNameExistsAsync(normalizedCompanyName, excludeCompanyId);
     }
 
     public async Task<CreateCompanyResult> CreateCompanyAsync(CreateCompanyInputModel inputModel)
@@ -67,10 +67,19 @@ public class CompanyService(ICompanyRepository companyRepository) : ICompanyServ
             : new CreateCompanyResult(1);
     }
 
-    public Task<CrudResult> UpdateCompanyAsync(UpdateCompanyInputModel inputModel)
+    public async Task<CrudResult> UpdateCompanyAsync(UpdateCompanyInputModel inputModel)
     {
         var updateCompanyInputDataModel = inputModel.Adapt<UpdateCompanyInputDataModel>();
-        return companyRepository.UpdateCompanyAsync(updateCompanyInputDataModel)
-            .ContinueWith(t => new CrudResult(t.Result));
+
+        var nameExists = await companyRepository.CompanyNameExistsAsync(
+            updateCompanyInputDataModel.CompanyUpdatedName,
+            updateCompanyInputDataModel.CompanyId);
+        if (nameExists)
+        {
+            return new CrudResult();
+        }
+
+        var affectedRows = await companyRepository.UpdateCompanyAsync(updateCompanyInputDataModel);
+        return new CrudResult(affectedRows);
     }
 }
