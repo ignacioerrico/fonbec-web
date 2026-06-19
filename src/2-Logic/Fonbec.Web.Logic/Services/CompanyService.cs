@@ -48,11 +48,15 @@ public class CompanyService(ICompanyRepository companyRepository) : ICompanyServ
 
         if (result.MissingSponsorIds is { Count: > 0 })
         {
-            var sponsorsById = inputModel.Sponsors.ToDictionary(s => s.Key);
+            var sponsorsById = inputModel.Sponsors
+                .GroupBy(s => s.Key)
+                .ToDictionary(g => g.Key, g => g.First());
             var missingSponsors = result.MissingSponsorIds
                 .Select(id => new MissingSponsor(
                     id,
-                    sponsorsById.TryGetValue(id, out var sponsor) ? sponsor.DisplayName : string.Empty))
+                    sponsorsById.TryGetValue(id, out var sponsor) && !string.IsNullOrWhiteSpace(sponsor.DisplayName)
+                        ? sponsor.DisplayName
+                        : "Padrino desconocido"))
                 .ToList();
 
             return new CreateCompanyResult(MissingSponsors: missingSponsors);

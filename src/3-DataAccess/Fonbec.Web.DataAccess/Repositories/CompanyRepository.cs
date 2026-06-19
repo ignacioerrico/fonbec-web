@@ -60,17 +60,18 @@ public class CompanyRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
 
         if (dataModel.SponsorIds.Count > 0)
         {
+            var sponsorIds = dataModel.SponsorIds.Distinct().ToList();
+
             var sponsors = await db.Sponsors
-                .Where(s => dataModel.SponsorIds.Contains(s.Id))
+                .Where(s => sponsorIds.Contains(s.Id) && !s.IsDeleted && s.IsActive)
                 .ToListAsync();
 
             var foundIds = sponsors.Select(s => s.Id).ToHashSet();
-            var missingIds = dataModel.SponsorIds
-                .Where(id => !foundIds.Contains(id))
+            var unavailableIds = sponsorIds.Where(id => !foundIds.Contains(id))
                 .ToList();
-            if (missingIds.Count > 0)
+            if (unavailableIds.Count > 0)
             {
-                return new CreateCompanyRepositoryResult(MissingSponsorIds: missingIds);
+                return new CreateCompanyRepositoryResult(MissingSponsorIds: unavailableIds);
             }
 
             sponsorsToLink = sponsors;
@@ -98,26 +99,34 @@ public class CompanyRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
 
         await using var transaction = await db.Database.BeginTransactionAsync();
 
-        db.Companies.Add(company);
-
-        if (sponsorsToLink is not null)
+        try
         {
-            foreach (var sponsor in sponsorsToLink)
+            db.Companies.Add(company);
+
+            if (sponsorsToLink is not null)
             {
-                sponsor.Company = company;
+                foreach (var sponsor in sponsorsToLink)
+                {
+                    sponsor.Company = company;
+                }
             }
+
+            var affectedRows = await db.SaveChangesAsync();
+
+            if (affectedRows == 0)
+            {
+                await transaction.RollbackAsync();
+                return new CreateCompanyRepositoryResult();
+            }
+
+            await transaction.CommitAsync();
+            return new CreateCompanyRepositoryResult(company.Id);
         }
-
-        var affectedRows = await db.SaveChangesAsync();
-
-        if (affectedRows == 0)
+        catch
         {
             await transaction.RollbackAsync();
-            return new CreateCompanyRepositoryResult();
+            throw;
         }
-
-        await transaction.CommitAsync();
-        return new CreateCompanyRepositoryResult(company.Id);
     }
 
     public async Task<int> UpdateCompanyAsync(UpdateCompanyInputDataModel dataModel)
