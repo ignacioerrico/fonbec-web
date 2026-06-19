@@ -24,8 +24,6 @@ public class CompanyRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             .Include(c => c.LastUpdatedBy)
             .Include(c => c.DisabledBy)
             .Include(c => c.ReenabledBy)
-            .Include(c => c.PointsOfContact)
-            .Include(c => c.Sponsors)
             .Where(c => c.IsActive)
             .Select(c => new AllCompaniesDataModel(c)
             {
@@ -33,8 +31,8 @@ public class CompanyRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
                 CompanyName = c.Name,
                 CompanyPhoneNumber = c.PhoneNumber,
                 CompanyEmail = c.Email,
-                CompanySponsors = c.Sponsors,
-                CompanyPointsOfContact = c.PointsOfContact
+                CompanySponsors = c.Sponsors == null ? new() : c.Sponsors.Where(s => s.IsActive && !s.IsDeleted).ToList(),
+                CompanyPointsOfContact = c.PointsOfContact.Where(p => p.IsActive).ToList()
             })
             .OrderBy(c => c.CompanyName)
             .ToListAsync();
