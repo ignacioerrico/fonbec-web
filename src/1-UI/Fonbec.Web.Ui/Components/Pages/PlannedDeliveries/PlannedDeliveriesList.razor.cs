@@ -113,6 +113,7 @@ public partial class PlannedDeliveriesList : AuthenticationRequiredComponentBase
         if (!result.AnyAffectedRows)
         {
             Snackbar.Add("No se pudo actualizar la planificación de envíos.", Severity.Error);
+            return;
         }
 
         _viewModels.Single(vm => vm.PlannedDeliveryId == modifiedViewModel.PlannedDeliveryId).LastUpdatedOnUtc = DateTime.Now;

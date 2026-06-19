@@ -67,6 +67,7 @@ public partial class ChaptersList : AuthenticationRequiredComponentBase
         if (!result.AnyAffectedRows)
         {
             Snackbar.Add("No se pudo actualizar la filial.", Severity.Error);
+            return;
         }
 
         _viewModels.Single(vm => vm.ChapterId == modifiedViewModel.ChapterId).LastUpdatedOnUtc = DateTime.Now;
