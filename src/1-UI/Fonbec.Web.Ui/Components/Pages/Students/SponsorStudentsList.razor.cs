@@ -18,6 +18,7 @@ public partial class SponsorStudentsList : AuthenticationRequiredComponentBase
     private List<SponsorStudentsListViewModel> _viewModels = [];
 
     private string _searchString = string.Empty;
+    private bool _sortByLastName;
     private bool FilterStudents(SponsorStudentsListViewModel viewModel) =>
         string.IsNullOrWhiteSpace(_searchString)
         || $"{viewModel.StudentFirstName} {viewModel.StudentLastName}".ContainsIgnoringAccents(_searchString)
@@ -25,7 +26,9 @@ public partial class SponsorStudentsList : AuthenticationRequiredComponentBase
             && $"{viewModel.StundentNickName} {viewModel.StudentLastName}".ContainsIgnoringAccents(_searchString));
 
     private string StudentFullName(SponsorStudentsListViewModel viewModel) =>
-           $"{viewModel.StudentFirstName} {viewModel.StudentLastName}";
+        _sortByLastName
+            ? $"{viewModel.StudentLastName}, {viewModel.StudentFirstName}"
+            : $"{viewModel.StudentFirstName} {viewModel.StudentLastName}";
 
     protected override async Task OnInitializedAsync()
     {

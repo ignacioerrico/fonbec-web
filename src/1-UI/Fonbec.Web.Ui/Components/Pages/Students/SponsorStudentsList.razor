@@ -8,6 +8,13 @@
 
 <PageHeader Title="Becarios" />
 
+<MudStack StretchItems="StretchItems.Middle" Row="true">
+	<MudSpacer />
+	<MudSwitch @bind-Value="_sortByLastName" LabelPlacement="Placement.Left">
+		@(_sortByLastName ? "Apellido, Nombre" : "Nombre Apellido")
+	</MudSwitch>
+</MudStack>
+
 <LoadingIndicator Loading="Loading"
 				  If="!_viewModels.Any()"
 				  ThenDisplay="No hay becarios." />
@@ -33,7 +40,7 @@
 						  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
 		</ToolBarContent>
 		<Columns>
-			<PropertyColumn Property="@(vm => vm.StudentFirstName)" Title="Nombre">
+			<PropertyColumn Property="@(vm => _sortByLastName ? vm.StudentLastName : vm.StudentFirstName)" Title="Nombre">
 				<CellTemplate>
 					<AuditableItemDisplay Id="@context.Item.StudentId"
 										  ItemName="@StudentFullName(context.Item)"
