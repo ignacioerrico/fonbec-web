@@ -99,10 +99,10 @@ public class UserService(
 
         var (userId, errors) = await userRepository.CreateUserAsync(createUserInputDataModel);
 
-        var pages = allPages.Where(p => p.Roles.Contains(model.UserRole))
+        var codenames = allPages.Where(p => p.Roles.Contains(model.UserRole))
             .Select(p => p.Codename);
 
-        await SetFonbecAuthClaim(userId, pages);
+        await SetFonbecAuthClaim(userId, codenames);
 
         if (userId > 0 && errors.Count == 0)
         {
@@ -172,10 +172,10 @@ public class UserService(
         return userClaim ?? string.Empty;
     }
 
-    public async Task SetFonbecAuthClaim(int userId, IEnumerable<string> pages)
+    public async Task SetFonbecAuthClaim(int userId, IEnumerable<string> codenames)
     {
-        var orderedPages = pages.OrderBy(page => page);
-        var claimValue = string.Join(",", orderedPages);
+        var orderedCodenames = codenames.OrderBy(cn => cn);
+        var claimValue = string.Join(",", orderedCodenames);
         await SetUserClaim(userId, FonbecAuth.ClaimType, claimValue);
     }
 

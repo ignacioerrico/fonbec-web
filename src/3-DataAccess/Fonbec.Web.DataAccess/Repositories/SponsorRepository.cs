@@ -7,9 +7,16 @@ namespace Fonbec.Web.DataAccess.Repositories;
 
 public interface ISponsorRepository
 {
-    // falta pasarle filtro chapterId
+    /// <summary>
+    /// Get all sponsors that have not been (soft) deleted.
+    /// </summary>
+    /// <param name="chapterId">Use <c>null</c> to get all sponsors for all chapters.</param>
+    /// <returns>A list of <see cref="AllSponsorsDataModel"/></returns>
     Task<List<AllSponsorsDataModel>> GetAllSponsorsAsync(int? chapterId);
+
     Task<int> CreateSponsorAsync(CreateSponsorInputDataModel dataModel);
+
+    Task<int> UpdateSponsorAsync(UpdateSponsorInputDataModel dataModel);
 }
 
 public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : ISponsorRepository
@@ -23,6 +30,8 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             .Include(s => s.LastUpdatedBy)
             .Include(s => s.DisabledBy)
             .Include(s => s.ReenabledBy)
+            .Include(s => s.Company)
+            .Include(s => s.Chapter)
             .Where(s => !s.IsDeleted
                         && (!chapterId.HasValue || s.ChapterId == chapterId))
             .Select(s => new AllSponsorsDataModel(s)
@@ -31,9 +40,12 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
                 SponsorFirstName = s.FirstName,
                 SponsorLastName = s.LastName,
                 SponsorNickName = s.NickName,
+                SponsorGender = s.Gender,
                 SponsorPhoneNumber = s.PhoneNumber,
                 SponsorEmail = s.Email,
                 IsSponsorActive = s.IsActive,
+                SponsorCompany = s.Company,
+                SponsorChapterName = s.Chapter.Name,
             })
             .OrderBy(sdm => sdm.SponsorFirstName)
             .ThenBy(sdm => sdm.SponsorLastName)
@@ -53,13 +65,38 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             LastName = dataModel.SponsorLastName,
             NickName = dataModel.SponsorNickName,
             Gender = dataModel.SponsorGender,
-            PhoneNumber = dataModel.SponsorPhoneNumber,
-            Notes = dataModel.SponsorNotes,
             Email = dataModel.SponsorEmail,
-            CreatedById = dataModel.CreatedById
+            PhoneNumber = dataModel.SponsorPhoneNumber,
+            CompanyId = dataModel.SponsorCompanyId,
+            Notes = dataModel.SponsorNotes,
+            CreatedById = dataModel.CreatedById,
         };
 
         db.Sponsors.Add(sponsor);
+        return await db.SaveChangesAsync();
+    }
+
+    public async Task<int> UpdateSponsorAsync(UpdateSponsorInputDataModel dataModel)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var sponsorDb = await db.Sponsors.FindAsync(dataModel.SponsorId);
+
+        if (sponsorDb is not { IsActive: true })
+        {
+            return 0;
+        }
+
+        sponsorDb.FirstName = dataModel.SponsorFirstName;
+        sponsorDb.LastName = dataModel.SponsorLastName;
+        sponsorDb.NickName = dataModel.SponsorNickName;
+        sponsorDb.Gender = dataModel.SponsorGender;
+        sponsorDb.PhoneNumber = dataModel.SponsorPhoneNumber;
+        sponsorDb.Email = dataModel.SponsorEmail;
+        sponsorDb.CompanyId = dataModel.SponsorCompanyId;
+        sponsorDb.LastUpdatedById = dataModel.UpdatedById;
+
+        db.Sponsors.Update(sponsorDb);
         return await db.SaveChangesAsync();
     }
 }

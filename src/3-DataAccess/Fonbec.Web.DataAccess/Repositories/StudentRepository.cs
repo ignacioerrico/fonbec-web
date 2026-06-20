@@ -7,7 +7,7 @@ namespace Fonbec.Web.DataAccess.Repositories;
 
 public interface IStudentRepository
 {
-    Task<List<AllStudentsDataModel>> GetAllStudentsAsync();
+    Task<List<AllStudentsDataModel>> GetAllStudentsAsync(int? chapterId);
     Task<int> CreateStudentAsync(CreateStudentInputDataModel inputDataModel);
     Task<int> UpdateStudentAsync(UpdateStudentInputDataModel dataModel);
     Task<List<SponsorStudentsDataModel>> GetStudentsBySponsorIdAsync(int sponsorId);
@@ -15,7 +15,7 @@ public interface IStudentRepository
 
 public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : IStudentRepository
 {
-    public async Task<List<AllStudentsDataModel>> GetAllStudentsAsync()
+    public async Task<List<AllStudentsDataModel>> GetAllStudentsAsync(int? chapterId)
     {
         await using var db = await dbContext.CreateDbContextAsync();
 
@@ -25,13 +25,16 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             .Include(s => s.LastUpdatedBy)
             .Include(s => s.DisabledBy)
             .Include(s => s.ReenabledBy)
-            .Where(s => s.IsActive)
+            .Include(s => s.Chapter)
+            .Where(s => s.IsActive
+                        && (chapterId == null || chapterId == s.ChapterId))
             .Select(s => new AllStudentsDataModel(s)
             {
+                ChapterId = s.ChapterId,
                 StudentId = s.Id,
                 StudentFirstName = s.FirstName,
                 StudentLastName = s.LastName,
-                StundentNickName = s.NickName,
+                StudentNickName = s.NickName,
                 StudentGender = s.Gender,
                 IsStudentActive = s.IsActive,
                 FacilitatorId = s.Facilitator.Id,
@@ -43,7 +46,8 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
                 StudentCurrentEducationLevel = s.CurrentEducationLevel,
                 StudentSecondarySchoolStartYear = s.SecondarySchoolStartYear,
                 StudentUniversityStartYear = s.UniversityStartYear,
-                StudentPhoneNumber = s.PhoneNumber
+                StudentPhoneNumber = s.PhoneNumber,
+                StudentChapterName = s.Chapter.Name,
             })
             .OrderBy(s => s.StudentFirstName)
             .ThenBy(s => s.StudentLastName)

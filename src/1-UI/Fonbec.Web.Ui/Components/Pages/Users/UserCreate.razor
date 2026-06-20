@@ -18,7 +18,7 @@
 	@if (FonbecClaim.ChapterId is null)
 	{
 		<ChapterSelector @bind-SelectedChapterId="_bindModel.UserChapterId"
-		                 OnChaptersLoaded="OnChaptersLoaded" />
+		                 NumberOfChaptersLoaded="OnChaptersLoaded" />
 	}
 
 	<MudTextField T="string" Label="Nombre" @bind-Value="_bindModel.UserFirstName" Immediate="true" AutoFocus="_anyChapters"

@@ -17,7 +17,8 @@ public class SponsorsListViewModelMappingDefinitionsTests : MappingTestBase
             SponsorLastName = "Wilson",
             SponsorNickName = "jwilson",
             SponsorPhoneNumber = "1234567890",
-            SponsorEmail = "jose@email.com"
+            SponsorEmail = "jose@email.com",
+            SponsorChapterName = "Cordoba",
         };
 
         var viewModel = dataModel.Adapt<SponsorsListViewModel>(Config);
@@ -28,6 +29,7 @@ public class SponsorsListViewModelMappingDefinitionsTests : MappingTestBase
         viewModel.SponsorNickName.Should().Be("jwilson");
         viewModel.SponsorPhoneNumber.Should().Be("1234567890");
         viewModel.SponsorEmail.Should().Be("jose@email.com");
+        viewModel.SponsorChapterName.Should().Be("Cordoba");
     }
 
     [Fact]

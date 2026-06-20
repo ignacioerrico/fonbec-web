@@ -67,8 +67,19 @@ public partial class ChaptersList : AuthenticationRequiredComponentBase
         if (!result.AnyAffectedRows)
         {
             Snackbar.Add("No se pudo actualizar la filial.", Severity.Error);
+            RevertItemChanges(modifiedViewModel.ChapterId);
+            return;
         }
 
         _viewModels.Single(vm => vm.ChapterId == modifiedViewModel.ChapterId).LastUpdatedOnUtc = DateTime.Now;
+    }
+
+    private void RevertItemChanges(int chapterId)
+    {
+        var index = _viewModels.FindIndex(vm => vm.ChapterId == chapterId);
+        if (index >= 0)
+        {
+            _viewModels[index] = _originalViewModel.DeepClone();
+        }
     }
 }

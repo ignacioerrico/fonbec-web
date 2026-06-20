@@ -6,18 +6,34 @@ namespace Fonbec.Web.Logic.Tests.ExtensionMethods;
 public class StringExtensionMethodsTests
 {
     [Theory]
-    [InlineData("María Elena", "ría", true)]
-    [InlineData("María Elena", "ria", true)]
-    [InlineData("Marí aelena", "ria", true)]
-    [InlineData("MAR Í äelena", "ria", true)]
-    [InlineData("Mar/Í/À\\elena", "ria", true)]
-    public void ContainsIgnoringAccents_Success(string source, string subString, bool expected)
+    [InlineData("María Elena", "ría")]
+    [InlineData("María Elena", "ria")]
+    [InlineData("Marí aelena", "ria")]
+    [InlineData("MAR Í äelena", "ria")]
+    [InlineData("Mar/Í/À\\elena", "ria")]
+    [InlineData("Mar +I +A + elena", "ríá")]
+    public void ContainsIgnoringAccents_Success(string source, string subString)
     {
         // Act
         var actual = source.ContainsIgnoringAccents(subString);
 
         // Assert
-        expected.Should().Be(actual);
+        actual.Should().BeTrue();
+    }
+
+    [Theory]
+    [InlineData("María Elena", "ría")]
+    [InlineData("Mar í a Elena", "ría")]
+    [InlineData("María Elena", "r í a")]
+    [InlineData("+54 9 1 5555-1000", "+")]
+    [InlineData("+54 9 1 5555-1000", "+54915")]
+    public void ContainsIgnoringSpaces_Success(string source, string subString)
+    {
+        // Act
+        var actual = source.ContainsIgnoringSpaces(subString);
+
+        // Assert
+        actual.Should().BeTrue();
     }
 
     [Theory]

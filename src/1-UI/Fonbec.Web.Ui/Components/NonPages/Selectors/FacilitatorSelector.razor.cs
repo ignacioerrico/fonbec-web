@@ -7,9 +7,12 @@ namespace Fonbec.Web.Ui.Components.NonPages.Selectors;
 
 public partial class FacilitatorSelector
 {
-    private bool _dataLoaded;
-
     private readonly List<SelectableModel<int>> _facilitators = [];
+
+    private bool _loading;
+
+    [Parameter]
+    public bool SelectFirstItemOnLoad { get; set; }
 
     [Parameter]
     public int SelectedFacilitatorId { get; set; }
@@ -21,37 +24,49 @@ public partial class FacilitatorSelector
     /// Callback invoked when facilitators are loaded. The int parameter indicates the number of facilitators loaded.
     /// </summary>
     [Parameter]
-    public EventCallback<int> OnFacilitatorsLoaded { get; set; }
+    public EventCallback<int> NumberOfFacilitatorsLoaded { get; set; }
 
     [Inject]
     public IUserService UserService { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
-        await base.OnInitializedAsync();
-        
+        _loading = true;
+
         var facilitators = await UserService.GetAllUsersInRoleForSelectionAsync(FonbecRole.Uploader);
 
-        _dataLoaded = true;
+        _loading = false;
 
         _facilitators.AddRange(facilitators);
 
-        await OnFacilitatorsLoaded.InvokeAsync(facilitators.Count);
-    }
+        await NumberOfFacilitatorsLoaded.InvokeAsync(facilitators.Count);
 
-    protected override async Task OnParametersSetAsync()
-    {
-        await base.OnParametersSetAsync();
-
-        if (SelectedFacilitatorId == 0 && _facilitators.Count > 0)
+        if (SelectFirstItemOnLoad && facilitators.Count > 0)
         {
-            SelectedFacilitatorId = _facilitators.First().Key;
+            if (SelectedFacilitatorId == 0)
+            {
+                SelectedFacilitatorId = facilitators.First().Key;
+            }
+
             await OnSelectedValueChanged(SelectedFacilitatorId);
         }
+
+        await base.OnInitializedAsync();
     }
 
-    private async Task OnSelectedValueChanged(int selectedFacilitatorId)
+    private async Task<IEnumerable<int>> Search(string value, CancellationToken token)
     {
-        await SelectedFacilitatorIdChanged.InvokeAsync(selectedFacilitatorId);
+        var result = string.IsNullOrEmpty(value)
+            ? _facilitators.Select(c => c.Key)
+            : _facilitators.Where(c => c.DisplayName.Contains(value, StringComparison.OrdinalIgnoreCase))
+                           .Select(c => c.Key);
+
+        return await Task.FromResult(result);
     }
+
+    private async Task OnSelectedValueChanged(int selectedFacilitatorId) =>
+        await SelectedFacilitatorIdChanged.InvokeAsync(selectedFacilitatorId);
+
+    private string? MapKeyToDisplayName(int key) =>
+        _facilitators.FirstOrDefault(s => s.Key == key)?.DisplayName;
 }

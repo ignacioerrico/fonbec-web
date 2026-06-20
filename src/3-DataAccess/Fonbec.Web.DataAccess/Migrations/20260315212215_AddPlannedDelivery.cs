@@ -1,0 +1,98 @@
+﻿using System;
+using Microsoft.EntityFrameworkCore.Migrations;
+
+#nullable disable
+
+namespace Fonbec.Web.DataAccess.Migrations
+{
+    /// <inheritdoc />
+    public partial class AddPlannedDelivery : Migration
+    {
+        /// <inheritdoc />
+        protected override void Up(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.CreateTable(
+                name: "PlannedDeliveries",
+                columns: table => new
+                {
+                    Id = table.Column<int>(type: "int", nullable: false)
+                        .Annotation("SqlServer:Identity", "1, 1"),
+                    ChapterId = table.Column<int>(type: "int", nullable: true),
+                    StartsOn = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    Completed = table.Column<bool>(type: "bit", nullable: false),
+                    CreatedById = table.Column<int>(type: "int", nullable: false),
+                    CreatedOnUtc = table.Column<DateTime>(type: "datetime2", nullable: false),
+                    LastUpdatedById = table.Column<int>(type: "int", nullable: true),
+                    LastUpdatedOnUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    DisabledById = table.Column<int>(type: "int", nullable: true),
+                    DisabledOnUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    ReenabledById = table.Column<int>(type: "int", nullable: true),
+                    ReenabledOnUtc = table.Column<DateTime>(type: "datetime2", nullable: true),
+                    IsActive = table.Column<bool>(type: "bit", nullable: false),
+                    Notes = table.Column<string>(type: "nvarchar(max)", nullable: true)
+                },
+                constraints: table =>
+                {
+                    table.PrimaryKey("PK_PlannedDeliveries", x => x.Id);
+                    table.ForeignKey(
+                        name: "FK_PlannedDeliveries_AspNetUsers_CreatedById",
+                        column: x => x.CreatedById,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id",
+                        onDelete: ReferentialAction.Cascade);
+                    table.ForeignKey(
+                        name: "FK_PlannedDeliveries_AspNetUsers_DisabledById",
+                        column: x => x.DisabledById,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_PlannedDeliveries_AspNetUsers_LastUpdatedById",
+                        column: x => x.LastUpdatedById,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_PlannedDeliveries_AspNetUsers_ReenabledById",
+                        column: x => x.ReenabledById,
+                        principalTable: "AspNetUsers",
+                        principalColumn: "Id");
+                    table.ForeignKey(
+                        name: "FK_PlannedDeliveries_Chapters_ChapterId",
+                        column: x => x.ChapterId,
+                        principalTable: "Chapters",
+                        principalColumn: "Id");
+                });
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PlannedDeliveries_ChapterId",
+                table: "PlannedDeliveries",
+                column: "ChapterId");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PlannedDeliveries_CreatedById",
+                table: "PlannedDeliveries",
+                column: "CreatedById");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PlannedDeliveries_DisabledById",
+                table: "PlannedDeliveries",
+                column: "DisabledById");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PlannedDeliveries_LastUpdatedById",
+                table: "PlannedDeliveries",
+                column: "LastUpdatedById");
+
+            migrationBuilder.CreateIndex(
+                name: "IX_PlannedDeliveries_ReenabledById",
+                table: "PlannedDeliveries",
+                column: "ReenabledById");
+        }
+
+        /// <inheritdoc />
+        protected override void Down(MigrationBuilder migrationBuilder)
+        {
+            migrationBuilder.DropTable(
+                name: "PlannedDeliveries");
+        }
+    }
+}

@@ -1,5 +1,4 @@
-﻿using Fonbec.Web.DataAccess.DataModels;
-using Fonbec.Web.DataAccess.DataModels.Users;
+﻿using Fonbec.Web.DataAccess.DataModels.Users;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.Logic.ExtensionMethods;
 using Mapster;

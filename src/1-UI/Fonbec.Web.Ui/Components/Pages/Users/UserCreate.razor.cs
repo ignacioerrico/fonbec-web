@@ -42,6 +42,12 @@ public partial class UserCreate : AuthenticationRequiredComponentBase
 
     private async Task SaveAsync()
     {
+        if (FonbecClaim.ChapterId is null && _bindModel.UserChapterId == 0)
+        {
+            Snackbar.Add("La filial no es válida.", Severity.Error);
+            return;
+        }
+
         _saving = true;
 
         var (isEmailUnique, userFullNameOrNull) = await UserService.ValidateUniqueEmailAsync(_bindModel.UserEmail);

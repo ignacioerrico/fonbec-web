@@ -224,7 +224,7 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
 
         if (!int.TryParse(userIdString, out userId))
         {
-            errors.Add("User ID could not be parsed.");
+            errors.Add($"User ID '{userIdString}' could not be parsed.");
         }
 
         return (userId, errors);

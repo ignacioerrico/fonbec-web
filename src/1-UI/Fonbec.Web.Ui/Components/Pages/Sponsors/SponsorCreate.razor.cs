@@ -8,7 +8,7 @@ using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.Pages.Sponsors;
 
-[PageMetadata(nameof(SponsorCreate), "Crear y actualizar padrino", [FonbecRole.Manager])]
+[PageMetadata(nameof(SponsorCreate), "Crear y actualizar padrino", [FonbecRole.Admin, FonbecRole.Manager])]
 public partial class SponsorCreate : AuthenticationRequiredComponentBase
 {
     private readonly SponsorCreateBindModel _bindModel = new();
@@ -31,6 +31,19 @@ public partial class SponsorCreate : AuthenticationRequiredComponentBase
 
     private async Task Save()
     {
+        if (FonbecClaim.ChapterId is null)
+        {
+            if (_bindModel.ChapterId == 0)
+            {
+                Snackbar.Add("La filial no es válida.", Severity.Error);
+                return;
+            }
+        }
+        else
+        {
+            _bindModel.ChapterId = FonbecClaim.ChapterId.Value;
+        }
+
         _saving = true;
 
         var createSponsorInputModel = new CreateSponsorInputModel(
@@ -39,9 +52,10 @@ public partial class SponsorCreate : AuthenticationRequiredComponentBase
             _bindModel.SponsorLastName,
             _bindModel.SponsorNickName,
             _bindModel.SponsorGender,
-            _bindModel.SponsorPhoneNumber,
-            _bindModel.SponsorNotes,
             _bindModel.SponsorEmail,
+            _bindModel.SponsorPhoneNumber,
+            _bindModel.CompanyId,
+            _bindModel.SponsorNotes,
             FonbecClaim.UserId
         );
 

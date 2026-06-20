@@ -9,7 +9,7 @@ using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.Pages.Students;
 
-[PageMetadata(nameof(StudentsList), "Lista de becarios", [FonbecRole.Manager])]
+[PageMetadata(nameof(StudentsList), "Lista de becarios", [FonbecRole.Admin, FonbecRole.Manager])]
 public partial class StudentsList : AuthenticationRequiredComponentBase
 {
     private List<StudentsListViewModel> _viewModels = [];
@@ -17,7 +17,10 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
     private StudentsListViewModel _originalViewModel = new();
 
     private IEnumerable<string> _allEducationLevels = [];
+
     private IEnumerable<string> _allFacilitators = [];
+
+    private IEnumerable<string> _allChapters = [];
 
     private string _searchString = string.Empty;
 
@@ -32,7 +35,7 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
 
         Loading = true;
 
-        _viewModels = await StudentService.GetAllStudentsAsync();
+        _viewModels = await StudentService.GetAllStudentsAsync(FonbecClaim.ChapterId);
 
         _allEducationLevels = Enum.GetValues<EducationLevel>()
             .Select(el => el.EnumToString());
@@ -40,6 +43,10 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
         _allFacilitators = _viewModels.Select(vm => vm.FacilitatorFullName)
             .Distinct()
             .OrderBy(fn => fn);
+
+        _allChapters = _viewModels.Select(vm => vm.StudentChapterName)
+            .Distinct()
+            .OrderBy(cn => cn);
 
         Loading = false;
     }
@@ -52,11 +59,13 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
     private bool Filter(StudentsListViewModel viewModel) =>
         string.IsNullOrWhiteSpace(_searchString)
         || $"{viewModel.StudentFirstName} {viewModel.StudentLastName}".ContainsIgnoringAccents(_searchString)
-        || (!string.IsNullOrWhiteSpace(viewModel.StundentNickName)
-            && $"{viewModel.StundentNickName} {viewModel.StudentLastName}".ContainsIgnoringAccents(_searchString))
+        || (!string.IsNullOrEmpty(viewModel.StudentNickName)
+            && $"{viewModel.StudentNickName} {viewModel.StudentLastName}".ContainsIgnoringAccents(_searchString))
         || viewModel.FacilitatorFullName.ContainsIgnoringAccents(_searchString)
-        || (!string.IsNullOrWhiteSpace(viewModel.StudentPhoneNumber)
-            && viewModel.StudentPhoneNumber.ContainsIgnoringAccents(_searchString));
+        || (!string.IsNullOrEmpty(viewModel.StudentEmail)
+            && viewModel.StudentEmail.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+        || (!string.IsNullOrEmpty(viewModel.StudentPhoneNumber)
+            && viewModel.StudentPhoneNumber.ContainsIgnoringSpaces(_searchString));
 
     private void StartedEditingItem(StudentsListViewModel originalViewModel) =>
         _originalViewModel = originalViewModel.DeepClone();
@@ -73,7 +82,7 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
             modifiedViewModel.StudentId,
             modifiedViewModel.StudentFirstName,
             modifiedViewModel.StudentLastName,
-            modifiedViewModel.StundentNickName,
+            modifiedViewModel.StudentNickName,
             modifiedViewModel.StudentEmail,
             modifiedViewModel.StudentPhoneNumber,
             modifiedViewModel.Notes,
@@ -86,15 +95,29 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
         Loading = true;
 
         var result = await StudentService.UpdateStudentAsync(updateStudentInputModel);
-        
+
         Loading = false;
 
-        if (!result.AnyAffectedRows)
+        if (result.AnyAffectedRows)
+        {
+            // Update timestamp in UI
+            _viewModels.Single(vm => vm.StudentId == modifiedViewModel.StudentId).LastUpdatedOnUtc = DateTime.Now;
+            Snackbar.Add("Padrino actualizado correctamente.", Severity.Success);
+        }
+        else
         {
             Snackbar.Add("No se pudo actualizar el becario.", Severity.Error);
+            RevertItemChanges(modifiedViewModel.StudentId);
         }
+    }
 
-        _viewModels.Single(vm => vm.StudentId == modifiedViewModel.StudentId).LastUpdatedOnUtc = DateTime.Now;
+    private void RevertItemChanges(int studentId)
+    {
+        var index = _viewModels.FindIndex(vm => vm.StudentId == studentId);
+        if (index >= 0)
+        {
+            _viewModels[index] = _originalViewModel.DeepClone();
+        }
     }
 
     private string StudentFullName(StudentsListViewModel viewModel) =>

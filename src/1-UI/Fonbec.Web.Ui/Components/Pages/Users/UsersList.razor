@@ -50,7 +50,7 @@
                           Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
         </ToolBarContent>
         <Columns>
-            <PropertyColumn Property="@(vm => _isLastNameFirst ? vm.UserLastName : vm.UserFirstName)" Title="Nombre">
+            <PropertyColumn Property="@(vm => $"{vm.UserFirstName} {vm.UserLastName} {vm.UserNickName} {vm.UserLastName}")" Title="Nombre">
                 <CellTemplate>
 	                <AuditableUserDisplay UsersListViewModel="context.Item"
 	                                      IsLastNameFirst="_isLastNameFirst"

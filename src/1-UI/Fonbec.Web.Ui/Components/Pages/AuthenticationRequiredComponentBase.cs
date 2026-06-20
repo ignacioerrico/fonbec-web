@@ -34,7 +34,6 @@ public abstract class AuthenticationRequiredComponentBase : ComponentBase
     {
         if (AuthenticationState is null)
         {
-            Loading = false;
             Snackbar.Add("AuthenticationState is null.", Severity.Error);
             NavigationManager.NavigateTo(NavRoutes.Home);
             return;
@@ -44,7 +43,6 @@ public abstract class AuthenticationRequiredComponentBase : ComponentBase
 
         if (user.Identity is not { IsAuthenticated: true })
         {
-            Loading = false;
             Snackbar.Add("El usuario no está autenticado.", Severity.Error);
             NavigationManager.NavigateTo(NavRoutes.Home);
             return;

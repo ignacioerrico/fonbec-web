@@ -17,9 +17,10 @@ public class CreateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorLastName: "Smith",
             SponsorNickName: "JS",
             SponsorGender: Gender.Female,
-            SponsorPhoneNumber: "555-1234",
-            SponsorNotes: "Some notes",
             SponsorEmail: "jane@x.com",
+            SponsorPhoneNumber: "555-1234",
+            SponsorCompanyId: 1,
+            SponsorNotes: "Some notes",
             CreatedById: 99
         );
 
@@ -30,9 +31,10 @@ public class CreateSponsorInputModelMappingDefinitionsTests : MappingTestBase
         result.SponsorLastName.Should().Be("Smith");
         result.SponsorNickName.Should().Be("Js");
         result.SponsorGender.Should().Be(Gender.Female);
-        result.SponsorPhoneNumber.Should().Be("555-1234");
-        result.SponsorNotes.Should().Be("Some notes");
         result.SponsorEmail.Should().Be("jane@x.com");
+        result.SponsorPhoneNumber.Should().Be("555-1234");
+        result.SponsorCompanyId.Should().Be(1);
+        result.SponsorNotes.Should().Be("Some notes");
         result.CreatedById.Should().Be(99);
     }
 
@@ -45,9 +47,10 @@ public class CreateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorLastName: "Smith",
             SponsorNickName: "JS",
             SponsorGender: Gender.Female,
-            SponsorPhoneNumber: "555-1234",
-            SponsorNotes: "Some notes",
             SponsorEmail: "jane@x.com",
+            SponsorPhoneNumber: "555-1234",
+            SponsorCompanyId: 1,
+            SponsorNotes: "Some notes",
             CreatedById: 99
         );
 
@@ -66,9 +69,10 @@ public class CreateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorLastName: "Smith",
             SponsorNickName: "JS",
             SponsorGender: Gender.Female,
-            SponsorPhoneNumber: "555-1234",
-            SponsorNotes: "Some notes",
             SponsorEmail: "jane@x.com",
+            SponsorPhoneNumber: "555-1234",
+            SponsorCompanyId: 1,
+            SponsorNotes: "Some notes",
             CreatedById: 99
         );
 
@@ -86,9 +90,10 @@ public class CreateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorLastName: string.Empty,
             SponsorNickName: "JS",
             SponsorGender: Gender.Female,
-            SponsorPhoneNumber: "555-1234",
-            SponsorNotes: "Some notes",
             SponsorEmail: "jane@x.com",
+            SponsorPhoneNumber: "555-1234",
+            SponsorCompanyId: 1,
+            SponsorNotes: "Some notes",
             CreatedById: 99
         );
 
@@ -107,9 +112,10 @@ public class CreateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorLastName: "  sponSor laSt naMe   ",
             SponsorNickName: "JS",
             SponsorGender: Gender.Female,
-            SponsorPhoneNumber: "555-1234",
-            SponsorNotes: "Some notes",
             SponsorEmail: "jane@x.com",
+            SponsorPhoneNumber: "555-1234",
+            SponsorCompanyId: 1,
+            SponsorNotes: "Some notes",
             CreatedById: 99
         );
 
@@ -129,9 +135,10 @@ public class CreateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorLastName: "Smith",
             SponsorNickName: nickName,
             SponsorGender: Gender.Female,
-            SponsorPhoneNumber: "555-1234",
-            SponsorNotes: "Some notes",
             SponsorEmail: "jane@x.com",
+            SponsorPhoneNumber: "555-1234",
+            SponsorCompanyId: 1,
+            SponsorNotes: "Some notes",
             CreatedById: 99
         );
 
@@ -149,9 +156,10 @@ public class CreateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorLastName: "Smith",
             SponsorNickName: "  sponSor  niCKnaMe   ",
             SponsorGender: Gender.Female,
-            SponsorPhoneNumber: "555-1234",
-            SponsorNotes: "Some notes",
             SponsorEmail: "jane@x.com",
+            SponsorPhoneNumber: "555-1234",
+            SponsorCompanyId: 1,
+            SponsorNotes: "Some notes",
             CreatedById: 99
         );
 
@@ -171,9 +179,10 @@ public class CreateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorLastName: "Smith",
             SponsorNickName: "JS",
             SponsorGender: Gender.Female,
-            SponsorPhoneNumber: "555-1234",
-            SponsorNotes: "Some notes",
             SponsorEmail: email,
+            SponsorPhoneNumber: "555-1234",
+            SponsorCompanyId: 1,
+            SponsorNotes: "Some notes",
             CreatedById: 99
         );
 
@@ -192,9 +201,10 @@ public class CreateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorLastName: "Smith",
             SponsorNickName: "JS",
             SponsorGender: Gender.Female,
-            SponsorPhoneNumber: "555-1234",
-            SponsorNotes: "Some notes",
             SponsorEmail: "  jaNE@x.Com   ",
+            SponsorPhoneNumber: "555-1234",
+            SponsorCompanyId: 1,
+            SponsorNotes: "Some notes",
             CreatedById: 99
         );
 
@@ -214,9 +224,10 @@ public class CreateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorLastName: "Smith",
             SponsorNickName: "JS",
             SponsorGender: Gender.Female,
-            SponsorPhoneNumber: phone,
-            SponsorNotes: "Some notes",
             SponsorEmail: "jane@x.com",
+            SponsorPhoneNumber: phone,
+            SponsorCompanyId: 1,
+            SponsorNotes: "Some notes",
             CreatedById: 99
         );
 
@@ -234,9 +245,10 @@ public class CreateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorLastName: "Smith",
             SponsorNickName: "JS",
             SponsorGender: Gender.Female,
-            SponsorPhoneNumber: "  555-1234   ",
-            SponsorNotes: "Some notes",
             SponsorEmail: "jane@x.com",
+            SponsorPhoneNumber: "  555-1234   ",
+            SponsorCompanyId: 1,
+            SponsorNotes: "Some notes",
             CreatedById: 99
         );
 
@@ -256,9 +268,10 @@ public class CreateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorLastName: "Smith",
             SponsorNickName: "JS",
             SponsorGender: Gender.Female,
-            SponsorPhoneNumber: "555-1234",
-            SponsorNotes: notes,
             SponsorEmail: "jane@x.com",
+            SponsorPhoneNumber: "555-1234",
+            SponsorCompanyId: 1,
+            SponsorNotes: notes,
             CreatedById: 99
         );
 
@@ -276,9 +289,10 @@ public class CreateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorLastName: "Smith",
             SponsorNickName: "JS",
             SponsorGender: Gender.Female,
-            SponsorPhoneNumber: "555-1234",
-            SponsorNotes: "  Some noTEs   ",
             SponsorEmail: "jane@x.com",
+            SponsorPhoneNumber: "555-1234",
+            SponsorCompanyId: 1,
+            SponsorNotes: "  Some noTEs   ",
             CreatedById: 99
         );
 

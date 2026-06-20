@@ -45,9 +45,11 @@ public partial class UsersList : AuthenticationRequiredComponentBase
     private bool Filter(UsersListViewModel viewModel) =>
         string.IsNullOrWhiteSpace(_searchString)
         || $"{viewModel.UserFirstName} {viewModel.UserLastName}".ContainsIgnoringAccents(_searchString)
-        || $"{viewModel.UserNickName} {viewModel.UserLastName}".ContainsIgnoringAccents(_searchString)
-        || viewModel.UserEmail.ContainsIgnoringAccents(_searchString)
-        || viewModel.UserPhoneNumber.ContainsIgnoringAccents(_searchString);
+        || (!string.IsNullOrEmpty(viewModel.UserNickName)
+            && $"{viewModel.UserNickName} {viewModel.UserLastName}".ContainsIgnoringAccents(_searchString))
+        || viewModel.UserEmail.Contains(_searchString, StringComparison.OrdinalIgnoreCase)
+        || (!string.IsNullOrEmpty(viewModel.UserPhoneNumber)
+            && viewModel.UserPhoneNumber.ContainsIgnoringSpaces(_searchString));
 
     private void StartedEditingItem(UsersListViewModel originalViewModel) =>
         _originalViewModel = originalViewModel.DeepClone();
@@ -81,6 +83,16 @@ public partial class UsersList : AuthenticationRequiredComponentBase
         if (!userUpdatedSuccessfully)
         {
             Snackbar.Add("No se pudo actualizar el usuario.", Severity.Error);
+            RevertItemChanges(modifiedViewModel.UserId);
+        }
+    }
+
+    private void RevertItemChanges(int userId)
+    {
+        var index = _viewModel.FindIndex(vm => vm.UserId == userId);
+        if (index >= 0)
+        {
+            _viewModel[index] = _originalViewModel.DeepClone();
         }
     }
 

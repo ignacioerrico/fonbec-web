@@ -8,57 +8,57 @@
 
 @if (!_anyChapters)
 {
-	<MudAlert Severity="Severity.Error">No hay filiales. Para dar de alta usuarios se requiere <MudLink Href="@NavRoutes.ChapterCreate" Typo="Typo.body2">al menos una filial</MudLink>.</MudAlert>
+    <MudAlert Severity="Severity.Error">No hay filiales. Para dar de alta usuarios se requiere <MudLink Href="@NavRoutes.ChapterCreate" Typo="Typo.body2">al menos una filial</MudLink>.</MudAlert>
 }
 else if (!_anyFacilitators)
 {
-	<MudAlert Severity="Severity.Error">No hay mediadores. Para dar de alta becarios se requiere <MudLink Href="@NavRoutes.UserCreate" Typo="Typo.body2">al menos un mediador</MudLink>.</MudAlert>
+    <MudAlert Severity="Severity.Error">No hay mediadores. Para dar de alta becarios se requiere <MudLink Href="@NavRoutes.UserCreate" Typo="Typo.body2">al menos un mediador</MudLink>.</MudAlert>
 }
 
 <LoadingIndicator Loading="Loading" />
 
 <MudForm @bind-IsValid="@_formValidationSucceeded" Disabled="IsFormDisabled">
-	<ChapterSelector @bind-SelectedChapterId="_bindModel.ChapterId"
-						OnChaptersLoaded="OnChaptersLoaded" />
-	
-	<MudTextField T="string" Label="Nombre" @bind-Value="_bindModel.StudentFirstName" Immediate="true" AutoFocus="!IsFormDisabled"
-	              Required="true" RequiredError="Este es un campo obligatorio."
-	              MaxLength="MaxLength.FonbecWebUser.FirstName" />
+    <ChapterSelector @bind-SelectedChapterId="_bindModel.ChapterId"
+                     NumberOfChaptersLoaded="OnChaptersLoaded" />
 
-	<MudTextField T="string" Label="Apellido" @bind-Value="_bindModel.StudentLastName" Immediate="true"
-	              Required="true" RequiredError="Este es un campo obligatorio."
-	              MaxLength="MaxLength.FonbecWebUser.LastName" />
+    <MudTextField T="string" Label="Nombre" @bind-Value="_bindModel.StudentFirstName" Immediate="true" AutoFocus="!IsFormDisabled"
+                  Required="true" RequiredError="Este es un campo obligatorio."
+                  MaxLength="MaxLength.FonbecWebUser.FirstName" />
 
-	<MudTextField T="string" Label="Apodo" @bind-Value="_bindModel.StudentNickName" Immediate="true"
-	              MaxLength="MaxLength.FonbecWebUser.NickName" />
-				  
-	<GenderSelector @bind-SelectedGender="_bindModel.StudentGender" />
-	
-	<EducationLevelSelector @bind-SecondarySchoolStartYear="_bindModel.StudentSecondarySchoolStartYear"
-	                        @bind-UniversityStartYear="_bindModel.StudentUniversityStartYear" />
+    <MudTextField T="string" Label="Apellido" @bind-Value="_bindModel.StudentLastName" Immediate="true"
+                  Required="true" RequiredError="Este es un campo obligatorio."
+                  MaxLength="MaxLength.FonbecWebUser.LastName" />
 
-	<FacilitatorSelector @bind-SelectedFacilitatorId="_bindModel.FacilitatorId"
-							OnFacilitatorsLoaded="OnFacilitatorsLoaded" />
+    <MudTextField T="string" Label="Apodo" @bind-Value="_bindModel.StudentNickName" Immediate="true"
+                  MaxLength="MaxLength.FonbecWebUser.NickName" />
 
-	<MudTextField T="string" Label="Correo electrónico" @bind-Value="_bindModel.StudentEmail" Immediate="true"
-	              MaxLength="MaxLength.FonbecWebUser.Email" />
+    <GenderSelector @bind-SelectedGender="_bindModel.StudentGender" />
 
-	<MudTextField T="string" Label="Teléfono" @bind-Value="_bindModel.StudentPhoneNumber" Immediate="true"
-	              MaxLength="MaxLength.FonbecWebUser.PhoneNumber" />
+    <EducationLevelSelector @bind-SecondarySchoolStartYear="_bindModel.StudentSecondarySchoolStartYear"
+                            @bind-UniversityStartYear="_bindModel.StudentUniversityStartYear" />
 
-	<MudTextField T="string" Label="Información adicional" @bind-Value="_bindModel.StudentNotes" Immediate="true"
-	              MaxLength="MaxLength.Auditable.Notes" />
+    <FacilitatorSelector @bind-SelectedFacilitatorId="_bindModel.FacilitatorId"
+                         NumberOfFacilitatorsLoaded="NumberOfFacilitatorsLoaded" />
+
+    <MudTextField T="string" Label="Correo electrónico" @bind-Value="_bindModel.StudentEmail" Immediate="true"
+                  MaxLength="MaxLength.FonbecWebUser.Email" />
+
+    <MudTextField T="string" Label="Teléfono" @bind-Value="_bindModel.StudentPhoneNumber" Immediate="true"
+                  MaxLength="MaxLength.FonbecWebUser.PhoneNumber" />
+
+    <MudTextField T="string" Label="Información adicional" @bind-Value="_bindModel.StudentNotes" Immediate="true"
+                  MaxLength="MaxLength.Auditable.Notes" />
 </MudForm>
 
 <MudStack Row="true" Class="pt-4">
-	<MudButton OnClick="Save" Disabled="SaveButtonDisabled"
-	           Variant="Variant.Filled" Color="Color.Primary">
-		Crear
-	</MudButton>
-	<MudButton Href="@NavRoutes.Students"
-	           Variant="Variant.Filled" Color="Color.Default" Class="ms-4">
-		Cancelar
-	</MudButton>
+    <MudButton OnClick="Save" Disabled="SaveButtonDisabled"
+               Variant="Variant.Filled" Color="Color.Primary">
+        Crear
+    </MudButton>
+    <MudButton Href="@NavRoutes.Students"
+               Variant="Variant.Filled" Color="Color.Default" Class="ms-4">
+        Cancelar
+    </MudButton>
 </MudStack>
 
 <LoadingIndicator Loading="_saving" LoadingText="Guardando los datos" />
