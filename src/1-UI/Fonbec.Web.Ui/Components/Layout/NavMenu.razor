@@ -20,9 +20,15 @@
 		    </AuthorizeView>
 		    <AuthorizeView Policy="@nameof(StudentsList)">
 				<MudNavLink Href="@NavRoutes.Students" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Face">Becarios</MudNavLink>
-		    </AuthorizeView>
+            </AuthorizeView>
             <AuthorizeView Policy="@nameof(SponsorsList)">
                 <MudNavLink Href="@NavRoutes.Sponsors" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.SupervisorAccount">Padrinos</MudNavLink>
+            </AuthorizeView>
+            <AuthorizeView Policy="@nameof(SponsorStudentsList)" Context="ctx">
+                @if (int.TryParse(ctx.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var id))
+                {
+                    <MudNavLink Href="@NavRoutes.MediadorBecarios(id)" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Face">Mis becarios</MudNavLink>
+                }
             </AuthorizeView>
 		    <MudNavLink Href="Account/Manage" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Person">@outerContext.User.Identity?.Name</MudNavLink>
 		    <form action="Account/Logout" method="post">
