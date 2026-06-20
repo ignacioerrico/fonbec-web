@@ -107,6 +107,16 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
         else
         {
             Snackbar.Add("No se pudo actualizar el becario.", Severity.Error);
+            RevertItemChanges(modifiedViewModel.StudentId);
+        }
+    }
+
+    private void RevertItemChanges(int studentId)
+    {
+        var index = _viewModels.FindIndex(vm => vm.StudentId == studentId);
+        if (index >= 0)
+        {
+            _viewModels[index] = _originalViewModel.DeepClone();
         }
     }
 

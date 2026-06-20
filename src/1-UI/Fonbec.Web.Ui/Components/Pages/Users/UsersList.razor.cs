@@ -83,6 +83,16 @@ public partial class UsersList : AuthenticationRequiredComponentBase
         if (!userUpdatedSuccessfully)
         {
             Snackbar.Add("No se pudo actualizar el usuario.", Severity.Error);
+            RevertItemChanges(modifiedViewModel.UserId);
+        }
+    }
+
+    private void RevertItemChanges(int userId)
+    {
+        var index = _viewModel.FindIndex(vm => vm.UserId == userId);
+        if (index >= 0)
+        {
+            _viewModel[index] = _originalViewModel.DeepClone();
         }
     }
 

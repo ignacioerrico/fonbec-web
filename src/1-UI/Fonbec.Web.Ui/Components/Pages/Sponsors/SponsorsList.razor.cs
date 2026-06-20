@@ -102,6 +102,16 @@ public partial class SponsorsList : AuthenticationRequiredComponentBase
         else
         {
             Snackbar.Add("No se pudo actualizar el padrino.", Severity.Error);
+            RevertItemChanges(modifiedViewModel.SponsorId);
+        }
+    }
+
+    private void RevertItemChanges(int sponsorId)
+    {
+        var index = _viewModels.FindIndex(vm => vm.SponsorId == sponsorId);
+        if (index >= 0)
+        {
+            _viewModels[index] = _originalViewModel.DeepClone();
         }
     }
 }

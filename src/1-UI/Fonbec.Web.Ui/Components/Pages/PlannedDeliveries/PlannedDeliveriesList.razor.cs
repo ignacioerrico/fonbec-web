@@ -85,6 +85,7 @@ public partial class PlannedDeliveriesList : AuthenticationRequiredComponentBase
         if (_plannedDeliveryStartsOn is null)
         {
             Snackbar.Add("Se debe seleccionar una fecha.", Severity.Warning);
+            RevertItemChanges(modifiedViewModel.PlannedDeliveryId);
             return;
         }
 
@@ -113,9 +114,20 @@ public partial class PlannedDeliveriesList : AuthenticationRequiredComponentBase
         if (!result.AnyAffectedRows)
         {
             Snackbar.Add("No se pudo actualizar la planificación de envíos.", Severity.Error);
+            RevertItemChanges(modifiedViewModel.PlannedDeliveryId);
             return;
         }
 
         _viewModels.Single(vm => vm.PlannedDeliveryId == modifiedViewModel.PlannedDeliveryId).LastUpdatedOnUtc = DateTime.Now;
+    }
+
+    private void RevertItemChanges(int plannedDeliveryId)
+    {
+        var index = _viewModels.FindIndex(vm => vm.PlannedDeliveryId == plannedDeliveryId);
+        if (index >= 0)
+        {
+            _viewModels[index] = _originalViewModel.DeepClone();
+            _plannedDeliveryStartsOn = _originalViewModel.PlannedDeliveryStartsOn;
+        }
     }
 }
