@@ -10,7 +10,7 @@ public interface IStudentRepository
     Task<List<AllStudentsDataModel>> GetAllStudentsAsync(int? chapterId);
     Task<int> CreateStudentAsync(CreateStudentInputDataModel inputDataModel);
     Task<int> UpdateStudentAsync(UpdateStudentInputDataModel dataModel);
-    Task<List<SponsorStudentsDataModel>> GetStudentsBySponsorIdAsync(int sponsorId);
+    Task<List<FacilitatorStudentsDataModel>> GetStudentsByFacilitatorIdAsync(int facilitatorId);
 }
 
 public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : IStudentRepository
@@ -106,7 +106,7 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
         return await db.SaveChangesAsync();
     }
 
-    public async Task<List<SponsorStudentsDataModel>> GetStudentsBySponsorIdAsync(int sponsorId)
+    public async Task<List<FacilitatorStudentsDataModel>> GetStudentsByFacilitatorIdAsync(int facilitatorId)
     {
         await using var db = await dbContext.CreateDbContextAsync();
 
@@ -116,19 +116,12 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             .Include(s => s.LastUpdatedBy)
             .Include(s => s.DisabledBy)
             .Include(s => s.ReenabledBy)
-            .Where(s => s.FacilitatorId == sponsorId && s.IsActive)
-            .Select(s => new SponsorStudentsDataModel(s)
+            .Where(s => s.FacilitatorId == facilitatorId && s.IsActive && s.Sponsorships.Any(sp => sp.IsActive))
+            .Select(s => new FacilitatorStudentsDataModel(s)
             {
                 StudentId = s.Id,
                 StudentFirstName = s.FirstName,
                 StudentLastName = s.LastName,
-                StundentNickName = s.NickName,
-                StudentGender = s.Gender,
-                IsStudentActive = s.IsActive,
-                Notes = s.Notes,
-                StudentCurrentEducationLevel = s.CurrentEducationLevel,
-                StudentEmail = s.Email,
-                StudentPhoneNumber = s.PhoneNumber,
             })
             .OrderBy(s => s.StudentFirstName)
             .ThenBy(s => s.StudentLastName)

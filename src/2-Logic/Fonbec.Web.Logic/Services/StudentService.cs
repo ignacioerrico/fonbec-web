@@ -15,7 +15,7 @@ public interface IStudentService
     Task<List<SelectableModel<int>>> GetAllStudentsForSelectionAsync(int? chapterId);
     Task<CrudResult> CreateStudentAsync(CreateStudentInputModel inputModel);
     Task<CrudResult> UpdateStudentAsync(UpdateStudentInputModel inputModel);
-    Task<List<SponsorStudentsListViewModel>> GetStudentsBySponsorIdAsync(int sponsorId);
+    Task<List<FacilitatorStudentsListViewModel>> GetStudentsByFacilitatorIdAsync(int facilitatorId);
 }
 
 public class StudentService(IStudentRepository studentRepository) : IStudentService
@@ -47,10 +47,10 @@ public class StudentService(IStudentRepository studentRepository) : IStudentServ
         return new CrudResult(affectedRows);
     }
 
-    public async Task<List<SponsorStudentsListViewModel>> GetStudentsBySponsorIdAsync(int sponsorId)
+    public async Task<List<FacilitatorStudentsListViewModel>> GetStudentsByFacilitatorIdAsync(int facilitatorId)
     {
-        var studentsDataModel = await studentRepository.GetStudentsBySponsorIdAsync(sponsorId);
-        var studentsViewModel = studentsDataModel.Adapt<List<SponsorStudentsListViewModel>>();
+        var studentsDataModel = await studentRepository.GetStudentsByFacilitatorIdAsync(facilitatorId);
+        var studentsViewModel = studentsDataModel.Adapt<List<FacilitatorStudentsListViewModel>>();
         return studentsViewModel;
     }
 

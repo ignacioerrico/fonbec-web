@@ -49,7 +49,7 @@
                     Empresas
                 </MudNavLink>
             </AuthorizeView>
-            <AuthorizeView Policy="@nameof(SponsorStudentsList)" Context="ctx">
+            <AuthorizeView Policy="@nameof(FacilitatorStudentsList)" Context="ctx">
                 @if (int.TryParse(ctx.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var id))
                 {
                     <MudNavLink Href="@NavRoutes.MediadorBecarios(id)" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Face">Mis becarios</MudNavLink>
