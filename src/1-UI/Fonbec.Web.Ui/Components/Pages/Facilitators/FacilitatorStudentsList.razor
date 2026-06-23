@@ -1,10 +1,10 @@
-﻿@page "/mediadores/{SponsorId:int}"
+@attribute [Route(NavRoutes.FacilitatorStudents)]
 @attribute [Authorize(Policy = nameof(FacilitatorStudentsList))]
 @inherits AuthenticationRequiredComponentBase
 
-@using Fonbec.Web.Logic.Models.Students
+@using Fonbec.Web.Logic.Models.Facilitators
 
-<PageHeader Title="Becarios" />
+<PageHeader Title="Mis becarios" />
 
 <MudStack StretchItems="StretchItems.Middle" Row="true">
 	<MudSpacer />
@@ -40,6 +40,7 @@
 				<CellTemplate>
 					<AuditableItemDisplay Id="@context.Item.StudentId"
 										  ItemName="@StudentFullName(context.Item)"
+										  IsActive="true"
 										  AuditableViewModel="@context.Item" />
 				</CellTemplate>
 			</PropertyColumn>

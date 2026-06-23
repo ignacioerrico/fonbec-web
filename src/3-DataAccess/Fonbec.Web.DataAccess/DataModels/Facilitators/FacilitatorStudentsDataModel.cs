@@ -1,6 +1,6 @@
-﻿using Fonbec.Web.DataAccess.Entities.Abstract;
+using Fonbec.Web.DataAccess.Entities.Abstract;
 
-namespace Fonbec.Web.DataAccess.DataModels.Students;
+namespace Fonbec.Web.DataAccess.DataModels.Facilitators;
 
 public class FacilitatorStudentsDataModel(Auditable auditable) : AuditableDataModel(auditable)
 {
@@ -9,5 +9,6 @@ public class FacilitatorStudentsDataModel(Auditable auditable) : AuditableDataMo
     public string StudentFirstName { get; set; } = null!;
 
     public string StudentLastName { get; set; } = null!;
-}
 
+    public string? StudentNickName { get; set; }
+}

@@ -10,7 +10,6 @@ public interface IStudentRepository
     Task<List<AllStudentsDataModel>> GetAllStudentsAsync(int? chapterId);
     Task<int> CreateStudentAsync(CreateStudentInputDataModel inputDataModel);
     Task<int> UpdateStudentAsync(UpdateStudentInputDataModel dataModel);
-    Task<List<FacilitatorStudentsDataModel>> GetStudentsByFacilitatorIdAsync(int facilitatorId);
 }
 
 public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : IStudentRepository
@@ -105,29 +104,4 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
         db.Students.Update(studentDb);
         return await db.SaveChangesAsync();
     }
-
-    public async Task<List<FacilitatorStudentsDataModel>> GetStudentsByFacilitatorIdAsync(int facilitatorId)
-    {
-        await using var db = await dbContext.CreateDbContextAsync();
-
-        var students = await db.Students
-            .Include(s => s.Facilitator)
-            .Include(s => s.CreatedBy)
-            .Include(s => s.LastUpdatedBy)
-            .Include(s => s.DisabledBy)
-            .Include(s => s.ReenabledBy)
-            .Where(s => s.FacilitatorId == facilitatorId && s.IsActive && s.Sponsorships.Any(sp => sp.IsActive))
-            .Select(s => new FacilitatorStudentsDataModel(s)
-            {
-                StudentId = s.Id,
-                StudentFirstName = s.FirstName,
-                StudentLastName = s.LastName,
-            })
-            .OrderBy(s => s.StudentFirstName)
-            .ThenBy(s => s.StudentLastName)
-            .ToListAsync();
-
-        return students;
-    }
-
 }

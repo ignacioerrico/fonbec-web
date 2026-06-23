@@ -6,6 +6,7 @@
 @using Fonbec.Web.Ui.Components.Pages.Companies
 @using Fonbec.Web.Ui.Components.Pages.PlannedDeliveries
 @using Fonbec.Web.Ui.Components.Pages.Sponsors
+@using Fonbec.Web.Ui.Components.Pages.Facilitators
 @using Fonbec.Web.Ui.Components.Pages.Students
 @using Fonbec.Web.Ui.Components.Pages.Users
 
@@ -49,13 +50,14 @@
                     Empresas
                 </MudNavLink>
             </AuthorizeView>
-            <AuthorizeView Policy="@nameof(FacilitatorStudentsList)" Context="ctx">
-                @if (int.TryParse(ctx.User.FindFirst(System.Security.Claims.ClaimTypes.NameIdentifier)?.Value, out var id))
-                {
-                    <MudNavLink Href="@NavRoutes.MediadorBecarios(id)" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Face">Mis becarios</MudNavLink>
-                }
+            <AuthorizeView Policy="@nameof(FacilitatorStudentsList)">
+                <MudNavLink Href="@NavRoutes.FacilitatorStudents" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Face">
+                    Mis becarios
+                </MudNavLink>
             </AuthorizeView>
-		    <MudNavLink Href="Account/Manage" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Person">@outerContext.User.Identity?.Name</MudNavLink>
+		    <MudNavLink Href="Account/Manage" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Person">
+                @outerContext.User.Identity?.Name
+            </MudNavLink>
 		    <form action="Account/Logout" method="post">
 			    <AntiforgeryToken />
 			    <input type="hidden" name="ReturnUrl" value="@_currentUrl" />

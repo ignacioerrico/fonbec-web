@@ -1,5 +1,4 @@
-﻿using Fonbec.Web.DataAccess.DataModels.Students;
-using Fonbec.Web.DataAccess.DataModels.Students.Input;
+﻿using Fonbec.Web.DataAccess.DataModels.Students.Input;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Models;
 using Fonbec.Web.Logic.Models.Results;
@@ -15,7 +14,6 @@ public interface IStudentService
     Task<List<SelectableModel<int>>> GetAllStudentsForSelectionAsync(int? chapterId);
     Task<CrudResult> CreateStudentAsync(CreateStudentInputModel inputModel);
     Task<CrudResult> UpdateStudentAsync(UpdateStudentInputModel inputModel);
-    Task<List<FacilitatorStudentsListViewModel>> GetStudentsByFacilitatorIdAsync(int facilitatorId);
 }
 
 public class StudentService(IStudentRepository studentRepository) : IStudentService
@@ -46,12 +44,4 @@ public class StudentService(IStudentRepository studentRepository) : IStudentServ
         var affectedRows = await studentRepository.UpdateStudentAsync(updateStudentInputDataModel);
         return new CrudResult(affectedRows);
     }
-
-    public async Task<List<FacilitatorStudentsListViewModel>> GetStudentsByFacilitatorIdAsync(int facilitatorId)
-    {
-        var studentsDataModel = await studentRepository.GetStudentsByFacilitatorIdAsync(facilitatorId);
-        var studentsViewModel = studentsDataModel.Adapt<List<FacilitatorStudentsListViewModel>>();
-        return studentsViewModel;
-    }
-
 }
