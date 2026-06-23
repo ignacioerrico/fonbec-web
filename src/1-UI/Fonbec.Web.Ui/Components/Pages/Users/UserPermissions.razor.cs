@@ -42,7 +42,7 @@ public partial class UserPermissions : AuthenticationRequiredComponentBase
         {
             var checkBoxItem = new UserPermissionsBindModel
             {
-                IsChecked = UserService.HasPermission(fonbecAuthClaim, page.Codename),
+                IsChecked = UserService.HasPermission(fonbecAuthClaim, _userData.UserRole, page.Codename),
                 Page = page.Codename,
                 Description = page.Description,
             };
@@ -67,10 +67,10 @@ public partial class UserPermissions : AuthenticationRequiredComponentBase
 
     private async Task Save()
     {
-        var pages = CheckBoxItems.Where(ti => ti.IsChecked)
+        var deniedPages = CheckBoxItems.Where(cbi => !cbi.IsChecked)
             .Select(cbi => cbi.Page);
 
-        await UserService.SetFonbecAuthClaim(UserId, pages);
+        await UserService.SetFonbecAuthClaim(UserId, deniedPages);
 
         NavigationManager.NavigateTo(NavRoutes.Users);
     }
