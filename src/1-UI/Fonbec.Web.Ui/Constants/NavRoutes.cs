@@ -26,6 +26,8 @@ public static class NavRoutes
 
     public const string SponsorCreate = $"{Sponsors}/alta";
 
+    public const string FacilitatorStudents = "/mediadores/mis-becarios";
+
     public static string Sponsorships(int studentId) => $"/becarios/{studentId}/padrinos";
 
     public static string SponsorshipCreate(int studentId) => $"{Sponsorships(studentId)}/alta";
