@@ -1,5 +1,6 @@
 ﻿using Fonbec.Web.Logic.Services;
 using Microsoft.AspNetCore.Authorization;
+using System.Security.Claims;
 
 namespace Fonbec.Web.Ui.Authorization;
 
@@ -14,14 +15,14 @@ internal class FonbecPermissionHandler(IUserService userService) : Authorization
 {
     protected override Task HandleRequirementAsync(AuthorizationHandlerContext context, FonbecPermissionRequirement requirement)
     {
-        var fonbecAuthValue = userService.GetFonbecAuthClaim(context.User);
-
-        if (fonbecAuthValue is null)
+        var userRole = context.User.FindFirstValue(ClaimTypes.Role);
+        if (userRole is null)
         {
             return Task.CompletedTask;
         }
 
-        var hasPermission = userService.HasPermission(fonbecAuthValue, requirement.PageName);
+        var denyListClaim = userService.GetFonbecAuthClaim(context.User);
+        var hasPermission = userService.HasPermission(denyListClaim, userRole, requirement.PageName);
 
         if (hasPermission)
         {

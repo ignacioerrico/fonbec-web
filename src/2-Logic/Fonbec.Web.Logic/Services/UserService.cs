@@ -29,9 +29,9 @@ public interface IUserService
     string? GetFonbecAuthClaim(ClaimsPrincipal principal);
     Task<string> GetFonbecAuthClaim(int userId);
     Task<string> GetUserClaim(int userId, string claimType);
-    Task SetFonbecAuthClaim(int userId, IEnumerable<string> pages);
+    Task SetFonbecAuthClaim(int userId, IEnumerable<string> deniedPages);
     Task SetUserClaim(int userId, string claimType, string claimValue);
-    bool HasPermission(string fonbecAuthValue, string page);
+    bool HasPermission(string? fonbecAuthClaimValue, string userRole, string page);
 }
 
 public class UserService(
@@ -98,11 +98,6 @@ public class UserService(
             .AdaptToType<CreateUserInputDataModel>();
 
         var (userId, errors) = await userRepository.CreateUserAsync(createUserInputDataModel);
-
-        var codenames = allPages.Where(p => p.Roles.Contains(model.UserRole))
-            .Select(p => p.Codename);
-
-        await SetFonbecAuthClaim(userId, codenames);
 
         if (userId > 0 && errors.Count == 0)
         {
@@ -172,10 +167,16 @@ public class UserService(
         return userClaim ?? string.Empty;
     }
 
-    public async Task SetFonbecAuthClaim(int userId, IEnumerable<string> codenames)
+    public async Task SetFonbecAuthClaim(int userId, IEnumerable<string> deniedCodenames)
     {
-        var orderedCodenames = codenames.OrderBy(cn => cn);
-        var claimValue = string.Join(",", orderedCodenames);
+        var orderedDenials = deniedCodenames.OrderBy(cn => cn).ToList();
+        if (orderedDenials.Count == 0)
+        {
+            await userRepository.RemoveUserClaim(userId.Adapt<string>(), FonbecAuth.ClaimType);
+            return;
+        }
+
+        var claimValue = string.Join(",", orderedDenials);
         await SetUserClaim(userId, FonbecAuth.ClaimType, claimValue);
     }
 
@@ -186,14 +187,32 @@ public class UserService(
     }
 
     /// <summary>
-    /// All permissions are stored in a single claim, "FonbecAuth".
-    /// It contains a comma-separated list of page names the user has access to.
+    /// Page permissions are stored in a single claim, "FonbecAuth".
+    /// It contains a comma-separated list of page codenames the user is denied access to.
+    /// Users have access by default to all pages allowed for their role.
     /// </summary>
-    /// <param name="fonbecAuthValue">The value of the FonbecAuth claim</param>
-    /// <param name="page">The page to check access to</param>
-    /// <returns>True if the page is contained in the claim; otherwise, false</returns>
-    public bool HasPermission(string fonbecAuthValue, string page)
-        => fonbecAuthValue.Split(',')
+    public bool HasPermission(string? fonbecAuthClaimValue, string userRole, string page)
+    {
+        var pageInfo = allPages.FirstOrDefault(p => p.Codename == page);
+        if (pageInfo is null || !pageInfo.Roles.Contains(userRole))
+        {
+            return false;
+        }
+
+        var deniedPages = ParseDeniedPages(fonbecAuthClaimValue);
+        return !deniedPages.Contains(page);
+    }
+
+    private static HashSet<string> ParseDeniedPages(string? claimValue)
+    {
+        if (string.IsNullOrWhiteSpace(claimValue))
+        {
+            return [];
+        }
+
+        return claimValue.Split(',')
             .Select(p => p.Trim())
-            .Contains(page);
+            .Where(p => p.Length > 0)
+            .ToHashSet();
+    }
 }

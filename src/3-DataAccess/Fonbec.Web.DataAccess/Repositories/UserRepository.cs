@@ -25,6 +25,7 @@ public interface IUserRepository
     Task<IdentityResult> ResetPasswordAsync(ResetPasswordInputDataModel inputDataModel);
     Task<string?> GetUserClaim(string userId, string claimType);
     Task SetUserClaim(string userId, string claimType, string claimValue);
+    Task RemoveUserClaim(string userId, string claimType);
 }
 
 public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<FonbecWebUser> userStore) : IUserRepository
@@ -383,6 +384,24 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
         else
         {
             await userManager.ReplaceClaimAsync(fonbecUser, claim, new Claim(claimType, claimValue));
+        }
+    }
+
+    public async Task RemoveUserClaim(string userId, string claimType)
+    {
+        var fonbecUser = await userManager.FindByIdAsync(userId);
+
+        if (fonbecUser is null)
+        {
+            return;
+        }
+
+        var claims = await userManager.GetClaimsAsync(fonbecUser);
+        var claim = claims.FirstOrDefault(c => c.Type == claimType);
+
+        if (claim is not null)
+        {
+            await userManager.RemoveClaimAsync(fonbecUser, claim);
         }
     }
 }
