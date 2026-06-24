@@ -2,6 +2,8 @@
 
 public class GetUserOutputDataModel
 {
+    public int? ChapterId { get; set; }
+
     public string UserFullName { get; init; } = null!;
 
     public string? UserNickName { get; init; }

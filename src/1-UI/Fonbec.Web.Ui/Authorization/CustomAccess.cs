@@ -1,5 +1,6 @@
 ﻿using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.Logic.Authorization;
+using Fonbec.Web.Logic.Constants;
 
 namespace Fonbec.Web.Ui.Authorization;
 
@@ -11,9 +12,11 @@ namespace Fonbec.Web.Ui.Authorization;
 public static class CustomAccess
 {
     public const string ResetPassword = "ResetPassword";
+    public const string DigitalImprovement = DocumentPermission.DigitalImprovement;
 
     public static readonly List<PageAccessInfo> List =
     [
         new(ResetPassword, "Restablecer contraseña de usuario", [FonbecRole.Admin, FonbecRole.Manager]),
+        new(DigitalImprovement, "Mejora digital de imágenes", [FonbecRole.Reviewer, FonbecRole.Manager]),
     ];
 }

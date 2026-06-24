@@ -70,6 +70,7 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             CompanyId = dataModel.SponsorCompanyId,
             Notes = dataModel.SponsorNotes,
             CreatedById = dataModel.CreatedById,
+            PublicAccessToken = Guid.NewGuid(),
         };
 
         db.Sponsors.Add(sponsor);

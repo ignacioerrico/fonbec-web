@@ -150,6 +150,7 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
 
         var outputDataModel = new GetUserOutputDataModel
         {
+            ChapterId = fonbecUserDb.ChapterId,
             UserFullName = fonbecUserDb.FullName(),
             UserNickName = fonbecUserDb.NickName,
         };

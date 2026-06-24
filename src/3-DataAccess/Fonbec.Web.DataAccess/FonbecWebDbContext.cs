@@ -27,6 +27,15 @@ public sealed class FonbecWebDbContext : IdentityDbContext<FonbecWebUser, Fonbec
     internal DbSet<Company> Companies => Set<Company>();
     internal DbSet<PointOfContact> PointsOfContact => Set<PointOfContact>();
 
+    internal DbSet<BlobPath> BlobPaths => Set<BlobPath>();
+    internal DbSet<Document> Documents => Set<Document>();
+    internal DbSet<DocumentQueueItem> DocumentQueueItems => Set<DocumentQueueItem>();
+    internal DbSet<DocumentShare> DocumentShares => Set<DocumentShare>();
+    internal DbSet<RejectedReason> RejectedReasons => Set<RejectedReason>();
+    internal DbSet<Assessment> Assessments => Set<Assessment>();
+    internal DbSet<LetterReview> LetterReviews => Set<LetterReview>();
+    internal DbSet<ReportCardReview> ReportCardReviews => Set<ReportCardReview>();
+
     protected override void OnModelCreating(ModelBuilder builder)
     {
         // The keys of Identity tables are mapped in the `OnModelCreating` method of `IdentityDbContext`.
