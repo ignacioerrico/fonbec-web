@@ -13,7 +13,9 @@
 <MudLayout>
     <MudAppBar Elevation="1">
         <MudStaticNavDrawerToggle DrawerId="nav-drawer" Icon="@Icons.Material.Filled.Menu" Color="Color.Inherit" Edge="Edge.Start" />
-        <MudText Typo="Typo.h5" Class="ml-3">FONBEC Web</MudText>
+        <span class="fonbec-brand fonbec-brand--app-bar ml-3">
+            FONBEC <span class="fonbec-brand-accent">Web</span>
+        </span>
         <MudSpacer />
         <AuthorizeView>
             @{

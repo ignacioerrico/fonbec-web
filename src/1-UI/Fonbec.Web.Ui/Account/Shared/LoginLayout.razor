@@ -1,0 +1,19 @@
+@inherits LayoutComponentBase
+
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<div class="auth-layout">
+    <main class="auth-layout__main">
+        <div class="auth-layout__panel">
+            <div class="fonbec-brand fonbec-brand--hero" aria-hidden="true">
+                FONBEC <span class="fonbec-brand-accent">Web</span>
+            </div>
+            <MudPaper Class="auth-layout__card pa-6 pa-sm-8" Elevation="3">
+                @Body
+            </MudPaper>
+        </div>
+    </main>
+</div>

@@ -3,37 +3,41 @@
 @using Microsoft.AspNetCore.Identity
 
 @inject SignInManager<FonbecWebUser> SignInManager
-@inject IdentityRedirectManager RedirectManager
 
-@if (_externalLogins.Length == 0)
+@if (_externalLogins.Length > 0)
 {
-    <MudAlert Variant="Variant.Text" Severity="Severity.Warning">There are no external authentication services configured.</MudAlert>
-    <MudText Typo="Typo.body1" Class="pt-4">
-        See <MudLink Target="_blank" Href="https://go.microsoft.com/fwlink/?LinkID=532715">this article</MudLink>
-        about setting up this ASP.NET application to support logging in via external services
-    </MudText>
-}
-else
-{
-    <form class="form-horizontal" action="Account/PerformExternalLogin" method="post">
-        <div>
+    <div class="@Class">
+        <MudDivider Class="mb-4" />
+        <MudText Typo="Typo.body2" Align="Align.Center" Class="mb-4 mud-text-secondary">
+            O iniciá sesión con otro servicio
+        </MudText>
+
+        <form action="Account/PerformExternalLogin" method="post">
             <AntiforgeryToken />
             <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
-            <p>
+            <MudStack Spacing="2">
                 @foreach (var provider in _externalLogins)
                 {
-                    <button type="submit" class="btn btn-primary" name="provider" value="@provider.Name" title="Log in using your @provider.DisplayName account">@provider.DisplayName</button>
+                    <button type="submit"
+                            class="mud-button-root mud-button mud-button-outlined mud-button-outlined-primary mud-ripple mud-width-full"
+                            name="provider"
+                            value="@provider.Name">
+                        @provider.DisplayName
+                    </button>
                 }
-            </p>
-        </div>
-    </form>
+            </MudStack>
+        </form>
+    </div>
 }
 
 @code {
     private AuthenticationScheme[] _externalLogins = [];
 
-    [SupplyParameterFromQuery]
-    private string? ReturnUrl { get; set; }
+    [Parameter]
+    public string? ReturnUrl { get; set; }
+
+    [Parameter]
+    public string? Class { get; set; }
 
     protected override async Task OnInitializedAsync()
     {

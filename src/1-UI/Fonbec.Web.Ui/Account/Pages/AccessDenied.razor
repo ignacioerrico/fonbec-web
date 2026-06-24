@@ -1,5 +1,12 @@
 ﻿@page "/Account/AccessDenied"
 
-<PageTitle>Access denied</PageTitle>
+<PageTitle>Acceso denegado</PageTitle>
 
-<MudAlert Severity="Severity.Error">You do not have access to this resource.</MudAlert>
+<MudText Typo="Typo.h4" Align="Align.Center" GutterBottom="true">Acceso denegado</MudText>
+<MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mt-4">
+    No tenés permiso para acceder a este recurso.
+</MudAlert>
+
+<div class="auth-layout__links mt-6">
+    <MudLink Href="">Ir al inicio</MudLink>
+</div>
