@@ -25,7 +25,7 @@
             <MudGrid>
                 <MudItem md="12">
                     <MudStaticTextField For="@(() => Input.Email)" @bind-Value="Input.Email"
-                                        Label="Email" Placeholder="name@example.com"
+                                        Label="Email" Placeholder="name@example.com" InputId="login-email"
                                         UserAttributes="@(new() { { "autocomplete", "username" }, { "aria-required", "true" } })" />
                 </MudItem>
                 <MudItem md="12">
@@ -56,6 +56,20 @@
         <ExternalLoginPicker />
     </MudItem>
 </MudGrid>
+
+<script>
+    (function () {
+        function focusLoginEmail() {
+            document.getElementById('login-email')?.focus();
+        }
+
+        if (document.readyState === 'loading') {
+            document.addEventListener('DOMContentLoaded', focusLoginEmail);
+        } else {
+            focusLoginEmail();
+        }
+    })();
+</script>
 
 @code {
     private string? _errorMessage;

@@ -1,8 +1,4 @@
-﻿@implements IDisposable
-
-@inject NavigationManager NavigationManager
-
-@using Fonbec.Web.Ui.Components.Pages.Chapters
+﻿@using Fonbec.Web.Ui.Components.Pages.Chapters
 @using Fonbec.Web.Ui.Components.Pages.Companies
 @using Fonbec.Web.Ui.Components.Pages.PlannedDeliveries
 @using Fonbec.Web.Ui.Components.Pages.Sponsors
@@ -60,7 +56,7 @@
             </MudNavLink>
 		    <form action="Account/Logout" method="post">
 			    <AntiforgeryToken />
-			    <input type="hidden" name="ReturnUrl" value="@_currentUrl" />
+			    <input type="hidden" name="ReturnUrl" value="Account/Login" />
 			    <button type="submit" class="mud-nav-link mud-ripple">
 				    <MudIcon Icon="@Icons.Material.Filled.Logout" Color="Color.Info" Class="mr-3"></MudIcon> Logout
 			    </button>
@@ -73,24 +69,3 @@
         </NotAuthorized>
     </AuthorizeView>
 </MudNavMenu>
-
-@code {
-    private string? _currentUrl;
-
-    protected override void OnInitialized()
-    {
-        _currentUrl = NavigationManager.ToBaseRelativePath(NavigationManager.Uri);
-        NavigationManager.LocationChanged += OnLocationChanged;
-    }
-
-    private void OnLocationChanged(object? sender, LocationChangedEventArgs e)
-    {
-        _currentUrl = NavigationManager.ToBaseRelativePath(e.Location);
-        StateHasChanged();
-    }
-
-    public void Dispose()
-    {
-        NavigationManager.LocationChanged -= OnLocationChanged;
-    }
-}
