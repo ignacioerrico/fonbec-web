@@ -8,41 +8,39 @@
 @inject UserManager<FonbecWebUser> UserManager
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<LoginWith2fa> Logger
+@inject NavigationManager NavigationManager
 
-<PageTitle>Two-factor authentication</PageTitle>
+<PageTitle>Autenticación en dos pasos</PageTitle>
 
-<h1>Two-factor authentication</h1>
-<MudDivider />
+<MudText Typo="Typo.h4" Align="Align.Center" GutterBottom="true">Autenticación en dos pasos</MudText>
+<MudText Typo="Typo.body2" Align="Align.Center" Class="mb-6 mud-text-secondary">
+    Tu cuenta está protegida con una app de autenticación. Ingresá el código de verificación.
+</MudText>
+
 <StatusMessage Message="@_message" />
-<p>Your login is protected with an authenticator app. Enter your authenticator code below.</p>
-<div class="row">
-    <div class="col-md-4">
-        <EditForm Model="Input" FormName="login-with-2fa" OnValidSubmit="OnValidSubmitAsync" method="post">
-            <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
-            <input type="hidden" name="RememberMe" value="@RememberMe" />
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.TwoFactorCode" id="Input.TwoFactorCode" class="form-control" autocomplete="off" />
-                <label for="Input.TwoFactorCode" class="form-label">Authenticator code</label>
-                <ValidationMessage For="() => Input.TwoFactorCode" class="text-danger" />
-            </div>
-            <div class="checkbox mb-3">
-                <label for="remember-machine" class="form-label">
-                    <InputCheckbox @bind-Value="Input.RememberMachine" />
-                    Remember this machine
-                </label>
-            </div>
-            <div>
-                <button type="submit" class="w-100 btn btn-lg btn-primary">Log in</button>
-            </div>
-        </EditForm>
-    </div>
+
+<EditForm Model="Input" FormName="login-with-2fa" OnValidSubmit="OnValidSubmitAsync" method="post">
+    <input type="hidden" name="ReturnUrl" value="@ReturnUrl" />
+    <input type="hidden" name="RememberMe" value="@RememberMe" />
+    <DataAnnotationsValidator />
+
+    <MudStack Spacing="3">
+        <MudStaticTextField For="@(() => Input.TwoFactorCode)" @bind-Value="Input.TwoFactorCode"
+                            Label="Código de autenticación" InputId="two-factor-code"
+                            UserAttributes="@(new() { { "autocomplete", "one-time-code" }, { "aria-required", "true" } })" />
+        <MudStaticCheckBox For="@(() => Input.RememberMachine)" @bind-Value="Input.RememberMachine">
+            Recordar este dispositivo
+        </MudStaticCheckBox>
+        <MudStaticButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" FormAction="FormAction.Submit">
+            Iniciar sesión
+        </MudStaticButton>
+    </MudStack>
+</EditForm>
+
+<div class="auth-layout__links mt-6">
+    <MudLink Href="@RecoveryCodeUrl">Iniciar sesión con un código de recuperación</MudLink>
+    <MudLink Href="Account/Login">Volver al inicio de sesión</MudLink>
 </div>
-<p>
-    Don't have access to your authenticator device? You can
-    <a class="mud-link mud-primary-text mud-link-underline-hover" href="Account/LoginWithRecoveryCode?ReturnUrl=@ReturnUrl">log in with a recovery code</a>.
-</p>
 
 @code {
     private string? _message;
@@ -57,9 +55,11 @@
     [SupplyParameterFromQuery]
     private bool RememberMe { get; set; }
 
+    private string RecoveryCodeUrl =>
+        NavigationManager.GetUriWithQueryParameters("Account/LoginWithRecoveryCode", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl });
+
     protected override async Task OnInitializedAsync()
     {
-        // Ensure the user has gone through the username & password screen first
         _user = await SignInManager.GetTwoFactorAuthenticationUserAsync() ??
             throw new InvalidOperationException("Unable to load two-factor authentication user.");
     }
@@ -83,19 +83,19 @@
         else
         {
             Logger.LogWarning("Invalid authenticator code entered for user with ID '{UserId}'.", userId);
-            _message = "Error: Invalid authenticator code.";
+            _message = "Error: Código de autenticación inválido.";
         }
     }
 
     private sealed class InputModel
     {
         [Required]
-        [StringLength(7, ErrorMessage = "The {0} must be at least {2} and at max {1} characters long.", MinimumLength = 6)]
+        [StringLength(7, ErrorMessage = "El {0} debe tener entre {2} y {1} caracteres.", MinimumLength = 6)]
         [DataType(DataType.Text)]
-        [Display(Name = "Authenticator code")]
+        [Display(Name = "Código de autenticación")]
         public string? TwoFactorCode { get; set; }
 
-        [Display(Name = "Remember this machine")]
+        [Display(Name = "Recordar este dispositivo")]
         public bool RememberMachine { get; set; }
     }
 }

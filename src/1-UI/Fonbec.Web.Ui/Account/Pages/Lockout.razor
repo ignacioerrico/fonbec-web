@@ -1,8 +1,12 @@
 ﻿@page "/Account/Lockout"
 
-<PageTitle>Locked out</PageTitle>
+<PageTitle>Cuenta bloqueada</PageTitle>
 
-<header>
-    <h1 class="text-danger">Locked out</h1>
-    <p class="text-danger" role="alert">This account has been locked out, please try again later.</p>
-</header>
+<MudText Typo="Typo.h4" Align="Align.Center" GutterBottom="true">Cuenta bloqueada</MudText>
+<MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mt-4">
+    Esta cuenta fue bloqueada por demasiados intentos fallidos. Intentá de nuevo más tarde.
+</MudAlert>
+
+<div class="auth-layout__links mt-6">
+    <MudLink Href="Account/Login">Volver al inicio de sesión</MudLink>
+</div>
