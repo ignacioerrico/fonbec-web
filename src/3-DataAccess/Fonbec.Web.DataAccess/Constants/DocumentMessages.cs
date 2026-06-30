@@ -15,6 +15,10 @@ public static class DocumentMessages
 
     public const string ReportCardCannotUseText = "Los boletines no pueden usar contenido de texto.";
 
+    public const string DescriptionRequired = "Debe indicar una descripción del documento.";
+
+    public const string ReportCardPeriodRequired = "Debe indicar el período (mes/año) del boletín.";
+
     public const string NotAuthorizedDigitalImprovement = "No está autorizado para realizar mejora digital.";
 
     public const string NotAuthorizedToReview = "No está autorizado para revisar documentos.";

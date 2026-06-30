@@ -79,6 +79,10 @@ internal sealed class DocumentTestFixture
     {
         await using var db = await Factory.CreateDbContextAsync();
 
+        // Applies HasData seed data (rejected reasons, global document description options)
+        // for the in-memory provider, which does not seed automatically.
+        await db.Database.EnsureCreatedAsync();
+
         ChapterId = 1;
         UploaderId = 1;
         OtherUploaderId = 4;

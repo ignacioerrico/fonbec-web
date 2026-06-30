@@ -47,5 +47,7 @@ public class DocumentMappingDefinitions : IRegister
         config.NewConfig<ReviewProgressDataModel, ReviewProgressViewModel>();
 
         config.NewConfig<LetterPlanProgressDataModel, LetterPlanProgressViewModel>();
+
+        config.NewConfig<DocumentDescriptionOptionDataModel, DocumentDescriptionOptionViewModel>();
     }
 }

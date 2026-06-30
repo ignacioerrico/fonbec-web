@@ -91,6 +91,11 @@ internal class DocumentConfiguration : IEntityTypeConfiguration<Document>
             t.HasCheckConstraint(
                 "CK_Document_ImprovementNotApplicable",
                 "[DigitalImprovementStatus] <> 0 OR [ImprovedBlobPathId] IS NULL");
+
+            // Report cards and other documents require a description; letters never have one.
+            t.HasCheckConstraint(
+                "CK_Document_DescriptionRequired",
+                $"[{nameof(Document.DocumentType)}] = {(byte)DocumentType.Letter} OR [Description] IS NOT NULL");
         });
     }
 }
@@ -121,11 +126,20 @@ internal class ReportCardConfiguration : IEntityTypeConfiguration<ReportCard>
 {
     public void Configure(EntityTypeBuilder<ReportCard> builder)
     {
+        // Shared with OtherDocument.Description on a single nullable TPH column.
+        builder.Property(r => r.Description)
+            .HasColumnName(nameof(ReportCard.Description))
+            .HasMaxLength(Constants.MaxLength.Document.Description);
+
         builder.ToTable(t =>
         {
             t.HasCheckConstraint(
                 "CK_ReportCard_SponsorNull",
                 $"[{nameof(Document.DocumentType)}] <> {(byte)DocumentType.ReportCard} OR [{nameof(Document.SponsorId)}] IS NULL");
+
+            t.HasCheckConstraint(
+                "CK_ReportCard_PeriodRequired",
+                $"[{nameof(Document.DocumentType)}] <> {(byte)DocumentType.ReportCard} OR [{nameof(ReportCard.Period)}] IS NOT NULL");
         });
     }
 }
@@ -134,6 +148,11 @@ internal class OtherDocumentConfiguration : IEntityTypeConfiguration<OtherDocume
 {
     public void Configure(EntityTypeBuilder<OtherDocument> builder)
     {
+        // Shared with ReportCard.Description on a single nullable TPH column.
+        builder.Property(o => o.Description)
+            .HasColumnName(nameof(OtherDocument.Description))
+            .HasMaxLength(Constants.MaxLength.Document.Description);
+
         builder.ToTable(t =>
         {
             t.HasCheckConstraint(

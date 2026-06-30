@@ -25,9 +25,16 @@ public class CreateLetterInputDataModel : CreateDocumentBaseInputDataModel
     public int SponsorId { get; set; }
 }
 
-public class CreateReportCardInputDataModel : CreateDocumentBaseInputDataModel;
+public class CreateReportCardInputDataModel : CreateDocumentBaseInputDataModel
+{
+    public DateOnly Period { get; set; }
+    public string Description { get; set; } = string.Empty;
+}
 
-public class CreateOtherDocumentInputDataModel : CreateDocumentBaseInputDataModel;
+public class CreateOtherDocumentInputDataModel : CreateDocumentBaseInputDataModel
+{
+    public string Description { get; set; } = string.Empty;
+}
 
 public class SubmitDigitalImprovementInputDataModel
 {

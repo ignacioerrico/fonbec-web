@@ -34,6 +34,7 @@ public interface IDocumentRepository
     Task MarkShareNotifiedAsync(long documentShareId, DateTime notifiedOn);
     Task<Document?> GetDocumentByIdAsync(long documentId);
     Task<List<int>> GetActiveSponsorIdsForStudentAsync(int studentId);
+    Task<List<DocumentDescriptionOptionDataModel>> GetDescriptionOptionsAsync(int chapterId, DocumentType documentType);
 }
 
 public class DocumentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : IDocumentRepository
@@ -120,6 +121,8 @@ public class DocumentRepository(IDbContextFactory<FonbecWebDbContext> dbContext)
         CreateDocumentAsync(input, (blobPathId, requiresImprovement) => new ReportCard
         {
             StudentId = input.StudentId,
+            Period = input.Period,
+            Description = input.Description,
             FileKind = input.FileKind,
             BlobPathId = blobPathId,
             OriginalBlobPathId = input.FileKind == FileKind.Blob ? blobPathId : null,
@@ -140,6 +143,7 @@ public class DocumentRepository(IDbContextFactory<FonbecWebDbContext> dbContext)
         CreateDocumentAsync(input, (blobPathId, requiresImprovement) => new OtherDocument
         {
             StudentId = input.StudentId,
+            Description = input.Description,
             FileKind = input.FileKind,
             BlobPathId = blobPathId,
             OriginalBlobPathId = input.FileKind == FileKind.Blob ? blobPathId : null,
@@ -613,6 +617,26 @@ public class DocumentRepository(IDbContextFactory<FonbecWebDbContext> dbContext)
     {
         await using var db = await dbContext.CreateDbContextAsync();
         return await GetActiveSponsorIdsInternalAsync(db, studentId);
+    }
+
+    public async Task<List<DocumentDescriptionOptionDataModel>> GetDescriptionOptionsAsync(
+        int chapterId, DocumentType documentType)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+        return await db.DocumentDescriptionOptions
+            .AsNoTracking()
+            .Where(o => o.DocumentType == documentType
+                        && o.IsActive
+                        && (o.ChapterId == null || o.ChapterId == chapterId))
+            .OrderBy(o => o.SortOrder)
+            .ThenBy(o => o.Text)
+            .Select(o => new DocumentDescriptionOptionDataModel
+            {
+                DocumentDescriptionOptionId = o.DocumentDescriptionOptionId,
+                Text = o.Text,
+                SortOrder = o.SortOrder,
+            })
+            .ToListAsync();
     }
 
     private static async Task<List<int>> GetActiveSponsorIdsInternalAsync(FonbecWebDbContext db, int studentId)

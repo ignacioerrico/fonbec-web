@@ -43,3 +43,10 @@ public class LetterPlanProgressViewModel
     public int PendingLetters { get; init; }
     public int RejectedLetters { get; init; }
 }
+
+public class DocumentDescriptionOptionViewModel
+{
+    public int DocumentDescriptionOptionId { get; init; }
+    public string Text { get; init; } = string.Empty;
+    public int SortOrder { get; init; }
+}

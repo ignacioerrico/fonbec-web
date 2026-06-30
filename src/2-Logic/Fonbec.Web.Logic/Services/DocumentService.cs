@@ -28,6 +28,7 @@ public interface IDocumentService
     Task<SponsorDocumentHistoryViewModel> GetSharedDocumentsAsync(Guid sponsorPublicAccessToken, int studentId);
     Task<ReviewProgressViewModel> GetGlobalReviewProgressAsync(int userId, string userRole, int? planId);
     Task<LetterPlanProgressViewModel> GetLetterPlanProgressAsync(int userId, string userRole, int planId, int? chapterId);
+    Task<List<DocumentDescriptionOptionViewModel>> GetDescriptionOptionsAsync(int chapterId, DocumentType documentType);
 }
 
 public class DocumentService(
@@ -91,6 +92,16 @@ public class DocumentService(
             return new CrudResult<long>(Errors: [DocumentMessages.ReportCardCannotUseText]);
         }
 
+        if (string.IsNullOrWhiteSpace(input.Description))
+        {
+            return new CrudResult<long>(Errors: [DocumentMessages.DescriptionRequired]);
+        }
+
+        if (input.Period == default)
+        {
+            return new CrudResult<long>(Errors: [DocumentMessages.ReportCardPeriodRequired]);
+        }
+
         var contentError = ValidateContent(input.FileKind, input.Blob, input.YouTubeVideoId, input.TextContent);
         if (contentError is not null)
         {
@@ -111,6 +122,11 @@ public class DocumentService(
         if (authError is not null)
         {
             return new CrudResult<long>(Errors: [authError]);
+        }
+
+        if (string.IsNullOrWhiteSpace(input.Description))
+        {
+            return new CrudResult<long>(Errors: [DocumentMessages.DescriptionRequired]);
         }
 
         var contentError = ValidateContent(input.FileKind, input.Blob, input.YouTubeVideoId, input.TextContent);
@@ -334,6 +350,13 @@ public class DocumentService(
 
         var progress = await documentRepository.GetLetterPlanProgressAsync(planId, chapterId);
         return progress.Adapt<LetterPlanProgressViewModel>();
+    }
+
+    public async Task<List<DocumentDescriptionOptionViewModel>> GetDescriptionOptionsAsync(
+        int chapterId, DocumentType documentType)
+    {
+        var options = await documentRepository.GetDescriptionOptionsAsync(chapterId, documentType);
+        return options.Adapt<List<DocumentDescriptionOptionViewModel>>();
     }
 
     private async Task<string?> ValidateUploadAuthorizationAsync(CreateDocumentUserContext user, int studentId)

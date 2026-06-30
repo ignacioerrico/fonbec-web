@@ -32,6 +32,7 @@ public sealed class FonbecWebDbContext : IdentityDbContext<FonbecWebUser, Fonbec
     internal DbSet<DocumentQueueItem> DocumentQueueItems => Set<DocumentQueueItem>();
     internal DbSet<DocumentShare> DocumentShares => Set<DocumentShare>();
     internal DbSet<RejectedReason> RejectedReasons => Set<RejectedReason>();
+    internal DbSet<DocumentDescriptionOption> DocumentDescriptionOptions => Set<DocumentDescriptionOption>();
     internal DbSet<Assessment> Assessments => Set<Assessment>();
     internal DbSet<LetterReview> LetterReviews => Set<LetterReview>();
     internal DbSet<ReportCardReview> ReportCardReviews => Set<ReportCardReview>();

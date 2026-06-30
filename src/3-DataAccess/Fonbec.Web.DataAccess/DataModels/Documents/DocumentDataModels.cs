@@ -72,3 +72,10 @@ public class CreateDocumentResultDataModel
     public List<string> Errors { get; init; } = [];
     public bool IsSuccess => Errors.Count == 0;
 }
+
+public class DocumentDescriptionOptionDataModel
+{
+    public int DocumentDescriptionOptionId { get; init; }
+    public string Text { get; init; } = string.Empty;
+    public int SortOrder { get; init; }
+}

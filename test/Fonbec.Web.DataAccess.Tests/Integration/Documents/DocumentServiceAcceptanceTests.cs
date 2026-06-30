@@ -44,6 +44,7 @@ public class DocumentServiceAcceptanceTests
             _fixture.StudentId,
             _fixture.UploaderContext,
             FileKind.Blob,
+            Description: "Certificado de alumno regular",
             Blob: new CreateBlobPathInputModel("path/note.txt", "text/plain"),
             UploaderNotes: "Certificate"));
 
@@ -108,6 +109,8 @@ public class DocumentServiceAcceptanceTests
             _fixture.StudentId,
             _fixture.UploaderContext,
             FileKind.Blob,
+            Period: new DateOnly(2026, 6, 1),
+            Description: "Boletín 2º trimestre",
             Blob: new CreateBlobPathInputModel("path/report.pdf", "application/pdf")));
 
         result.IsSuccess.Should().BeTrue();
@@ -125,6 +128,8 @@ public class DocumentServiceAcceptanceTests
             _fixture.StudentId,
             _fixture.UploaderContext,
             FileKind.Blob,
+            Period: new DateOnly(2026, 6, 1),
+            Description: "Boletín 2º trimestre",
             Blob: new CreateBlobPathInputModel("path/report.jpg", "image/jpeg")));
 
         result.IsSuccess.Should().BeTrue();
@@ -144,7 +149,8 @@ public class DocumentServiceAcceptanceTests
 
         await _fixture.DocumentService.CreateReportCardAsync(new CreateReportCardInputModel(
             _fixture.StudentId, _fixture.UploaderContext,
-            FileKind.Blob, Blob: new CreateBlobPathInputModel("b.pdf", "application/pdf")));
+            FileKind.Blob, Period: new DateOnly(2026, 5, 1), Description: "Boletín 1º trimestre",
+            Blob: new CreateBlobPathInputModel("b.pdf", "application/pdf")));
 
         var next = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer");
 
@@ -283,7 +289,8 @@ public class DocumentServiceAcceptanceTests
 
         var create = await _fixture.DocumentService.CreateReportCardAsync(new CreateReportCardInputModel(
             _fixture.StudentId, _fixture.UploaderContext,
-            FileKind.Blob, Blob: new CreateBlobPathInputModel("r.pdf", "application/pdf")));
+            FileKind.Blob, Period: new DateOnly(2026, 6, 1), Description: "Boletín 2º trimestre",
+            Blob: new CreateBlobPathInputModel("r.pdf", "application/pdf")));
 
         var locked = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer")!;
 
@@ -305,7 +312,7 @@ public class DocumentServiceAcceptanceTests
 
         await _fixture.DocumentService.CreateOtherDocumentAsync(new CreateOtherDocumentInputModel(
             _fixture.StudentId, _fixture.UploaderContext,
-            FileKind.Text, TextContent: "Note"));
+            FileKind.Text, Description: "Constancia", TextContent: "Note"));
 
         var locked = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer")!;
 
@@ -325,7 +332,7 @@ public class DocumentServiceAcceptanceTests
         await _fixture.InitializeAsync();
 
         await _fixture.DocumentService.CreateOtherDocumentAsync(new CreateOtherDocumentInputModel(
-            _fixture.StudentId, _fixture.UploaderContext, FileKind.Text, TextContent: "Note"));
+            _fixture.StudentId, _fixture.UploaderContext, FileKind.Text, Description: "Constancia", TextContent: "Note"));
 
         var locked = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer")!;
 
@@ -344,7 +351,7 @@ public class DocumentServiceAcceptanceTests
         await _fixture.InitializeAsync();
 
         await _fixture.DocumentService.CreateOtherDocumentAsync(new CreateOtherDocumentInputModel(
-            _fixture.StudentId, _fixture.UploaderContext, FileKind.Text, TextContent: "Note"));
+            _fixture.StudentId, _fixture.UploaderContext, FileKind.Text, Description: "Constancia", TextContent: "Note"));
 
         var locked = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer")!;
 
@@ -386,7 +393,8 @@ public class DocumentServiceAcceptanceTests
 
         await _fixture.DocumentService.CreateReportCardAsync(new CreateReportCardInputModel(
             _fixture.StudentId, _fixture.UploaderContext,
-            FileKind.Blob, Blob: new CreateBlobPathInputModel("r.pdf", "application/pdf")));
+            FileKind.Blob, Period: new DateOnly(2026, 6, 1), Description: "Boletín 2º trimestre",
+            Blob: new CreateBlobPathInputModel("r.pdf", "application/pdf")));
 
         var locked = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer")!;
 
@@ -406,7 +414,8 @@ public class DocumentServiceAcceptanceTests
 
         await _fixture.DocumentService.CreateReportCardAsync(new CreateReportCardInputModel(
             _fixture.StudentId, _fixture.UploaderContext,
-            FileKind.Blob, Blob: new CreateBlobPathInputModel("r.pdf", "application/pdf")));
+            FileKind.Blob, Period: new DateOnly(2026, 6, 1), Description: "Boletín 2º trimestre",
+            Blob: new CreateBlobPathInputModel("r.pdf", "application/pdf")));
 
         var locked = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer")!;
 
@@ -427,7 +436,8 @@ public class DocumentServiceAcceptanceTests
 
         await _fixture.DocumentService.CreateReportCardAsync(new CreateReportCardInputModel(
             _fixture.StudentId, _fixture.UploaderContext,
-            FileKind.Blob, Blob: new CreateBlobPathInputModel("r.pdf", "application/pdf")));
+            FileKind.Blob, Period: new DateOnly(2026, 6, 1), Description: "Boletín 2º trimestre",
+            Blob: new CreateBlobPathInputModel("r.pdf", "application/pdf")));
 
         var locked = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer")!;
         await _fixture.DocumentService.ApproveReportCardAsync(new ApproveReportCardInputModel(
@@ -471,7 +481,7 @@ public class DocumentServiceAcceptanceTests
 
         await CreateAndApproveLetterForShareAsync();
         await _fixture.DocumentService.CreateOtherDocumentAsync(new CreateOtherDocumentInputModel(
-            _fixture.StudentId, _fixture.UploaderContext, FileKind.Text, TextContent: "Other"));
+            _fixture.StudentId, _fixture.UploaderContext, FileKind.Text, Description: "Constancia", TextContent: "Other"));
         var locked = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer")!;
         await _fixture.DocumentService.ApproveOtherDocumentAsync(new ApproveOtherDocumentInputModel(
             locked!.DocumentId, _fixture.ReviewerId, "Reviewer", locked.RowVersion));
@@ -499,7 +509,7 @@ public class DocumentServiceAcceptanceTests
 
         var result = await _fixture.DocumentService.CreateOtherDocumentAsync(new CreateOtherDocumentInputModel(
             _fixture.StudentId, _fixture.OtherUploaderUserContext,
-            FileKind.Text, TextContent: "Note"));
+            FileKind.Text, Description: "Constancia", TextContent: "Note"));
 
         result.IsSuccess.Should().BeFalse();
     }
@@ -515,7 +525,8 @@ public class DocumentServiceAcceptanceTests
 
         await _fixture.DocumentService.CreateReportCardAsync(new CreateReportCardInputModel(
             _fixture.StudentId, _fixture.UploaderContext,
-            FileKind.Blob, Blob: new CreateBlobPathInputModel("b.pdf", "application/pdf")));
+            FileKind.Blob, Period: new DateOnly(2026, 5, 1), Description: "Boletín 1º trimestre",
+            Blob: new CreateBlobPathInputModel("b.pdf", "application/pdf")));
 
         var progress = await _fixture.DocumentService.GetGlobalReviewProgressAsync(
             _fixture.ReviewerId, "Reviewer", planId: null);
@@ -532,7 +543,8 @@ public class DocumentServiceAcceptanceTests
         await CreatePendingLetterAsync();
         await _fixture.DocumentService.CreateReportCardAsync(new CreateReportCardInputModel(
             _fixture.StudentId, _fixture.UploaderContext,
-            FileKind.Blob, Blob: new CreateBlobPathInputModel("r.pdf", "application/pdf")));
+            FileKind.Blob, Period: new DateOnly(2026, 6, 1), Description: "Boletín 2º trimestre",
+            Blob: new CreateBlobPathInputModel("r.pdf", "application/pdf")));
         var locked = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer")!;
         await _fixture.DocumentService.ApproveReportCardAsync(new ApproveReportCardInputModel(
             locked!.DocumentId, _fixture.ReviewerId, "Reviewer", locked.RowVersion,
@@ -553,11 +565,94 @@ public class DocumentServiceAcceptanceTests
 
         var result = await _fixture.DocumentService.CreateReportCardAsync(new CreateReportCardInputModel(
             _fixture.StudentId, _fixture.UploaderContext,
-            FileKind.Text, TextContent: "Not allowed"));
+            FileKind.Text, Period: new DateOnly(2026, 6, 1), Description: "Boletín 2º trimestre",
+            TextContent: "Not allowed"));
 
         result.IsSuccess.Should().BeFalse();
         await using var db = await _fixture.Factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
         (await db.Set<Document>().CountAsync(TestContext.Current.CancellationToken)).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task Scenario28_ReportCard_StoresPeriodAndDescription()
+    {
+        await _fixture.InitializeAsync();
+
+        var period = new DateOnly(2026, 6, 1);
+        var result = await _fixture.DocumentService.CreateReportCardAsync(new CreateReportCardInputModel(
+            _fixture.StudentId, _fixture.UploaderContext,
+            FileKind.Blob, Period: period, Description: "Boletín 2º trimestre",
+            Blob: new CreateBlobPathInputModel("r.pdf", "application/pdf")));
+
+        result.IsSuccess.Should().BeTrue();
+        await using var db = await _fixture.Factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        var reportCard = await db.Set<ReportCard>().SingleAsync(TestContext.Current.CancellationToken);
+        reportCard.Period.Should().Be(period);
+        reportCard.Description.Should().Be("Boletín 2º trimestre");
+    }
+
+    [Fact]
+    public async Task Scenario29_OtherDocument_RequiresDescription()
+    {
+        await _fixture.InitializeAsync();
+
+        var result = await _fixture.DocumentService.CreateOtherDocumentAsync(new CreateOtherDocumentInputModel(
+            _fixture.StudentId, _fixture.UploaderContext, FileKind.Text, Description: "  ", TextContent: "Note"));
+
+        result.IsSuccess.Should().BeFalse();
+        await using var db = await _fixture.Factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        (await db.Set<Document>().CountAsync(TestContext.Current.CancellationToken)).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task Scenario28b_ReportCard_RequiresPeriod()
+    {
+        await _fixture.InitializeAsync();
+
+        var result = await _fixture.DocumentService.CreateReportCardAsync(new CreateReportCardInputModel(
+            _fixture.StudentId, _fixture.UploaderContext,
+            FileKind.Blob, Period: default, Description: "Boletín 2º trimestre",
+            Blob: new CreateBlobPathInputModel("r.pdf", "application/pdf")));
+
+        result.IsSuccess.Should().BeFalse();
+        await using var db = await _fixture.Factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        (await db.Set<Document>().CountAsync(TestContext.Current.CancellationToken)).Should().Be(0);
+    }
+
+    [Fact]
+    public async Task Scenario30_DescriptionIsDenormalizedCopy()
+    {
+        await _fixture.InitializeAsync();
+
+        var options = await _fixture.DocumentService.GetDescriptionOptionsAsync(
+            _fixture.ChapterId, DocumentType.ReportCard);
+        var chosen = options.First().Text;
+
+        var result = await _fixture.DocumentService.CreateReportCardAsync(new CreateReportCardInputModel(
+            _fixture.StudentId, _fixture.UploaderContext,
+            FileKind.Blob, Period: new DateOnly(2026, 6, 1), Description: chosen,
+            Blob: new CreateBlobPathInputModel("r.pdf", "application/pdf")));
+
+        result.IsSuccess.Should().BeTrue();
+        await using var db = await _fixture.Factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        var reportCard = await db.Set<ReportCard>().SingleAsync(TestContext.Current.CancellationToken);
+        // Stored as a copy of the option text, independent of the option row.
+        reportCard.Description.Should().Be(chosen);
+    }
+
+    [Fact]
+    public async Task GetDescriptionOptions_ReturnsGlobalDefaultsForType()
+    {
+        await _fixture.InitializeAsync();
+
+        var reportCardOptions = await _fixture.DocumentService.GetDescriptionOptionsAsync(
+            _fixture.ChapterId, DocumentType.ReportCard);
+        var otherOptions = await _fixture.DocumentService.GetDescriptionOptionsAsync(
+            _fixture.ChapterId, DocumentType.Other);
+
+        reportCardOptions.Should().HaveCount(5);
+        reportCardOptions.Should().BeInAscendingOrder(o => o.SortOrder);
+        otherOptions.Should().HaveCount(4);
     }
 
     private async Task<long> CreatePendingLetterAsync()

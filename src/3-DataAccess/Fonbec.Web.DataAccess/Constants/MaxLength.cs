@@ -43,6 +43,12 @@ public static class MaxLength
         public const int TextContent = 8192;
         public const int UploaderNotes = 512;
         public const int RejectionNotes = 512;
+        public const int Description = 256;
+    }
+
+    public static class DocumentDescriptionOption
+    {
+        public const int Text = Document.Description;
     }
 
     public static class BlobPath
