@@ -57,6 +57,8 @@ public static class ConfigureServices
         services.AddScoped<ISponsorService, SponsorService>();
         services.AddScoped<ISponsorshipService, SponsorshipService>();
         services.AddScoped<ICompanyService, CompanyService>();
+        services.AddScoped<IDocumentService, DocumentService>();
+        services.AddScoped<IDocumentNotificationService, DocumentNotificationService>();
 
         services.AddScoped<IChapterRepository, ChapterRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
@@ -66,6 +68,7 @@ public static class ConfigureServices
         services.AddScoped<ISponsorRepository, SponsorRepository>();
         services.AddScoped<ISponsorshipRepository, SponsorshipRepository>();
         services.AddScoped<ICompanyRepository, CompanyRepository>();
+        services.AddScoped<IDocumentRepository, DocumentRepository>();
     }
 
     public static void RegisterPolicies(IServiceCollection services)

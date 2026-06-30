@@ -4,6 +4,7 @@ using Fonbec.Web.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Fonbec.Web.DataAccess.Migrations
 {
     [DbContext(typeof(FonbecWebDbContext))]
-    partial class FonbecWebDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260624174309_AddDocuments")]
+    partial class AddDocuments
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -316,8 +319,6 @@ namespace Fonbec.Web.DataAccess.Migrations
                         {
                             t.HasCheckConstraint("CK_Document_ApprovedOrRejected", "[ApprovedOn] IS NULL OR [RejectedOn] IS NULL");
 
-                            t.HasCheckConstraint("CK_Document_DescriptionRequired", "[DocumentType] = 1 OR [Description] IS NOT NULL");
-
                             t.HasCheckConstraint("CK_Document_ImprovementComplete", "[DigitalImprovementStatus] <> 3 OR [ImprovedBlobPathId] IS NOT NULL");
 
                             t.HasCheckConstraint("CK_Document_ImprovementNotApplicable", "[DigitalImprovementStatus] <> 0 OR [ImprovedBlobPathId] IS NULL");
@@ -326,113 +327,6 @@ namespace Fonbec.Web.DataAccess.Migrations
                     b.HasDiscriminator<byte>("DocumentType");
 
                     b.UseTphMappingStrategy();
-                });
-
-            modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.DocumentDescriptionOption", b =>
-                {
-                    b.Property<int>("DocumentDescriptionOptionId")
-                        .ValueGeneratedOnAdd()
-                        .HasColumnType("int");
-
-                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("DocumentDescriptionOptionId"));
-
-                    b.Property<int?>("ChapterId")
-                        .HasColumnType("int");
-
-                    b.Property<byte>("DocumentType")
-                        .HasColumnType("tinyint");
-
-                    b.Property<bool>("IsActive")
-                        .HasColumnType("bit");
-
-                    b.Property<int>("SortOrder")
-                        .HasColumnType("int");
-
-                    b.Property<string>("Text")
-                        .IsRequired()
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)");
-
-                    b.HasKey("DocumentDescriptionOptionId");
-
-                    b.HasIndex("ChapterId", "DocumentType", "Text")
-                        .IsUnique();
-
-                    b.ToTable("DocumentDescriptionOptions");
-
-                    b.HasData(
-                        new
-                        {
-                            DocumentDescriptionOptionId = 1,
-                            DocumentType = (byte)2,
-                            IsActive = true,
-                            SortOrder = 1,
-                            Text = "Boletín 1º trimestre"
-                        },
-                        new
-                        {
-                            DocumentDescriptionOptionId = 2,
-                            DocumentType = (byte)2,
-                            IsActive = true,
-                            SortOrder = 2,
-                            Text = "Boletín 2º trimestre"
-                        },
-                        new
-                        {
-                            DocumentDescriptionOptionId = 3,
-                            DocumentType = (byte)2,
-                            IsActive = true,
-                            SortOrder = 3,
-                            Text = "Boletín 3º trimestre"
-                        },
-                        new
-                        {
-                            DocumentDescriptionOptionId = 4,
-                            DocumentType = (byte)2,
-                            IsActive = true,
-                            SortOrder = 4,
-                            Text = "Boletín 4º trimestre"
-                        },
-                        new
-                        {
-                            DocumentDescriptionOptionId = 5,
-                            DocumentType = (byte)2,
-                            IsActive = true,
-                            SortOrder = 5,
-                            Text = "Libreta universitaria"
-                        },
-                        new
-                        {
-                            DocumentDescriptionOptionId = 6,
-                            DocumentType = (byte)3,
-                            IsActive = true,
-                            SortOrder = 1,
-                            Text = "Certificado de alumno regular"
-                        },
-                        new
-                        {
-                            DocumentDescriptionOptionId = 7,
-                            DocumentType = (byte)3,
-                            IsActive = true,
-                            SortOrder = 2,
-                            Text = "Constancia"
-                        },
-                        new
-                        {
-                            DocumentDescriptionOptionId = 8,
-                            DocumentType = (byte)3,
-                            IsActive = true,
-                            SortOrder = 3,
-                            Text = "Foto"
-                        },
-                        new
-                        {
-                            DocumentDescriptionOptionId = 9,
-                            DocumentType = (byte)3,
-                            IsActive = true,
-                            SortOrder = 4,
-                            Text = "Otro documento"
-                        });
                 });
 
             modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.DocumentQueueItem", b =>
@@ -1403,8 +1297,6 @@ namespace Fonbec.Web.DataAccess.Migrations
                         {
                             t.HasCheckConstraint("CK_Document_ApprovedOrRejected", "[ApprovedOn] IS NULL OR [RejectedOn] IS NULL");
 
-                            t.HasCheckConstraint("CK_Document_DescriptionRequired", "[DocumentType] = 1 OR [Description] IS NOT NULL");
-
                             t.HasCheckConstraint("CK_Document_ImprovementComplete", "[DigitalImprovementStatus] <> 3 OR [ImprovedBlobPathId] IS NOT NULL");
 
                             t.HasCheckConstraint("CK_Document_ImprovementNotApplicable", "[DigitalImprovementStatus] <> 0 OR [ImprovedBlobPathId] IS NULL");
@@ -1419,18 +1311,9 @@ namespace Fonbec.Web.DataAccess.Migrations
                 {
                     b.HasBaseType("Fonbec.Web.DataAccess.Entities.Document");
 
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .ValueGeneratedOnUpdateSometimes()
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)")
-                        .HasColumnName("Description");
-
                     b.ToTable("Documents", t =>
                         {
                             t.HasCheckConstraint("CK_Document_ApprovedOrRejected", "[ApprovedOn] IS NULL OR [RejectedOn] IS NULL");
-
-                            t.HasCheckConstraint("CK_Document_DescriptionRequired", "[DocumentType] = 1 OR [Description] IS NOT NULL");
 
                             t.HasCheckConstraint("CK_Document_ImprovementComplete", "[DigitalImprovementStatus] <> 3 OR [ImprovedBlobPathId] IS NOT NULL");
 
@@ -1446,27 +1329,13 @@ namespace Fonbec.Web.DataAccess.Migrations
                 {
                     b.HasBaseType("Fonbec.Web.DataAccess.Entities.Document");
 
-                    b.Property<string>("Description")
-                        .IsRequired()
-                        .ValueGeneratedOnUpdateSometimes()
-                        .HasMaxLength(256)
-                        .HasColumnType("nvarchar(256)")
-                        .HasColumnName("Description");
-
-                    b.Property<DateOnly>("Period")
-                        .HasColumnType("date");
-
                     b.ToTable("Documents", t =>
                         {
                             t.HasCheckConstraint("CK_Document_ApprovedOrRejected", "[ApprovedOn] IS NULL OR [RejectedOn] IS NULL");
 
-                            t.HasCheckConstraint("CK_Document_DescriptionRequired", "[DocumentType] = 1 OR [Description] IS NOT NULL");
-
                             t.HasCheckConstraint("CK_Document_ImprovementComplete", "[DigitalImprovementStatus] <> 3 OR [ImprovedBlobPathId] IS NOT NULL");
 
                             t.HasCheckConstraint("CK_Document_ImprovementNotApplicable", "[DigitalImprovementStatus] <> 0 OR [ImprovedBlobPathId] IS NULL");
-
-                            t.HasCheckConstraint("CK_ReportCard_PeriodRequired", "[DocumentType] <> 2 OR [Period] IS NOT NULL");
 
                             t.HasCheckConstraint("CK_ReportCard_SponsorNull", "[DocumentType] <> 2 OR [SponsorId] IS NULL");
                         });
@@ -1599,16 +1468,6 @@ namespace Fonbec.Web.DataAccess.Migrations
                     b.Navigation("Student");
 
                     b.Navigation("UploadedBy");
-                });
-
-            modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.DocumentDescriptionOption", b =>
-                {
-                    b.HasOne("Fonbec.Web.DataAccess.Entities.Chapter", "Chapter")
-                        .WithMany()
-                        .HasForeignKey("ChapterId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.Navigation("Chapter");
                 });
 
             modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.DocumentQueueItem", b =>

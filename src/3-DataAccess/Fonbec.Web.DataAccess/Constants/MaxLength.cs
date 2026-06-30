@@ -36,4 +36,36 @@ public static class MaxLength
         public const int Email = 128;
         public const int PhoneNumber = 20;
     }
+
+    public static class Document
+    {
+        public const int YouTubeVideoId = 20;
+        public const int TextContent = 8192;
+        public const int UploaderNotes = 512;
+        public const int RejectionNotes = 512;
+        public const int Description = 256;
+    }
+
+    public static class DocumentDescriptionOption
+    {
+        public const int Text = Document.Description;
+    }
+
+    public static class BlobPath
+    {
+        public const int StoragePath = 512;
+        public const int MimeType = 128;
+    }
+
+    public static class RejectedReason
+    {
+        public const int Code = 32;
+        public const int Description = 256;
+    }
+
+    public static class Assessment
+    {
+        public const int IssuesNotes = 1024;
+        public const int Appraisal = 1024;
+    }
 }

@@ -21,6 +21,15 @@ internal class SponsorConfiguration : UserWithoutAccountConfiguration<Sponsor>
             .HasForeignKey(s => s.CompanyId)
             .OnDelete(DeleteBehavior.NoAction);
 
+        builder.Property(s => s.PublicAccessToken)
+            .IsRequired();
+
+        builder.HasIndex(s => s.PublicAccessToken)
+            .IsUnique();
+
+        builder.Property(s => s.NotificationPreference)
+            .HasDefaultValue(Entities.Enums.SponsorNotificationPreference.EveryDocument);
+
         base.Configure(builder);
     }
 }
