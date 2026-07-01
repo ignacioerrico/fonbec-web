@@ -17,13 +17,13 @@ public partial class FacilitatorStudentsList : AuthenticationRequiredComponentBa
     private bool _sortByLastName;
     private bool _letterFilterActive;
 
-    private bool FilterStudents(FacilitatorStudentsListViewModel viewModel) =>
+    private bool FilterStudents(MisBecariosRowViewModel viewModel) =>
         string.IsNullOrWhiteSpace(_searchString)
         || $"{viewModel.StudentFirstName} {viewModel.StudentLastName}".ContainsIgnoringAccents(_searchString)
         || (!string.IsNullOrEmpty(viewModel.StudentNickName)
             && $"{viewModel.StudentNickName} {viewModel.StudentLastName}".ContainsIgnoringAccents(_searchString));
 
-    private string StudentFullName(FacilitatorStudentsListViewModel viewModel) =>
+    private string StudentFullName(MisBecariosRowViewModel viewModel) =>
         _sortByLastName
             ? $"{viewModel.StudentLastName}, {viewModel.StudentFirstName}"
             : $"{viewModel.StudentFirstName} {viewModel.StudentLastName}";

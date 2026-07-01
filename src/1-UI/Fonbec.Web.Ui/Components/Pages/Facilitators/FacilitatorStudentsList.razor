@@ -43,7 +43,7 @@
 					<AuditableItemDisplay Id="@context.Item.StudentId"
 										  ItemName="@StudentFullName(context.Item)"
 										  IsActive="true"
-										  AuditableViewModel="@context.Item" />
+										  AuditableViewModel="null" />
 				</CellTemplate>
 			</PropertyColumn>
 			<TemplateColumn Title="Carta Jun 2026" Filterable="false" Sortable="false">
@@ -105,7 +105,7 @@
 			</MudPaper>
 		</ChildRowContent>
 		<PagerContent>
-			<MudDataGridPager T="FacilitatorStudentsListViewModel" RowsPerPageString="Filas por página:" InfoFormat="{first_item}-{last_item} of {all_items}" />
+			<MudDataGridPager T="MisBecariosRowViewModel" RowsPerPageString="Filas por página:" InfoFormat="{first_item}-{last_item} of {all_items}" />
 		</PagerContent>
 	</MudDataGrid>
 }
