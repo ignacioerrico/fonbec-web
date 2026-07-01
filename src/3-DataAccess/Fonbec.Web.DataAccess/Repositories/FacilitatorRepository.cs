@@ -18,6 +18,11 @@ public class FacilitatorRepository(IDbContextFactory<FonbecWebDbContext> dbConte
         var utcNow = DateTime.UtcNow;
 
         var students = await db.Students
+            .Include(s => s.Facilitator)
+            .Include(s => s.CreatedBy)
+            .Include(s => s.LastUpdatedBy)
+            .Include(s => s.DisabledBy)
+            .Include(s => s.ReenabledBy)
             .Where(s => s.FacilitatorId == facilitatorId
                         && s.IsActive
                         && !s.IsDeleted
@@ -33,7 +38,7 @@ public class FacilitatorRepository(IDbContextFactory<FonbecWebDbContext> dbConte
                                 || (sp.CompanyId != null
                                     && sp.Company != null
                                     && sp.Company.IsActive))))
-            .Select(s => new FacilitatorStudentsDataModel
+            .Select(s => new FacilitatorStudentsDataModel(s)
             {
                 StudentId = s.Id,
                 StudentFirstName = s.FirstName,
@@ -63,6 +68,7 @@ public class FacilitatorRepository(IDbContextFactory<FonbecWebDbContext> dbConte
                         IsCompany = sp.CompanyId != null,
                     })
                     .ToList(),
+
             })
             .OrderBy(s => s.StudentFirstName)
             .ThenBy(s => s.StudentLastName)

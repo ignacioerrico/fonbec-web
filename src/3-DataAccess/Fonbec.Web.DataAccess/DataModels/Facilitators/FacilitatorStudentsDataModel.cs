@@ -1,8 +1,9 @@
+using Fonbec.Web.DataAccess.Entities.Abstract;
 using Fonbec.Web.DataAccess.Entities.Enums;
 
 namespace Fonbec.Web.DataAccess.DataModels.Facilitators;
 
-public class FacilitatorStudentsDataModel
+public class FacilitatorStudentsDataModel(Auditable auditable) : AuditableDataModel(auditable)
 {
     public int StudentId { get; set; }
 
