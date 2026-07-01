@@ -1,4 +1,5 @@
 using Fonbec.Web.DataAccess.DataModels.Facilitators;
+using Fonbec.Web.DataAccess.Entities.Enums;
 using Microsoft.EntityFrameworkCore;
 
 namespace Fonbec.Web.DataAccess.Repositories;
@@ -17,11 +18,6 @@ public class FacilitatorRepository(IDbContextFactory<FonbecWebDbContext> dbConte
         var utcNow = DateTime.UtcNow;
 
         var students = await db.Students
-            .Include(s => s.Facilitator)
-            .Include(s => s.CreatedBy)
-            .Include(s => s.LastUpdatedBy)
-            .Include(s => s.DisabledBy)
-            .Include(s => s.ReenabledBy)
             .Where(s => s.FacilitatorId == facilitatorId
                         && s.IsActive
                         && !s.IsDeleted
@@ -37,12 +33,36 @@ public class FacilitatorRepository(IDbContextFactory<FonbecWebDbContext> dbConte
                                 || (sp.CompanyId != null
                                     && sp.Company != null
                                     && sp.Company.IsActive))))
-            .Select(s => new FacilitatorStudentsDataModel(s)
+            .Select(s => new FacilitatorStudentsDataModel
             {
                 StudentId = s.Id,
                 StudentFirstName = s.FirstName,
                 StudentLastName = s.LastName,
                 StudentNickName = s.NickName,
+                EducationLevel = s.SecondarySchoolStartYear == null && s.UniversityStartYear == null
+                    ? EducationLevel.PrimarySchool
+                    : s.UniversityStartYear != null && s.UniversityStartYear <= utcNow
+                        ? EducationLevel.University
+                        : s.SecondarySchoolStartYear != null && s.SecondarySchoolStartYear <= utcNow
+                            ? EducationLevel.SecondarySchool
+                            : EducationLevel.PrimarySchool,
+                Sponsors = s.Sponsorships
+                    .Where(sp => sp.IsActive
+                                 && sp.StartDate <= utcNow
+                                 && (sp.EndDate == null || sp.EndDate >= utcNow))
+                    .Select(sp => new DashboardSponsorDataModel
+                    {
+                        SponsorshipId = sp.Id,
+                        SponsorId = sp.SponsorId,
+                        CompanyId = sp.CompanyId,
+                        RecipientName = sp.CompanyId != null && sp.Company != null
+                            ? sp.Company.Name
+                            : sp.Sponsor != null
+                                ? sp.Sponsor.FirstName + " " + sp.Sponsor.LastName
+                                : string.Empty,
+                        IsCompany = sp.CompanyId != null,
+                    })
+                    .ToList(),
             })
             .OrderBy(s => s.StudentFirstName)
             .ThenBy(s => s.StudentLastName)

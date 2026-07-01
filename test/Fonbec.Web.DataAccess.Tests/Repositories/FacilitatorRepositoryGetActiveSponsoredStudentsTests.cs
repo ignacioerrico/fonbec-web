@@ -184,6 +184,66 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
         students.Should().BeEmpty();
     }
 
+    [Fact]
+    public async Task GetActiveSponsoredStudentsAsync_Sets_EducationLevel_Primary()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedAsync(factory, studentId: 10);
+        var repository = new FacilitatorRepository(factory);
+
+        var students = await repository.GetActiveSponsoredStudentsAsync(FacilitatorId);
+
+        students.Single().EducationLevel.Should().Be(EducationLevel.PrimarySchool);
+    }
+
+    [Fact]
+    public async Task GetActiveSponsoredStudentsAsync_Sets_EducationLevel_Secondary()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedAsync(factory, studentId: 10, secondarySchoolStart: UtcNow.AddYears(-2));
+        var repository = new FacilitatorRepository(factory);
+
+        var students = await repository.GetActiveSponsoredStudentsAsync(FacilitatorId);
+
+        students.Single().EducationLevel.Should().Be(EducationLevel.SecondarySchool);
+    }
+
+    [Fact]
+    public async Task GetActiveSponsoredStudentsAsync_Sets_EducationLevel_University()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedAsync(factory, studentId: 10, universityStart: UtcNow.AddYears(-1));
+        var repository = new FacilitatorRepository(factory);
+
+        var students = await repository.GetActiveSponsoredStudentsAsync(FacilitatorId);
+
+        students.Single().EducationLevel.Should().Be(EducationLevel.University);
+    }
+
+    [Fact]
+    public async Task GetActiveSponsoredStudentsAsync_Includes_Sponsors()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedAsync(factory, studentId: 10);
+        var repository = new FacilitatorRepository(factory);
+
+        var students = await repository.GetActiveSponsoredStudentsAsync(FacilitatorId);
+
+        students.Single().Sponsors.Should().ContainSingle(s => s.SponsorId == SponsorId);
+    }
+
+    [Fact]
+    public async Task GetActiveSponsoredStudentsAsync_Includes_Company_Sponsor()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedAsync(factory, studentId: 10, useCompanySponsorship: true);
+        var repository = new FacilitatorRepository(factory);
+
+        var students = await repository.GetActiveSponsoredStudentsAsync(FacilitatorId);
+
+        students.Single().Sponsors.Should().ContainSingle(s => s.CompanyId == CompanyId && s.IsCompany);
+    }
+
     private static TestDbContextFactory CreateDbContextFactory() =>
         new(Guid.NewGuid().ToString());
 
@@ -240,7 +300,9 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
         string? studentNickName = null,
         string studentFirstName = "Ana",
         string studentLastName = "Becaria",
-        int sponsorshipId = 30)
+        int sponsorshipId = 30,
+        DateTime? secondarySchoolStart = null,
+        DateTime? universityStart = null)
     {
         sponsorshipStart ??= UtcNow.AddMonths(-1);
         sponsorshipEnd ??= UtcNow.AddMonths(1);
@@ -321,6 +383,8 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
             Gender = Gender.Unknown,
             ChapterId = 1,
             FacilitatorId = facilitatorId,
+            SecondarySchoolStartYear = secondarySchoolStart,
+            UniversityStartYear = universityStart,
             CreatedById = 1,
             CreatedOnUtc = UtcNow,
         });

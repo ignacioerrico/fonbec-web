@@ -23,7 +23,7 @@ public class FacilitatorServiceGetActiveSponsoredStudentsTests : MappingTestBase
     {
         _facilitatorRepository.GetActiveSponsoredStudentsAsync(2)
             .Returns([
-                new FacilitatorStudentsDataModel(Auditable)
+                new FacilitatorStudentsDataModel
                 {
                     StudentId = 10,
                     StudentFirstName = "Ana",

@@ -2,25 +2,26 @@
 @attribute [Authorize(Policy = nameof(FacilitatorStudentsList))]
 @inherits AuthenticationRequiredComponentBase
 
+@using Fonbec.Web.DataAccess.Entities.Enums
 @using Fonbec.Web.Logic.Models.Facilitators
 
 <PageHeader Title="Mis becarios" />
 
 <MudStack StretchItems="StretchItems.Middle" Row="true">
 	<MudSpacer />
-	<MudSwitch @bind-Value="_sortByLastName" LabelPlacement="Placement.Left">
-		@(_sortByLastName ? "Apellido, Nombre" : "Nombre Apellido")
+	<MudSwitch @bind-Value="_letterFilterActive" LabelPlacement="Placement.Left">
+		Solo carta pendiente o rechazada
 	</MudSwitch>
 </MudStack>
 
 <LoadingIndicator Loading="Loading"
-				  If="!_viewModels.Any()"
+				  If="!_students.Any()"
 				  ThenDisplay="No hay becarios." />
 
-@if (_viewModels.Any())
+@if (_students.Any())
 {
 	<MudDataGrid T="FacilitatorStudentsListViewModel"
-				 Items="_viewModels"
+				 Items="_students"
 				 Dense="true" Hover="true" Striped="true" Bordered="true"
 				 ReadOnly="true"
 				 QuickFilter="FilterStudents"
@@ -36,7 +37,8 @@
 						  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
 		</ToolBarContent>
 		<Columns>
-			<PropertyColumn Property="@(vm => _sortByLastName ? vm.StudentLastName : vm.StudentFirstName)" Title="Nombre">
+			<HierarchyColumn ButtonDisabledFunc="@(vm => false)" EnableHeaderToggle="true" />
+			<PropertyColumn Property="@(vm => _sortByLastName ? vm.StudentLastName : vm.StudentFirstName)" Title="Becario">
 				<CellTemplate>
 					<AuditableItemDisplay Id="@context.Item.StudentId"
 										  ItemName="@StudentFullName(context.Item)"
@@ -44,7 +46,64 @@
 										  AuditableViewModel="@context.Item" />
 				</CellTemplate>
 			</PropertyColumn>
+			<TemplateColumn Title="Carta Jun 2026" Filterable="false" Sortable="false">
+				<CellTemplate>
+				</CellTemplate>
+			</TemplateColumn>
+			<TemplateColumn Title="Calificaciones" Filterable="false" Sortable="false">
+				<CellTemplate>
+				</CellTemplate>
+			</TemplateColumn>
+			<TemplateColumn Title="Otros" Filterable="false" Sortable="false">
+				<CellTemplate>
+				</CellTemplate>
+			</TemplateColumn>
 		</Columns>
+		<ChildRowContent>
+			<MudPaper Class="pa-4" Elevation="0">
+				<MudStack Row="true" Spacing="12" AlignItems="AlignItems.Start">
+					<MudStack Spacing="1">
+						<MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+							<MudIcon Icon="@Icons.Material.Filled.School" Size="Size.Small" />
+							<MudText Typo="Typo.subtitle2">Nivel Académico</MudText>
+						</MudStack>
+						<MudChip T="string" Size="Size.Small" Color="Color.Primary">
+							@context.Item.EducationLevel.EnumToString()
+						</MudChip>
+					</MudStack>
+
+					<MudStack Spacing="1">
+						<MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+							<MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Small" />
+							<MudText Typo="Typo.subtitle2">Padrinos Asignados (@context.Item.Sponsors.Count)</MudText>
+						</MudStack>
+						<MudStack Row="true" Spacing="1">
+							@foreach (var sponsor in context.Item.Sponsors)
+							{
+								<MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Person">
+									@sponsor.RecipientName
+								</MudChip>
+							}
+						</MudStack>
+					</MudStack>
+				</MudStack>
+
+				<MudDivider Class="my-3" />
+
+				<MudText Typo="Typo.subtitle2" Class="mb-2">Acciones</MudText>
+				<MudStack Row="true" Spacing="2">
+					<MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Mail" Size="Size.Small">
+						Subir carta
+					</MudButton>
+					<MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Description" Size="Size.Small">
+						Subir libreta universitaria
+					</MudButton>
+					<MudButton Variant="Variant.Filled" Style="background-color: #e91e63; color: white;" StartIcon="@Icons.Material.Filled.Upload" Size="Size.Small">
+						Subir otro documento
+					</MudButton>
+				</MudStack>
+			</MudPaper>
+		</ChildRowContent>
 		<PagerContent>
 			<MudDataGridPager T="FacilitatorStudentsListViewModel" RowsPerPageString="Filas por página:" InfoFormat="{first_item}-{last_item} of {all_items}" />
 		</PagerContent>

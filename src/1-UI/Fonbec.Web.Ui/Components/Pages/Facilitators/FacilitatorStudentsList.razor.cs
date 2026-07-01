@@ -11,10 +11,11 @@ public partial class FacilitatorStudentsList : AuthenticationRequiredComponentBa
 {
     [Inject] public IFacilitatorService FacilitatorService { get; set; } = null!;
 
-    private List<FacilitatorStudentsListViewModel> _viewModels = [];
+    private List<FacilitatorStudentsListViewModel> _students = [];
 
     private string _searchString = string.Empty;
     private bool _sortByLastName;
+    private bool _letterFilterActive;
 
     private bool FilterStudents(FacilitatorStudentsListViewModel viewModel) =>
         string.IsNullOrWhiteSpace(_searchString)
@@ -31,7 +32,7 @@ public partial class FacilitatorStudentsList : AuthenticationRequiredComponentBa
     {
         await base.OnInitializedAsync();
         Loading = true;
-        _viewModels = await FacilitatorService.GetActiveSponsoredStudentsAsync(FonbecClaim.UserId);
+        _students = await FacilitatorService.GetActiveSponsoredStudentsAsync(FonbecClaim.UserId);
         Loading = false;
     }
 }
