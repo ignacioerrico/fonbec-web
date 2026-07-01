@@ -2,6 +2,7 @@
 @attribute [Authorize(Policy = nameof(FacilitatorStudentsList))]
 @inherits AuthenticationRequiredComponentBase
 
+@using Fonbec.Web.DataAccess.Entities.Enums
 @using Fonbec.Web.Logic.Models.Facilitators
 
 <PageHeader Title="Mis becarios" />
@@ -14,13 +15,13 @@
 </MudStack>
 
 <LoadingIndicator Loading="Loading"
-				  If="!_viewModels.Any()"
+				  If="!_students.Any()"
 				  ThenDisplay="No hay becarios." />
 
-@if (_viewModels.Any())
+@if (_students.Any())
 {
-	<MudDataGrid T="FacilitatorStudentsListViewModel"
-				 Items="_viewModels"
+	<MudDataGrid T="MisBecariosRowViewModel"
+				 Items="_students"
 				 Dense="true" Hover="true" Striped="true" Bordered="true"
 				 ReadOnly="true"
 				 QuickFilter="FilterStudents"
@@ -36,17 +37,49 @@
 						  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
 		</ToolBarContent>
 		<Columns>
-			<PropertyColumn Property="@(vm => _sortByLastName ? vm.StudentLastName : vm.StudentFirstName)" Title="Nombre">
+			<HierarchyColumn ButtonDisabledFunc="@(vm => false)" EnableHeaderToggle="true" />
+			<PropertyColumn Property="@(vm => _sortByLastName ? vm.StudentLastName : vm.StudentFirstName)" Title="Becario">
 				<CellTemplate>
 					<AuditableItemDisplay Id="@context.Item.StudentId"
 										  ItemName="@StudentFullName(context.Item)"
 										  IsActive="true"
-										  AuditableViewModel="@context.Item" />
+										  AuditableViewModel="null" />
 				</CellTemplate>
 			</PropertyColumn>
+			<TemplateColumn Title="Carta" Filterable="false" Sortable="false">
+				<CellTemplate />
+			</TemplateColumn>
+			<TemplateColumn Title="Calificaciones" Filterable="false" Sortable="false">
+				<CellTemplate />
+			</TemplateColumn>
+			<TemplateColumn Title="Otros" Filterable="false" Sortable="false">
+				<CellTemplate />
+			</TemplateColumn>
 		</Columns>
+		<ChildRowContent>
+			<MudPaper Class="pa-4" Elevation="0">
+				<MudStack Row="true" Spacing="4" AlignItems="AlignItems.Center">
+					<MudText Typo="Typo.subtitle2">Nivel Académico</MudText>
+					<MudChip T="string" Size="Size.Small" Color="Color.Primary">
+						@context.Item.EducationLevel.EnumToString()
+					</MudChip>
+				</MudStack>
+
+				<MudStack Row="true" Spacing="4" AlignItems="AlignItems.Center" Class="mt-2">
+					<MudText Typo="Typo.subtitle2">Padrinos Asignados (@context.Item.Sponsors.Count)</MudText>
+					<MudStack Row="true" Spacing="1">
+						@foreach (var sponsor in context.Item.Sponsors)
+						{
+							<MudChip T="string" Size="Size.Small" Variant="Variant.Outlined">
+								@sponsor.RecipientName
+							</MudChip>
+						}
+					</MudStack>
+				</MudStack>
+			</MudPaper>
+		</ChildRowContent>
 		<PagerContent>
-			<MudDataGridPager T="FacilitatorStudentsListViewModel" RowsPerPageString="Filas por página:" InfoFormat="{first_item}-{last_item} of {all_items}" />
+			<MudDataGridPager T="MisBecariosRowViewModel" RowsPerPageString="Filas por página:" InfoFormat="{first_item}-{last_item} of {all_items}" />
 		</PagerContent>
 	</MudDataGrid>
 }

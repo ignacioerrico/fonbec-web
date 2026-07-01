@@ -11,18 +11,18 @@ public partial class FacilitatorStudentsList : AuthenticationRequiredComponentBa
 {
     [Inject] public IFacilitatorService FacilitatorService { get; set; } = null!;
 
-    private List<FacilitatorStudentsListViewModel> _viewModels = [];
+    private List<MisBecariosRowViewModel> _students = [];
 
     private string _searchString = string.Empty;
     private bool _sortByLastName;
 
-    private bool FilterStudents(FacilitatorStudentsListViewModel viewModel) =>
+    private bool FilterStudents(MisBecariosRowViewModel viewModel) =>
         string.IsNullOrWhiteSpace(_searchString)
         || $"{viewModel.StudentFirstName} {viewModel.StudentLastName}".ContainsIgnoringAccents(_searchString)
         || (!string.IsNullOrEmpty(viewModel.StudentNickName)
             && $"{viewModel.StudentNickName} {viewModel.StudentLastName}".ContainsIgnoringAccents(_searchString));
 
-    private string StudentFullName(FacilitatorStudentsListViewModel viewModel) =>
+    private string StudentFullName(MisBecariosRowViewModel viewModel) =>
         _sortByLastName
             ? $"{viewModel.StudentLastName}, {viewModel.StudentFirstName}"
             : $"{viewModel.StudentFirstName} {viewModel.StudentLastName}";
@@ -31,7 +31,8 @@ public partial class FacilitatorStudentsList : AuthenticationRequiredComponentBa
     {
         await base.OnInitializedAsync();
         Loading = true;
-        _viewModels = await FacilitatorService.GetActiveSponsoredStudentsAsync(FonbecClaim.UserId);
+        var dashboard = await FacilitatorService.GetMisBecariosDashboardAsync(FonbecClaim.UserId);
+        _students = dashboard.Students;
         Loading = false;
     }
 }
