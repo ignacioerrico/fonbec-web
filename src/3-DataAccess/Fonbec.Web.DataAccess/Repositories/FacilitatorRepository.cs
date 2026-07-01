@@ -7,8 +7,6 @@ namespace Fonbec.Web.DataAccess.Repositories;
 public interface IFacilitatorRepository
 {
     Task<List<FacilitatorStudentsDataModel>> GetActiveSponsoredStudentsAsync(int facilitatorId);
-
-    Task<MisBecariosDashboardDataModel> GetMisBecariosDashboardAsync(int facilitatorId);
 }
 
 public class FacilitatorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : IFacilitatorRepository

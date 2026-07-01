@@ -7,8 +7,6 @@ namespace Fonbec.Web.Logic.Services;
 public interface IFacilitatorService
 {
     Task<List<FacilitatorStudentsListViewModel>> GetActiveSponsoredStudentsAsync(int facilitatorId);
-
-    Task<MisBecariosDashboardViewModel> GetMisBecariosDashboardAsync(int facilitatorId);
 }
 
 public class FacilitatorService(IFacilitatorRepository facilitatorRepository) : IFacilitatorService
