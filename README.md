@@ -1,9 +1,14 @@
 # FONBEC Web
+
 [![MIT License](https://img.shields.io/badge/license-MIT-green.svg)](https://github.com/ignacioerrico/fonbec-web/blob/main/LICENSE.txt)
 
-![Castellano](https://github.com/madebybowtie/FlagKit/raw/master/Assets/PNG/AR@2x.png?raw=true)
+![Problem overview](doc/img/problem-overview.jpg)
 
-**Castellano**
+## Problem statement
+
+![Argentina flag](https://github.com/madebybowtie/FlagKit/raw/master/Assets/PNG/AR@2x.png?raw=true)
+
+### Castellano
 
 [FONBEC](http://www.fonbec.org.ar/) es una fundación de Argentina que conecta
 dos mundos: el de chicos que quieren estudiar (_becarios_) y el de personas que
@@ -23,9 +28,9 @@ que no solo demanda tiempo, sino que también es proclive a errores humanos
 Uno de los objetivos de este proyecto es automatizar ese proceso para que cada
 persona que interviene pueda enfocarse en su rol.
 
-![English](https://github.com/madebybowtie/FlagKit/raw/master/Assets/PNG/US@2x.png?raw=true)
+![USA flag](https://github.com/madebybowtie/FlagKit/raw/master/Assets/PNG/US@2x.png?raw=true)
 
-**English**
+### English
 
 [FONBEC](http://www.fonbec.org.ar/) is a nonprofit organization based in
 Argentina that connects students who want to continue their education but lack
@@ -45,6 +50,8 @@ letters sent to the wrong recipient).
 
 A key objective of this project is to automate this process, enabling everyone
 involved to focus more effectively on their specific roles.
+
+----
 
 ## Setting up your development environment
 
