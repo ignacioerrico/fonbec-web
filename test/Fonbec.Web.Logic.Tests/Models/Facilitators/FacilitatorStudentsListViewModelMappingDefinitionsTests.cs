@@ -11,7 +11,7 @@ public class FacilitatorStudentsListViewModelMappingDefinitionsTests : MappingTe
     [Fact]
     public void Maps_All_Fields_Correctly_From_FacilitatorStudentsDataModel()
     {
-        var dataModel = new FacilitatorStudentsDataModel
+        var dataModel = new FacilitatorStudentsDataModel(Auditable)
         {
             StudentId = 10,
             StudentFirstName = "Jhon",
@@ -30,7 +30,7 @@ public class FacilitatorStudentsListViewModelMappingDefinitionsTests : MappingTe
     [Fact]
     public void Maps_Nullable_Fields_To_Empty_Or_Default()
     {
-        var dataModel = new FacilitatorStudentsDataModel
+        var dataModel = new FacilitatorStudentsDataModel(Auditable)
         {
             StudentNickName = null,
         };

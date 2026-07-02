@@ -18,11 +18,6 @@ public class FacilitatorRepository(IDbContextFactory<FonbecWebDbContext> dbConte
         var utcNow = DateTime.UtcNow;
 
         var students = await db.Students
-            .Include(s => s.Facilitator)
-            .Include(s => s.CreatedBy)
-            .Include(s => s.LastUpdatedBy)
-            .Include(s => s.DisabledBy)
-            .Include(s => s.ReenabledBy)
             .Where(s => s.FacilitatorId == facilitatorId
                         && s.IsActive
                         && !s.IsDeleted
@@ -44,13 +39,7 @@ public class FacilitatorRepository(IDbContextFactory<FonbecWebDbContext> dbConte
                 StudentFirstName = s.FirstName,
                 StudentLastName = s.LastName,
                 StudentNickName = s.NickName,
-                EducationLevel = s.SecondarySchoolStartYear == null && s.UniversityStartYear == null
-                    ? EducationLevel.PrimarySchool
-                    : s.UniversityStartYear != null && s.UniversityStartYear <= utcNow
-                        ? EducationLevel.University
-                        : s.SecondarySchoolStartYear != null && s.SecondarySchoolStartYear <= utcNow
-                            ? EducationLevel.SecondarySchool
-                            : EducationLevel.PrimarySchool,
+                EducationLevel = s.CurrentEducationLevel,
                 Sponsors = s.Sponsorships
                     .Where(sp => sp.IsActive
                                  && sp.StartDate <= utcNow
