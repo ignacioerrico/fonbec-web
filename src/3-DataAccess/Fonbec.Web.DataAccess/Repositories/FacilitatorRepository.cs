@@ -18,6 +18,11 @@ public class FacilitatorRepository(IDbContextFactory<FonbecWebDbContext> dbConte
         var utcNow = DateTime.UtcNow;
 
         var students = await db.Students
+            .Include(s => s.Facilitator)
+            .Include(s => s.CreatedBy)
+            .Include(s => s.LastUpdatedBy)
+            .Include(s => s.DisabledBy)
+            .Include(s => s.ReenabledBy)
             .Where(s => s.FacilitatorId == facilitatorId
                         && s.IsActive
                         && !s.IsDeleted
