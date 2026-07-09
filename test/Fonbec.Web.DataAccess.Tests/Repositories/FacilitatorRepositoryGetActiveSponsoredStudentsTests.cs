@@ -10,6 +10,7 @@ namespace Fonbec.Web.DataAccess.Tests.Repositories;
 public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
 {
     private const int FacilitatorId = 2;
+    private const int ChapterId = 1;
     private const int CompanyId = 40;
     private const int SponsorId = 20;
     private static readonly DateTime UtcNow = new(2026, 6, 15, 12, 0, 0, DateTimeKind.Utc);
@@ -244,8 +245,130 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
         students.Single().Sponsors.Should().ContainSingle(s => s.CompanyId == CompanyId && s.IsCompany);
     }
 
+    [Fact]
+    public async Task GetActiveSponsoredStudentsAsync_Excludes_Inactive_Sponsor_From_Sponsors_List()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedAsync(factory, studentId: 10);
+
+        await using (var db = await factory.CreateDbContextAsync())
+        {
+            db.Set<Sponsor>().Add(new Sponsor
+            {
+                Id = 21,
+                FirstName = "Padrino",
+                LastName = "Inactivo",
+                Email = "inactivo@fonbec.test",
+                Gender = Gender.Unknown,
+                ChapterId = ChapterId,
+                CreatedById = 1,
+                CreatedOnUtc = UtcNow,
+            });
+
+            db.Set<Sponsorship>().Add(new Sponsorship
+            {
+                Id = 31,
+                StudentId = 10,
+                SponsorId = 21,
+                StartDate = UtcNow.AddMonths(-1),
+                EndDate = UtcNow.AddMonths(1),
+                CreatedById = 1,
+                CreatedOnUtc = UtcNow,
+            });
+
+            await db.SaveChangesAsync();
+
+            var inactiveSponsor = await db.Set<Sponsor>().SingleAsync(s => s.Id == 21);
+            inactiveSponsor.DisabledById = 1;
+            await db.SaveChangesAsync();
+        }
+
+        var repository = new FacilitatorRepository(factory);
+
+        var students = await repository.GetActiveSponsoredStudentsAsync(FacilitatorId);
+
+        var student = students.Single();
+        student.Sponsors.Should().ContainSingle(s => s.SponsorId == SponsorId);
+        student.Sponsors.Should().NotContain(s => s.SponsorId == 21);
+    }
+
+    [Fact]
+    public async Task GetCurrentPlanForFacilitatorAsync_Returns_Most_Recently_Started_Plan()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedAsync(factory, studentId: 10);
+        await SeedPlannedDeliveryAsync(factory, planId: 100, chapterId: ChapterId, startsOn: UtcNow.AddMonths(-2));
+        await SeedPlannedDeliveryAsync(factory, planId: 101, chapterId: ChapterId, startsOn: UtcNow.AddMonths(-1));
+        var repository = new FacilitatorRepository(factory);
+
+        var plan = await repository.GetCurrentPlanForFacilitatorAsync(FacilitatorId);
+
+        plan.Should().NotBeNull();
+        plan!.PlanId.Should().Be(101);
+    }
+
+    [Fact]
+    public async Task GetCurrentPlanForFacilitatorAsync_Ignores_Future_Plan()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedAsync(factory, studentId: 10);
+        await SeedPlannedDeliveryAsync(factory, planId: 100, chapterId: ChapterId, startsOn: UtcNow.AddMonths(-1));
+        await SeedPlannedDeliveryAsync(factory, planId: 101, chapterId: ChapterId, startsOn: UtcNow.AddMonths(2));
+        var repository = new FacilitatorRepository(factory);
+
+        var plan = await repository.GetCurrentPlanForFacilitatorAsync(FacilitatorId);
+
+        plan!.PlanId.Should().Be(100);
+    }
+
+    [Fact]
+    public async Task GetCurrentPlanForFacilitatorAsync_Ignores_Plan_Of_Other_Chapter()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedAsync(factory, studentId: 10);
+        await SeedPlannedDeliveryAsync(factory, planId: 100, chapterId: 999, startsOn: UtcNow.AddMonths(-1));
+        var repository = new FacilitatorRepository(factory);
+
+        var plan = await repository.GetCurrentPlanForFacilitatorAsync(FacilitatorId);
+
+        plan.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetCurrentPlanForFacilitatorAsync_Returns_Null_When_No_Plan()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedAsync(factory, studentId: 10);
+        var repository = new FacilitatorRepository(factory);
+
+        var plan = await repository.GetCurrentPlanForFacilitatorAsync(FacilitatorId);
+
+        plan.Should().BeNull();
+    }
+
     private static TestDbContextFactory CreateDbContextFactory() =>
         new(Guid.NewGuid().ToString());
+
+    private static async Task SeedPlannedDeliveryAsync(
+        TestDbContextFactory factory,
+        int planId,
+        int chapterId,
+        DateTime startsOn)
+    {
+        await using var db = await factory.CreateDbContextAsync();
+
+        db.Set<PlannedDelivery>().Add(new PlannedDelivery
+        {
+            Id = planId,
+            ChapterId = chapterId,
+            StartsOn = startsOn,
+            Completed = false,
+            CreatedById = 1,
+            CreatedOnUtc = UtcNow,
+        });
+
+        await db.SaveChangesAsync();
+    }
 
     private static async Task SeedTwoStudentsAsync(TestDbContextFactory factory)
     {
@@ -332,6 +455,7 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
                     NormalizedEmail = "FACILITATOR@FONBEC.TEST",
                     FirstName = "Mediador",
                     LastName = "Uno",
+                    ChapterId = ChapterId,
                     SecurityStamp = Guid.NewGuid().ToString(),
                 });
         }

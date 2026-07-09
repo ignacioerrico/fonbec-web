@@ -6,14 +6,21 @@ namespace Fonbec.Web.Logic.Services;
 
 public interface IFacilitatorService
 {
-    Task<List<FacilitatorStudentsListViewModel>> GetActiveSponsoredStudentsAsync(int facilitatorId);
+    Task<StudentsDashboardViewModel> GetStudentsDashboardAsync(int facilitatorId);
 }
 
 public class FacilitatorService(IFacilitatorRepository facilitatorRepository) : IFacilitatorService
 {
-    public async Task<List<FacilitatorStudentsListViewModel>> GetActiveSponsoredStudentsAsync(int facilitatorId)
+    public async Task<StudentsDashboardViewModel> GetStudentsDashboardAsync(int facilitatorId)
     {
         var studentsDataModel = await facilitatorRepository.GetActiveSponsoredStudentsAsync(facilitatorId);
-        return studentsDataModel.Adapt<List<FacilitatorStudentsListViewModel>>();
+        var currentPlan = await facilitatorRepository.GetCurrentPlanForFacilitatorAsync(facilitatorId);
+
+        return new StudentsDashboardViewModel
+        {
+            CurrentPlanId = currentPlan?.PlanId,
+            CurrentPlanStartsOn = currentPlan?.StartsOn,
+            Students = studentsDataModel.Adapt<List<FacilitatorStudentsListViewModel>>(),
+        };
     }
 }

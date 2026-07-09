@@ -1,4 +1,5 @@
 using Fonbec.Web.DataAccess.Constants;
+using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models.Facilitators;
 using Fonbec.Web.Logic.Services;
@@ -9,13 +10,31 @@ namespace Fonbec.Web.Ui.Components.Pages.Facilitators;
 [PageMetadata(nameof(FacilitatorStudentsList), "Mis becarios", [FonbecRole.Uploader])]
 public partial class FacilitatorStudentsList : AuthenticationRequiredComponentBase
 {
-    [Inject] public IFacilitatorService FacilitatorService { get; set; } = null!;
-
-    private List<FacilitatorStudentsListViewModel> _students = [];
+    private StudentsDashboardViewModel _dashboard = new();
 
     private string _searchString = string.Empty;
     private bool _sortByLastName;
+
+    // Bound to the "Solo carta pendiente o rechazada" toggle. The filtering logic itself
+    // lives in the Carta column (US 107); the shell only exposes the toggle state.
     private bool _letterFilterActive;
+
+    [Inject]
+    public IFacilitatorService FacilitatorService { get; set; } = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        Loading = true;
+        _dashboard = await FacilitatorService.GetStudentsDashboardAsync(FonbecClaim.UserId);
+        Loading = false;
+    }
+
+    private string LetterColumnTitle =>
+        _dashboard.CurrentPlanLabel is { } label
+            ? $"Carta {label}"
+            : "Carta";
 
     private bool FilterStudents(FacilitatorStudentsListViewModel viewModel) =>
         string.IsNullOrWhiteSpace(_searchString)
@@ -28,11 +47,8 @@ public partial class FacilitatorStudentsList : AuthenticationRequiredComponentBa
             ? $"{viewModel.StudentLastName}, {viewModel.StudentFirstName}"
             : $"{viewModel.StudentFirstName} {viewModel.StudentLastName}";
 
-    protected override async Task OnInitializedAsync()
-    {
-        await base.OnInitializedAsync();
-        Loading = true;
-        _students = await FacilitatorService.GetActiveSponsoredStudentsAsync(FonbecClaim.UserId);
-        Loading = false;
-    }
+    private static string ReportCardUploadLabel(FacilitatorStudentsListViewModel viewModel) =>
+        viewModel.EducationLevel == EducationLevel.University
+            ? "Subir libreta universitaria"
+            : "Subir boletín";
 }

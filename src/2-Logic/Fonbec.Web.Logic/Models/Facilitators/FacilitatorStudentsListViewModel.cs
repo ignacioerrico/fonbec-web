@@ -1,9 +1,39 @@
+using System.Globalization;
 using Fonbec.Web.DataAccess.DataModels.Facilitators;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.Logic.ExtensionMethods;
 using Mapster;
 
 namespace Fonbec.Web.Logic.Models.Facilitators;
+
+public class StudentsDashboardViewModel
+{
+    private static readonly CultureInfo EsAr = new("es-AR");
+
+    public int? CurrentPlanId { get; set; }
+
+    public DateTime? CurrentPlanStartsOn { get; set; }
+
+    public List<FacilitatorStudentsListViewModel> Students { get; set; } = [];
+
+    /// <summary>
+    /// The current plan period rendered for the "Carta" column header, e.g. "Jun 2026".
+    /// Null when the facilitator's chapter has no active plan.
+    /// </summary>
+    public string? CurrentPlanLabel
+    {
+        get
+        {
+            if (CurrentPlanStartsOn is not { } startsOn)
+            {
+                return null;
+            }
+
+            var month = startsOn.ToString("MMM", EsAr).Replace(".", string.Empty);
+            return $"{EsAr.TextInfo.ToTitleCase(month)} {startsOn.Year}";
+        }
+    }
+}
 
 public class FacilitatorStudentsListViewModel : AuditableViewModel, IDetectChanges<FacilitatorStudentsListViewModel>
 {
@@ -13,7 +43,7 @@ public class FacilitatorStudentsListViewModel : AuditableViewModel, IDetectChang
 
     public string StudentLastName { get; set; } = null!;
 
-    public string StudentNickName { get; set; } = string.Empty;
+    public string? StudentNickName { get; set; }
 
     public EducationLevel EducationLevel { get; set; }
 
@@ -22,13 +52,15 @@ public class FacilitatorStudentsListViewModel : AuditableViewModel, IDetectChang
     public bool IsIdenticalTo(FacilitatorStudentsListViewModel other) =>
         StudentFirstName == other.StudentFirstName.NormalizeText()
         && StudentLastName == other.StudentLastName.NormalizeText()
-        && StudentNickName == other.StudentNickName.NormalizeText()
+        && (StudentNickName?.NormalizeText() ?? string.Empty) == (other.StudentNickName?.NormalizeText() ?? string.Empty)
         && EducationLevel == other.EducationLevel
         && Sponsors.Count == other.Sponsors.Count
         && Sponsors.All(s => other.Sponsors.Any(os =>
             os.SponsorshipId == s.SponsorshipId
             && os.SponsorId == s.SponsorId
-            && os.CompanyId == s.CompanyId));
+            && os.CompanyId == s.CompanyId
+            && os.IsCompany == s.IsCompany
+            && os.RecipientName == s.RecipientName));
 }
 
 public class DashboardSponsorViewModel

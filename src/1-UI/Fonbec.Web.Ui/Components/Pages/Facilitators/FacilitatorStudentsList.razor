@@ -7,27 +7,27 @@
 
 <PageHeader Title="Mis becarios" />
 
-<MudStack StretchItems="StretchItems.Middle" Row="true">
-	<MudSpacer />
-	<MudSwitch @bind-Value="_letterFilterActive" LabelPlacement="Placement.Left">
+<MudStack Row="true" AlignItems="AlignItems.Center">
+	<MudSwitch @bind-Value="_letterFilterActive" LabelPlacement="Placement.End" Color="Color.Primary">
 		Solo carta pendiente o rechazada
+	</MudSwitch>
+	<MudSpacer />
+	<MudSwitch @bind-Value="_sortByLastName" LabelPlacement="Placement.Left">
+		@(_sortByLastName ? "Apellido, Nombre" : "Nombre Apellido")
 	</MudSwitch>
 </MudStack>
 
 <LoadingIndicator Loading="Loading"
-				  If="!_students.Any()"
+				  If="!_dashboard.Students.Any()"
 				  ThenDisplay="No hay becarios." />
 
-@if (_students.Any())
+@if (_dashboard.Students.Any())
 {
 	<MudDataGrid T="FacilitatorStudentsListViewModel"
-				 Items="_students"
+				 Items="_dashboard.Students"
 				 Dense="true" Hover="true" Striped="true" Bordered="true"
 				 ReadOnly="true"
 				 QuickFilter="FilterStudents"
-				 Filterable="true"
-				 FilterMode="DataGridFilterMode.ColumnFilterRow"
-				 FilterCaseSensitivity="DataGridFilterCaseSensitivity.CaseInsensitive"
 				 SortMode="SortMode.Multiple"
 				 Class="mt-4">
 		<ToolBarContent>
@@ -37,16 +37,15 @@
 						  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
 		</ToolBarContent>
 		<Columns>
-			<HierarchyColumn ButtonDisabledFunc="@(vm => false)" EnableHeaderToggle="true" />
+			<HierarchyColumn ButtonDisabledFunc="@(vm => false)" EnableHeaderToggle="false" />
 			<PropertyColumn Property="@(vm => _sortByLastName ? vm.StudentLastName : vm.StudentFirstName)" Title="Becario">
 				<CellTemplate>
-					<AuditableItemDisplay Id="@context.Item.StudentId"
-										  ItemName="@StudentFullName(context.Item)"
-										  IsActive="true"
-										  AuditableViewModel="@context.Item" />
+					<MudText Color="Color.Primary">
+						<strong>@StudentFullName(context.Item)</strong>
+					</MudText>
 				</CellTemplate>
 			</PropertyColumn>
-			<TemplateColumn Title="Carta Jun 2026" Filterable="false" Sortable="false">
+			<TemplateColumn Title="@LetterColumnTitle" Filterable="false" Sortable="false">
 				<CellTemplate>
 				</CellTemplate>
 			</TemplateColumn>
@@ -71,7 +70,6 @@
 							@context.Item.EducationLevel.EnumToString()
 						</MudChip>
 					</MudStack>
-
 					<MudStack Spacing="1">
 						<MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
 							<MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Small" />
@@ -96,9 +94,9 @@
 						Subir carta
 					</MudButton>
 					<MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Description" Size="Size.Small">
-						Subir libreta universitaria
+						@ReportCardUploadLabel(context.Item)
 					</MudButton>
-					<MudButton Variant="Variant.Filled" Style="background-color: #e91e63; color: white;" StartIcon="@Icons.Material.Filled.Upload" Size="Size.Small">
+					<MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Upload" Size="Size.Small">
 						Subir otro documento
 					</MudButton>
 				</MudStack>
