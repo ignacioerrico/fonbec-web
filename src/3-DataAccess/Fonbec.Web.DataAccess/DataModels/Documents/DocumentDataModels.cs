@@ -79,3 +79,27 @@ public class DocumentDescriptionOptionDataModel
     public string Text { get; init; } = string.Empty;
     public int SortOrder { get; init; }
 }
+
+public class BlobPathDataModel
+{
+    public string StoragePath { get; init; } = string.Empty;
+    public string MimeType { get; init; } = string.Empty;
+    public long? FileSizeBytes { get; init; }
+    public byte[]? Sha256 { get; init; }
+}
+
+public class DocumentBlobContextDataModel
+{
+    public long DocumentId { get; init; }
+    public DocumentType DocumentType { get; init; }
+    public int ChapterId { get; init; }
+    public int StudentId { get; init; }
+    public int? SponsorId { get; init; }
+    public int? PlanId { get; init; }
+    public int UploadedById { get; init; }
+    public DigitalImprovementStatus DigitalImprovementStatus { get; init; }
+    public int? ImprovementLockedById { get; init; }
+    public int? ReviewLockedById { get; init; }
+    public BlobPathDataModel? ActiveBlob { get; init; }
+    public BlobPathDataModel? OriginalBlob { get; init; }
+}

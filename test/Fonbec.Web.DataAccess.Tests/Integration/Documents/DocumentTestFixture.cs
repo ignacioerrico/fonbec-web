@@ -1,14 +1,20 @@
+using System.Security.Cryptography;
+using Fonbec.Web.DataAccess.DataModels.Users.Output;
 using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Authorization;
 using Fonbec.Web.Logic.Constants;
+using Fonbec.Web.Logic.Models.Documents;
 using Fonbec.Web.Logic.Models.Documents.Input;
+using Fonbec.Web.Logic.Options;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Logic.Util;
 using Mapster;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging.Abstractions;
+using Microsoft.Extensions.Options;
 using NSubstitute;
 
 namespace Fonbec.Web.DataAccess.Tests.Integration.Documents;
@@ -32,6 +38,13 @@ internal sealed class DocumentTestFixture
     public IDocumentRepository DocumentRepository { get; private set; } = null!;
     public IDocumentService DocumentService { get; private set; } = null!;
     public IEmailMessageSender EmailSender { get; private set; } = null!;
+    public IBlobStorageService BlobStorageService { get; private set; } = null!;
+
+    private readonly Dictionary<string, (byte[] Bytes, string MimeType)> _blobs = new();
+
+    public IReadOnlyCollection<string> UploadedBlobNames => _blobs.Keys.ToList();
+
+    public bool BlobExists(string blobName) => _blobs.ContainsKey(blobName);
 
     public async Task InitializeAsync(bool includeActivePlan = true)
     {
@@ -54,20 +67,112 @@ internal sealed class DocumentTestFixture
         {
             new(DocumentPermission.DigitalImprovement, "Digital improvement", ["Reviewer", "Manager"]),
         };
+
+        var userRepository = CreateUserRepositorySubstitute();
         var userService = new UserService(
-            Substitute.For<IUserRepository>(),
+            userRepository,
             Substitute.For<IPasswordGeneratorWrapper>(),
             EmailSender,
             pages);
 
+        BlobStorageService = CreateBlobStorageSubstitute();
+
+        var blobOptions = Microsoft.Extensions.Options.Options.Create(new BlobStorageOptions());
+
         TypeAdapterConfig.GlobalSettings.Scan(typeof(DocumentService).Assembly);
-        DocumentService = new DocumentService(DocumentRepository, notificationService, userService);
+        DocumentService = new DocumentService(
+            DocumentRepository,
+            notificationService,
+            userService,
+            BlobStorageService,
+            blobOptions,
+            NullLogger<DocumentService>.Instance);
+    }
+
+    private IUserRepository CreateUserRepositorySubstitute()
+    {
+        var userRepository = Substitute.For<IUserRepository>();
+
+        ConfigureUser(UploaderId, "Uploader", ChapterId);
+        ConfigureUser(ReviewerId, "Reviewer", chapterId: null);
+        ConfigureUser(ManagerId, "Manager", ChapterId);
+        ConfigureUser(OtherUploaderId, "Uploader", ChapterId);
+
+        // No page denials by default, so Reviewer/Manager have the DigitalImprovement permission.
+        userRepository.GetUserClaim(Arg.Any<string>(), Arg.Any<string>())
+            .Returns((string?)null);
+
+        return userRepository;
+
+        void ConfigureUser(int userId, string role, int? chapterId) =>
+            userRepository.GetUserAsync(userId).Returns(new GetUserOutputDataModel
+            {
+                ChapterId = chapterId,
+                UserFullName = $"User {userId}",
+                UserRole = role,
+            });
+    }
+
+    private IBlobStorageService CreateBlobStorageSubstitute()
+    {
+        var blobStorage = Substitute.For<IBlobStorageService>();
+
+        blobStorage.UploadAsync(Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var stream = callInfo.ArgAt<Stream>(0);
+                var blobName = callInfo.ArgAt<string>(1);
+                var mimeType = callInfo.ArgAt<string>(2);
+
+                using var ms = new MemoryStream();
+                stream.CopyTo(ms);
+                var bytes = ms.ToArray();
+                _blobs[blobName] = (bytes, mimeType);
+
+                return new UploadBlobResult
+                {
+                    BlobName = blobName,
+                    MimeType = mimeType,
+                    FileSizeBytes = bytes.LongLength,
+                    Sha256 = SHA256.HashData(bytes),
+                };
+            });
+
+        blobStorage.DownloadAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                var blobName = callInfo.ArgAt<string>(0);
+                if (!_blobs.TryGetValue(blobName, out var blob))
+                {
+                    return (DownloadBlobResult?)null;
+                }
+
+                return new DownloadBlobResult
+                {
+                    Content = new MemoryStream(blob.Bytes),
+                    MimeType = blob.MimeType,
+                    FileSizeBytes = blob.Bytes.LongLength,
+                };
+            });
+
+        blobStorage.DeleteAsync(Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo =>
+            {
+                _blobs.Remove(callInfo.ArgAt<string>(0));
+                return Task.CompletedTask;
+            });
+
+        return blobStorage;
     }
 
     public CreateDocumentUserContext UploaderContext => new(UploaderId, "Uploader", ChapterId, null);
 
     public CreateDocumentUserContext OtherUploaderUserContext =>
         new(OtherUploaderId, "Uploader", ChapterId, null);
+
+    public CreateDocumentUserContext ManagerContext => new(ManagerId, "Manager", ChapterId, null);
+
+    public CreateDocumentUserContext AdminContext => new(UploaderId, "Admin", ChapterId, null);
 
     public async Task<Document> GetDocumentAsync(long documentId)
     {

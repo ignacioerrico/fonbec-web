@@ -6,6 +6,8 @@ namespace Fonbec.Web.Logic.Models.Users.Output;
 
 public class GetUserOutputModel
 {
+    public int? ChapterId { get; set; }
+
     public string UserFullName { get; set; } = null!;
 
     public string? UserNickName { get; set; }
@@ -19,6 +21,7 @@ public class GetUserOutputModelMappingDefinitions : IRegister
     public void Register(TypeAdapterConfig config)
     {
         config.NewConfig<GetUserOutputDataModel, GetUserOutputModel>()
+            .Map(dest => dest.ChapterId, src => src.ChapterId)
             .Map(dest => dest.UserFullName, src => src.UserFullName)
             .Map(dest => dest.UserNickName, src => src.UserNickName)
             .Map(dest => dest.UserRole, src => src.UserRole)

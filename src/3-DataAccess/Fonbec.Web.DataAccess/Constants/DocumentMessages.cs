@@ -70,4 +70,17 @@ public static class DocumentMessages
 
     public const string DocumentTypeMismatch =
         "El tipo de documento no coincide con la operación solicitada.";
+
+    public const string InvalidMimeType = "El tipo de archivo no está permitido.";
+
+    public const string FileTooLarge = "El archivo supera el tamaño máximo permitido.";
+
+    public const string ImprovedBlobMustBeImage =
+        "La versión mejorada debe ser una imagen (JPG o PNG).";
+
+    public const string DocumentNotEligibleForImprovement =
+        "El documento no está en un estado válido para enviar una mejora digital.";
+
+    public const string DocumentSaveFailed =
+        "No se pudo guardar el documento. Intente nuevamente.";
 }
