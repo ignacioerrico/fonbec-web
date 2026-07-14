@@ -1,8 +1,10 @@
 ﻿using Azure.Communication.Email;
+using Azure.Storage.Blobs;
 using Fonbec.Web.DataAccess;
 using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Authorization;
+using Fonbec.Web.Logic.Options;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Logic.Util;
 using Fonbec.Web.Ui.Account.Communication;
@@ -23,6 +25,9 @@ public static class ConfigureServices
     {
         services.Configure<AdminUserOptions>(
             configuration.GetSection(AdminUserOptions.SectionName));
+
+        services.Configure<BlobStorageOptions>(
+            configuration.GetSection(BlobStorageOptions.SectionName));
     }
 
     public static void RegisterServices(IServiceCollection services, IConfiguration configuration)
@@ -48,6 +53,12 @@ public static class ConfigureServices
         var communicationServiceConnectionString =
             configuration.GetConnectionString("CommunicationServiceConnectionString");
         services.AddSingleton(_ => new EmailClient(communicationServiceConnectionString));
+
+        var blobStorageConnectionString =
+            configuration.GetConnectionString("BlobStorageConnectionString")
+            ?? throw new InvalidOperationException("Connection string 'BlobStorageConnectionString' not found.");
+        services.AddSingleton(_ => new BlobServiceClient(blobStorageConnectionString));
+        services.AddScoped<IBlobStorageService, BlobStorageService>();
 
         services.AddScoped<IChapterService, ChapterService>();
         services.AddScoped<IUserService, UserService>();

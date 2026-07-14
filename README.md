@@ -142,6 +142,57 @@ registration for `IEmailSender<FonbecWebUser>` (but you'll have to get back
 code in the `RegisterConfirmation.razor`; check git history for that, for
 example in commit 934513470a789143bd45f295c400a4e82852ae18).
 
+### Document storage (Azure Blob Storage)
+
+Document files (letters, report cards and other documents) are stored in Azure
+Blob Storage. The storage account is accessed through a `BlobServiceClient`,
+which requires a connection string. Add it to the user secrets:
+
+```json
+"ConnectionStrings": {
+  "BlobStorageConnectionString": ""
+}
+```
+
+For local development you can run the [Azurite storage
+emulator](https://learn.microsoft.com/azure/storage/common/storage-use-azurite)
+and use the well-known development connection string:
+
+```json
+"ConnectionStrings": {
+  "BlobStorageConnectionString": "UseDevelopmentStorage=true"
+}
+```
+
+Start Azurite (for example `azurite --silent`, or via the _Azurite_ Visual
+Studio Code extension). The container is created automatically on the first
+upload, so no manual setup is required.
+
+**Don't commit the connection string.** For production, ask a colleague for the
+connection string to the Azure Storage account.
+
+The remaining blob-storage settings live in `appsettings.json` (they contain no
+secrets) and can be overridden per environment:
+
+```json
+"BlobStorage": {
+  "ContainerName": "documents",
+  "MaxFileSizeBytes": 10485760,
+  "AllowedMimeTypes": [
+    "text/plain",
+    "application/pdf",
+    "image/jpeg",
+    "image/png"
+  ]
+}
+```
+
+There is an integration test (`BlobStorageServiceAzuriteTests`) that exercises a
+real upload/download/delete round-trip against Azurite. It is **skipped
+automatically** when Azurite is not reachable, so it will not fail a build that
+runs without the emulator. Start Azurite before running the test suite to have
+it execute.
+
 ### Password requirements
 
 Password requirements must be configured in settings.  This is normally part of

@@ -33,6 +33,7 @@ public interface IDocumentRepository
     Task<List<DocumentShareNotificationDataModel>> GetUnnotifiedSharesAsync(long documentId);
     Task MarkShareNotifiedAsync(long documentShareId, DateTime notifiedOn);
     Task<Document?> GetDocumentByIdAsync(long documentId);
+    Task<DocumentBlobContextDataModel?> GetDocumentBlobContextAsync(long documentId);
     Task<List<int>> GetActiveSponsorIdsForStudentAsync(int studentId);
     Task<List<DocumentDescriptionOptionDataModel>> GetDescriptionOptionsAsync(int chapterId, DocumentType documentType);
 }
@@ -612,6 +613,50 @@ public class DocumentRepository(IDbContextFactory<FonbecWebDbContext> dbContext)
             .AsNoTracking()
             .FirstOrDefaultAsync(d => d.DocumentId == documentId);
     }
+
+    public async Task<DocumentBlobContextDataModel?> GetDocumentBlobContextAsync(long documentId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var document = await db.Documents
+            .AsNoTracking()
+            .Include(d => d.BlobPath)
+            .Include(d => d.OriginalBlobPath)
+            .Include(d => d.QueueItem)
+            .FirstOrDefaultAsync(d => d.DocumentId == documentId);
+
+        if (document is null)
+        {
+            return null;
+        }
+
+        return new DocumentBlobContextDataModel
+        {
+            DocumentId = document.DocumentId,
+            DocumentType = document.DocumentType,
+            ChapterId = document.ChapterId,
+            StudentId = document.StudentId,
+            SponsorId = document.SponsorId,
+            PlanId = (document as Letter)?.PlanId,
+            UploadedById = document.UploadedById,
+            DigitalImprovementStatus = document.DigitalImprovementStatus,
+            ImprovementLockedById = document.ImprovementLockedById,
+            ReviewLockedById = document.QueueItem?.ReviewLockedById,
+            ActiveBlob = ToBlobPathDataModel(document.BlobPath),
+            OriginalBlob = ToBlobPathDataModel(document.OriginalBlobPath),
+        };
+    }
+
+    private static BlobPathDataModel? ToBlobPathDataModel(BlobPath? blobPath) =>
+        blobPath is null
+            ? null
+            : new BlobPathDataModel
+            {
+                StoragePath = blobPath.StoragePath,
+                MimeType = blobPath.MimeType,
+                FileSizeBytes = blobPath.FileSizeBytes,
+                Sha256 = blobPath.Sha256,
+            };
 
     public async Task<List<int>> GetActiveSponsorIdsForStudentAsync(int studentId)
     {
