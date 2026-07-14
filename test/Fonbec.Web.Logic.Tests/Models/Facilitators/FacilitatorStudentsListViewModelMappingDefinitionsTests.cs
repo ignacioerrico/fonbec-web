@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Fonbec.Web.DataAccess.DataModels.Facilitators;
+using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.Logic.Models.Facilitators;
 using Mapster;
 
@@ -16,7 +17,6 @@ public class FacilitatorStudentsListViewModelMappingDefinitionsTests : MappingTe
             StudentFirstName = "Jhon",
             StudentLastName = "Cena",
             StudentNickName = "The Champ",
-            Notes = "Some notes",
         };
 
         var viewModel = dataModel.Adapt<FacilitatorStudentsListViewModel>(Config);
@@ -25,7 +25,6 @@ public class FacilitatorStudentsListViewModelMappingDefinitionsTests : MappingTe
         viewModel.StudentFirstName.Should().Be("Jhon");
         viewModel.StudentLastName.Should().Be("Cena");
         viewModel.StudentNickName.Should().Be("The Champ");
-        viewModel.Notes.Should().Be("Some notes");
     }
 
     [Fact]
@@ -33,37 +32,114 @@ public class FacilitatorStudentsListViewModelMappingDefinitionsTests : MappingTe
     {
         var dataModel = new FacilitatorStudentsDataModel(Auditable)
         {
-            Notes = null,
             StudentNickName = null,
         };
 
         var viewModel = dataModel.Adapt<FacilitatorStudentsListViewModel>(Config);
 
-        viewModel.Notes.Should().BeEmpty();
         viewModel.StudentNickName.Should().BeNull();
     }
 
     [Fact]
-    public void IsIdenticalTo_Compares_FirstName_LastName_Notes()
+    public void IsIdenticalTo_Returns_True_When_All_Fields_Match()
     {
-        var studentsListViewModel1 = new FacilitatorStudentsListViewModel
+        var vm1 = new FacilitatorStudentsListViewModel
         {
-            StudentId = 121,
             StudentFirstName = "First Name",
             StudentLastName = "Last Name",
-            Notes = "Notes"
+            StudentNickName = "Nick",
+            EducationLevel = EducationLevel.SecondarySchool,
+            Sponsors =
+            [
+                new DashboardSponsorViewModel { SponsorshipId = 1, SponsorId = 10, CompanyId = null, RecipientName = "Sponsor A", IsCompany = false },
+            ],
         };
 
-        var studentsListViewModel2 = new FacilitatorStudentsListViewModel
+        var vm2 = new FacilitatorStudentsListViewModel
         {
-            StudentId = 121,
             StudentFirstName = "First Name",
             StudentLastName = "Last Name",
-            Notes = "Notes"
+            StudentNickName = "Nick",
+            EducationLevel = EducationLevel.SecondarySchool,
+            Sponsors =
+            [
+                new DashboardSponsorViewModel { SponsorshipId = 1, SponsorId = 10, CompanyId = null, RecipientName = "Sponsor A", IsCompany = false },
+            ],
         };
 
-        var result = studentsListViewModel1.IsIdenticalTo(studentsListViewModel2);
+        vm1.IsIdenticalTo(vm2).Should().BeTrue();
+    }
 
-        result.Should().BeTrue();
+    [Fact]
+    public void IsIdenticalTo_Returns_False_When_EducationLevel_Differs()
+    {
+        var vm1 = new FacilitatorStudentsListViewModel
+        {
+            StudentFirstName = "First Name",
+            StudentLastName = "Last Name",
+            EducationLevel = EducationLevel.PrimarySchool,
+        };
+
+        var vm2 = new FacilitatorStudentsListViewModel
+        {
+            StudentFirstName = "First Name",
+            StudentLastName = "Last Name",
+            EducationLevel = EducationLevel.University,
+        };
+
+        vm1.IsIdenticalTo(vm2).Should().BeFalse();
+    }
+
+    [Fact]
+    public void IsIdenticalTo_Returns_False_When_Sponsors_Differ()
+    {
+        var vm1 = new FacilitatorStudentsListViewModel
+        {
+            StudentFirstName = "First Name",
+            StudentLastName = "Last Name",
+            Sponsors =
+            [
+                new DashboardSponsorViewModel { SponsorshipId = 1, SponsorId = 10 },
+            ],
+        };
+
+        var vm2 = new FacilitatorStudentsListViewModel
+        {
+            StudentFirstName = "First Name",
+            StudentLastName = "Last Name",
+            Sponsors =
+            [
+                new DashboardSponsorViewModel { SponsorshipId = 2, SponsorId = 20 },
+            ],
+        };
+
+        vm1.IsIdenticalTo(vm2).Should().BeFalse();
+    }
+
+    [Fact]
+    public void IsIdenticalTo_Returns_False_When_Sponsor_Count_Differs()
+    {
+        var vm1 = new FacilitatorStudentsListViewModel
+        {
+            StudentFirstName = "First Name",
+            StudentLastName = "Last Name",
+            Sponsors =
+            [
+                new DashboardSponsorViewModel { SponsorshipId = 1, SponsorId = 10 },
+            ],
+        };
+
+        var vm2 = new FacilitatorStudentsListViewModel
+        {
+            StudentFirstName = "First Name",
+            StudentLastName = "Last Name",
+            Sponsors =
+            [
+                new DashboardSponsorViewModel { SponsorshipId = 1, SponsorId = 10 },
+                new DashboardSponsorViewModel { SponsorshipId = 2, SponsorId = 20 },
+            ],
+        };
+
+        vm1.IsIdenticalTo(vm2).Should().BeFalse();
     }
 }

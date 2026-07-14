@@ -1,8 +1,39 @@
+using System.Globalization;
 using Fonbec.Web.DataAccess.DataModels.Facilitators;
+using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.Logic.ExtensionMethods;
 using Mapster;
 
 namespace Fonbec.Web.Logic.Models.Facilitators;
+
+public class StudentsDashboardViewModel
+{
+    private static readonly CultureInfo EsAr = new("es-AR");
+
+    public int? CurrentPlanId { get; set; }
+
+    public DateTime? CurrentPlanStartsOn { get; set; }
+
+    public List<FacilitatorStudentsListViewModel> Students { get; set; } = [];
+
+    /// <summary>
+    /// The current plan period rendered for the "Carta" column header, e.g. "Jun 2026".
+    /// Null when the facilitator's chapter has no active plan.
+    /// </summary>
+    public string? CurrentPlanLabel
+    {
+        get
+        {
+            if (CurrentPlanStartsOn is not { } startsOn)
+            {
+                return null;
+            }
+
+            var month = startsOn.ToString("MMM", EsAr).Replace(".", string.Empty);
+            return $"{EsAr.TextInfo.ToTitleCase(month)} {startsOn.Year}";
+        }
+    }
+}
 
 public class FacilitatorStudentsListViewModel : AuditableViewModel, IDetectChanges<FacilitatorStudentsListViewModel>
 {
@@ -14,9 +45,35 @@ public class FacilitatorStudentsListViewModel : AuditableViewModel, IDetectChang
 
     public string? StudentNickName { get; set; }
 
+    public EducationLevel EducationLevel { get; set; }
+
+    public List<DashboardSponsorViewModel> Sponsors { get; set; } = [];
+
     public bool IsIdenticalTo(FacilitatorStudentsListViewModel other) =>
         StudentFirstName == other.StudentFirstName.NormalizeText()
-        && StudentLastName == other.StudentLastName.NormalizeText();
+        && StudentLastName == other.StudentLastName.NormalizeText()
+        && (StudentNickName?.NormalizeText() ?? string.Empty) == (other.StudentNickName?.NormalizeText() ?? string.Empty)
+        && EducationLevel == other.EducationLevel
+        && Sponsors.Count == other.Sponsors.Count
+        && Sponsors.All(s => other.Sponsors.Any(os =>
+            os.SponsorshipId == s.SponsorshipId
+            && os.SponsorId == s.SponsorId
+            && os.CompanyId == s.CompanyId
+            && os.IsCompany == s.IsCompany
+            && os.RecipientName == s.RecipientName));
+}
+
+public class DashboardSponsorViewModel
+{
+    public int SponsorshipId { get; set; }
+
+    public int? SponsorId { get; set; }
+
+    public int? CompanyId { get; set; }
+
+    public string RecipientName { get; set; } = null!;
+
+    public bool IsCompany { get; set; }
 }
 
 public class FacilitatorStudentsListViewModelMappingDefinitions : IRegister
@@ -27,6 +84,15 @@ public class FacilitatorStudentsListViewModelMappingDefinitions : IRegister
             .Map(dest => dest.StudentId, src => src.StudentId)
             .Map(dest => dest.StudentFirstName, src => src.StudentFirstName)
             .Map(dest => dest.StudentLastName, src => src.StudentLastName)
-            .Map(dest => dest.StudentNickName, src => src.StudentNickName);
+            .Map(dest => dest.StudentNickName, src => src.StudentNickName)
+            .Map(dest => dest.EducationLevel, src => src.EducationLevel)
+            .Map(dest => dest.Sponsors, src => src.Sponsors);
+
+        config.NewConfig<DashboardSponsorDataModel, DashboardSponsorViewModel>()
+            .Map(dest => dest.SponsorshipId, src => src.SponsorshipId)
+            .Map(dest => dest.SponsorId, src => src.SponsorId)
+            .Map(dest => dest.CompanyId, src => src.CompanyId)
+            .Map(dest => dest.RecipientName, src => src.RecipientName)
+            .Map(dest => dest.IsCompany, src => src.IsCompany);
     }
 }
