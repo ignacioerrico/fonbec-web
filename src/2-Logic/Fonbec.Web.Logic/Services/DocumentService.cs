@@ -23,8 +23,8 @@ public interface IDocumentService
     Task<CrudResult<long>> CreateLetterWithBlobAsync(CreateLetterWithBlobInputModel input);
     Task<CrudResult<long>> CreateReportCardWithBlobAsync(CreateReportCardWithBlobInputModel input);
     Task<CrudResult<long>> CreateOtherDocumentWithBlobAsync(CreateOtherDocumentWithBlobInputModel input);
-    Task<DownloadBlobResult?> DownloadDocumentBlobAsync(long documentId, int requestingUserId);
-    Task<DownloadBlobResult?> DownloadOriginalDocumentBlobAsync(long documentId, int requestingUserId);
+    Task<DownloadBlobResult?> DownloadDocumentBlobAsync(long documentId, int pageNumber, int requestingUserId);
+    Task<DownloadBlobResult?> DownloadOriginalDocumentBlobAsync(long documentId, int pageNumber, int requestingUserId);
     Task<CrudResult> SubmitDigitalImprovementWithBlobAsync(SubmitDigitalImprovementWithBlobInputModel input);
     Task<DocumentQueueItemViewModel?> TakeNextForReviewAsync(int userId, string userRole);
     Task ReleaseReviewLockAsync(long documentId, int userId);
@@ -38,6 +38,7 @@ public interface IDocumentService
     Task<ReviewResult> ApproveOtherDocumentAsync(ApproveOtherDocumentInputModel input);
     Task<ReviewResult> RejectOtherDocumentAsync(RejectOtherDocumentInputModel input);
     Task<SponsorDocumentHistoryViewModel> GetSharedDocumentsAsync(Guid sponsorPublicAccessToken, int studentId);
+    Task<SponsorDocumentHistoryViewModel> GetSharedDocumentsForCompanyAsync(Guid companyPublicAccessToken, int studentId);
     Task<ReviewProgressViewModel> GetGlobalReviewProgressAsync(int userId, string userRole, int? planId);
     Task<LetterPlanProgressViewModel> GetLetterPlanProgressAsync(int userId, string userRole, int planId, int? chapterId);
     Task<List<DocumentDescriptionOptionViewModel>> GetDescriptionOptionsAsync(int chapterId, DocumentType documentType);
@@ -78,14 +79,10 @@ public class DocumentService(
             return new CrudResult<long>(Errors: [DocumentMessages.NoActivePlan]);
         }
 
-        if (!await documentRepository.HasActiveSponsorshipAsync(input.StudentId, input.SponsorId))
+        var recipientError = await ValidateLetterRecipientAsync(input.StudentId, input.PlanId, input.SponsorId, input.CompanyId);
+        if (recipientError is not null)
         {
-            return new CrudResult<long>(Errors: [DocumentMessages.SponsorNotActiveForStudent]);
-        }
-
-        if (await documentRepository.HasDuplicateLetterAsync(input.StudentId, input.SponsorId, input.PlanId))
-        {
-            return new CrudResult<long>(Errors: [DocumentMessages.DuplicateLetter]);
+            return new CrudResult<long>(Errors: [recipientError]);
         }
 
         var dataModel = input.Adapt<DataAccess.DataModels.Documents.Input.CreateLetterInputDataModel>();
@@ -179,28 +176,27 @@ public class DocumentService(
             return new CrudResult<long>(Errors: [DocumentMessages.NoActivePlan]);
         }
 
-        if (!await documentRepository.HasActiveSponsorshipAsync(input.StudentId, input.SponsorId))
+        var recipientError = await ValidateLetterRecipientAsync(input.StudentId, input.PlanId, input.SponsorId, input.CompanyId);
+        if (recipientError is not null)
         {
-            return new CrudResult<long>(Errors: [DocumentMessages.SponsorNotActiveForStudent]);
+            return new CrudResult<long>(Errors: [recipientError]);
         }
 
-        if (await documentRepository.HasDuplicateLetterAsync(input.StudentId, input.SponsorId, input.PlanId))
-        {
-            return new CrudResult<long>(Errors: [DocumentMessages.DuplicateLetter]);
-        }
-
+        var uploadedOn = DateOnly.FromDateTime(DateTime.UtcNow);
         return await UploadAndCreateAsync(
-            input.Content,
-            input.MimeType,
-            _ => BlobPathBuilder.Letter(student.ChapterId, input.PlanId, input.StudentId, input.SponsorId, _, improved: false),
-            upload => new CreateLetterInputDataModel
+            input.Files,
+            (extension, pageNumber, pageCount) => input.SponsorId.HasValue
+                ? BlobPathBuilder.LetterForPersonSponsor(student.ChapterId, input.StudentId, input.SponsorId.Value, input.PlanId, extension, isImproved: false, uploadedOn, pageNumber, pageCount)
+                : BlobPathBuilder.LetterForCompanySponsor(student.ChapterId, input.StudentId, input.CompanyId!.Value, input.PlanId, extension, isImproved: false, uploadedOn, pageNumber, pageCount),
+            blobs => new CreateLetterInputDataModel
             {
                 StudentId = input.StudentId,
                 PlanId = input.PlanId,
                 SponsorId = input.SponsorId,
+                CompanyId = input.CompanyId,
                 UploadedById = input.User.UserId,
                 FileKind = FileKind.Blob,
-                Blob = ToBlobDataModel(upload),
+                Blobs = blobs,
                 UploaderNotes = input.UploaderNotes,
             },
             documentRepository.CreateLetterAsync);
@@ -230,18 +226,18 @@ public class DocumentService(
             return new CrudResult<long>(Errors: [DocumentMessages.StudentNotFoundOrInactive]);
         }
 
+        var uploadedOn = DateOnly.FromDateTime(DateTime.UtcNow);
         return await UploadAndCreateAsync(
-            input.Content,
-            input.MimeType,
-            _ => BlobPathBuilder.ReportCard(student.ChapterId, input.StudentId, _, improved: false),
-            upload => new CreateReportCardInputDataModel
+            input.Files,
+            (extension, pageNumber, pageCount) => BlobPathBuilder.ReportCard(student.ChapterId, input.StudentId, extension, isImproved: false, uploadedOn, pageNumber, pageCount),
+            blobs => new CreateReportCardInputDataModel
             {
                 StudentId = input.StudentId,
                 Period = input.Period,
                 Description = input.Description,
                 UploadedById = input.User.UserId,
                 FileKind = FileKind.Blob,
-                Blob = ToBlobDataModel(upload),
+                Blobs = blobs,
                 UploaderNotes = input.UploaderNotes,
             },
             documentRepository.CreateReportCardAsync);
@@ -266,23 +262,23 @@ public class DocumentService(
             return new CrudResult<long>(Errors: [DocumentMessages.StudentNotFoundOrInactive]);
         }
 
+        var uploadedOn = DateOnly.FromDateTime(DateTime.UtcNow);
         return await UploadAndCreateAsync(
-            input.Content,
-            input.MimeType,
-            _ => BlobPathBuilder.Other(student.ChapterId, input.StudentId, _, improved: false),
-            upload => new CreateOtherDocumentInputDataModel
+            input.Files,
+            (extension, pageNumber, pageCount) => BlobPathBuilder.Other(student.ChapterId, input.StudentId, extension, isImproved: false, uploadedOn, pageNumber, pageCount),
+            blobs => new CreateOtherDocumentInputDataModel
             {
                 StudentId = input.StudentId,
                 Description = input.Description,
                 UploadedById = input.User.UserId,
                 FileKind = FileKind.Blob,
-                Blob = ToBlobDataModel(upload),
+                Blobs = blobs,
                 UploaderNotes = input.UploaderNotes,
             },
             documentRepository.CreateOtherDocumentAsync);
     }
 
-    public async Task<DownloadBlobResult?> DownloadDocumentBlobAsync(long documentId, int requestingUserId)
+    public async Task<DownloadBlobResult?> DownloadDocumentBlobAsync(long documentId, int pageNumber, int requestingUserId)
     {
         var context = await documentRepository.GetDocumentBlobContextAsync(documentId);
         if (context is null)
@@ -301,10 +297,11 @@ public class DocumentService(
             return null;
         }
 
-        return await DownloadBlobAsync(context.ActiveBlob, documentId);
+        var page = context.Pages.FirstOrDefault(p => p.PageNumber == pageNumber);
+        return await DownloadBlobAsync(page?.Active, documentId);
     }
 
-    public async Task<DownloadBlobResult?> DownloadOriginalDocumentBlobAsync(long documentId, int requestingUserId)
+    public async Task<DownloadBlobResult?> DownloadOriginalDocumentBlobAsync(long documentId, int pageNumber, int requestingUserId)
     {
         var context = await documentRepository.GetDocumentBlobContextAsync(documentId);
         if (context is null)
@@ -326,7 +323,8 @@ public class DocumentService(
             return null;
         }
 
-        return await DownloadBlobAsync(context.OriginalBlob, documentId);
+        var page = context.Pages.FirstOrDefault(p => p.PageNumber == pageNumber);
+        return await DownloadBlobAsync(page?.Original, documentId);
     }
 
     public async Task<CrudResult> SubmitDigitalImprovementWithBlobAsync(SubmitDigitalImprovementWithBlobInputModel input)
@@ -343,64 +341,102 @@ public class DocumentService(
         }
 
         if (context.DigitalImprovementStatus != DigitalImprovementStatus.InProgress
-            || context.OriginalBlob is null
-            || !DocumentMimeTypes.IsImage(context.OriginalBlob.MimeType))
+            || context.Pages.Count == 0
+            || context.Pages.Any(p => !DocumentMimeTypes.IsImage(p.Original.MimeType)))
         {
             return new CrudResult(Errors: [DocumentMessages.DocumentNotEligibleForImprovement]);
         }
 
-        if (!DocumentMimeTypes.IsImage(input.MimeType))
+        // Improvement is submitted for the whole document: one improved image per existing page,
+        // provided in page order.
+        if (input.Files.Count != context.Pages.Count)
+        {
+            return new CrudResult(Errors: [DocumentMessages.ImprovedPageCountMismatch]);
+        }
+
+        if (input.Files.Any(f => !DocumentMimeTypes.IsImage(f.MimeType)))
         {
             return new CrudResult(Errors: [DocumentMessages.ImprovedBlobMustBeImage]);
         }
 
-        await using var buffer = await BufferAsync(input.Content);
-        var validationError = ValidateBlobFile(input.MimeType, buffer.Length);
-        if (validationError is not null)
-        {
-            return new CrudResult(Errors: [validationError]);
-        }
-
-        var extension = DocumentMimeTypes.GetExtension(input.MimeType)!;
-        var blobName = context.DocumentType switch
-        {
-            DocumentType.Letter => BlobPathBuilder.Letter(
-                context.ChapterId, context.PlanId.GetValueOrDefault(), context.StudentId,
-                context.SponsorId.GetValueOrDefault(), extension, improved: true),
-            DocumentType.ReportCard => BlobPathBuilder.ReportCard(
-                context.ChapterId, context.StudentId, extension, improved: true),
-            _ => BlobPathBuilder.Other(
-                context.ChapterId, context.StudentId, extension, improved: true),
-        };
-
-        var upload = await blobStorageService.UploadAsync(buffer, blobName, input.MimeType);
-
-        var dataModel = new SubmitDigitalImprovementInputDataModel
-        {
-            DocumentId = input.DocumentId,
-            UserId = input.UserId,
-            ImprovedBlob = ToBlobDataModel(upload),
-            RowVersion = input.RowVersion,
-        };
-
+        var buffers = new List<MemoryStream>();
+        var uploadedBlobNames = new List<string>();
         try
         {
-            var errors = await documentRepository.SubmitDigitalImprovementAsync(dataModel);
-            if (errors.Count > 0)
+            long totalSize = 0;
+            foreach (var file in input.Files)
             {
-                await blobStorageService.DeleteAsync(blobName);
-                return new CrudResult(Errors: errors);
+                var buffer = await BufferAsync(file.Content);
+                buffers.Add(buffer);
+                totalSize += buffer.Length;
             }
 
-            return new CrudResult(1);
+            if (totalSize > _blobStorageOptions.MaxFileSizeBytes)
+            {
+                return new CrudResult(Errors: [DocumentMessages.TotalFileSizeTooLarge]);
+            }
+
+            var uploadedOn = DateOnly.FromDateTime(DateTime.UtcNow);
+            var pageCount = input.Files.Count;
+            var improvedBlobs = new List<CreateBlobPathInputDataModel>();
+            for (var i = 0; i < input.Files.Count; i++)
+            {
+                var mimeType = input.Files[i].MimeType;
+                var extension = DocumentMimeTypes.GetExtension(mimeType)!;
+                var pageNumber = i + 1;
+                var blobName = context.DocumentType switch
+                {
+                    DocumentType.Letter when context.SponsorId.HasValue => BlobPathBuilder.LetterForPersonSponsor(
+                        context.ChapterId, context.StudentId, context.SponsorId.Value,
+                        context.PlanId.GetValueOrDefault(), extension, isImproved: true, uploadedOn, pageNumber, pageCount),
+                    DocumentType.Letter => BlobPathBuilder.LetterForCompanySponsor(
+                        context.ChapterId, context.StudentId, context.CompanyId.GetValueOrDefault(),
+                        context.PlanId.GetValueOrDefault(), extension, isImproved: true, uploadedOn, pageNumber, pageCount),
+                    DocumentType.ReportCard => BlobPathBuilder.ReportCard(
+                        context.ChapterId, context.StudentId, extension, isImproved: true, uploadedOn, pageNumber, pageCount),
+                    _ => BlobPathBuilder.Other(
+                        context.ChapterId, context.StudentId, extension, isImproved: true, uploadedOn, pageNumber, pageCount),
+                };
+
+                var upload = await blobStorageService.UploadAsync(buffers[i], blobName, mimeType);
+                uploadedBlobNames.Add(blobName);
+                improvedBlobs.Add(ToBlobDataModel(upload));
+            }
+
+            var dataModel = new SubmitDigitalImprovementInputDataModel
+            {
+                DocumentId = input.DocumentId,
+                UserId = input.UserId,
+                ImprovedBlobs = improvedBlobs,
+                RowVersion = input.RowVersion,
+            };
+
+            try
+            {
+                var errors = await documentRepository.SubmitDigitalImprovementAsync(dataModel);
+                if (errors.Count > 0)
+                {
+                    await DeleteBlobsAsync(uploadedBlobNames);
+                    return new CrudResult(Errors: errors);
+                }
+
+                return new CrudResult(1);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex,
+                    "Failed to persist digital improvement for document {DocumentId}; rolling back {Count} improved blob(s).",
+                    input.DocumentId, uploadedBlobNames.Count);
+                await DeleteBlobsAsync(uploadedBlobNames);
+                return new CrudResult(Errors: [DocumentMessages.DocumentSaveFailed]);
+            }
         }
-        catch (Exception ex)
+        finally
         {
-            logger.LogError(ex,
-                "Failed to persist digital improvement for document {DocumentId}; rolling back improved blob {BlobName}.",
-                input.DocumentId, blobName);
-            await blobStorageService.DeleteAsync(blobName);
-            return new CrudResult(Errors: [DocumentMessages.DocumentSaveFailed]);
+            foreach (var buffer in buffers)
+            {
+                await buffer.DisposeAsync();
+            }
         }
     }
 
@@ -589,6 +625,17 @@ public class DocumentService(
         };
     }
 
+    public async Task<SponsorDocumentHistoryViewModel> GetSharedDocumentsForCompanyAsync(
+        Guid companyPublicAccessToken, int studentId)
+    {
+        var result = await documentRepository.GetSharedDocumentsForCompanyAsync(companyPublicAccessToken, studentId);
+        return new SponsorDocumentHistoryViewModel
+        {
+            IsAuthorized = result.IsAuthorized,
+            Documents = result.Documents.Adapt<List<SharedDocumentViewModel>>(),
+        };
+    }
+
     public async Task<ReviewProgressViewModel> GetGlobalReviewProgressAsync(
         int userId, string userRole, int? planId)
     {
@@ -651,6 +698,45 @@ public class DocumentService(
         return null;
     }
 
+    /// <summary>
+    /// Validates that a letter is addressed to exactly one recipient (a sponsor XOR a company),
+    /// that the recipient has an active sponsorship with the student, and that no duplicate exists.
+    /// </summary>
+    private async Task<string?> ValidateLetterRecipientAsync(int studentId, int planId, int? sponsorId, int? companyId)
+    {
+        if (sponsorId.HasValue == companyId.HasValue)
+        {
+            return DocumentMessages.LetterRequiresRecipient;
+        }
+
+        if (sponsorId.HasValue)
+        {
+            if (!await documentRepository.HasActiveSponsorshipAsync(studentId, sponsorId.Value))
+            {
+                return DocumentMessages.SponsorNotActiveForStudent;
+            }
+
+            if (await documentRepository.HasDuplicateLetterAsync(studentId, sponsorId.Value, planId))
+            {
+                return DocumentMessages.DuplicateLetter;
+            }
+
+            return null;
+        }
+
+        if (!await documentRepository.HasActiveCompanySponsorshipAsync(studentId, companyId!.Value))
+        {
+            return DocumentMessages.CompanyNotActiveForStudent;
+        }
+
+        if (await documentRepository.HasDuplicateCompanyLetterAsync(studentId, companyId.Value, planId))
+        {
+            return DocumentMessages.DuplicateCompanyLetter;
+        }
+
+        return null;
+    }
+
     private static string? ValidateContent(
         FileKind fileKind,
         CreateBlobPathInputModel? blob,
@@ -671,58 +757,109 @@ public class DocumentService(
         CanReview(userRole)
         && userService.HasPermission(fonbecAuthClaim, userRole, DocumentPermission.DigitalImprovement);
 
+    /// <summary>
+    /// Uploads one or more files (pages) and creates the document. A document may consist of several
+    /// files only when every file is an image (JPG/PNG); PDF/text documents are always a single file.
+    /// The combined size of all files must not exceed <see cref="BlobStorageOptions.MaxFileSizeBytes"/>.
+    /// On persistence failure all uploaded blobs are rolled back.
+    /// </summary>
     private async Task<CrudResult<long>> UploadAndCreateAsync<TDataModel>(
-        Stream content,
-        string mimeType,
-        Func<string, string> buildBlobName,
-        Func<UploadBlobResult, TDataModel> buildDataModel,
+        IReadOnlyList<UploadFileInputModel> files,
+        Func<string, int, int, string> buildBlobName,
+        Func<List<CreateBlobPathInputDataModel>, TDataModel> buildDataModel,
         Func<TDataModel, Task<CreateDocumentResultDataModel>> createAsync)
         where TDataModel : CreateDocumentBaseInputDataModel
     {
-        await using var buffer = await BufferAsync(content);
-        var validationError = ValidateBlobFile(mimeType, buffer.Length);
-        if (validationError is not null)
+        if (files.Count == 0)
         {
-            return new CrudResult<long>(Errors: [validationError]);
+            return new CrudResult<long>(Errors: [DocumentMessages.BlobContentRequired]);
         }
 
-        var extension = DocumentMimeTypes.GetExtension(mimeType)!;
-        var blobName = buildBlobName(extension);
+        foreach (var file in files)
+        {
+            var mimeError = ValidateMimeType(file.MimeType);
+            if (mimeError is not null)
+            {
+                return new CrudResult<long>(Errors: [mimeError]);
+            }
+        }
 
-        var upload = await blobStorageService.UploadAsync(buffer, blobName, mimeType);
+        // Only image documents may consist of multiple files.
+        if (files.Count > 1 && files.Any(f => !DocumentMimeTypes.IsImage(f.MimeType)))
+        {
+            return new CrudResult<long>(Errors: [DocumentMessages.MultipleFilesOnlyForImages]);
+        }
 
+        var buffers = new List<MemoryStream>();
+        var uploadedBlobNames = new List<string>();
         try
         {
-            var result = await createAsync(buildDataModel(upload));
-            if (!result.IsSuccess)
+            long totalSize = 0;
+            foreach (var file in files)
             {
-                await blobStorageService.DeleteAsync(blobName);
-                return new CrudResult<long>(Errors: result.Errors);
+                var buffer = await BufferAsync(file.Content);
+                buffers.Add(buffer);
+                totalSize += buffer.Length;
             }
 
-            return new CrudResult<long>(result.DocumentId);
+            if (totalSize > _blobStorageOptions.MaxFileSizeBytes)
+            {
+                return new CrudResult<long>(Errors: [DocumentMessages.TotalFileSizeTooLarge]);
+            }
+
+            var blobs = new List<CreateBlobPathInputDataModel>();
+            for (var i = 0; i < files.Count; i++)
+            {
+                var extension = DocumentMimeTypes.GetExtension(files[i].MimeType)!;
+                var blobName = buildBlobName(extension, i + 1, files.Count);
+                var upload = await blobStorageService.UploadAsync(buffers[i], blobName, files[i].MimeType);
+                uploadedBlobNames.Add(blobName);
+                blobs.Add(ToBlobDataModel(upload));
+            }
+
+            try
+            {
+                var result = await createAsync(buildDataModel(blobs));
+                if (!result.IsSuccess)
+                {
+                    await DeleteBlobsAsync(uploadedBlobNames);
+                    return new CrudResult<long>(Errors: result.Errors);
+                }
+
+                return new CrudResult<long>(result.DocumentId);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex,
+                    "Failed to persist document after uploading {Count} blob(s); rolling back the uploaded blobs.",
+                    uploadedBlobNames.Count);
+                await DeleteBlobsAsync(uploadedBlobNames);
+                return new CrudResult<long>(Errors: [DocumentMessages.DocumentSaveFailed]);
+            }
         }
-        catch (Exception ex)
+        finally
         {
-            logger.LogError(ex,
-                "Failed to persist document after uploading blob {BlobName}; rolling back the uploaded blob.",
-                blobName);
-            await blobStorageService.DeleteAsync(blobName);
-            return new CrudResult<long>(Errors: [DocumentMessages.DocumentSaveFailed]);
+            foreach (var buffer in buffers)
+            {
+                await buffer.DisposeAsync();
+            }
         }
     }
 
-    private string? ValidateBlobFile(string mimeType, long fileSizeBytes)
+    private async Task DeleteBlobsAsync(IEnumerable<string> blobNames)
+    {
+        foreach (var blobName in blobNames)
+        {
+            await blobStorageService.DeleteAsync(blobName);
+        }
+    }
+
+    private string? ValidateMimeType(string mimeType)
     {
         if (!_blobStorageOptions.AllowedMimeTypes.Contains(mimeType, StringComparer.OrdinalIgnoreCase)
             || DocumentMimeTypes.GetExtension(mimeType) is null)
         {
             return DocumentMessages.InvalidMimeType;
-        }
-
-        if (fileSizeBytes > _blobStorageOptions.MaxFileSizeBytes)
-        {
-            return DocumentMessages.FileTooLarge;
         }
 
         return null;

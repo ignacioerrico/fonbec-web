@@ -19,14 +19,11 @@ public abstract class Document
 
     public FileKind FileKind { get; set; }
 
-    public long? BlobPathId { get; set; }
-    public BlobPath? BlobPath { get; set; }
-
-    public long? OriginalBlobPathId { get; set; }
-    public BlobPath? OriginalBlobPath { get; set; }
-
-    public long? ImprovedBlobPathId { get; set; }
-    public BlobPath? ImprovedBlobPath { get; set; }
+    /// <summary>
+    /// Ordered file pages for a <see cref="FileKind.Blob"/> document. A PDF or single image is one page;
+    /// a multi-image document has one page per image. Empty for Text/YouTube documents.
+    /// </summary>
+    public List<DocumentPage> Pages { get; set; } = [];
 
     public string? YouTubeVideoId { get; set; }
 

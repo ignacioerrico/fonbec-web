@@ -8,7 +8,7 @@ public static class DocumentNotificationMessageFormatter
     public static string GetSponsorSalutation(string? nickName, string firstName) =>
         string.IsNullOrWhiteSpace(nickName) ? firstName : nickName;
 
-    public static string GetGodchildTerm(Gender gender) =>
+    public static string GetStudentTerm(Gender gender) =>
         gender switch
         {
             Gender.Male => "ahijado",
@@ -24,22 +24,23 @@ public static class DocumentNotificationMessageFormatter
 
     public static string BuildBodyHtml(
         string sponsorSalutation,
-        string godchildTerm,
+        string studentTerm,
         string studentDisplayName,
         string historyUrl) =>
         $"""
          <p>Hola, {sponsorSalutation}:</p>
-         <p>Hay un nuevo documento disponible de tu {godchildTerm} {studentDisplayName}.</p>
+         <p>Hay un nuevo documento disponible de tu {studentTerm} {studentDisplayName}.</p>
          <p><a href="{historyUrl}">Ver historial de documentos</a></p>
          """;
 
     public static string BuildNotificationHtml(DocumentShareNotificationDataModel share, string historyUrl)
     {
-        var sponsorSalutation = GetSponsorSalutation(share.SponsorNickName, share.SponsorFirstName);
-        var godchildTerm = GetGodchildTerm(share.StudentGender);
+        // Person-sponsors and companies get the same message; a company's name has no nickname.
+        var salutation = GetSponsorSalutation(share.RecipientNickName, share.RecipientName);
+        var godchildTerm = GetStudentTerm(share.StudentGender);
         var studentName = GetStudentDisplayName(
             share.StudentFirstName, share.StudentLastName, share.StudentNickName);
 
-        return BuildBodyHtml(sponsorSalutation, godchildTerm, studentName, historyUrl);
+        return BuildBodyHtml(salutation, godchildTerm, studentName, historyUrl);
     }
 }

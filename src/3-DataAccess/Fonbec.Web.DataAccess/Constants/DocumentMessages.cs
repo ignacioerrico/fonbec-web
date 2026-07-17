@@ -11,7 +11,13 @@ public static class DocumentMessages
 
     public const string SponsorNotActiveForStudent = "El padrino no tiene un apadrinamiento activo con el estudiante.";
 
+    public const string CompanyNotActiveForStudent = "La empresa no tiene un apadrinamiento activo con el estudiante.";
+
+    public const string LetterRequiresRecipient = "La carta debe tener exactamente un destinatario: un padrino o una empresa.";
+
     public const string DuplicateLetter = "Ya existe una carta para este estudiante, padrino y plan.";
+
+    public const string DuplicateCompanyLetter = "Ya existe una carta para este estudiante, empresa y plan.";
 
     public const string ReportCardCannotUseText = "Los boletines no pueden usar contenido de texto.";
 
@@ -75,12 +81,27 @@ public static class DocumentMessages
 
     public const string FileTooLarge = "El archivo supera el tamaño máximo permitido.";
 
+    public const string TotalFileSizeTooLarge =
+        "El tamaño total de los archivos supera el tamaño máximo permitido.";
+
+    public const string MultipleFilesOnlyForImages =
+        "Solo los documentos con imágenes (JPG o PNG) pueden tener varios archivos.";
+
     public const string ImprovedBlobMustBeImage =
         "La versión mejorada debe ser una imagen (JPG o PNG).";
+
+    public const string ImprovedPageCountMismatch =
+        "Debe enviar una versión mejorada por cada página del documento.";
 
     public const string DocumentNotEligibleForImprovement =
         "El documento no está en un estado válido para enviar una mejora digital.";
 
     public const string DocumentSaveFailed =
         "No se pudo guardar el documento. Intente nuevamente.";
+
+    public const string LetterRequiresSponsor =
+        "La carta requiere un padrino asociado al apadrinamiento seleccionado.";
+
+    public const string LetterExemptForPlan =
+        "El becario está eximido de entregar carta para este plan.";
 }

@@ -17,7 +17,7 @@ namespace Fonbec.Web.DataAccess.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.9")
+                .HasAnnotation("ProductVersion", "10.0.10")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -190,6 +190,9 @@ namespace Fonbec.Web.DataAccess.Migrations
                         .HasMaxLength(20)
                         .HasColumnType("nvarchar(20)");
 
+                    b.Property<Guid>("PublicAccessToken")
+                        .HasColumnType("uniqueidentifier");
+
                     b.Property<int?>("ReenabledById")
                         .HasColumnType("int");
 
@@ -203,6 +206,9 @@ namespace Fonbec.Web.DataAccess.Migrations
                     b.HasIndex("DisabledById");
 
                     b.HasIndex("LastUpdatedById");
+
+                    b.HasIndex("PublicAccessToken")
+                        .IsUnique();
 
                     b.HasIndex("ReenabledById");
 
@@ -220,9 +226,6 @@ namespace Fonbec.Web.DataAccess.Migrations
                     b.Property<DateTime?>("ApprovedOn")
                         .HasColumnType("datetime2");
 
-                    b.Property<long?>("BlobPathId")
-                        .HasColumnType("bigint");
-
                     b.Property<int>("ChapterId")
                         .HasColumnType("int");
 
@@ -235,17 +238,11 @@ namespace Fonbec.Web.DataAccess.Migrations
                     b.Property<byte>("FileKind")
                         .HasColumnType("tinyint");
 
-                    b.Property<long?>("ImprovedBlobPathId")
-                        .HasColumnType("bigint");
-
                     b.Property<DateTime?>("ImprovementLockedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<int?>("ImprovementLockedById")
                         .HasColumnType("int");
-
-                    b.Property<long?>("OriginalBlobPathId")
-                        .HasColumnType("bigint");
 
                     b.Property<DateTime?>("RejectedOn")
                         .HasColumnType("datetime2");
@@ -292,15 +289,9 @@ namespace Fonbec.Web.DataAccess.Migrations
 
                     b.HasKey("DocumentId");
 
-                    b.HasIndex("BlobPathId");
-
                     b.HasIndex("ChapterId");
 
-                    b.HasIndex("ImprovedBlobPathId");
-
                     b.HasIndex("ImprovementLockedById");
-
-                    b.HasIndex("OriginalBlobPathId");
 
                     b.HasIndex("RejectedReasonId");
 
@@ -317,10 +308,6 @@ namespace Fonbec.Web.DataAccess.Migrations
                             t.HasCheckConstraint("CK_Document_ApprovedOrRejected", "[ApprovedOn] IS NULL OR [RejectedOn] IS NULL");
 
                             t.HasCheckConstraint("CK_Document_DescriptionRequired", "[DocumentType] = 1 OR [Description] IS NOT NULL");
-
-                            t.HasCheckConstraint("CK_Document_ImprovementComplete", "[DigitalImprovementStatus] <> 3 OR [ImprovedBlobPathId] IS NOT NULL");
-
-                            t.HasCheckConstraint("CK_Document_ImprovementNotApplicable", "[DigitalImprovementStatus] <> 0 OR [ImprovedBlobPathId] IS NULL");
                         });
 
                     b.HasDiscriminator<byte>("DocumentType");
@@ -435,6 +422,38 @@ namespace Fonbec.Web.DataAccess.Migrations
                         });
                 });
 
+            modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.DocumentPage", b =>
+                {
+                    b.Property<long>("DocumentPageId")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bigint");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("DocumentPageId"));
+
+                    b.Property<long>("DocumentId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long?>("ImprovedBlobPathId")
+                        .HasColumnType("bigint");
+
+                    b.Property<long>("OriginalBlobPathId")
+                        .HasColumnType("bigint");
+
+                    b.Property<int>("PageNumber")
+                        .HasColumnType("int");
+
+                    b.HasKey("DocumentPageId");
+
+                    b.HasIndex("ImprovedBlobPathId");
+
+                    b.HasIndex("OriginalBlobPathId");
+
+                    b.HasIndex("DocumentId", "PageNumber")
+                        .IsUnique();
+
+                    b.ToTable("DocumentPages");
+                });
+
             modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.DocumentQueueItem", b =>
                 {
                     b.Property<long>("QueueItemId")
@@ -483,6 +502,9 @@ namespace Fonbec.Web.DataAccess.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("DocumentShareId"));
 
+                    b.Property<int?>("CompanyId")
+                        .HasColumnType("int");
+
                     b.Property<long>("DocumentId")
                         .HasColumnType("bigint");
 
@@ -495,7 +517,7 @@ namespace Fonbec.Web.DataAccess.Migrations
                     b.Property<DateTime>("SharedOn")
                         .HasColumnType("datetime2");
 
-                    b.Property<int>("SponsorId")
+                    b.Property<int?>("SponsorId")
                         .HasColumnType("int");
 
                     b.Property<int>("StudentId")
@@ -503,16 +525,26 @@ namespace Fonbec.Web.DataAccess.Migrations
 
                     b.HasKey("DocumentShareId");
 
+                    b.HasIndex("CompanyId");
+
                     b.HasIndex("SharedById");
 
                     b.HasIndex("SponsorId");
 
                     b.HasIndex("StudentId");
 
-                    b.HasIndex("DocumentId", "SponsorId")
-                        .IsUnique();
+                    b.HasIndex("DocumentId", "CompanyId")
+                        .IsUnique()
+                        .HasFilter("[CompanyId] IS NOT NULL");
 
-                    b.ToTable("DocumentShares");
+                    b.HasIndex("DocumentId", "SponsorId")
+                        .IsUnique()
+                        .HasFilter("[SponsorId] IS NOT NULL");
+
+                    b.ToTable("DocumentShares", t =>
+                        {
+                            t.HasCheckConstraint("CK_DocumentShare_RecipientRequired", "([SponsorId] IS NOT NULL AND [CompanyId] IS NULL) OR ([SponsorId] IS NULL AND [CompanyId] IS NOT NULL)");
+                        });
                 });
 
             modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.FonbecWebRole", b =>
@@ -671,6 +703,60 @@ namespace Fonbec.Web.DataAccess.Migrations
                     b.HasIndex("ReenabledById");
 
                     b.ToTable("AspNetUsers", (string)null);
+                });
+
+            modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.LetterExemption", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<int>("ChapterId")
+                        .HasColumnType("int");
+
+                    b.Property<int>("CreatedByFonbecUserId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime>("CreatedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<bool>("IsRevoked")
+                        .HasColumnType("bit");
+
+                    b.Property<int>("PlannedDeliveryId")
+                        .HasColumnType("int");
+
+                    b.Property<string>("Reason")
+                        .IsRequired()
+                        .HasMaxLength(512)
+                        .HasColumnType("nvarchar(512)");
+
+                    b.Property<int?>("RevokedByFonbecUserId")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("RevokedOnUtc")
+                        .HasColumnType("datetime2");
+
+                    b.Property<int>("StudentId")
+                        .HasColumnType("int");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChapterId");
+
+                    b.HasIndex("CreatedByFonbecUserId");
+
+                    b.HasIndex("RevokedByFonbecUserId");
+
+                    b.HasIndex("StudentId", "PlannedDeliveryId")
+                        .IsUnique()
+                        .HasFilter("[IsRevoked] = 0");
+
+                    b.HasIndex("PlannedDeliveryId", "ChapterId", "IsRevoked");
+
+                    b.ToTable("LetterExemptions");
                 });
 
             modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.LetterReview", b =>
@@ -1390,14 +1476,23 @@ namespace Fonbec.Web.DataAccess.Migrations
                 {
                     b.HasBaseType("Fonbec.Web.DataAccess.Entities.Document");
 
+                    b.Property<int?>("CompanyId")
+                        .HasColumnType("int");
+
                     b.Property<int>("PlanId")
                         .HasColumnType("int");
 
+                    b.HasIndex("CompanyId");
+
                     b.HasIndex("PlanId");
+
+                    b.HasIndex("StudentId", "CompanyId", "PlanId")
+                        .IsUnique()
+                        .HasFilter("[DocumentType] = 1 AND [Status] <> 5 AND [CompanyId] IS NOT NULL");
 
                     b.HasIndex("StudentId", "SponsorId", "PlanId")
                         .IsUnique()
-                        .HasFilter("[DocumentType] = 1 AND [Status] <> 5");
+                        .HasFilter("[DocumentType] = 1 AND [Status] <> 5 AND [SponsorId] IS NOT NULL");
 
                     b.ToTable("Documents", t =>
                         {
@@ -1405,11 +1500,7 @@ namespace Fonbec.Web.DataAccess.Migrations
 
                             t.HasCheckConstraint("CK_Document_DescriptionRequired", "[DocumentType] = 1 OR [Description] IS NOT NULL");
 
-                            t.HasCheckConstraint("CK_Document_ImprovementComplete", "[DigitalImprovementStatus] <> 3 OR [ImprovedBlobPathId] IS NOT NULL");
-
-                            t.HasCheckConstraint("CK_Document_ImprovementNotApplicable", "[DigitalImprovementStatus] <> 0 OR [ImprovedBlobPathId] IS NULL");
-
-                            t.HasCheckConstraint("CK_Letter_SponsorRequired", "[DocumentType] <> 1 OR [SponsorId] IS NOT NULL");
+                            t.HasCheckConstraint("CK_Letter_RecipientRequired", "[DocumentType] <> 1 OR (([SponsorId] IS NOT NULL AND [CompanyId] IS NULL) OR ([SponsorId] IS NULL AND [CompanyId] IS NOT NULL))");
                         });
 
                     b.HasDiscriminator().HasValue((byte)1);
@@ -1432,9 +1523,7 @@ namespace Fonbec.Web.DataAccess.Migrations
 
                             t.HasCheckConstraint("CK_Document_DescriptionRequired", "[DocumentType] = 1 OR [Description] IS NOT NULL");
 
-                            t.HasCheckConstraint("CK_Document_ImprovementComplete", "[DigitalImprovementStatus] <> 3 OR [ImprovedBlobPathId] IS NOT NULL");
-
-                            t.HasCheckConstraint("CK_Document_ImprovementNotApplicable", "[DigitalImprovementStatus] <> 0 OR [ImprovedBlobPathId] IS NULL");
+                            t.HasCheckConstraint("CK_OtherDocument_CompanyNull", "[DocumentType] <> 3 OR [CompanyId] IS NULL");
 
                             t.HasCheckConstraint("CK_OtherDocument_SponsorNull", "[DocumentType] <> 3 OR [SponsorId] IS NULL");
                         });
@@ -1462,9 +1551,7 @@ namespace Fonbec.Web.DataAccess.Migrations
 
                             t.HasCheckConstraint("CK_Document_DescriptionRequired", "[DocumentType] = 1 OR [Description] IS NOT NULL");
 
-                            t.HasCheckConstraint("CK_Document_ImprovementComplete", "[DigitalImprovementStatus] <> 3 OR [ImprovedBlobPathId] IS NOT NULL");
-
-                            t.HasCheckConstraint("CK_Document_ImprovementNotApplicable", "[DigitalImprovementStatus] <> 0 OR [ImprovedBlobPathId] IS NULL");
+                            t.HasCheckConstraint("CK_ReportCard_CompanyNull", "[DocumentType] <> 2 OR [CompanyId] IS NULL");
 
                             t.HasCheckConstraint("CK_ReportCard_PeriodRequired", "[DocumentType] <> 2 OR [Period] IS NOT NULL");
 
@@ -1534,30 +1621,15 @@ namespace Fonbec.Web.DataAccess.Migrations
 
             modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.Document", b =>
                 {
-                    b.HasOne("Fonbec.Web.DataAccess.Entities.BlobPath", "BlobPath")
-                        .WithMany()
-                        .HasForeignKey("BlobPathId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
                     b.HasOne("Fonbec.Web.DataAccess.Entities.Chapter", "Chapter")
                         .WithMany()
                         .HasForeignKey("ChapterId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.HasOne("Fonbec.Web.DataAccess.Entities.BlobPath", "ImprovedBlobPath")
-                        .WithMany()
-                        .HasForeignKey("ImprovedBlobPathId")
-                        .OnDelete(DeleteBehavior.NoAction);
-
                     b.HasOne("Fonbec.Web.DataAccess.Entities.FonbecWebUser", "ImprovementLockedBy")
                         .WithMany()
                         .HasForeignKey("ImprovementLockedById")
-                        .OnDelete(DeleteBehavior.NoAction);
-
-                    b.HasOne("Fonbec.Web.DataAccess.Entities.BlobPath", "OriginalBlobPath")
-                        .WithMany()
-                        .HasForeignKey("OriginalBlobPathId")
                         .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("Fonbec.Web.DataAccess.Entities.RejectedReason", "RejectedReason")
@@ -1582,15 +1654,9 @@ namespace Fonbec.Web.DataAccess.Migrations
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
 
-                    b.Navigation("BlobPath");
-
                     b.Navigation("Chapter");
 
-                    b.Navigation("ImprovedBlobPath");
-
                     b.Navigation("ImprovementLockedBy");
-
-                    b.Navigation("OriginalBlobPath");
 
                     b.Navigation("RejectedReason");
 
@@ -1609,6 +1675,32 @@ namespace Fonbec.Web.DataAccess.Migrations
                         .OnDelete(DeleteBehavior.NoAction);
 
                     b.Navigation("Chapter");
+                });
+
+            modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.DocumentPage", b =>
+                {
+                    b.HasOne("Fonbec.Web.DataAccess.Entities.Document", "Document")
+                        .WithMany("Pages")
+                        .HasForeignKey("DocumentId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.HasOne("Fonbec.Web.DataAccess.Entities.BlobPath", "ImprovedBlobPath")
+                        .WithMany()
+                        .HasForeignKey("ImprovedBlobPathId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("Fonbec.Web.DataAccess.Entities.BlobPath", "OriginalBlobPath")
+                        .WithMany()
+                        .HasForeignKey("OriginalBlobPathId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("Document");
+
+                    b.Navigation("ImprovedBlobPath");
+
+                    b.Navigation("OriginalBlobPath");
                 });
 
             modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.DocumentQueueItem", b =>
@@ -1631,6 +1723,11 @@ namespace Fonbec.Web.DataAccess.Migrations
 
             modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.DocumentShare", b =>
                 {
+                    b.HasOne("Fonbec.Web.DataAccess.Entities.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("Fonbec.Web.DataAccess.Entities.Document", "Document")
                         .WithMany("Shares")
                         .HasForeignKey("DocumentId")
@@ -1646,14 +1743,15 @@ namespace Fonbec.Web.DataAccess.Migrations
                     b.HasOne("Fonbec.Web.DataAccess.Entities.Sponsor", "Sponsor")
                         .WithMany()
                         .HasForeignKey("SponsorId")
-                        .OnDelete(DeleteBehavior.NoAction)
-                        .IsRequired();
+                        .OnDelete(DeleteBehavior.NoAction);
 
                     b.HasOne("Fonbec.Web.DataAccess.Entities.Student", "Student")
                         .WithMany()
                         .HasForeignKey("StudentId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
+
+                    b.Navigation("Company");
 
                     b.Navigation("Document");
 
@@ -1700,6 +1798,42 @@ namespace Fonbec.Web.DataAccess.Migrations
                     b.Navigation("LastUpdatedBy");
 
                     b.Navigation("ReenabledBy");
+                });
+
+            modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.LetterExemption", b =>
+                {
+                    b.HasOne("Fonbec.Web.DataAccess.Entities.Chapter", null)
+                        .WithMany()
+                        .HasForeignKey("ChapterId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Fonbec.Web.DataAccess.Entities.FonbecWebUser", null)
+                        .WithMany()
+                        .HasForeignKey("CreatedByFonbecUserId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Fonbec.Web.DataAccess.Entities.PlannedDelivery", "PlannedDelivery")
+                        .WithMany()
+                        .HasForeignKey("PlannedDeliveryId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.HasOne("Fonbec.Web.DataAccess.Entities.FonbecWebUser", null)
+                        .WithMany()
+                        .HasForeignKey("RevokedByFonbecUserId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
+                    b.HasOne("Fonbec.Web.DataAccess.Entities.Student", "Student")
+                        .WithMany()
+                        .HasForeignKey("StudentId")
+                        .OnDelete(DeleteBehavior.NoAction)
+                        .IsRequired();
+
+                    b.Navigation("PlannedDelivery");
+
+                    b.Navigation("Student");
                 });
 
             modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.LetterReview", b =>
@@ -2013,11 +2147,18 @@ namespace Fonbec.Web.DataAccess.Migrations
 
             modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.Letter", b =>
                 {
+                    b.HasOne("Fonbec.Web.DataAccess.Entities.Company", "Company")
+                        .WithMany()
+                        .HasForeignKey("CompanyId")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("Fonbec.Web.DataAccess.Entities.PlannedDelivery", "Plan")
                         .WithMany()
                         .HasForeignKey("PlanId")
                         .OnDelete(DeleteBehavior.NoAction)
                         .IsRequired();
+
+                    b.Navigation("Company");
 
                     b.Navigation("Plan");
                 });
@@ -2038,6 +2179,8 @@ namespace Fonbec.Web.DataAccess.Migrations
 
             modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.Document", b =>
                 {
+                    b.Navigation("Pages");
+
                     b.Navigation("QueueItem");
 
                     b.Navigation("Shares");

@@ -26,6 +26,7 @@ public class DocumentServiceBlobTests
     private const int StudentId = 5;
     private const int PlanId = 3;
     private const int SponsorId = 7;
+    private const int CompanyId = 9;
     private const int ChapterId = 1;
 
     private DocumentService CreateService(BlobStorageOptions? options = null) =>
@@ -63,8 +64,97 @@ public class DocumentServiceBlobTests
     private static CreateLetterWithBlobInputModel LetterInput(string mimeType, int contentLength = 10) =>
         new(StudentId, PlanId, SponsorId,
             new CreateDocumentUserContext(UploaderId, "Uploader", ChapterId, null),
-            new MemoryStream(new byte[contentLength]),
-            mimeType);
+            [new UploadFileInputModel(new MemoryStream(new byte[contentLength]), mimeType)]);
+
+    private void ConfigureValidCompanyLetterUpload()
+    {
+        _repository.GetStudentUploadContextAsync(StudentId).Returns(new StudentUploadContextDataModel
+        {
+            StudentId = StudentId,
+            ChapterId = ChapterId,
+            FacilitatorId = UploaderId,
+            IsActive = true,
+        });
+        _repository.IsActivePlanAsync(PlanId, ChapterId).Returns(true);
+        _repository.HasActiveCompanySponsorshipAsync(StudentId, CompanyId).Returns(true);
+        _repository.HasDuplicateCompanyLetterAsync(StudentId, CompanyId, PlanId).Returns(false);
+        _repository.CreateLetterAsync(Arg.Any<CreateLetterInputDataModel>())
+            .Returns(new CreateDocumentResultDataModel { DocumentId = 1 });
+
+        _blobStorageService
+            .UploadAsync(Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo => new UploadBlobResult
+            {
+                BlobName = callInfo.ArgAt<string>(1),
+                MimeType = callInfo.ArgAt<string>(2),
+                FileSizeBytes = 10,
+                Sha256 = [1, 2, 3],
+            });
+    }
+
+    [Fact]
+    public async Task CompanyLetter_ValidatesCompanyRecipient_UploadsWithCompanyPathAndId()
+    {
+        ConfigureValidCompanyLetterUpload();
+        var service = CreateService();
+
+        var input = new CreateLetterWithBlobInputModel(
+            StudentId, PlanId, null,
+            new CreateDocumentUserContext(UploaderId, "Uploader", ChapterId, null),
+            [new UploadFileInputModel(new MemoryStream(new byte[10]), "application/pdf")], CompanyId: CompanyId);
+
+        var result = await service.CreateLetterWithBlobAsync(input);
+
+        result.IsSuccess.Should().BeTrue();
+        await _repository.Received(1).HasActiveCompanySponsorshipAsync(StudentId, CompanyId);
+        await _repository.DidNotReceive().HasActiveSponsorshipAsync(Arg.Any<int>(), Arg.Any<int>());
+        await _repository.Received(1).CreateLetterAsync(Arg.Is<CreateLetterInputDataModel>(m =>
+            m.SponsorId == null && m.CompanyId == CompanyId));
+        await _blobStorageService.Received(1).UploadAsync(
+            Arg.Any<Stream>(),
+            Arg.Is<string>(name => name.Contains($"/company-{CompanyId}/")),
+            Arg.Any<string>(),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task PersonLetter_UploadsWithSponsorPathAndId()
+    {
+        ConfigureValidLetterUpload();
+        _repository.CreateLetterAsync(Arg.Any<CreateLetterInputDataModel>())
+            .Returns(new CreateDocumentResultDataModel { DocumentId = 1 });
+        var service = CreateService();
+
+        var result = await service.CreateLetterWithBlobAsync(LetterInput("application/pdf"));
+
+        result.IsSuccess.Should().BeTrue();
+        await _repository.Received(1).CreateLetterAsync(Arg.Is<CreateLetterInputDataModel>(m =>
+            m.SponsorId == SponsorId && m.CompanyId == null));
+        await _blobStorageService.Received(1).UploadAsync(
+            Arg.Any<Stream>(),
+            Arg.Is<string>(name => name.Contains($"/sponsor-{SponsorId}/")),
+            Arg.Any<string>(),
+            Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Letter_WithBothRecipients_ReturnsRecipientErrorAndDoesNotUpload()
+    {
+        ConfigureValidLetterUpload();
+        var service = CreateService();
+
+        var input = new CreateLetterWithBlobInputModel(
+            StudentId, PlanId, SponsorId,
+            new CreateDocumentUserContext(UploaderId, "Uploader", ChapterId, null),
+            [new UploadFileInputModel(new MemoryStream(new byte[10]), "application/pdf")], CompanyId: CompanyId);
+
+        var result = await service.CreateLetterWithBlobAsync(input);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Errors.Should().Contain(DocumentMessages.LetterRequiresRecipient);
+        await _blobStorageService.DidNotReceive().UploadAsync(
+            Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+    }
 
     [Fact]
     public async Task Scenario07_DisallowedMimeType_ReturnsErrorAndDoesNotUpload()
@@ -89,7 +179,7 @@ public class DocumentServiceBlobTests
         var result = await service.CreateLetterWithBlobAsync(LetterInput("application/pdf", contentLength: 100));
 
         result.IsSuccess.Should().BeFalse();
-        result.Errors.Should().Contain(DocumentMessages.FileTooLarge);
+        result.Errors.Should().Contain(DocumentMessages.TotalFileSizeTooLarge);
         await _blobStorageService.DidNotReceive().UploadAsync(
             Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
@@ -142,7 +232,15 @@ public class DocumentServiceBlobTests
             PlanId = PlanId,
             DigitalImprovementStatus = DigitalImprovementStatus.InProgress,
             ImprovementLockedById = reviewerId,
-            OriginalBlob = new BlobPathDataModel { StoragePath = "orig.jpg", MimeType = "image/jpeg" },
+            Pages =
+            [
+                new DocumentPageBlobDataModel
+                {
+                    PageNumber = 1,
+                    Original = new BlobPathDataModel { StoragePath = "orig.jpg", MimeType = "image/jpeg" },
+                    Active = new BlobPathDataModel { StoragePath = "orig.jpg", MimeType = "image/jpeg" },
+                },
+            ],
         });
         _blobStorageService
             .UploadAsync(Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
@@ -160,7 +258,7 @@ public class DocumentServiceBlobTests
 
         var result = await service.SubmitDigitalImprovementWithBlobAsync(new SubmitDigitalImprovementWithBlobInputModel(
             documentId, reviewerId, "Reviewer", null,
-            new MemoryStream(Encoding.UTF8.GetBytes("improved")), "image/jpeg", new byte[8]));
+            [new UploadFileInputModel(new MemoryStream(Encoding.UTF8.GetBytes("improved")), "image/jpeg")], new byte[8]));
 
         result.IsSuccess.Should().BeFalse();
         await _blobStorageService.Received(1).DeleteAsync(
@@ -182,14 +280,22 @@ public class DocumentServiceBlobTests
             ImprovementLockedById = reviewerId,
             PlanId = PlanId,
             SponsorId = SponsorId,
-            OriginalBlob = new BlobPathDataModel { StoragePath = "orig.jpg", MimeType = "image/jpeg" },
+            Pages =
+            [
+                new DocumentPageBlobDataModel
+                {
+                    PageNumber = 1,
+                    Original = new BlobPathDataModel { StoragePath = "orig.jpg", MimeType = "image/jpeg" },
+                    Active = new BlobPathDataModel { StoragePath = "orig.jpg", MimeType = "image/jpeg" },
+                },
+            ],
         });
 
         var service = CreateService();
 
         var result = await service.SubmitDigitalImprovementWithBlobAsync(new SubmitDigitalImprovementWithBlobInputModel(
             documentId, reviewerId, "Reviewer", null,
-            new MemoryStream(new byte[10]), "application/pdf", new byte[8]));
+            [new UploadFileInputModel(new MemoryStream(new byte[10]), "application/pdf")], new byte[8]));
 
         result.IsSuccess.Should().BeFalse();
         result.Errors.Should().Contain(DocumentMessages.ImprovedBlobMustBeImage);

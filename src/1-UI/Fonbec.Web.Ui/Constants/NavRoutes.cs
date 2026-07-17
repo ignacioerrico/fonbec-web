@@ -28,6 +28,34 @@ public static class NavRoutes
 
     public const string FacilitatorStudents = "/mediadores/mis-becarios";
 
+    public const string FacilitatorUploadDocumentTemplate =
+        $"{FacilitatorStudents}/becarios/{{studentId:int}}/subir";
+
+    public static string FacilitatorUploadDocument(int studentId) =>
+        $"{FacilitatorStudents}/becarios/{studentId}/subir";
+
+    public static string FacilitatorUploadLetter(int studentId, int planId, int? sponsorId, int? companyId)
+    {
+        var query = $"tipo=carta&planId={planId}";
+        if (sponsorId.HasValue)
+        {
+            query += $"&padrinoId={sponsorId.Value}";
+        }
+
+        if (companyId.HasValue)
+        {
+            query += $"&empresaId={companyId.Value}";
+        }
+
+        return $"{FacilitatorUploadDocument(studentId)}?{query}";
+    }
+
+    public static string FacilitatorUploadReportCard(int studentId) =>
+        $"{FacilitatorUploadDocument(studentId)}?tipo=boletin";
+
+    public static string FacilitatorUploadOther(int studentId) =>
+        $"{FacilitatorUploadDocument(studentId)}?tipo=otro";
+
     public static string Sponsorships(int studentId) => $"/becarios/{studentId}/padrinos";
 
     public static string SponsorshipCreate(int studentId) => $"{Sponsorships(studentId)}/alta";

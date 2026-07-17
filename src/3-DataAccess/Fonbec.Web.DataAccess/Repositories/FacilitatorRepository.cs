@@ -8,15 +8,20 @@ public interface IFacilitatorRepository
     Task<List<FacilitatorStudentsDataModel>> GetActiveSponsoredStudentsAsync(int facilitatorId);
 
     Task<CurrentPlanDataModel?> GetCurrentPlanForFacilitatorAsync(int facilitatorId);
+
+    Task<FacilitatorUploadContextDataModel?> GetUploadContextAsync(
+        int studentId, int? planId, int? sponsorId, int? companyId);
 }
 
-public class FacilitatorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : IFacilitatorRepository
+public class FacilitatorRepository(
+    IDbContextFactory<FonbecWebDbContext> dbContext,
+    TimeProvider timeProvider) : IFacilitatorRepository
 {
     public async Task<List<FacilitatorStudentsDataModel>> GetActiveSponsoredStudentsAsync(int facilitatorId)
     {
         await using var db = await dbContext.CreateDbContextAsync();
 
-        var utcNow = DateTime.UtcNow;
+        var utcNow = timeProvider.GetUtcNow().UtcDateTime;
 
         // NOTE: the sponsorship predicate below is intentionally duplicated between the outer
         // student inclusion filter and the inner "Sponsors" projection so that a listed student
@@ -89,7 +94,7 @@ public class FacilitatorRepository(IDbContextFactory<FonbecWebDbContext> dbConte
     {
         await using var db = await dbContext.CreateDbContextAsync();
 
-        var utcNow = DateTime.UtcNow;
+        var utcNow = timeProvider.GetUtcNow().UtcDateTime;
 
         var chapterId = await db.Users
             .Where(u => u.Id == facilitatorId)
@@ -109,5 +114,81 @@ public class FacilitatorRepository(IDbContextFactory<FonbecWebDbContext> dbConte
                 StartsOn = pd.StartsOn,
             })
             .FirstOrDefaultAsync();
+    }
+
+    public async Task<FacilitatorUploadContextDataModel?> GetUploadContextAsync(
+        int studentId, int? planId, int? sponsorId, int? companyId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var student = await db.Students
+            .AsNoTracking()
+            .Where(s => s.Id == studentId && !s.IsDeleted)
+            .Select(s => new
+            {
+                s.Id,
+                s.FirstName,
+                s.LastName,
+                s.ChapterId,
+                s.FacilitatorId,
+                s.IsActive,
+                s.SecondarySchoolStartYear,
+                s.UniversityStartYear,
+            })
+            .FirstOrDefaultAsync();
+
+        if (student is null)
+        {
+            return null;
+        }
+
+        DateTime? planStartsOn = null;
+        if (planId.HasValue)
+        {
+            planStartsOn = await db.PlannedDeliveries
+                .AsNoTracking()
+                .Where(p => p.Id == planId.Value)
+                .Select(p => (DateTime?)p.StartsOn)
+                .FirstOrDefaultAsync();
+        }
+
+        string? sponsorFirstName = null;
+        string? sponsorLastName = null;
+        if (sponsorId.HasValue)
+        {
+            var sponsor = await db.Sponsors
+                .AsNoTracking()
+                .Where(s => s.Id == sponsorId.Value && !s.IsDeleted)
+                .Select(s => new { s.FirstName, s.LastName })
+                .FirstOrDefaultAsync();
+            sponsorFirstName = sponsor?.FirstName;
+            sponsorLastName = sponsor?.LastName;
+        }
+
+        string? companyName = null;
+        if (companyId.HasValue)
+        {
+            companyName = await db.Companies
+                .AsNoTracking()
+                .Where(c => c.Id == companyId.Value)
+                .Select(c => c.Name)
+                .FirstOrDefaultAsync();
+        }
+
+        return new FacilitatorUploadContextDataModel
+        {
+            StudentId = student.Id,
+            StudentFirstName = student.FirstName,
+            StudentLastName = student.LastName,
+            ChapterId = student.ChapterId,
+            FacilitatorId = student.FacilitatorId,
+            IsActive = student.IsActive,
+            SecondarySchoolStartYear = student.SecondarySchoolStartYear,
+            UniversityStartYear = student.UniversityStartYear,
+            PlanStartsOn = planStartsOn,
+            SponsorFirstName = sponsorFirstName,
+            SponsorLastName = sponsorLastName,
+            CompanyName = companyName,
+        };
     }
 }

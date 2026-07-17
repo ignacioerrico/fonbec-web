@@ -20,7 +20,7 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
     {
         var factory = CreateDbContextFactory();
         await SeedAsync(factory, studentId: 10, sponsorshipStart: UtcNow.AddMonths(-1), sponsorshipEnd: UtcNow.AddMonths(1));
-        var repository = new FacilitatorRepository(factory);
+        var repository = CreateRepository(factory);
 
         var students = await repository.GetActiveSponsoredStudentsAsync(FacilitatorId);
 
@@ -32,7 +32,7 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
     {
         var factory = CreateDbContextFactory();
         await SeedAsync(factory, studentId: 10, sponsorshipStart: UtcNow.AddMonths(-1), sponsorshipEnd: null);
-        var repository = new FacilitatorRepository(factory);
+        var repository = CreateRepository(factory);
 
         var students = await repository.GetActiveSponsoredStudentsAsync(FacilitatorId);
 
@@ -44,7 +44,7 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
     {
         var factory = CreateDbContextFactory();
         await SeedAsync(factory, studentId: 10, useCompanySponsorship: true);
-        var repository = new FacilitatorRepository(factory);
+        var repository = CreateRepository(factory);
 
         var students = await repository.GetActiveSponsoredStudentsAsync(FacilitatorId);
 
@@ -56,7 +56,7 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
     {
         var factory = CreateDbContextFactory();
         await SeedAsync(factory, studentId: 10, studentNickName: "Anita");
-        var repository = new FacilitatorRepository(factory);
+        var repository = CreateRepository(factory);
 
         var students = await repository.GetActiveSponsoredStudentsAsync(FacilitatorId);
 
@@ -68,7 +68,7 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
     {
         var factory = CreateDbContextFactory();
         await SeedTwoStudentsAsync(factory);
-        var repository = new FacilitatorRepository(factory);
+        var repository = CreateRepository(factory);
 
         var students = await repository.GetActiveSponsoredStudentsAsync(FacilitatorId);
 
@@ -82,7 +82,7 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
     {
         var factory = CreateDbContextFactory();
         await SeedAsync(factory, studentId: 10, sponsorshipStart: UtcNow.AddYears(-2), sponsorshipEnd: UtcNow.AddMonths(-1));
-        var repository = new FacilitatorRepository(factory);
+        var repository = CreateRepository(factory);
 
         var students = await repository.GetActiveSponsoredStudentsAsync(FacilitatorId);
 
@@ -94,7 +94,7 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
     {
         var factory = CreateDbContextFactory();
         await SeedAsync(factory, studentId: 10, sponsorshipStart: UtcNow.AddMonths(1), sponsorshipEnd: null);
-        var repository = new FacilitatorRepository(factory);
+        var repository = CreateRepository(factory);
 
         var students = await repository.GetActiveSponsoredStudentsAsync(FacilitatorId);
 
@@ -106,7 +106,7 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
     {
         var factory = CreateDbContextFactory();
         await SeedAsync(factory, studentId: 10, disableStudent: true);
-        var repository = new FacilitatorRepository(factory);
+        var repository = CreateRepository(factory);
 
         var students = await repository.GetActiveSponsoredStudentsAsync(FacilitatorId);
 
@@ -118,7 +118,7 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
     {
         var factory = CreateDbContextFactory();
         await SeedAsync(factory, studentId: 10, markStudentDeleted: true);
-        var repository = new FacilitatorRepository(factory);
+        var repository = CreateRepository(factory);
 
         var students = await repository.GetActiveSponsoredStudentsAsync(FacilitatorId);
 
@@ -130,7 +130,7 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
     {
         var factory = CreateDbContextFactory();
         await SeedAsync(factory, studentId: 10, facilitatorId: 99);
-        var repository = new FacilitatorRepository(factory);
+        var repository = CreateRepository(factory);
 
         var students = await repository.GetActiveSponsoredStudentsAsync(FacilitatorId);
 
@@ -142,7 +142,7 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
     {
         var factory = CreateDbContextFactory();
         await SeedAsync(factory, studentId: 10, disableSponsor: true);
-        var repository = new FacilitatorRepository(factory);
+        var repository = CreateRepository(factory);
 
         var students = await repository.GetActiveSponsoredStudentsAsync(FacilitatorId);
 
@@ -154,7 +154,7 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
     {
         var factory = CreateDbContextFactory();
         await SeedAsync(factory, studentId: 10, markSponsorDeleted: true);
-        var repository = new FacilitatorRepository(factory);
+        var repository = CreateRepository(factory);
 
         var students = await repository.GetActiveSponsoredStudentsAsync(FacilitatorId);
 
@@ -166,7 +166,7 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
     {
         var factory = CreateDbContextFactory();
         await SeedAsync(factory, studentId: 10, useCompanySponsorship: true, disableCompany: true);
-        var repository = new FacilitatorRepository(factory);
+        var repository = CreateRepository(factory);
 
         var students = await repository.GetActiveSponsoredStudentsAsync(FacilitatorId);
 
@@ -178,7 +178,7 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
     {
         var factory = CreateDbContextFactory();
         await SeedAsync(factory, studentId: 10, disableSponsorship: true);
-        var repository = new FacilitatorRepository(factory);
+        var repository = CreateRepository(factory);
 
         var students = await repository.GetActiveSponsoredStudentsAsync(FacilitatorId);
 
@@ -190,7 +190,7 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
     {
         var factory = CreateDbContextFactory();
         await SeedAsync(factory, studentId: 10);
-        var repository = new FacilitatorRepository(factory);
+        var repository = CreateRepository(factory);
 
         var students = await repository.GetActiveSponsoredStudentsAsync(FacilitatorId);
 
@@ -202,7 +202,7 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
     {
         var factory = CreateDbContextFactory();
         await SeedAsync(factory, studentId: 10, secondarySchoolStart: UtcNow.AddYears(-2));
-        var repository = new FacilitatorRepository(factory);
+        var repository = CreateRepository(factory);
 
         var students = await repository.GetActiveSponsoredStudentsAsync(FacilitatorId);
 
@@ -214,7 +214,7 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
     {
         var factory = CreateDbContextFactory();
         await SeedAsync(factory, studentId: 10, universityStart: UtcNow.AddYears(-1));
-        var repository = new FacilitatorRepository(factory);
+        var repository = CreateRepository(factory);
 
         var students = await repository.GetActiveSponsoredStudentsAsync(FacilitatorId);
 
@@ -226,7 +226,7 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
     {
         var factory = CreateDbContextFactory();
         await SeedAsync(factory, studentId: 10);
-        var repository = new FacilitatorRepository(factory);
+        var repository = CreateRepository(factory);
 
         var students = await repository.GetActiveSponsoredStudentsAsync(FacilitatorId);
 
@@ -238,7 +238,7 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
     {
         var factory = CreateDbContextFactory();
         await SeedAsync(factory, studentId: 10, useCompanySponsorship: true);
-        var repository = new FacilitatorRepository(factory);
+        var repository = CreateRepository(factory);
 
         var students = await repository.GetActiveSponsoredStudentsAsync(FacilitatorId);
 
@@ -283,7 +283,7 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
             await db.SaveChangesAsync();
         }
 
-        var repository = new FacilitatorRepository(factory);
+        var repository = CreateRepository(factory);
 
         var students = await repository.GetActiveSponsoredStudentsAsync(FacilitatorId);
 
@@ -299,7 +299,7 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
         await SeedAsync(factory, studentId: 10);
         await SeedPlannedDeliveryAsync(factory, planId: 100, chapterId: ChapterId, startsOn: UtcNow.AddMonths(-2));
         await SeedPlannedDeliveryAsync(factory, planId: 101, chapterId: ChapterId, startsOn: UtcNow.AddMonths(-1));
-        var repository = new FacilitatorRepository(factory);
+        var repository = CreateRepository(factory);
 
         var plan = await repository.GetCurrentPlanForFacilitatorAsync(FacilitatorId);
 
@@ -314,7 +314,7 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
         await SeedAsync(factory, studentId: 10);
         await SeedPlannedDeliveryAsync(factory, planId: 100, chapterId: ChapterId, startsOn: UtcNow.AddMonths(-1));
         await SeedPlannedDeliveryAsync(factory, planId: 101, chapterId: ChapterId, startsOn: UtcNow.AddMonths(2));
-        var repository = new FacilitatorRepository(factory);
+        var repository = CreateRepository(factory);
 
         var plan = await repository.GetCurrentPlanForFacilitatorAsync(FacilitatorId);
 
@@ -327,7 +327,7 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
         var factory = CreateDbContextFactory();
         await SeedAsync(factory, studentId: 10);
         await SeedPlannedDeliveryAsync(factory, planId: 100, chapterId: 999, startsOn: UtcNow.AddMonths(-1));
-        var repository = new FacilitatorRepository(factory);
+        var repository = CreateRepository(factory);
 
         var plan = await repository.GetCurrentPlanForFacilitatorAsync(FacilitatorId);
 
@@ -339,7 +339,7 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
     {
         var factory = CreateDbContextFactory();
         await SeedAsync(factory, studentId: 10);
-        var repository = new FacilitatorRepository(factory);
+        var repository = CreateRepository(factory);
 
         var plan = await repository.GetCurrentPlanForFacilitatorAsync(FacilitatorId);
 
@@ -348,6 +348,16 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
 
     private static TestDbContextFactory CreateDbContextFactory() =>
         new(Guid.NewGuid().ToString());
+
+    // A fixed clock anchored to the same instant the seed data is built around, so the
+    // active-sponsorship / current-plan date filters are deterministic regardless of the real date.
+    private static FacilitatorRepository CreateRepository(TestDbContextFactory factory) =>
+        new(factory, new FixedTimeProvider(new DateTimeOffset(UtcNow)));
+
+    private sealed class FixedTimeProvider(DateTimeOffset utcNow) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => utcNow;
+    }
 
     private static async Task SeedPlannedDeliveryAsync(
         TestDbContextFactory factory,

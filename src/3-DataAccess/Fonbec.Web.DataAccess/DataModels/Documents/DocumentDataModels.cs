@@ -19,6 +19,9 @@ public class SharedDocumentDataModel
     public DocumentType DocumentType { get; init; }
     public DateTime SharedOn { get; init; }
     public FileKind FileKind { get; init; }
+
+    /// <summary>Number of file pages (0 for Text/YouTube; 1 for a PDF/single image; N for a multi-image document).</summary>
+    public int PageCount { get; init; }
 }
 
 public class SponsorDocumentHistoryDataModel
@@ -44,13 +47,30 @@ public class LetterPlanProgressDataModel
     public int RejectedLetters { get; init; }
 }
 
+/// <summary>
+/// A pending notification for a single document share. The recipient is either a person-sponsor
+/// or a company (both are first-class sponsors and are notified the same way, each via its own
+/// <see cref="PublicAccessToken"/>-based history page).
+/// </summary>
 public class DocumentShareNotificationDataModel
 {
     public long DocumentShareId { get; init; }
-    public string SponsorEmail { get; init; } = string.Empty;
-    public string SponsorFirstName { get; init; } = string.Empty;
-    public string? SponsorNickName { get; init; }
+
+    /// <summary>True when the recipient is a company; false for a person-sponsor.</summary>
+    public bool IsCompany { get; init; }
+
+    /// <summary>Recipient email address. May be empty for a company that opted out of an address.</summary>
+    public string RecipientEmail { get; init; } = string.Empty;
+
+    /// <summary>Sponsor first name or company name.</summary>
+    public string RecipientName { get; init; } = string.Empty;
+
+    /// <summary>Sponsor nickname; always null for a company.</summary>
+    public string? RecipientNickName { get; init; }
+
+    /// <summary>Token for the recipient's public document-history page.</summary>
     public Guid PublicAccessToken { get; init; }
+
     public int StudentId { get; init; }
     public string StudentFirstName { get; init; } = string.Empty;
     public string StudentLastName { get; init; } = string.Empty;
@@ -95,11 +115,25 @@ public class DocumentBlobContextDataModel
     public int ChapterId { get; init; }
     public int StudentId { get; init; }
     public int? SponsorId { get; init; }
+    public int? CompanyId { get; init; }
     public int? PlanId { get; init; }
     public int UploadedById { get; init; }
     public DigitalImprovementStatus DigitalImprovementStatus { get; init; }
     public int? ImprovementLockedById { get; init; }
     public int? ReviewLockedById { get; init; }
-    public BlobPathDataModel? ActiveBlob { get; init; }
-    public BlobPathDataModel? OriginalBlob { get; init; }
+
+    /// <summary>All file pages of the document, ordered by <see cref="DocumentPageBlobDataModel.PageNumber"/>.</summary>
+    public List<DocumentPageBlobDataModel> Pages { get; init; } = [];
+}
+
+public class DocumentPageBlobDataModel
+{
+    public long DocumentPageId { get; init; }
+    public int PageNumber { get; init; }
+
+    /// <summary>The originally uploaded file for this page.</summary>
+    public BlobPathDataModel Original { get; init; } = null!;
+
+    /// <summary>The active file for this page (improved when available, otherwise the original).</summary>
+    public BlobPathDataModel Active { get; init; } = null!;
 }

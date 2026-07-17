@@ -24,7 +24,7 @@ public class DocumentNotificationMessageFormatterTests
     [InlineData(Gender.Unknown, "ahijado/a")]
     public void GetGodchildTerm_Uses_Gender(Gender gender, string expected)
     {
-        DocumentNotificationMessageFormatter.GetGodchildTerm(gender).Should().Be(expected);
+        DocumentNotificationMessageFormatter.GetStudentTerm(gender).Should().Be(expected);
     }
 
     [Theory]
@@ -59,7 +59,7 @@ public class DocumentNotificationMessageFormatterTests
     {
         var share = new DocumentShareNotificationDataModel
         {
-            SponsorFirstName = "Juan",
+            RecipientName = "Juan",
             StudentFirstName = "María",
             StudentLastName = "García",
             StudentGender = Gender.Male,
@@ -70,5 +70,26 @@ public class DocumentNotificationMessageFormatterTests
 
         html.Should().Contain("Hola, Juan:");
         html.Should().Contain("de tu ahijado María García.");
+    }
+
+    [Fact]
+    public void BuildNotificationHtml_Uses_Company_Name_And_History_Link()
+    {
+        var share = new DocumentShareNotificationDataModel
+        {
+            IsCompany = true,
+            RecipientName = "Acme SA",
+            StudentFirstName = "María",
+            StudentLastName = "García",
+            StudentNickName = "Mari",
+            StudentGender = Gender.Female,
+        };
+
+        var html = DocumentNotificationMessageFormatter.BuildNotificationHtml(
+            share, "https://fonbec.test/empresas/token/1");
+
+        html.Should().Contain("Hola, Acme SA:");
+        html.Should().Contain("de tu ahijada Mari García.");
+        html.Should().Contain("https://fonbec.test/empresas/token/1");
     }
 }

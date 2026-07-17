@@ -81,6 +81,7 @@ public class CompanyRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             PhoneNumber = dataModel.CompanyPhoneNumber,
             Email = dataModel.CompanyEmail,
             Notes = dataModel.CompanyNotes,
+            PublicAccessToken = Guid.NewGuid(),
             PointsOfContact = dataModel.PointsOfContact.Select(poc =>
                 new PointOfContact
                 {
