@@ -76,10 +76,13 @@ public class DocumentServiceAcceptanceTests
 
         result.IsSuccess.Should().BeTrue();
         var doc = await _fixture.GetDocumentAsync(result.Value!);
-        doc.OriginalBlobPathId.Should().NotBeNull();
-        doc.ImprovedBlobPathId.Should().BeNull();
         doc.DigitalImprovementStatus.Should().Be(DigitalImprovementStatus.Required);
         doc.Status.Should().Be(DocumentStatus.PendingImprovement);
+
+        var pages = await _fixture.GetPagesAsync(result.Value!);
+        pages.Should().ContainSingle();
+        pages[0].OriginalBlobPathId.Should().NotBe(0);
+        pages[0].ImprovedBlobPathId.Should().BeNull();
     }
 
     [Fact]
@@ -217,17 +220,19 @@ public class DocumentServiceAcceptanceTests
                 _fixture.ReviewerId,
                 "Reviewer",
                 null,
-                new CreateBlobPathInputModel("improved.jpg", "image/jpeg"),
+                [new CreateBlobPathInputModel("improved.jpg", "image/jpeg")],
                 locked.RowVersion));
 
         submit.IsSuccess.Should().BeTrue();
         var doc = await _fixture.GetDocumentAsync(locked.DocumentId);
-        doc.OriginalBlobPathId.Should().NotBeNull();
-        doc.ImprovedBlobPathId.Should().NotBeNull();
-        doc.BlobPathId.Should().Be(doc.ImprovedBlobPathId);
         doc.DigitalImprovementStatus.Should().Be(DigitalImprovementStatus.Complete);
         doc.Status.Should().Be(DocumentStatus.Pending);
         doc.ImprovementLockedById.Should().BeNull();
+
+        var pages = await _fixture.GetPagesAsync(locked.DocumentId);
+        pages.Should().ContainSingle();
+        pages[0].OriginalBlobPathId.Should().NotBe(0);
+        pages[0].ImprovedBlobPathId.Should().NotBeNull();
     }
 
     [Fact]
@@ -244,7 +249,7 @@ public class DocumentServiceAcceptanceTests
 
         await _fixture.DocumentService.SubmitDigitalImprovementAsync(new SubmitDigitalImprovementInputModel(
             locked!.DocumentId, _fixture.ReviewerId, "Reviewer", null,
-            new CreateBlobPathInputModel("improved.jpg", "image/jpeg"), locked.RowVersion));
+            [new CreateBlobPathInputModel("improved.jpg", "image/jpeg")], locked.RowVersion));
 
         var next = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer");
         next.Should().NotBeNull();
@@ -283,6 +288,51 @@ public class DocumentServiceAcceptanceTests
     }
 
     [Fact]
+    public async Task Scenario12b_ApproveCompanyLetter_SharesWithLinkedSponsorsAndNotifiesCompany()
+    {
+        await _fixture.InitializeAsync();
+
+        var create = await _fixture.DocumentService.CreateLetterAsync(new CreateLetterInputModel(
+            _fixture.CompanyStudentId, _fixture.PlanId, SponsorId: null, _fixture.UploaderContext,
+            FileKind.Text, TextContent: "Dear company", CompanyId: _fixture.CompanyId));
+
+        create.IsSuccess.Should().BeTrue();
+
+        var locked = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer")!;
+
+        var approve = await _fixture.DocumentService.ApproveLetterAsync(new ApproveLetterInputModel(
+            locked!.DocumentId, _fixture.ReviewerId, "Reviewer", locked.RowVersion,
+            ConfirmedIsLetter: true, ConfirmedWrittenDate: DateTime.UtcNow.Date,
+            ConfirmedAddressee: true, ConfirmedSignerMatchesStudent: true,
+            SpellingScore: 4, PenmanshipScore: 4, ContentScore: 4,
+            HasRedFlags: false, HasGreenFlags: true, IssuesNotes: null, Appraisal: "Good"));
+
+        approve.IsSuccess.Should().BeTrue();
+
+        await using var db = await _fixture.Factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+
+        // Two shares: one for the company itself and one for its linked individual sponsor.
+        var shares = await db.Set<DocumentShare>().ToListAsync(TestContext.Current.CancellationToken);
+        shares.Should().HaveCount(2);
+        shares.Should().ContainSingle(s => s.CompanyId == _fixture.CompanyId && s.SponsorId == null);
+        shares.Should().ContainSingle(s => s.SponsorId == _fixture.CompanyLinkedSponsorId && s.CompanyId == null);
+        shares.Should().OnlyContain(s => s.NotificationSentOn != null);
+
+        var letter = await db.Set<Letter>().SingleAsync(TestContext.Current.CancellationToken);
+        letter.CompanyId.Should().Be(_fixture.CompanyId);
+
+        // The linked sponsor and the company itself are both emailed, each with its own history link.
+        await _fixture.EmailSender.Received(1).SendEmailAsync(
+            Arg.Is<string>(e => e == DocumentTestFixture.CompanyLinkedSponsorEmail),
+            Arg.Any<string>(),
+            Arg.Is<string>(html => html.Contains($"/padrinos/{_fixture.CompanyLinkedSponsorToken}/")));
+        await _fixture.EmailSender.Received(1).SendEmailAsync(
+            Arg.Is<string>(e => e == DocumentTestFixture.CompanyEmail),
+            Arg.Any<string>(),
+            Arg.Is<string>(html => html.Contains("Acme SA") && html.Contains("/empresas/")));
+    }
+
+    [Fact]
     public async Task Scenario13_ApproveReportCard_SharesWithAllActiveSponsors()
     {
         await _fixture.InitializeAsync();
@@ -303,6 +353,38 @@ public class DocumentServiceAcceptanceTests
         await using var db = await _fixture.Factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
         (await db.Set<DocumentShare>().CountAsync(TestContext.Current.CancellationToken)).Should().Be(2);
         await _fixture.EmailSender.Received(2).SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task Scenario13b_ApproveReportCard_ForCompanySponsoredStudent_SharesWithCompanyAndLinkedSponsors()
+    {
+        await _fixture.InitializeAsync();
+
+        await _fixture.DocumentService.CreateReportCardAsync(new CreateReportCardInputModel(
+            _fixture.CompanyStudentId, _fixture.UploaderContext,
+            FileKind.Blob, Period: new DateOnly(2026, 6, 1), Description: "Boletín 2º trimestre",
+            Blob: new CreateBlobPathInputModel("r.pdf", "application/pdf")));
+
+        var locked = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer")!;
+
+        var approve = await _fixture.DocumentService.ApproveReportCardAsync(new ApproveReportCardInputModel(
+            locked!.DocumentId, _fixture.ReviewerId, "Reviewer", locked.RowVersion,
+            ConfirmedIsReportCardOrTranscript: true, ConfirmedStudentNameCorrect: true));
+
+        approve.IsSuccess.Should().BeTrue();
+
+        await using var db = await _fixture.Factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+
+        // A report card for a company-sponsored student reaches both the company and its linked sponsor.
+        var shares = await db.Set<DocumentShare>().ToListAsync(TestContext.Current.CancellationToken);
+        shares.Should().HaveCount(2);
+        shares.Should().ContainSingle(s => s.CompanyId == _fixture.CompanyId && s.SponsorId == null);
+        shares.Should().ContainSingle(s => s.SponsorId == _fixture.CompanyLinkedSponsorId && s.CompanyId == null);
+
+        await _fixture.EmailSender.Received(1).SendEmailAsync(
+            Arg.Is<string>(e => e == DocumentTestFixture.CompanyEmail), Arg.Any<string>(), Arg.Any<string>());
+        await _fixture.EmailSender.Received(1).SendEmailAsync(
+            Arg.Is<string>(e => e == DocumentTestFixture.CompanyLinkedSponsorEmail), Arg.Any<string>(), Arg.Any<string>());
     }
 
     [Fact]

@@ -28,9 +28,9 @@ public class DocumentNotificationServiceTests
             new DocumentShareNotificationDataModel
             {
                 DocumentShareId = 1,
-                SponsorEmail = "padrino@test.com",
-                SponsorFirstName = "Juan",
-                SponsorNickName = "Juancito",
+                RecipientEmail = "padrino@test.com",
+                RecipientName = "Juan",
+                RecipientNickName = "Juancito",
                 PublicAccessToken = token,
                 StudentId = 7,
                 StudentFirstName = "María",
@@ -54,5 +54,70 @@ public class DocumentNotificationServiceTests
                 && html.Contains($"https://fonbec.test/padrinos/{token}/7")));
 
         await _documentRepository.Received(1).MarkShareNotifiedAsync(1, Arg.Any<DateTime>());
+    }
+
+    [Fact]
+    public async Task NotifySponsorsAsync_Sends_Company_Email_With_Company_History_Link()
+    {
+        var token = Guid.NewGuid();
+        _documentRepository.GetUnnotifiedSharesAsync(42).Returns(
+        [
+            new DocumentShareNotificationDataModel
+            {
+                DocumentShareId = 5,
+                IsCompany = true,
+                RecipientEmail = "empresa@test.com",
+                RecipientName = "Acme SA",
+                PublicAccessToken = token,
+                StudentId = 7,
+                StudentFirstName = "María",
+                StudentLastName = "García",
+                StudentNickName = "Mari",
+                StudentGender = Gender.Female,
+            },
+        ]);
+
+        var service = new DocumentNotificationService(
+            _documentRepository, _emailMessageSender, _configuration);
+
+        await service.NotifySponsorsAsync(42);
+
+        await _emailMessageSender.Received(1).SendEmailAsync(
+            "empresa@test.com",
+            "Nuevo documento disponible",
+            Arg.Is<string>(html =>
+                html.Contains("Hola, Acme SA:")
+                && html.Contains($"https://fonbec.test/empresas/{token}/7")));
+
+        await _documentRepository.Received(1).MarkShareNotifiedAsync(5, Arg.Any<DateTime>());
+    }
+
+    [Fact]
+    public async Task NotifySponsorsAsync_Skips_Send_But_Marks_Notified_When_Recipient_Has_No_Email()
+    {
+        _documentRepository.GetUnnotifiedSharesAsync(42).Returns(
+        [
+            new DocumentShareNotificationDataModel
+            {
+                DocumentShareId = 9,
+                IsCompany = true,
+                RecipientEmail = string.Empty,
+                RecipientName = "Sin Email SA",
+                PublicAccessToken = Guid.NewGuid(),
+                StudentId = 7,
+                StudentFirstName = "María",
+                StudentLastName = "García",
+                StudentGender = Gender.Female,
+            },
+        ]);
+
+        var service = new DocumentNotificationService(
+            _documentRepository, _emailMessageSender, _configuration);
+
+        await service.NotifySponsorsAsync(42);
+
+        await _emailMessageSender.DidNotReceive().SendEmailAsync(
+            Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await _documentRepository.Received(1).MarkShareNotifiedAsync(9, Arg.Any<DateTime>());
     }
 }

@@ -29,6 +29,7 @@ public sealed class FonbecWebDbContext : IdentityDbContext<FonbecWebUser, Fonbec
 
     internal DbSet<BlobPath> BlobPaths => Set<BlobPath>();
     internal DbSet<Document> Documents => Set<Document>();
+    internal DbSet<DocumentPage> DocumentPages => Set<DocumentPage>();
     internal DbSet<DocumentQueueItem> DocumentQueueItems => Set<DocumentQueueItem>();
     internal DbSet<DocumentShare> DocumentShares => Set<DocumentShare>();
     internal DbSet<RejectedReason> RejectedReasons => Set<RejectedReason>();
@@ -36,6 +37,7 @@ public sealed class FonbecWebDbContext : IdentityDbContext<FonbecWebUser, Fonbec
     internal DbSet<Assessment> Assessments => Set<Assessment>();
     internal DbSet<LetterReview> LetterReviews => Set<LetterReview>();
     internal DbSet<ReportCardReview> ReportCardReviews => Set<ReportCardReview>();
+    internal DbSet<LetterExemption> LetterExemptions => Set<LetterExemption>();
 
     protected override void OnModelCreating(ModelBuilder builder)
     {

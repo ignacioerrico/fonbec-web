@@ -26,13 +26,14 @@ public record CreateDocumentBaseInputModel(
 public record CreateLetterInputModel(
     int StudentId,
     int PlanId,
-    int SponsorId,
+    int? SponsorId,
     CreateDocumentUserContext User,
     FileKind FileKind,
     CreateBlobPathInputModel? Blob = null,
     string? YouTubeVideoId = null,
     string? TextContent = null,
-    string? UploaderNotes = null) : CreateDocumentBaseInputModel(
+    string? UploaderNotes = null,
+    int? CompanyId = null) : CreateDocumentBaseInputModel(
     StudentId, User, FileKind, Blob, YouTubeVideoId, TextContent, UploaderNotes);
 
 public record CreateReportCardInputModel(
@@ -63,7 +64,7 @@ public record SubmitDigitalImprovementInputModel(
     int UserId,
     string UserRole,
     string? FonbecAuthClaim,
-    CreateBlobPathInputModel ImprovedBlob,
+    IReadOnlyList<CreateBlobPathInputModel> ImprovedBlobs,
     byte[] RowVersion);
 
 public record ApproveLetterInputModel(

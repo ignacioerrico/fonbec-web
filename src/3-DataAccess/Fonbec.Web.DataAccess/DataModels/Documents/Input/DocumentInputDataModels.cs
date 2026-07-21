@@ -13,7 +13,14 @@ public class CreateDocumentBaseInputDataModel
     public int StudentId { get; set; }
     public int UploadedById { get; set; }
     public Entities.Enums.FileKind FileKind { get; set; }
-    public CreateBlobPathInputDataModel? Blob { get; set; }
+
+    /// <summary>
+    /// Ordered file pages for a <see cref="Entities.Enums.FileKind.Blob"/> document. A PDF or single
+    /// image is one page; a multi-image document has one page per image (list order = page order).
+    /// Empty for Text/YouTube documents.
+    /// </summary>
+    public List<CreateBlobPathInputDataModel> Blobs { get; set; } = [];
+
     public string? YouTubeVideoId { get; set; }
     public string? TextContent { get; set; }
     public string? UploaderNotes { get; set; }
@@ -22,7 +29,8 @@ public class CreateDocumentBaseInputDataModel
 public class CreateLetterInputDataModel : CreateDocumentBaseInputDataModel
 {
     public int PlanId { get; set; }
-    public int SponsorId { get; set; }
+    public int? SponsorId { get; set; }
+    public int? CompanyId { get; set; }
 }
 
 public class CreateReportCardInputDataModel : CreateDocumentBaseInputDataModel
@@ -40,7 +48,10 @@ public class SubmitDigitalImprovementInputDataModel
 {
     public long DocumentId { get; set; }
     public int UserId { get; set; }
-    public CreateBlobPathInputDataModel ImprovedBlob { get; set; } = null!;
+
+    /// <summary>Improved replacement for each page, in page order (one entry per existing page).</summary>
+    public List<CreateBlobPathInputDataModel> ImprovedBlobs { get; set; } = [];
+
     public byte[] RowVersion { get; set; } = null!;
 }
 

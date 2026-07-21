@@ -78,7 +78,8 @@
 						<MudStack Row="true" Spacing="1">
 							@foreach (var sponsor in context.Item.Sponsors)
 							{
-								<MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined" Icon="@Icons.Material.Filled.Person">
+								<MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined"
+										 Icon="@(sponsor.CompanyId.HasValue ? Icons.Material.Filled.Factory : Icons.Material.Filled.Person)">
 									@sponsor.RecipientName
 								</MudChip>
 							}
@@ -89,14 +90,47 @@
 				<MudDivider Class="my-3" />
 
 				<MudText Typo="Typo.subtitle2" Class="mb-2">Acciones</MudText>
+				@{
+					var letterSponsors = LetterSponsors(context.Item);
+				}
 				<MudStack Row="true" Spacing="2">
-					<MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Mail" Size="Size.Small">
-						Subir carta
-					</MudButton>
-					<MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Description" Size="Size.Small">
+					@if (context.Item.IsLetterExemptForCurrentPlan)
+					{
+						<MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Block" Size="Size.Small" Disabled="true">
+							Eximido
+						</MudButton>
+					}
+					else if (_dashboard.CurrentPlanId is null || letterSponsors.Count == 0)
+					{
+						<MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Mail" Size="Size.Small" Disabled="true">
+							Subir carta
+						</MudButton>
+					}
+					else if (letterSponsors.Count == 1)
+					{
+						<MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Mail" Size="Size.Small"
+								   Href="@LetterUploadUrl(context.Item, letterSponsors[0])">
+							Subir carta
+						</MudButton>
+					}
+					else
+					{
+						<MudMenu Label="Subir carta" StartIcon="@Icons.Material.Filled.Mail" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small">
+							@foreach (var sponsor in letterSponsors)
+							{
+								<MudMenuItem Href="@LetterUploadUrl(context.Item, sponsor)"
+											 Icon="@(sponsor.CompanyId.HasValue ? Icons.Material.Filled.Factory : Icons.Material.Filled.Person)">
+									@sponsor.RecipientName
+								</MudMenuItem>
+							}
+						</MudMenu>
+					}
+					<MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Description" Size="Size.Small"
+							   Href="@NavRoutes.FacilitatorUploadReportCard(context.Item.StudentId)">
 						@ReportCardUploadLabel(context.Item)
 					</MudButton>
-					<MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Upload" Size="Size.Small">
+					<MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Upload" Size="Size.Small"
+							   Href="@NavRoutes.FacilitatorUploadOther(context.Item.StudentId)">
 						Subir otro documento
 					</MudButton>
 				</MudStack>

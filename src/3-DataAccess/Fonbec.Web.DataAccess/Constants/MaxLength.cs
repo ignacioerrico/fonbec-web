@@ -51,6 +51,11 @@ public static class MaxLength
         public const int Text = Document.Description;
     }
 
+    public static class LetterExemption
+    {
+        public const int Reason = 512;
+    }
+
     public static class BlobPath
     {
         public const int StoragePath = 512;

@@ -14,6 +14,20 @@ var builder = WebApplication.CreateBuilder(args);
 builder.Services.AddRazorComponents()
     .AddInteractiveServerComponents();
 
+// Blazor Server streams uploaded files over the circuit's SignalR connection, so the
+// maximum receive message size must accommodate the largest allowed document plus overhead.
+const long KB = 1024;
+const long MB = KB * KB;
+var maxFileSizeBytes = builder.Configuration.GetValue<long?>("BlobStorage:MaxFileSizeBytes")
+                       ?? 10 * MB;
+var maxUploadMessageSize = maxFileSizeBytes + 1 * MB;
+builder.Services.Configure<Microsoft.AspNetCore.SignalR.HubOptions>(options =>
+    options.MaximumReceiveMessageSize = maxUploadMessageSize);
+builder.Services.Configure<Microsoft.AspNetCore.Http.Features.FormOptions>(options =>
+    options.MultipartBodyLengthLimit = maxUploadMessageSize);
+builder.Services.Configure<Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServerOptions>(options =>
+    options.Limits.MaxRequestBodySize = maxUploadMessageSize);
+
 builder.Services.AddCascadingAuthenticationState();
 builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();

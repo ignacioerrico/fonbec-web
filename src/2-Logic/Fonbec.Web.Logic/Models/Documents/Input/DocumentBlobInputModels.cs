@@ -1,19 +1,24 @@
 namespace Fonbec.Web.Logic.Models.Documents.Input;
 
+/// <summary>
+/// A single uploaded file. Only image documents (JPG/PNG) may consist of several files (pages);
+/// PDF and text/YouTube documents are always a single file. List order defines page order.
+/// </summary>
+public record UploadFileInputModel(Stream Content, string MimeType);
+
 public record CreateLetterWithBlobInputModel(
     int StudentId,
     int PlanId,
-    int SponsorId,
+    int? SponsorId,
     CreateDocumentUserContext User,
-    Stream Content,
-    string MimeType,
-    string? UploaderNotes = null);
+    IReadOnlyList<UploadFileInputModel> Files,
+    string? UploaderNotes = null,
+    int? CompanyId = null);
 
 public record CreateReportCardWithBlobInputModel(
     int StudentId,
     CreateDocumentUserContext User,
-    Stream Content,
-    string MimeType,
+    IReadOnlyList<UploadFileInputModel> Files,
     DateOnly Period,
     string Description,
     string? UploaderNotes = null);
@@ -21,8 +26,7 @@ public record CreateReportCardWithBlobInputModel(
 public record CreateOtherDocumentWithBlobInputModel(
     int StudentId,
     CreateDocumentUserContext User,
-    Stream Content,
-    string MimeType,
+    IReadOnlyList<UploadFileInputModel> Files,
     string Description,
     string? UploaderNotes = null);
 
@@ -31,6 +35,5 @@ public record SubmitDigitalImprovementWithBlobInputModel(
     int UserId,
     string UserRole,
     string? FonbecAuthClaim,
-    Stream Content,
-    string MimeType,
+    IReadOnlyList<UploadFileInputModel> Files,
     byte[] RowVersion);

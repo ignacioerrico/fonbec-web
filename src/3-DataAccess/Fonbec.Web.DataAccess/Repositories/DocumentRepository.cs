@@ -12,7 +12,9 @@ public interface IDocumentRepository
     Task<StudentUploadContextDataModel?> GetStudentUploadContextAsync(int studentId);
     Task<bool> IsActivePlanAsync(int planId, int chapterId);
     Task<bool> HasActiveSponsorshipAsync(int studentId, int sponsorId);
+    Task<bool> HasActiveCompanySponsorshipAsync(int studentId, int companyId);
     Task<bool> HasDuplicateLetterAsync(int studentId, int sponsorId, int planId);
+    Task<bool> HasDuplicateCompanyLetterAsync(int studentId, int companyId, int planId);
     Task<CreateDocumentResultDataModel> CreateLetterAsync(CreateLetterInputDataModel input);
     Task<CreateDocumentResultDataModel> CreateReportCardAsync(CreateReportCardInputDataModel input);
     Task<CreateDocumentResultDataModel> CreateOtherDocumentAsync(CreateOtherDocumentInputDataModel input);
@@ -28,6 +30,7 @@ public interface IDocumentRepository
     Task<List<string>> ApproveOtherDocumentAsync(ApproveOtherDocumentInputDataModel input);
     Task<List<string>> RejectOtherDocumentAsync(RejectOtherDocumentInputDataModel input);
     Task<SponsorDocumentHistoryDataModel> GetSharedDocumentsAsync(Guid sponsorPublicAccessToken, int studentId);
+    Task<SponsorDocumentHistoryDataModel> GetSharedDocumentsForCompanyAsync(Guid companyPublicAccessToken, int studentId);
     Task<ReviewProgressDataModel> GetGlobalReviewProgressAsync(int? planId);
     Task<LetterPlanProgressDataModel> GetLetterPlanProgressAsync(int planId, int? chapterId);
     Task<List<DocumentShareNotificationDataModel>> GetUnnotifiedSharesAsync(long documentId);
@@ -85,6 +88,21 @@ public class DocumentRepository(IDbContextFactory<FonbecWebDbContext> dbContext)
                             && !sp.Sponsor.IsDeleted);
     }
 
+    public async Task<bool> HasActiveCompanySponsorshipAsync(int studentId, int companyId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+        var utcNow = DateTime.UtcNow;
+        return await db.Sponsorships
+            .AsNoTracking()
+            .AnyAsync(sp => sp.StudentId == studentId
+                            && sp.CompanyId == companyId
+                            && sp.IsActive
+                            && sp.StartDate <= utcNow
+                            && (sp.EndDate == null || sp.EndDate >= utcNow)
+                            && sp.Company != null
+                            && sp.Company.IsActive);
+    }
+
     public async Task<bool> HasDuplicateLetterAsync(int studentId, int sponsorId, int planId)
     {
         await using var db = await dbContext.CreateDbContextAsync();
@@ -95,16 +113,25 @@ public class DocumentRepository(IDbContextFactory<FonbecWebDbContext> dbContext)
                            && l.Status != DocumentStatus.Rejected);
     }
 
+    public async Task<bool> HasDuplicateCompanyLetterAsync(int studentId, int companyId, int planId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+        return await db.Set<Letter>()
+            .AnyAsync(l => l.StudentId == studentId
+                           && l.CompanyId == companyId
+                           && l.PlanId == planId
+                           && l.Status != DocumentStatus.Rejected);
+    }
+
     public Task<CreateDocumentResultDataModel> CreateLetterAsync(CreateLetterInputDataModel input) =>
-        CreateDocumentAsync(input, (blobPathId, requiresImprovement) => new Letter
+        CreateDocumentAsync(input, requiresImprovement => new Letter
         {
             ChapterId = 0, // set below
             StudentId = input.StudentId,
             SponsorId = input.SponsorId,
+            CompanyId = input.CompanyId,
             PlanId = input.PlanId,
             FileKind = input.FileKind,
-            BlobPathId = blobPathId,
-            OriginalBlobPathId = input.FileKind == FileKind.Blob ? blobPathId : null,
             YouTubeVideoId = input.YouTubeVideoId,
             TextContent = input.TextContent,
             UploaderNotes = input.UploaderNotes,
@@ -116,17 +143,15 @@ public class DocumentRepository(IDbContextFactory<FonbecWebDbContext> dbContext)
             Status = requiresImprovement
                 ? DocumentStatus.PendingImprovement
                 : DocumentStatus.Pending,
-        }, input);
+        });
 
     public Task<CreateDocumentResultDataModel> CreateReportCardAsync(CreateReportCardInputDataModel input) =>
-        CreateDocumentAsync(input, (blobPathId, requiresImprovement) => new ReportCard
+        CreateDocumentAsync(input, requiresImprovement => new ReportCard
         {
             StudentId = input.StudentId,
             Period = input.Period,
             Description = input.Description,
             FileKind = input.FileKind,
-            BlobPathId = blobPathId,
-            OriginalBlobPathId = input.FileKind == FileKind.Blob ? blobPathId : null,
             YouTubeVideoId = input.YouTubeVideoId,
             TextContent = input.TextContent,
             UploaderNotes = input.UploaderNotes,
@@ -138,16 +163,14 @@ public class DocumentRepository(IDbContextFactory<FonbecWebDbContext> dbContext)
             Status = requiresImprovement
                 ? DocumentStatus.PendingImprovement
                 : DocumentStatus.Pending,
-        }, input);
+        });
 
     public Task<CreateDocumentResultDataModel> CreateOtherDocumentAsync(CreateOtherDocumentInputDataModel input) =>
-        CreateDocumentAsync(input, (blobPathId, requiresImprovement) => new OtherDocument
+        CreateDocumentAsync(input, requiresImprovement => new OtherDocument
         {
             StudentId = input.StudentId,
             Description = input.Description,
             FileKind = input.FileKind,
-            BlobPathId = blobPathId,
-            OriginalBlobPathId = input.FileKind == FileKind.Blob ? blobPathId : null,
             YouTubeVideoId = input.YouTubeVideoId,
             TextContent = input.TextContent,
             UploaderNotes = input.UploaderNotes,
@@ -159,12 +182,11 @@ public class DocumentRepository(IDbContextFactory<FonbecWebDbContext> dbContext)
             Status = requiresImprovement
                 ? DocumentStatus.PendingImprovement
                 : DocumentStatus.Pending,
-        }, input);
+        });
 
     private async Task<CreateDocumentResultDataModel> CreateDocumentAsync<TDocument>(
         CreateDocumentBaseInputDataModel input,
-        Func<long?, bool, TDocument> createEntity,
-        CreateDocumentBaseInputDataModel _)
+        Func<bool, TDocument> createEntity)
         where TDocument : Document
     {
         await using var db = await dbContext.CreateDbContextAsync();
@@ -178,35 +200,52 @@ public class DocumentRepository(IDbContextFactory<FonbecWebDbContext> dbContext)
             return new CreateDocumentResultDataModel { Errors = [DocumentMessages.StudentNotFoundOrInactive] };
         }
 
-        long? blobPathId = null;
         var requiresImprovement = false;
 
         if (input.FileKind == FileKind.Blob)
         {
-            if (input.Blob is null)
+            if (input.Blobs.Count == 0)
             {
                 return new CreateDocumentResultDataModel { Errors = [DocumentMessages.BlobContentRequired] };
             }
 
-            var blob = new BlobPath
-            {
-                StoragePath = input.Blob.StoragePath,
-                MimeType = input.Blob.MimeType,
-                FileSizeBytes = input.Blob.FileSizeBytes,
-                Sha256 = input.Blob.Sha256,
-            };
-            db.BlobPaths.Add(blob);
-            await db.SaveChangesAsync();
-            blobPathId = blob.BlobPathId;
-            requiresImprovement = ImageMimeTypes.Contains(input.Blob.MimeType, StringComparer.OrdinalIgnoreCase);
+            // Only images may span multiple files; all pages of an image document require improvement.
+            requiresImprovement = input.Blobs.Any(b =>
+                ImageMimeTypes.Contains(b.MimeType, StringComparer.OrdinalIgnoreCase));
         }
 
-        var document = createEntity(blobPathId, requiresImprovement);
+        var document = createEntity(requiresImprovement);
         document.ChapterId = student.ChapterId;
         document.RowVersion = new byte[8];
 
         db.Documents.Add(document);
         await db.SaveChangesAsync();
+
+        if (input.FileKind == FileKind.Blob)
+        {
+            var pageNumber = 1;
+            foreach (var blob in input.Blobs)
+            {
+                var blobPath = new BlobPath
+                {
+                    StoragePath = blob.StoragePath,
+                    MimeType = blob.MimeType,
+                    FileSizeBytes = blob.FileSizeBytes,
+                    Sha256 = blob.Sha256,
+                };
+                db.BlobPaths.Add(blobPath);
+                await db.SaveChangesAsync();
+
+                db.DocumentPages.Add(new DocumentPage
+                {
+                    DocumentId = document.DocumentId,
+                    PageNumber = pageNumber++,
+                    OriginalBlobPathId = blobPath.BlobPathId,
+                });
+            }
+
+            await db.SaveChangesAsync();
+        }
 
         db.DocumentQueueItems.Add(new DocumentQueueItem
         {
@@ -304,6 +343,7 @@ public class DocumentRepository(IDbContextFactory<FonbecWebDbContext> dbContext)
         await using var db = await dbContext.CreateDbContextAsync();
 
         var document = await db.Documents
+            .Include(d => d.Pages)
             .FirstOrDefaultAsync(d => d.DocumentId == input.DocumentId
                                       && d.ImprovementLockedById == input.UserId);
 
@@ -312,20 +352,32 @@ public class DocumentRepository(IDbContextFactory<FonbecWebDbContext> dbContext)
             return [DocumentMessages.DocumentNotFoundOrImprovementLockNotHeld];
         }
 
+        // Improvement is submitted for the whole document: exactly one improved file per page,
+        // provided in page order.
+        var pages = document.Pages.OrderBy(p => p.PageNumber).ToList();
+        if (input.ImprovedBlobs.Count != pages.Count)
+        {
+            return [DocumentMessages.ImprovedPageCountMismatch];
+        }
+
         db.Entry(document).Property(d => d.RowVersion).OriginalValue = input.RowVersion;
 
-        var improvedBlob = new BlobPath
+        for (var i = 0; i < pages.Count; i++)
         {
-            StoragePath = input.ImprovedBlob.StoragePath,
-            MimeType = input.ImprovedBlob.MimeType,
-            FileSizeBytes = input.ImprovedBlob.FileSizeBytes,
-            Sha256 = input.ImprovedBlob.Sha256,
-        };
-        db.BlobPaths.Add(improvedBlob);
-        await db.SaveChangesAsync();
+            var source = input.ImprovedBlobs[i];
+            var improvedBlob = new BlobPath
+            {
+                StoragePath = source.StoragePath,
+                MimeType = source.MimeType,
+                FileSizeBytes = source.FileSizeBytes,
+                Sha256 = source.Sha256,
+            };
+            db.BlobPaths.Add(improvedBlob);
+            await db.SaveChangesAsync();
 
-        document.ImprovedBlobPathId = improvedBlob.BlobPathId;
-        document.BlobPathId = improvedBlob.BlobPathId;
+            pages[i].ImprovedBlobPathId = improvedBlob.BlobPathId;
+        }
+
         document.DigitalImprovementStatus = DigitalImprovementStatus.Complete;
         document.Status = DocumentStatus.Pending;
         document.ImprovementLockedById = null;
@@ -405,7 +457,13 @@ public class DocumentRepository(IDbContextFactory<FonbecWebDbContext> dbContext)
         };
         db.LetterReviews.Add(review);
 
-        return await FinalizeApprovalAsync(db, letter, input.ReviewerId, [letter.SponsorId!.Value]);
+        // A letter is addressed to exactly one recipient (a person-sponsor XOR a company). Both are
+        // sponsors: a company additionally fans out to the person-sponsors linked to it.
+        var directSponsorIds = letter.SponsorId.HasValue ? new[] { letter.SponsorId.Value } : [];
+        var companyIds = letter.CompanyId.HasValue ? new[] { letter.CompanyId.Value } : [];
+        var targets = await ResolveShareTargetsAsync(db, directSponsorIds, companyIds);
+
+        return await FinalizeApprovalAsync(db, letter, input.ReviewerId, targets);
     }
 
     public async Task<List<string>> RejectLetterAsync(RejectLetterInputDataModel input) =>
@@ -439,8 +497,8 @@ public class DocumentRepository(IDbContextFactory<FonbecWebDbContext> dbContext)
         };
         db.ReportCardReviews.Add(review);
 
-        var sponsorIds = await GetActiveSponsorIdsInternalAsync(db, reportCard.StudentId);
-        return await FinalizeApprovalAsync(db, reportCard, input.ReviewerId, sponsorIds);
+        var targets = await ResolveStudentShareTargetsAsync(db, reportCard.StudentId);
+        return await FinalizeApprovalAsync(db, reportCard, input.ReviewerId, targets);
     }
 
     public async Task<List<string>> RejectReportCardAsync(RejectReportCardInputDataModel input) =>
@@ -464,8 +522,8 @@ public class DocumentRepository(IDbContextFactory<FonbecWebDbContext> dbContext)
 
         db.Entry(other).Property(d => d.RowVersion).OriginalValue = input.RowVersion;
 
-        var sponsorIds = await GetActiveSponsorIdsInternalAsync(db, other.StudentId);
-        return await FinalizeApprovalAsync(db, other, input.ReviewerId, sponsorIds);
+        var targets = await ResolveStudentShareTargetsAsync(db, other.StudentId);
+        return await FinalizeApprovalAsync(db, other, input.ReviewerId, targets);
     }
 
     public async Task<List<string>> RejectOtherDocumentAsync(RejectOtherDocumentInputDataModel input) =>
@@ -491,10 +549,13 @@ public class DocumentRepository(IDbContextFactory<FonbecWebDbContext> dbContext)
         var hasSponsorship = await db.Sponsorships
             .AsNoTracking()
             .AnyAsync(sp => sp.StudentId == studentId
-                            && sp.SponsorId == sponsor.Id
                             && sp.IsActive
                             && sp.StartDate <= utcNow
-                            && (sp.EndDate == null || sp.EndDate >= utcNow));
+                            && (sp.EndDate == null || sp.EndDate >= utcNow)
+                            // Direct sponsorship, or the sponsor belongs to a company that sponsors the student
+                            // (company letters are shared with the company's individual sponsors).
+                            && (sp.SponsorId == sponsor.Id
+                                || (sponsor.CompanyId != null && sp.CompanyId == sponsor.CompanyId)));
 
         if (!hasSponsorship)
         {
@@ -511,6 +572,56 @@ public class DocumentRepository(IDbContextFactory<FonbecWebDbContext> dbContext)
                 DocumentType = s.Document.DocumentType,
                 SharedOn = s.SharedOn,
                 FileKind = s.Document.FileKind,
+                PageCount = s.Document.Pages.Count,
+            })
+            .ToListAsync();
+
+        return new SponsorDocumentHistoryDataModel
+        {
+            IsAuthorized = true,
+            Documents = documents,
+        };
+    }
+
+    public async Task<SponsorDocumentHistoryDataModel> GetSharedDocumentsForCompanyAsync(
+        Guid companyPublicAccessToken, int studentId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var company = await db.Companies
+            .AsNoTracking()
+            .FirstOrDefaultAsync(c => c.PublicAccessToken == companyPublicAccessToken && c.IsActive);
+
+        if (company is null)
+        {
+            return new SponsorDocumentHistoryDataModel { IsAuthorized = false };
+        }
+
+        var utcNow = DateTime.UtcNow;
+        var hasSponsorship = await db.Sponsorships
+            .AsNoTracking()
+            .AnyAsync(sp => sp.StudentId == studentId
+                            && sp.CompanyId == company.Id
+                            && sp.IsActive
+                            && sp.StartDate <= utcNow
+                            && (sp.EndDate == null || sp.EndDate >= utcNow));
+
+        if (!hasSponsorship)
+        {
+            return new SponsorDocumentHistoryDataModel { IsAuthorized = false };
+        }
+
+        var documents = await db.DocumentShares
+            .AsNoTracking()
+            .Where(s => s.CompanyId == company.Id && s.StudentId == studentId)
+            .OrderByDescending(s => s.SharedOn)
+            .Select(s => new SharedDocumentDataModel
+            {
+                DocumentId = s.DocumentId,
+                DocumentType = s.Document.DocumentType,
+                SharedOn = s.SharedOn,
+                FileKind = s.Document.FileKind,
+                PageCount = s.Document.Pages.Count,
             })
             .ToListAsync();
 
@@ -582,10 +693,15 @@ public class DocumentRepository(IDbContextFactory<FonbecWebDbContext> dbContext)
             .Select(s => new DocumentShareNotificationDataModel
             {
                 DocumentShareId = s.DocumentShareId,
-                SponsorEmail = s.Sponsor.Email,
-                SponsorFirstName = s.Sponsor.FirstName,
-                SponsorNickName = s.Sponsor.NickName,
-                PublicAccessToken = s.Sponsor.PublicAccessToken,
+                IsCompany = s.CompanyId != null,
+                RecipientEmail = s.CompanyId != null
+                    ? (s.Company!.Email ?? string.Empty)
+                    : s.Sponsor!.Email,
+                RecipientName = s.CompanyId != null ? s.Company!.Name : s.Sponsor!.FirstName,
+                RecipientNickName = s.CompanyId != null ? null : s.Sponsor!.NickName,
+                PublicAccessToken = s.CompanyId != null
+                    ? s.Company!.PublicAccessToken
+                    : s.Sponsor!.PublicAccessToken,
                 StudentId = s.StudentId,
                 StudentFirstName = s.Student.FirstName,
                 StudentLastName = s.Student.LastName,
@@ -620,8 +736,8 @@ public class DocumentRepository(IDbContextFactory<FonbecWebDbContext> dbContext)
 
         var document = await db.Documents
             .AsNoTracking()
-            .Include(d => d.BlobPath)
-            .Include(d => d.OriginalBlobPath)
+            .Include(d => d.Pages).ThenInclude(p => p.OriginalBlobPath)
+            .Include(d => d.Pages).ThenInclude(p => p.ImprovedBlobPath)
             .Include(d => d.QueueItem)
             .FirstOrDefaultAsync(d => d.DocumentId == documentId);
 
@@ -630,6 +746,17 @@ public class DocumentRepository(IDbContextFactory<FonbecWebDbContext> dbContext)
             return null;
         }
 
+        var pages = document.Pages
+            .OrderBy(p => p.PageNumber)
+            .Select(p => new DocumentPageBlobDataModel
+            {
+                DocumentPageId = p.DocumentPageId,
+                PageNumber = p.PageNumber,
+                Original = ToBlobPathDataModel(p.OriginalBlobPath)!,
+                Active = ToBlobPathDataModel(p.ImprovedBlobPath ?? p.OriginalBlobPath)!,
+            })
+            .ToList();
+
         return new DocumentBlobContextDataModel
         {
             DocumentId = document.DocumentId,
@@ -637,13 +764,13 @@ public class DocumentRepository(IDbContextFactory<FonbecWebDbContext> dbContext)
             ChapterId = document.ChapterId,
             StudentId = document.StudentId,
             SponsorId = document.SponsorId,
+            CompanyId = (document as Letter)?.CompanyId,
             PlanId = (document as Letter)?.PlanId,
             UploadedById = document.UploadedById,
             DigitalImprovementStatus = document.DigitalImprovementStatus,
             ImprovementLockedById = document.ImprovementLockedById,
             ReviewLockedById = document.QueueItem?.ReviewLockedById,
-            ActiveBlob = ToBlobPathDataModel(document.BlobPath),
-            OriginalBlob = ToBlobPathDataModel(document.OriginalBlobPath),
+            Pages = pages,
         };
     }
 
@@ -686,27 +813,83 @@ public class DocumentRepository(IDbContextFactory<FonbecWebDbContext> dbContext)
 
     private static async Task<List<int>> GetActiveSponsorIdsInternalAsync(FonbecWebDbContext db, int studentId)
     {
+        var targets = await ResolveStudentShareTargetsAsync(db, studentId);
+        return targets.SponsorIds.ToList();
+    }
+
+    /// <summary>
+    /// The set of recipients a document should be shared with for the student's active sponsorships.
+    /// Each sponsorship recipient is a person-sponsor or a company; a company additionally fans out
+    /// to the person-sponsors linked to it.
+    /// </summary>
+    private static async Task<ShareTargets> ResolveStudentShareTargetsAsync(FonbecWebDbContext db, int studentId)
+    {
         var utcNow = DateTime.UtcNow;
-        return await db.Sponsorships
+        var sponsorships = await db.Sponsorships
             .AsNoTracking()
             .Where(sp => sp.StudentId == studentId
-                         && sp.SponsorId != null
                          && sp.IsActive
                          && sp.StartDate <= utcNow
-                         && (sp.EndDate == null || sp.EndDate >= utcNow)
-                         && sp.Sponsor != null
-                         && sp.Sponsor.IsActive
-                         && !sp.Sponsor.IsDeleted)
-            .Select(sp => sp.SponsorId!.Value)
-            .Distinct()
+                         && (sp.EndDate == null || sp.EndDate >= utcNow))
+            .Select(sp => new
+            {
+                sp.SponsorId,
+                SponsorActive = sp.Sponsor != null && sp.Sponsor.IsActive && !sp.Sponsor.IsDeleted,
+                sp.CompanyId,
+                CompanyActive = sp.Company != null && sp.Company.IsActive,
+            })
             .ToListAsync();
+
+        var directSponsorIds = sponsorships
+            .Where(x => x.SponsorId != null && x.SponsorActive)
+            .Select(x => x.SponsorId!.Value);
+
+        var companyIds = sponsorships
+            .Where(x => x.CompanyId != null && x.CompanyActive)
+            .Select(x => x.CompanyId!.Value);
+
+        return await ResolveShareTargetsAsync(db, directSponsorIds, companyIds);
     }
+
+    /// <summary>
+    /// Expands an explicit set of recipient person-sponsors and companies into concrete share
+    /// targets. Every company additionally fans out to its active linked person-sponsors.
+    /// </summary>
+    private static async Task<ShareTargets> ResolveShareTargetsAsync(
+        FonbecWebDbContext db,
+        IEnumerable<int> directSponsorIds,
+        IEnumerable<int> companyIds)
+    {
+        var sponsorIds = new HashSet<int>(directSponsorIds);
+        var companies = new HashSet<int>(companyIds);
+
+        if (companies.Count > 0)
+        {
+            var linkedSponsorIds = await db.Sponsors
+                .AsNoTracking()
+                .Where(s => s.CompanyId != null
+                            && companies.Contains(s.CompanyId.Value)
+                            && s.IsActive
+                            && !s.IsDeleted)
+                .Select(s => s.Id)
+                .ToListAsync();
+
+            foreach (var id in linkedSponsorIds)
+            {
+                sponsorIds.Add(id);
+            }
+        }
+
+        return new ShareTargets(sponsorIds, companies);
+    }
+
+    private sealed record ShareTargets(IReadOnlyCollection<int> SponsorIds, IReadOnlyCollection<int> CompanyIds);
 
     private static async Task<List<string>> FinalizeApprovalAsync(
         FonbecWebDbContext db,
         Document document,
         int reviewerId,
-        IReadOnlyList<int> sponsorIds)
+        ShareTargets targets)
     {
         var utcNow = DateTime.UtcNow;
         document.Status = DocumentStatus.Approved;
@@ -718,12 +901,24 @@ public class DocumentRepository(IDbContextFactory<FonbecWebDbContext> dbContext)
             document.QueueItem.ReviewLockedAt = null;
         }
 
-        foreach (var sponsorId in sponsorIds)
+        foreach (var sponsorId in targets.SponsorIds)
         {
             db.DocumentShares.Add(new DocumentShare
             {
                 DocumentId = document.DocumentId,
                 SponsorId = sponsorId,
+                StudentId = document.StudentId,
+                SharedOn = utcNow,
+                SharedById = reviewerId,
+            });
+        }
+
+        foreach (var companyId in targets.CompanyIds)
+        {
+            db.DocumentShares.Add(new DocumentShare
+            {
+                DocumentId = document.DocumentId,
+                CompanyId = companyId,
                 StudentId = document.StudentId,
                 SharedOn = utcNow,
                 SharedById = reviewerId,

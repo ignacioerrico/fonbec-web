@@ -47,6 +47,12 @@ public class FacilitatorStudentsListViewModel : AuditableViewModel, IDetectChang
 
     public EducationLevel EducationLevel { get; set; }
 
+    /// <summary>
+    /// True when the student is exempt from submitting a letter for the current plan (us110).
+    /// When set, the "Subir carta" action is unavailable.
+    /// </summary>
+    public bool IsLetterExemptForCurrentPlan { get; set; }
+
     public List<DashboardSponsorViewModel> Sponsors { get; set; } = [];
 
     public bool IsIdenticalTo(FacilitatorStudentsListViewModel other) =>

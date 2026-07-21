@@ -3,6 +3,7 @@ using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models.Facilitators;
 using Fonbec.Web.Logic.Services;
+using Fonbec.Web.Ui.Constants;
 using Microsoft.AspNetCore.Components;
 
 namespace Fonbec.Web.Ui.Components.Pages.Facilitators;
@@ -51,4 +52,13 @@ public partial class FacilitatorStudentsList : AuthenticationRequiredComponentBa
         viewModel.EducationLevel == EducationLevel.University
             ? "Subir libreta universitaria"
             : "Subir boletín";
+
+    // Letters can be addressed to either an individual sponsor or a company (each sponsorship
+    // resolves to exactly one recipient), so all of a student's sponsorships are letter recipients.
+    private static List<DashboardSponsorViewModel> LetterSponsors(FacilitatorStudentsListViewModel viewModel) =>
+        viewModel.Sponsors;
+
+    private string LetterUploadUrl(FacilitatorStudentsListViewModel viewModel, DashboardSponsorViewModel sponsor) =>
+        NavRoutes.FacilitatorUploadLetter(
+            viewModel.StudentId, _dashboard.CurrentPlanId!.Value, sponsor.SponsorId, sponsor.CompanyId);
 }

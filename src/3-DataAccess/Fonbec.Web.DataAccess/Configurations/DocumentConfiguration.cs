@@ -46,20 +46,10 @@ internal class DocumentConfiguration : IEntityTypeConfiguration<Document>
             .HasForeignKey(d => d.SponsorId)
             .OnDelete(DeleteBehavior.NoAction);
 
-        builder.HasOne(d => d.BlobPath)
-            .WithMany()
-            .HasForeignKey(d => d.BlobPathId)
-            .OnDelete(DeleteBehavior.NoAction);
-
-        builder.HasOne(d => d.OriginalBlobPath)
-            .WithMany()
-            .HasForeignKey(d => d.OriginalBlobPathId)
-            .OnDelete(DeleteBehavior.NoAction);
-
-        builder.HasOne(d => d.ImprovedBlobPath)
-            .WithMany()
-            .HasForeignKey(d => d.ImprovedBlobPathId)
-            .OnDelete(DeleteBehavior.NoAction);
+        builder.HasMany(d => d.Pages)
+            .WithOne(p => p.Document)
+            .HasForeignKey(p => p.DocumentId)
+            .OnDelete(DeleteBehavior.Cascade);
 
         builder.HasOne(d => d.UploadedBy)
             .WithMany()
@@ -84,19 +74,33 @@ internal class DocumentConfiguration : IEntityTypeConfiguration<Document>
                 "CK_Document_ApprovedOrRejected",
                 "[ApprovedOn] IS NULL OR [RejectedOn] IS NULL");
 
-            t.HasCheckConstraint(
-                "CK_Document_ImprovementComplete",
-                "[DigitalImprovementStatus] <> 3 OR [ImprovedBlobPathId] IS NOT NULL");
-
-            t.HasCheckConstraint(
-                "CK_Document_ImprovementNotApplicable",
-                "[DigitalImprovementStatus] <> 0 OR [ImprovedBlobPathId] IS NULL");
-
             // Report cards and other documents require a description; letters never have one.
             t.HasCheckConstraint(
                 "CK_Document_DescriptionRequired",
                 $"[{nameof(Document.DocumentType)}] = {(byte)DocumentType.Letter} OR [Description] IS NOT NULL");
         });
+    }
+}
+
+internal class DocumentPageConfiguration : IEntityTypeConfiguration<DocumentPage>
+{
+    public void Configure(EntityTypeBuilder<DocumentPage> builder)
+    {
+        builder.HasKey(p => p.DocumentPageId);
+
+        // Page order is unique within a document.
+        builder.HasIndex(p => new { p.DocumentId, p.PageNumber })
+            .IsUnique();
+
+        builder.HasOne(p => p.OriginalBlobPath)
+            .WithMany()
+            .HasForeignKey(p => p.OriginalBlobPathId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder.HasOne(p => p.ImprovedBlobPath)
+            .WithMany()
+            .HasForeignKey(p => p.ImprovedBlobPathId)
+            .OnDelete(DeleteBehavior.NoAction);
     }
 }
 
@@ -109,15 +113,30 @@ internal class LetterConfiguration : IEntityTypeConfiguration<Letter>
             .HasForeignKey(l => l.PlanId)
             .OnDelete(DeleteBehavior.NoAction);
 
+        builder.HasOne(l => l.Company)
+            .WithMany()
+            .HasForeignKey(l => l.CompanyId)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        // One (non-rejected) letter per sponsor + plan. Filtered to sponsor letters so the
+        // company-letter rows (SponsorId IS NULL) don't collide on SQL Server's single-NULL rule.
         builder.HasIndex(l => new { l.StudentId, l.SponsorId, l.PlanId })
             .IsUnique()
-            .HasFilter($"[{nameof(Document.DocumentType)}] = {(byte)DocumentType.Letter} AND [{nameof(Document.Status)}] <> {(byte)DocumentStatus.Rejected}");
+            .HasFilter($"[{nameof(Document.DocumentType)}] = {(byte)DocumentType.Letter} AND [{nameof(Document.Status)}] <> {(byte)DocumentStatus.Rejected} AND [{nameof(Document.SponsorId)}] IS NOT NULL");
+
+        // One (non-rejected) letter per company + plan.
+        builder.HasIndex(l => new { l.StudentId, l.CompanyId, l.PlanId })
+            .IsUnique()
+            .HasFilter($"[{nameof(Document.DocumentType)}] = {(byte)DocumentType.Letter} AND [{nameof(Document.Status)}] <> {(byte)DocumentStatus.Rejected} AND [{nameof(Letter.CompanyId)}] IS NOT NULL");
 
         builder.ToTable(t =>
         {
+            // A letter is addressed to exactly one recipient: a sponsor XOR a company.
             t.HasCheckConstraint(
-                "CK_Letter_SponsorRequired",
-                $"[{nameof(Document.DocumentType)}] <> {(byte)DocumentType.Letter} OR [{nameof(Document.SponsorId)}] IS NOT NULL");
+                "CK_Letter_RecipientRequired",
+                $"[{nameof(Document.DocumentType)}] <> {(byte)DocumentType.Letter} OR "
+                + $"(([{nameof(Document.SponsorId)}] IS NOT NULL AND [{nameof(Letter.CompanyId)}] IS NULL) "
+                + $"OR ([{nameof(Document.SponsorId)}] IS NULL AND [{nameof(Letter.CompanyId)}] IS NOT NULL))");
         });
     }
 }
@@ -136,6 +155,10 @@ internal class ReportCardConfiguration : IEntityTypeConfiguration<ReportCard>
             t.HasCheckConstraint(
                 "CK_ReportCard_SponsorNull",
                 $"[{nameof(Document.DocumentType)}] <> {(byte)DocumentType.ReportCard} OR [{nameof(Document.SponsorId)}] IS NULL");
+
+            t.HasCheckConstraint(
+                "CK_ReportCard_CompanyNull",
+                $"[{nameof(Document.DocumentType)}] <> {(byte)DocumentType.ReportCard} OR [{nameof(Letter.CompanyId)}] IS NULL");
 
             t.HasCheckConstraint(
                 "CK_ReportCard_PeriodRequired",
@@ -158,6 +181,10 @@ internal class OtherDocumentConfiguration : IEntityTypeConfiguration<OtherDocume
             t.HasCheckConstraint(
                 "CK_OtherDocument_SponsorNull",
                 $"[{nameof(Document.DocumentType)}] <> {(byte)DocumentType.Other} OR [{nameof(Document.SponsorId)}] IS NULL");
+
+            t.HasCheckConstraint(
+                "CK_OtherDocument_CompanyNull",
+                $"[{nameof(Document.DocumentType)}] <> {(byte)DocumentType.Other} OR [{nameof(Letter.CompanyId)}] IS NULL");
         });
     }
 }

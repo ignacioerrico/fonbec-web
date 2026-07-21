@@ -11,14 +11,19 @@ public class DocumentMappingDefinitions : IRegister
     {
         config.NewConfig<CreateBlobPathInputModel, CreateBlobPathInputDataModel>();
 
+        // The single optional Blob on the create input becomes the ordered page list on the data model
+        // (empty for Text/YouTube). The with-blob upload path builds the multi-page list directly.
         config.NewConfig<CreateLetterInputModel, CreateLetterInputDataModel>()
-            .Map(dest => dest.UploadedById, src => src.User.UserId);
+            .Map(dest => dest.UploadedById, src => src.User.UserId)
+            .Map(dest => dest.Blobs, src => SingleBlobToList(src.Blob));
 
         config.NewConfig<CreateReportCardInputModel, CreateReportCardInputDataModel>()
-            .Map(dest => dest.UploadedById, src => src.User.UserId);
+            .Map(dest => dest.UploadedById, src => src.User.UserId)
+            .Map(dest => dest.Blobs, src => SingleBlobToList(src.Blob));
 
         config.NewConfig<CreateOtherDocumentInputModel, CreateOtherDocumentInputDataModel>()
-            .Map(dest => dest.UploadedById, src => src.User.UserId);
+            .Map(dest => dest.UploadedById, src => src.User.UserId)
+            .Map(dest => dest.Blobs, src => SingleBlobToList(src.Blob));
 
         config.NewConfig<SubmitDigitalImprovementInputModel, SubmitDigitalImprovementInputDataModel>();
 
@@ -50,4 +55,15 @@ public class DocumentMappingDefinitions : IRegister
 
         config.NewConfig<DocumentDescriptionOptionDataModel, DocumentDescriptionOptionViewModel>();
     }
+
+    private static List<CreateBlobPathInputDataModel> SingleBlobToList(CreateBlobPathInputModel? blob) =>
+        blob is null
+            ? []
+            : [new CreateBlobPathInputDataModel
+            {
+                StoragePath = blob.StoragePath,
+                MimeType = blob.MimeType,
+                FileSizeBytes = blob.FileSizeBytes,
+                Sha256 = blob.Sha256,
+            }];
 }

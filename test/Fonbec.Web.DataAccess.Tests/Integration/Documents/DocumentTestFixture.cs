@@ -34,6 +34,15 @@ internal sealed class DocumentTestFixture
     public Guid SponsorAToken { get; private set; }
     public int PlanId { get; private set; }
 
+    // Company sponsorship scenario (kept on a separate student so sponsor-share counts elsewhere are unaffected).
+    public int CompanyId { get; private set; }
+    public Guid CompanyToken { get; private set; }
+    public int CompanyStudentId { get; private set; }
+    public int CompanyLinkedSponsorId { get; private set; }
+    public Guid CompanyLinkedSponsorToken { get; private set; }
+    public const string CompanyEmail = "empresa@test.com";
+    public const string CompanyLinkedSponsorEmail = "linked@test.com";
+
     public IDbContextFactory<FonbecWebDbContext> Factory { get; private set; } = null!;
     public IDocumentRepository DocumentRepository { get; private set; } = null!;
     public IDocumentService DocumentService { get; private set; } = null!;
@@ -180,6 +189,15 @@ internal sealed class DocumentTestFixture
         return (await db.Set<Document>().FindAsync(documentId))!;
     }
 
+    public async Task<List<DocumentPage>> GetPagesAsync(long documentId)
+    {
+        await using var db = await Factory.CreateDbContextAsync();
+        return await db.Set<DocumentPage>()
+            .Where(p => p.DocumentId == documentId)
+            .OrderBy(p => p.PageNumber)
+            .ToListAsync();
+    }
+
     private async Task SeedAsync(bool includeActivePlan)
     {
         await using var db = await Factory.CreateDbContextAsync();
@@ -276,11 +294,66 @@ internal sealed class DocumentTestFixture
             IsActive = true,
         };
 
+        CompanyId = 1;
+        CompanyToken = Guid.NewGuid();
+        CompanyStudentId = 2;
+        CompanyLinkedSponsorId = 3;
+        CompanyLinkedSponsorToken = Guid.NewGuid();
+
+        var company = new Company
+        {
+            Id = CompanyId,
+            Name = "Acme SA",
+            Email = CompanyEmail,
+            PublicAccessToken = CompanyToken,
+            CreatedById = UploaderId,
+            CreatedOnUtc = utcNow,
+            IsActive = true,
+        };
+
+        var companyStudent = new Student
+        {
+            Id = CompanyStudentId,
+            FirstName = "Empresa",
+            LastName = "Becario",
+            ChapterId = ChapterId,
+            FacilitatorId = UploaderId,
+            CreatedById = UploaderId,
+            CreatedOnUtc = utcNow,
+            IsActive = true,
+        };
+
+        var companyLinkedSponsor = new Sponsor
+        {
+            Id = CompanyLinkedSponsorId,
+            FirstName = "Linked",
+            LastName = "Sponsor",
+            Email = CompanyLinkedSponsorEmail,
+            ChapterId = ChapterId,
+            PublicAccessToken = CompanyLinkedSponsorToken,
+            CompanyId = CompanyId,
+            CreatedById = UploaderId,
+            CreatedOnUtc = utcNow,
+            IsActive = true,
+        };
+
+        var companySponsorship = new Sponsorship
+        {
+            Id = 3,
+            StudentId = CompanyStudentId,
+            CompanyId = CompanyId,
+            StartDate = utcNow.AddYears(-1),
+            CreatedById = UploaderId,
+            CreatedOnUtc = utcNow,
+            IsActive = true,
+        };
+
         db.Set<Chapter>().Add(chapter);
         db.Users.AddRange(users);
-        db.Set<Student>().Add(student);
-        db.Set<Sponsor>().AddRange(sponsorA, sponsorB);
-        db.Set<Sponsorship>().AddRange(sponsorshipA, sponsorshipB);
+        db.Set<Company>().Add(company);
+        db.Set<Student>().AddRange(student, companyStudent);
+        db.Set<Sponsor>().AddRange(sponsorA, sponsorB, companyLinkedSponsor);
+        db.Set<Sponsorship>().AddRange(sponsorshipA, sponsorshipB, companySponsorship);
 
         if (includeActivePlan)
         {

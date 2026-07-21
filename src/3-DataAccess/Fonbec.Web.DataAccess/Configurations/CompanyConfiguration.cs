@@ -21,6 +21,12 @@ internal class CompanyConfiguration : AuditableEntityTypeConfiguration<Company>
         builder.Property(company => company.PhoneNumber)
             .HasMaxLength(MaxLength.Company.PhoneNumber);
 
+        builder.Property(company => company.PublicAccessToken)
+            .IsRequired();
+
+        builder.HasIndex(company => company.PublicAccessToken)
+            .IsUnique();
+
         base.Configure(builder);
     }
 }
