@@ -1,8 +1,22 @@
 ﻿@page "/"
 @attribute [Authorize]
 
+@using System.Security.Claims
+
 <PageTitle>Home</PageTitle>
 
-<MudText Typo="Typo.h3" GutterBottom="true">Hello, world!</MudText>
+<AuthorizeView>
+    <MudAlert Severity="Severity.Info" Class="mb-8">This page is only for developers and QA. It will <strong>not</strong> be used in production.</MudAlert>
 
-<MudText Typo="Typo.body1">Welcome to your new app.</MudText>
+    <MudText Typo="Typo.h3" GutterBottom="true">Welcome, @context.User.FindFirstValue(FonbecWebUserCustomClaim.FirstName).</MudText>
+    <MudText Typo="Typo.body1">Your role: <strong>@context.User.FindFirstValue(ClaimTypes.Role)</strong></MudText>
+
+    <MudButton Href="/user-claims"
+               Variant="Variant.Filled" Color="Color.Primary"
+               Class="mt-4">
+        See my user claims
+    </MudButton>
+
+    <MudText Typo="Typo.body2" Class="mt-8">What debugging information would you like to see in this page?</MudText>
+    <MudText Typo="Typo.body2">Share your thoughts and ideas!</MudText>
+</AuthorizeView>

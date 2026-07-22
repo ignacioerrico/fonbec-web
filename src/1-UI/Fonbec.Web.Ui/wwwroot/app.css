@@ -74,6 +74,15 @@
     gap: 0.5rem;
 }
 
+.mud-navmenu .mud-nav-link .mud-icon-root {
+    transition: color 0.15s ease, fill 0.15s ease;
+}
+
+.mud-navmenu .mud-nav-link:hover .mud-icon-root {
+    color: var(--mud-palette-primary);
+    fill: var(--mud-palette-primary);
+}
+
 .fonbec-dropzone {
     position: relative;
     display: flex;
