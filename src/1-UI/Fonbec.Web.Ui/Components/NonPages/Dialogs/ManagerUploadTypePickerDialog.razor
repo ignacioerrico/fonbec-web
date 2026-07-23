@@ -1,0 +1,53 @@
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">Subir documento — @StudentFullName</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <MudStack Row="true" Spacing="2">
+                @if (_letterOptionsLoaded && _recipientOptions.Count > 1)
+                {
+                    <MudMenu Label="Carta" StartIcon="@Icons.Material.Filled.Mail" Variant="Variant.Filled" Color="Color.Primary">
+                        @foreach (var option in _recipientOptions)
+                        {
+                            <MudMenuItem OnClick="@(() => SelectLetterRecipient(option))"
+                                         Icon="@(option.CompanyId.HasValue ? Icons.Material.Filled.Factory : Icons.Material.Filled.Person)">
+                                @option.RecipientName
+                            </MudMenuItem>
+                        }
+                    </MudMenu>
+                }
+                else
+                {
+                    <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                               StartIcon="@(_loadingLetterOptions ? null : Icons.Material.Filled.Mail)"
+                               Disabled="@(_loadingLetterOptions || (_letterOptionsLoaded && _letterBlockedMessage is not null))"
+                               OnClick="LoadLetterOptionsAsync">
+                        @if (_loadingLetterOptions)
+                        {
+                            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="me-2" />
+                        }
+                        Carta
+                    </MudButton>
+                }
+
+                <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Description"
+                           OnClick="SelectReportCard">
+                    Boletín
+                </MudButton>
+                <MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Upload"
+                           OnClick="SelectOther">
+                    Otro
+                </MudButton>
+            </MudStack>
+
+            @if (_letterBlockedMessage is not null)
+            {
+                <MudAlert Severity="Severity.Info" Dense="true">@_letterBlockedMessage</MudAlert>
+            }
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancelar</MudButton>
+    </DialogActions>
+</MudDialog>

@@ -5,6 +5,7 @@
 @using Fonbec.Web.DataAccess.Constants
 @using Fonbec.Web.DataAccess.Entities.Enums
 @using Fonbec.Web.Logic.Models.Students
+@using Fonbec.Web.Ui.Components.Pages.Managers
 
 <PageHeader Title="Becarios" />
 
@@ -170,6 +171,16 @@
                         <MudTooltip Text="Apadrinamientos" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary">
                             <MudIconButton Href="@NavRoutes.Sponsorships(context.Item.StudentId)"
                                            Icon="@Icons.Material.Outlined.People"
+                                           Size="@Size.Small"
+                                           Color="Color.Primary" />
+                        </MudTooltip>
+                    </AuthorizeView>
+
+                    <AuthorizeView Policy="@nameof(ManagerUploadDocument)" Context="uploadContext">
+                        <MudTooltip Text="Subir documento" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary">
+                            <MudIconButton OnClick="@(() => OpenUploadDialogAsync(context.Item))"
+                                           Disabled="@(!context.Item.IsStudentActive)"
+                                           Icon="@Icons.Material.Outlined.CloudUpload"
                                            Size="@Size.Small"
                                            Color="Color.Primary" />
                         </MudTooltip>

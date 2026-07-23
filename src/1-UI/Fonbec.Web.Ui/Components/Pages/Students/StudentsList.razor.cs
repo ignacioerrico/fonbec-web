@@ -4,6 +4,7 @@ using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models.Students;
 using Fonbec.Web.Logic.Models.Students.Input;
 using Fonbec.Web.Logic.Services;
+using Fonbec.Web.Ui.Components.NonPages.Dialogs;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
@@ -28,6 +29,9 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
 
     [Inject]
     public IStudentService StudentService { get; set; } = null!;
+
+    [Inject]
+    public IDialogService DialogService { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
@@ -124,4 +128,22 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
         _sortByLastName
             ? $"{viewModel.StudentLastName}, {viewModel.StudentFirstName}"
             : $"{viewModel.StudentFirstName} {viewModel.StudentLastName}";
+
+    private async Task OpenUploadDialogAsync(StudentsListViewModel viewModel)
+    {
+        if (FonbecClaim.ChapterId is not { } managerChapterId)
+        {
+            Snackbar.Add("No se puede subir el documento para este becario.", Severity.Error);
+            return;
+        }
+
+        var parameters = new DialogParameters<ManagerUploadTypePickerDialog>
+        {
+            { d => d.StudentId, viewModel.StudentId },
+            { d => d.StudentFullName, StudentFullName(viewModel) },
+            { d => d.ManagerChapterId, managerChapterId },
+        };
+
+        await DialogService.ShowAsync<ManagerUploadTypePickerDialog>("Subir documento", parameters);
+    }
 }
