@@ -3,7 +3,9 @@ using Fonbec.Web.DataAccess.DataModels.Documents;
 using Fonbec.Web.DataAccess.DataModels.Documents.Input;
 using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.DataAccess.Entities.Enums;
+using Fonbec.Web.DataAccess.Options;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Options;
 
 namespace Fonbec.Web.DataAccess.Repositories;
 
@@ -41,9 +43,14 @@ public interface IDocumentRepository
     Task<List<DocumentDescriptionOptionDataModel>> GetDescriptionOptionsAsync(int chapterId, DocumentType documentType);
 }
 
-public class DocumentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : IDocumentRepository
+public class DocumentRepository(
+    IDbContextFactory<FonbecWebDbContext> dbContext,
+    TimeProvider timeProvider,
+    IOptions<DocumentQueueOptions> queueOptions) : IDocumentRepository
 {
     private static readonly string[] ImageMimeTypes = ["image/jpeg", "image/png"];
+
+    private TimeSpan LockTimeout => TimeSpan.FromMinutes(queueOptions.Value.ReviewLockTimeoutMinutes);
 
     public async Task<StudentUploadContextDataModel?> GetStudentUploadContextAsync(int studentId)
     {
@@ -260,32 +267,63 @@ public class DocumentRepository(IDbContextFactory<FonbecWebDbContext> dbContext)
 
     public async Task<DocumentQueueItemDataModel?> TakeNextForReviewAsync(int userId)
     {
-        await using var db = await dbContext.CreateDbContextAsync();
-
-        var queueItem = await db.DocumentQueueItems
-            .Include(q => q.Document)
-            .Where(q => q.Document.Status == DocumentStatus.Pending
-                        && (q.Document.DigitalImprovementStatus == DigitalImprovementStatus.NotApplicable
-                            || q.Document.DigitalImprovementStatus == DigitalImprovementStatus.Complete)
-                        && q.ReviewLockedById == null)
-            .OrderBy(q => q.Priority)
-            .ThenBy(q => q.EnqueuedAt)
-            .FirstOrDefaultAsync();
-
-        if (queueItem is null)
+        // Lock the first review-eligible document whose lock is free: either never locked
+        // (Status Pending) or taken but abandoned past the timeout (Status Processing with a
+        // stale ReviewLockedAt). Ordering is Priority then EnqueuedAt, so an expired lock is
+        // re-taken ahead of later documents that are still validly locked. The document's
+        // RowVersion arbitrates concurrent takes; the loser retries and picks the next free one.
+        while (true)
         {
-            return null;
+            await using var db = await dbContext.CreateDbContextAsync();
+
+            var utcNow = timeProvider.GetUtcNow().UtcDateTime;
+            var lockExpiredBefore = utcNow - LockTimeout;
+
+            var queueItem = await db.DocumentQueueItems
+                .Include(q => q.Document)
+                .Where(q => (q.Document.DigitalImprovementStatus == DigitalImprovementStatus.NotApplicable
+                             || q.Document.DigitalImprovementStatus == DigitalImprovementStatus.Complete)
+                            && ((q.ReviewLockedById == null && q.Document.Status == DocumentStatus.Pending)
+                                || (q.ReviewLockedById != null
+                                    && q.Document.Status == DocumentStatus.Processing
+                                    && q.ReviewLockedAt != null
+                                    && q.ReviewLockedAt < lockExpiredBefore)))
+                .OrderBy(q => q.Priority)
+                .ThenBy(q => q.EnqueuedAt)
+                .FirstOrDefaultAsync();
+
+            if (queueItem is null)
+            {
+                return null;
+            }
+
+            var isExpiredRetake = queueItem.Document.Status == DocumentStatus.Processing;
+
+            queueItem.ReviewLockedById = userId;
+            queueItem.ReviewLockedAt = utcNow;
+            queueItem.DequeueCount++;
+
+            if (isExpiredRetake)
+            {
+                // Status is already Processing, so nothing on the document changes; force a
+                // guarded update so its RowVersion still arbitrates concurrent re-takes.
+                db.Entry(queueItem.Document).State = EntityState.Modified;
+            }
+            else
+            {
+                queueItem.Document.Status = DocumentStatus.Processing;
+            }
+
+            try
+            {
+                await db.SaveChangesAsync();
+                return MapQueueItem(queueItem);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // Another reviewer took this document first; loop and pick the next free one.
+            }
         }
-
-        var utcNow = DateTime.UtcNow;
-        queueItem.ReviewLockedById = userId;
-        queueItem.ReviewLockedAt = utcNow;
-        queueItem.DequeueCount++;
-        queueItem.Document.Status = DocumentStatus.Processing;
-
-        await db.SaveChangesAsync();
-
-        return MapQueueItem(queueItem);
     }
 
     public async Task ReleaseReviewLockAsync(long documentId, int userId)
@@ -313,29 +351,48 @@ public class DocumentRepository(IDbContextFactory<FonbecWebDbContext> dbContext)
 
     public async Task<DocumentQueueItemDataModel?> TakeNextForDigitalImprovementAsync(int userId)
     {
-        await using var db = await dbContext.CreateDbContextAsync();
-
-        var document = await db.Documents
-            .Include(d => d.QueueItem)
-            .Where(d => d.DigitalImprovementStatus == DigitalImprovementStatus.Required
-                        && d.ImprovementLockedById == null)
-            .OrderBy(d => d.QueueItem!.EnqueuedAt)
-            .FirstOrDefaultAsync();
-
-        if (document?.QueueItem is null)
+        // Same free-lock rule as review, applied to the improvement lock: oldest image document
+        // that is either awaiting improvement (Required, unlocked) or was taken but abandoned
+        // past the timeout (InProgress with a stale ImprovementLockedAt). The improvement lock
+        // fields live on the document itself, so its RowVersion arbitrates concurrent takes.
+        while (true)
         {
-            return null;
+            await using var db = await dbContext.CreateDbContextAsync();
+
+            var utcNow = timeProvider.GetUtcNow().UtcDateTime;
+            var lockExpiredBefore = utcNow - LockTimeout;
+
+            var document = await db.Documents
+                .Include(d => d.QueueItem)
+                .Where(d => (d.DigitalImprovementStatus == DigitalImprovementStatus.Required
+                             && d.ImprovementLockedById == null)
+                            || (d.DigitalImprovementStatus == DigitalImprovementStatus.InProgress
+                                && d.ImprovementLockedById != null
+                                && d.ImprovementLockedAt != null
+                                && d.ImprovementLockedAt < lockExpiredBefore))
+                .OrderBy(d => d.QueueItem!.EnqueuedAt)
+                .FirstOrDefaultAsync();
+
+            if (document?.QueueItem is null)
+            {
+                return null;
+            }
+
+            document.ImprovementLockedById = userId;
+            document.ImprovementLockedAt = utcNow;
+            document.DigitalImprovementStatus = DigitalImprovementStatus.InProgress;
+            document.Status = DocumentStatus.ProcessingImprovement;
+
+            try
+            {
+                await db.SaveChangesAsync();
+                return MapQueueItem(document.QueueItem, document);
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // Another user took this document first; loop and pick the next free one.
+            }
         }
-
-        var utcNow = DateTime.UtcNow;
-        document.ImprovementLockedById = userId;
-        document.ImprovementLockedAt = utcNow;
-        document.DigitalImprovementStatus = DigitalImprovementStatus.InProgress;
-        document.Status = DocumentStatus.ProcessingImprovement;
-
-        await db.SaveChangesAsync();
-
-        return MapQueueItem(document.QueueItem, document);
     }
 
     public async Task<List<string>> SubmitDigitalImprovementAsync(SubmitDigitalImprovementInputDataModel input)

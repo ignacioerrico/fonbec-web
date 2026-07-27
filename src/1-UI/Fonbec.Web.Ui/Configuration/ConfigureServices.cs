@@ -2,6 +2,7 @@
 using Azure.Storage.Blobs;
 using Fonbec.Web.DataAccess;
 using Fonbec.Web.DataAccess.Entities;
+using Fonbec.Web.DataAccess.Options;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Authorization;
 using Fonbec.Web.Logic.Options;
@@ -28,6 +29,9 @@ public static class ConfigureServices
 
         services.Configure<BlobStorageOptions>(
             configuration.GetSection(BlobStorageOptions.SectionName));
+
+        services.Configure<DocumentQueueOptions>(
+            configuration.GetSection(DocumentQueueOptions.SectionName));
     }
 
     public static void RegisterServices(IServiceCollection services, IConfiguration configuration)

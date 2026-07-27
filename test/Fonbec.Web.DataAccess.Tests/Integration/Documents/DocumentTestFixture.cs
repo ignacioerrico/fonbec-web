@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using Fonbec.Web.DataAccess.DataModels.Users.Output;
 using Fonbec.Web.DataAccess.Entities;
+using Fonbec.Web.DataAccess.Options;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Authorization;
 using Fonbec.Web.Logic.Constants;
@@ -60,7 +61,10 @@ internal sealed class DocumentTestFixture
         Factory = CreateDbContextFactory();
         await SeedAsync(includeActivePlan);
 
-        DocumentRepository = new DocumentRepository(Factory);
+        DocumentRepository = new DocumentRepository(
+            Factory,
+            TimeProvider.System,
+            Microsoft.Extensions.Options.Options.Create(new DocumentQueueOptions()));
         EmailSender = Substitute.For<IEmailMessageSender>();
 
         var configuration = new ConfigurationBuilder()
@@ -196,6 +200,30 @@ internal sealed class DocumentTestFixture
             .Where(p => p.DocumentId == documentId)
             .OrderBy(p => p.PageNumber)
             .ToListAsync();
+    }
+
+    public async Task<DocumentQueueItem> GetQueueItemAsync(long documentId)
+    {
+        await using var db = await Factory.CreateDbContextAsync();
+        return await db.Set<DocumentQueueItem>().SingleAsync(q => q.DocumentId == documentId);
+    }
+
+    /// <summary>Backdates the review lock so it is considered expired (older than the lock timeout).</summary>
+    public async Task ExpireReviewLockAsync(long documentId, TimeSpan age)
+    {
+        await using var db = await Factory.CreateDbContextAsync();
+        var queueItem = await db.Set<DocumentQueueItem>().SingleAsync(q => q.DocumentId == documentId);
+        queueItem.ReviewLockedAt = DateTime.UtcNow - age;
+        await db.SaveChangesAsync();
+    }
+
+    /// <summary>Backdates the improvement lock so it is considered expired (older than the lock timeout).</summary>
+    public async Task ExpireImprovementLockAsync(long documentId, TimeSpan age)
+    {
+        await using var db = await Factory.CreateDbContextAsync();
+        var document = await db.Set<Document>().SingleAsync(d => d.DocumentId == documentId);
+        document.ImprovementLockedAt = DateTime.UtcNow - age;
+        await db.SaveChangesAsync();
     }
 
     private async Task SeedAsync(bool includeActivePlan)

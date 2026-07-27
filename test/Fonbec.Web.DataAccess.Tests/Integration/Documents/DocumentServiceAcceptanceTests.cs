@@ -737,6 +737,105 @@ public class DocumentServiceAcceptanceTests
         otherOptions.Should().HaveCount(4);
     }
 
+    [Fact]
+    public async Task Scenario31_TakeNextForReview_ReTakesDocumentAfterLockExpires()
+    {
+        await _fixture.InitializeAsync();
+
+        // A single review-ready document (PDF report card needs no digital improvement).
+        await _fixture.DocumentService.CreateReportCardAsync(new CreateReportCardInputModel(
+            _fixture.StudentId, _fixture.UploaderContext,
+            FileKind.Blob, Period: new DateOnly(2026, 5, 1), Description: "Boletín 1º trimestre",
+            Blob: new CreateBlobPathInputModel("a.pdf", "application/pdf")));
+
+        // Reviewer takes it for review.
+        var first = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer");
+        first.Should().NotBeNull();
+
+        // While the lock is still valid, another reviewer taking "next" gets nothing.
+        var blockedWhileLocked = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ManagerId, "Manager");
+        blockedWhileLocked.Should().BeNull();
+
+        // 41 minutes pass with no approve/reject: the lock is now stale (timeout is 40 min).
+        await _fixture.ExpireReviewLockAsync(first!.DocumentId, TimeSpan.FromMinutes(41));
+
+        // The next reviewer re-takes the same document.
+        var reTaken = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ManagerId, "Manager");
+        reTaken.Should().NotBeNull();
+        reTaken!.DocumentId.Should().Be(first.DocumentId);
+
+        var doc = await _fixture.GetDocumentAsync(reTaken.DocumentId);
+        doc.Status.Should().Be(DocumentStatus.Processing);
+
+        var queueItem = await _fixture.GetQueueItemAsync(reTaken.DocumentId);
+        queueItem.ReviewLockedById.Should().Be(_fixture.ManagerId);
+        queueItem.DequeueCount.Should().Be(2);
+    }
+
+    [Fact]
+    public async Task Scenario32_TakeNextForReview_ReTakesEarliestExpired_EvenWhenLaterDocumentStillLocked()
+    {
+        await _fixture.InitializeAsync();
+
+        // Two review-ready documents, enqueued in order.
+        await _fixture.DocumentService.CreateReportCardAsync(new CreateReportCardInputModel(
+            _fixture.StudentId, _fixture.UploaderContext,
+            FileKind.Blob, Period: new DateOnly(2026, 5, 1), Description: "Primero",
+            Blob: new CreateBlobPathInputModel("first.pdf", "application/pdf")));
+        await _fixture.DocumentService.CreateReportCardAsync(new CreateReportCardInputModel(
+            _fixture.StudentId, _fixture.UploaderContext,
+            FileKind.Blob, Period: new DateOnly(2026, 6, 1), Description: "Segundo",
+            Blob: new CreateBlobPathInputModel("second.pdf", "application/pdf")));
+
+        // Reviewer A takes the first (oldest); Manager takes the second.
+        var firstDoc = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer");
+        var secondDoc = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ManagerId, "Manager");
+        firstDoc.Should().NotBeNull();
+        secondDoc.Should().NotBeNull();
+        firstDoc!.DocumentId.Should().NotBe(secondDoc!.DocumentId);
+
+        // The first document's lock expires; the second remains validly locked.
+        await _fixture.ExpireReviewLockAsync(firstDoc.DocumentId, TimeSpan.FromMinutes(41));
+
+        // "Take next" re-locks the earliest free document (the expired first one),
+        // even though a later document in the queue is still locked.
+        var reTaken = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer");
+        reTaken.Should().NotBeNull();
+        reTaken!.DocumentId.Should().Be(firstDoc.DocumentId);
+    }
+
+    [Fact]
+    public async Task Scenario33_TakeNextForDigitalImprovement_ReTakesDocumentAfterLockExpires()
+    {
+        await _fixture.InitializeAsync();
+
+        // Image document requiring digital improvement.
+        await _fixture.DocumentService.CreateLetterAsync(new CreateLetterInputModel(
+            _fixture.StudentId, _fixture.PlanId, _fixture.SponsorAId, _fixture.UploaderContext,
+            FileKind.Blob, Blob: new CreateBlobPathInputModel("a.jpg", "image/jpeg")));
+
+        var first = await _fixture.DocumentService.TakeNextForDigitalImprovementAsync(
+            _fixture.ReviewerId, "Reviewer", fonbecAuthClaim: null);
+        first.Should().NotBeNull();
+
+        // Still validly locked: another taker gets nothing.
+        var blockedWhileLocked = await _fixture.DocumentService.TakeNextForDigitalImprovementAsync(
+            _fixture.ManagerId, "Manager", fonbecAuthClaim: null);
+        blockedWhileLocked.Should().BeNull();
+
+        // Lock goes stale after the timeout.
+        await _fixture.ExpireImprovementLockAsync(first!.DocumentId, TimeSpan.FromMinutes(41));
+
+        var reTaken = await _fixture.DocumentService.TakeNextForDigitalImprovementAsync(
+            _fixture.ManagerId, "Manager", fonbecAuthClaim: null);
+        reTaken.Should().NotBeNull();
+        reTaken!.DocumentId.Should().Be(first.DocumentId);
+
+        var doc = await _fixture.GetDocumentAsync(reTaken.DocumentId);
+        doc.ImprovementLockedById.Should().Be(_fixture.ManagerId);
+        doc.Status.Should().Be(DocumentStatus.ProcessingImprovement);
+    }
+
     private async Task<long> CreatePendingLetterAsync()
     {
         var result = await _fixture.DocumentService.CreateLetterAsync(new CreateLetterInputModel(
