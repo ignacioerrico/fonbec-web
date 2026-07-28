@@ -11,6 +11,7 @@ public partial class ManagerUploadTypePickerDialog
     private bool _loadingLetterOptions;
     private bool _letterOptionsLoaded;
     private string? _letterBlockedMessage;
+    private string? _lettersAlreadyUploadedMessage;
     private List<ManagerLetterRecipientOptionViewModel> _recipientOptions = [];
     private int _planIdForRecipients;
 
@@ -31,6 +32,13 @@ public partial class ManagerUploadTypePickerDialog
 
     [Inject]
     public NavigationManager NavigationManager { get; set; } = null!;
+
+    protected override async Task OnInitializedAsync()
+    {
+        // Load eagerly so the "Carta" button and its info message reflect the
+        // letter status as soon as the dialog opens (not after the first click).
+        await LoadLetterOptionsAsync();
+    }
 
     private async Task LoadLetterOptionsAsync()
     {
@@ -67,19 +75,69 @@ public partial class ManagerUploadTypePickerDialog
         }
 
         _recipientOptions = options.Options;
+        _planIdForRecipients = options.PlanId.Value;
 
-        if (_recipientOptions.Count == 1)
+        // Recipients that already have a (non-rejected) letter for this plan cannot be picked.
+        var selectable = _recipientOptions.Where(o => !o.AlreadyHasLetterForPlan).ToList();
+
+        if (selectable.Count == 0)
         {
-            SelectLetterRecipient(_recipientOptions[0], options.PlanId.Value);
+            _letterBlockedMessage = _recipientOptions.Count == 1
+                ? "La carta del plan actual ya fue subida para el padrino."
+                : "La carta del plan actual ya fue subida para todos los padrinos.";
+            return;
         }
-        else
+
+        // Some (but not all) recipients already have a letter for this plan: keep the
+        // menu usable, disable those entries, and let the manager know which are done.
+        var alreadyUploaded = _recipientOptions
+            .Where(o => o.AlreadyHasLetterForPlan)
+            .Select(o => o.RecipientName)
+            .ToList();
+
+        if (alreadyUploaded.Count > 0)
         {
-            _planIdForRecipients = options.PlanId.Value;
+            _lettersAlreadyUploadedMessage = BuildAlreadyUploadedMessage(alreadyUploaded);
         }
     }
 
-    private void SelectLetterRecipient(ManagerLetterRecipientOptionViewModel option) =>
+    private static string BuildAlreadyUploadedMessage(IReadOnlyList<string> names)
+    {
+        var joined = JoinWithConjunction(names);
+        return names.Count == 1
+            ? $"La carta de {joined} ya fue subida para el plan actual."
+            : $"Las cartas de {joined} ya fueron subidas para el plan actual.";
+    }
+
+    private static string JoinWithConjunction(IReadOnlyList<string> names)
+    {
+        if (names.Count == 1)
+        {
+            return names[0];
+        }
+
+        var allButLast = string.Join(", ", names.Take(names.Count - 1));
+        return $"{allButLast} y {names[^1]}";
+    }
+
+    private void SelectSingleLetterRecipient()
+    {
+        var selectable = _recipientOptions.Where(o => !o.AlreadyHasLetterForPlan).ToList();
+        if (selectable.Count == 1)
+        {
+            SelectLetterRecipient(selectable[0], _planIdForRecipients);
+        }
+    }
+
+    private void SelectLetterRecipient(ManagerLetterRecipientOptionViewModel option)
+    {
+        if (option.AlreadyHasLetterForPlan)
+        {
+            return;
+        }
+
         SelectLetterRecipient(option, _planIdForRecipients);
+    }
 
     private void SelectLetterRecipient(ManagerLetterRecipientOptionViewModel option, int planId)
     {

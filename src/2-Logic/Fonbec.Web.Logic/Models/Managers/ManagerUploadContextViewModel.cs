@@ -46,6 +46,12 @@ public class ManagerLetterRecipientOptionViewModel
     public int? CompanyId { get; init; }
 
     public string RecipientName { get; init; } = string.Empty;
+
+    /// <summary>
+    /// True when a non-rejected letter already exists for this recipient and the current plan,
+    /// so the option is shown but cannot be picked (a new letter would be blocked as a duplicate).
+    /// </summary>
+    public bool AlreadyHasLetterForPlan { get; init; }
 }
 
 /// <summary>

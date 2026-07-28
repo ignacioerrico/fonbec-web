@@ -69,21 +69,21 @@ public partial class ManagerUploadDocument : AuthenticationRequiredComponentBase
         {
             DocumentType.Letter => await ManagerUploadService.UploadLetterAsync(
                 new ManagerUploadLetterInputModel(
-                    _context.StudentId, _context.PlanId!.Value, _context.SponsorId, _context.CompanyId,
+                    _context.StudentId, _managerChapterId, _context.PlanId!.Value, _context.SponsorId, _context.CompanyId,
                     submission.ContentMode, submission.Files, submission.TextContent,
                     submission.YouTubeUrlOrId, submission.UploaderNotes),
-                FonbecClaim.UserId, _managerChapterId),
+                FonbecClaim.UserId),
 
             DocumentType.ReportCard => await ManagerUploadService.UploadReportCardAsync(
                 new ManagerUploadReportCardInputModel(
-                    _context.StudentId, submission.Period!.Value, submission.Description,
+                    _context.StudentId, _managerChapterId, submission.Period!.Value, submission.Description,
                     submission.ContentMode, submission.Files, submission.YouTubeUrlOrId, submission.UploaderNotes),
-                FonbecClaim.UserId, _managerChapterId),
+                FonbecClaim.UserId),
 
             _ => await ManagerUploadService.UploadOtherDocumentAsync(
                 new ManagerUploadOtherInputModel(
-                    _context.StudentId, submission.Description, submission.ContentMode,
+                    _context.StudentId, _managerChapterId, submission.Description, submission.ContentMode,
                     submission.Files, submission.TextContent, submission.YouTubeUrlOrId, submission.UploaderNotes),
-                FonbecClaim.UserId, _managerChapterId),
+                FonbecClaim.UserId),
         };
 }

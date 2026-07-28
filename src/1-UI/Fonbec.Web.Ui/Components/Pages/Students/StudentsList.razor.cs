@@ -66,6 +66,7 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
         || (!string.IsNullOrEmpty(viewModel.StudentNickName)
             && $"{viewModel.StudentNickName} {viewModel.StudentLastName}".ContainsIgnoringAccents(_searchString))
         || viewModel.FacilitatorFullName.ContainsIgnoringAccents(_searchString)
+        || viewModel.ActiveSponsors.Any(s => s.Name.ContainsIgnoringAccents(_searchString))
         || (!string.IsNullOrEmpty(viewModel.StudentEmail)
             && viewModel.StudentEmail.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
         || (!string.IsNullOrEmpty(viewModel.StudentPhoneNumber)

@@ -27,7 +27,7 @@ public class FacilitatorUploadServiceTests
 
     public FacilitatorUploadServiceTests()
     {
-        _service = new FacilitatorUploadService(_facilitatorRepository, _documentService, _letterExemptionService);
+        _service = new FacilitatorUploadService(_facilitatorRepository, _documentService, _letterExemptionService, TimeProvider.System);
         _documentService.CreateLetterAsync(Arg.Any<CreateLetterInputModel>()).Returns(new CrudResult<long>(1));
         _documentService.CreateLetterWithBlobAsync(Arg.Any<CreateLetterWithBlobInputModel>()).Returns(new CrudResult<long>(1));
         _documentService.CreateReportCardAsync(Arg.Any<CreateReportCardInputModel>()).Returns(new CrudResult<long>(1));

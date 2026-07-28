@@ -30,15 +30,15 @@ public static class UploadDocumentHelper
         return EsAr.TextInfo.ToTitleCase(label);
     }
 
-    public static EducationLevel ResolveEducationLevel(DateTime? secondarySchoolStartYear, DateTime? universityStartYear)
+    public static EducationLevel ResolveEducationLevel(
+        DateTime? secondarySchoolStartYear, DateTime? universityStartYear, DateTime utcNow)
     {
-        var now = DateTime.UtcNow;
-        if (universityStartYear <= now)
+        if (universityStartYear <= utcNow)
         {
             return EducationLevel.University;
         }
 
-        return secondarySchoolStartYear <= now
+        return secondarySchoolStartYear <= utcNow
             ? EducationLevel.SecondarySchool
             : EducationLevel.PrimarySchool;
     }

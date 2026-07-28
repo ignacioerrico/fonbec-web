@@ -1,5 +1,6 @@
 using FluentAssertions;
 using Fonbec.Web.DataAccess.Constants;
+using Fonbec.Web.DataAccess.DataModels.Facilitators;
 using Fonbec.Web.DataAccess.DataModels.Managers;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Repositories;
@@ -16,6 +17,7 @@ public class ManagerUploadServiceTests
 {
     private readonly IManagerUploadRepository _managerUploadRepository = Substitute.For<IManagerUploadRepository>();
     private readonly IDocumentService _documentService = Substitute.For<IDocumentService>();
+    private readonly IDocumentRepository _documentRepository = Substitute.For<IDocumentRepository>();
     private readonly ILetterExemptionService _letterExemptionService = Substitute.For<ILetterExemptionService>();
     private readonly ManagerUploadService _service;
 
@@ -28,7 +30,8 @@ public class ManagerUploadServiceTests
 
     public ManagerUploadServiceTests()
     {
-        _service = new ManagerUploadService(_managerUploadRepository, _documentService, _letterExemptionService);
+        _service = new ManagerUploadService(
+            _managerUploadRepository, _documentService, _documentRepository, _letterExemptionService, TimeProvider.System);
         _documentService.CreateLetterAsync(Arg.Any<CreateLetterInputModel>()).Returns(new CrudResult<long>(1));
         _documentService.CreateLetterWithBlobAsync(Arg.Any<CreateLetterWithBlobInputModel>()).Returns(new CrudResult<long>(1));
         _documentService.CreateReportCardAsync(Arg.Any<CreateReportCardInputModel>()).Returns(new CrudResult<long>(1));
@@ -198,16 +201,56 @@ public class ManagerUploadServiceTests
         result.Should().BeNull();
     }
 
+    [Fact]
+    public async Task GetLetterRecipientOptions_MarksRecipientThatAlreadyHasLetterForPlan()
+    {
+        _managerUploadRepository.GetUploadContextAsync(StudentId, null, null, null).Returns(StudentContext());
+        _managerUploadRepository.GetCurrentPlanForChapterAsync(ManagerChapterId)
+            .Returns(new CurrentPlanDataModel { PlanId = PlanId, StartsOn = new DateTime(2026, 3, 1) });
+        _managerUploadRepository.GetActiveSponsorshipsAsync(StudentId).Returns(
+        [
+            new ManagerLetterRecipientOptionDataModel { SponsorId = SponsorId, RecipientName = "María López" },
+            new ManagerLetterRecipientOptionDataModel { CompanyId = CompanyId, RecipientName = "Acme SA" },
+        ]);
+        _documentRepository.HasDuplicateLetterAsync(StudentId, SponsorId, PlanId).Returns(true);
+
+        var result = await _service.GetLetterRecipientOptionsAsync(ManagerChapterId, StudentId);
+
+        result.Should().NotBeNull();
+        result!.Options.Should().HaveCount(2);
+        result.Options.Single(o => o.SponsorId == SponsorId).AlreadyHasLetterForPlan.Should().BeTrue();
+        result.Options.Single(o => o.CompanyId == CompanyId).AlreadyHasLetterForPlan.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task GetLetterRecipientOptions_SkipsRecipientWithoutName()
+    {
+        _managerUploadRepository.GetUploadContextAsync(StudentId, null, null, null).Returns(StudentContext());
+        _managerUploadRepository.GetCurrentPlanForChapterAsync(ManagerChapterId)
+            .Returns(new CurrentPlanDataModel { PlanId = PlanId, StartsOn = new DateTime(2026, 3, 1) });
+        _managerUploadRepository.GetActiveSponsorshipsAsync(StudentId).Returns(
+        [
+            new ManagerLetterRecipientOptionDataModel { SponsorId = SponsorId, RecipientName = "María López" },
+            new ManagerLetterRecipientOptionDataModel { CompanyId = CompanyId, RecipientName = "  " },
+        ]);
+
+        var result = await _service.GetLetterRecipientOptionsAsync(ManagerChapterId, StudentId);
+
+        result.Should().NotBeNull();
+        result!.Options.Should().ContainSingle();
+        result.Options.Single().SponsorId.Should().Be(SponsorId);
+    }
+
     // ---- Upload delegation ----
 
     [Fact]
     public async Task UploadLetter_File_DelegatesToBlobCreateWithManagerContext()
     {
         var input = new ManagerUploadLetterInputModel(
-            StudentId, PlanId, SponsorId, null, UploadContentMode.File,
+            StudentId, ManagerChapterId, PlanId, SponsorId, null, UploadContentMode.File,
             [new UploadFileInputModel(new MemoryStream(new byte[8]), "application/pdf")], null, null, "una nota");
 
-        var result = await _service.UploadLetterAsync(input, ManagerId, ManagerChapterId);
+        var result = await _service.UploadLetterAsync(input, ManagerId);
 
         result.IsSuccess.Should().BeTrue();
         await _documentService.Received(1).CreateLetterWithBlobAsync(Arg.Is<CreateLetterWithBlobInputModel>(m =>
@@ -226,10 +269,10 @@ public class ManagerUploadServiceTests
     public async Task UploadLetter_Text_DelegatesWithTextFileKind()
     {
         var input = new ManagerUploadLetterInputModel(
-            StudentId, PlanId, SponsorId, null, UploadContentMode.Text,
+            StudentId, ManagerChapterId, PlanId, SponsorId, null, UploadContentMode.Text,
             null, "Contenido de la carta", null, null);
 
-        await _service.UploadLetterAsync(input, ManagerId, ManagerChapterId);
+        await _service.UploadLetterAsync(input, ManagerId);
 
         await _documentService.Received(1).CreateLetterAsync(Arg.Is<CreateLetterInputModel>(m =>
             m.FileKind == FileKind.Text
@@ -243,10 +286,10 @@ public class ManagerUploadServiceTests
     public async Task UploadLetter_YouTube_ParsesIdAndDelegates()
     {
         var input = new ManagerUploadLetterInputModel(
-            StudentId, PlanId, SponsorId, null, UploadContentMode.YouTube,
+            StudentId, ManagerChapterId, PlanId, SponsorId, null, UploadContentMode.YouTube,
             null, null, "https://youtu.be/dQw4w9WgXcQ", null);
 
-        await _service.UploadLetterAsync(input, ManagerId, ManagerChapterId);
+        await _service.UploadLetterAsync(input, ManagerId);
 
         await _documentService.Received(1).CreateLetterAsync(Arg.Is<CreateLetterInputModel>(m =>
             m.FileKind == FileKind.YouTube
@@ -257,10 +300,10 @@ public class ManagerUploadServiceTests
     public async Task UploadLetter_InvalidYouTube_ReturnsError()
     {
         var input = new ManagerUploadLetterInputModel(
-            StudentId, PlanId, SponsorId, null, UploadContentMode.YouTube,
+            StudentId, ManagerChapterId, PlanId, SponsorId, null, UploadContentMode.YouTube,
             null, null, "not a link", null);
 
-        var result = await _service.UploadLetterAsync(input, ManagerId, ManagerChapterId);
+        var result = await _service.UploadLetterAsync(input, ManagerId);
 
         result.IsSuccess.Should().BeFalse();
         result.Errors.Should().Contain(DocumentMessages.YouTubeVideoIdRequired);
@@ -271,10 +314,10 @@ public class ManagerUploadServiceTests
     public async Task UploadLetter_WithoutRecipient_ReturnsError()
     {
         var input = new ManagerUploadLetterInputModel(
-            StudentId, PlanId, null, null, UploadContentMode.Text,
+            StudentId, ManagerChapterId, PlanId, null, null, UploadContentMode.Text,
             null, "texto", null, null);
 
-        var result = await _service.UploadLetterAsync(input, ManagerId, ManagerChapterId);
+        var result = await _service.UploadLetterAsync(input, ManagerId);
 
         result.IsSuccess.Should().BeFalse();
         result.Errors.Should().Contain(DocumentMessages.LetterRequiresRecipient);
@@ -285,10 +328,10 @@ public class ManagerUploadServiceTests
     public async Task UploadLetter_WithBothRecipients_ReturnsError()
     {
         var input = new ManagerUploadLetterInputModel(
-            StudentId, PlanId, SponsorId, CompanyId, UploadContentMode.Text,
+            StudentId, ManagerChapterId, PlanId, SponsorId, CompanyId, UploadContentMode.Text,
             null, "texto", null, null);
 
-        var result = await _service.UploadLetterAsync(input, ManagerId, ManagerChapterId);
+        var result = await _service.UploadLetterAsync(input, ManagerId);
 
         result.IsSuccess.Should().BeFalse();
         result.Errors.Should().Contain(DocumentMessages.LetterRequiresRecipient);
@@ -299,10 +342,10 @@ public class ManagerUploadServiceTests
     public async Task UploadLetter_Company_Text_DelegatesWithCompanyId()
     {
         var input = new ManagerUploadLetterInputModel(
-            StudentId, PlanId, null, CompanyId, UploadContentMode.Text,
+            StudentId, ManagerChapterId, PlanId, null, CompanyId, UploadContentMode.Text,
             null, "Contenido de la carta", null, null);
 
-        var result = await _service.UploadLetterAsync(input, ManagerId, ManagerChapterId);
+        var result = await _service.UploadLetterAsync(input, ManagerId);
 
         result.IsSuccess.Should().BeTrue();
         await _documentService.Received(1).CreateLetterAsync(Arg.Is<CreateLetterInputModel>(m =>
@@ -315,10 +358,10 @@ public class ManagerUploadServiceTests
     public async Task UploadLetter_Company_File_DelegatesWithCompanyId()
     {
         var input = new ManagerUploadLetterInputModel(
-            StudentId, PlanId, null, CompanyId, UploadContentMode.File,
+            StudentId, ManagerChapterId, PlanId, null, CompanyId, UploadContentMode.File,
             [new UploadFileInputModel(new MemoryStream(new byte[8]), "application/pdf")], null, null, null);
 
-        var result = await _service.UploadLetterAsync(input, ManagerId, ManagerChapterId);
+        var result = await _service.UploadLetterAsync(input, ManagerId);
 
         result.IsSuccess.Should().BeTrue();
         await _documentService.Received(1).CreateLetterWithBlobAsync(Arg.Is<CreateLetterWithBlobInputModel>(m =>
@@ -332,10 +375,10 @@ public class ManagerUploadServiceTests
     {
         _letterExemptionService.IsExemptAsync(StudentId, PlanId).Returns(true);
         var input = new ManagerUploadLetterInputModel(
-            StudentId, PlanId, SponsorId, null, UploadContentMode.Text,
+            StudentId, ManagerChapterId, PlanId, SponsorId, null, UploadContentMode.Text,
             null, "Contenido de la carta", null, null);
 
-        var result = await _service.UploadLetterAsync(input, ManagerId, ManagerChapterId);
+        var result = await _service.UploadLetterAsync(input, ManagerId);
 
         result.IsSuccess.Should().BeFalse();
         result.Errors.Should().Contain(DocumentMessages.LetterExemptForPlan);
@@ -346,10 +389,10 @@ public class ManagerUploadServiceTests
     public async Task UploadReportCard_Text_ReturnsErrorWithoutDelegating()
     {
         var input = new ManagerUploadReportCardInputModel(
-            StudentId, new DateOnly(2026, 3, 1), "Boletín 1º trimestre", UploadContentMode.Text,
+            StudentId, ManagerChapterId, new DateOnly(2026, 3, 1), "Boletín 1º trimestre", UploadContentMode.Text,
             null, null, null);
 
-        var result = await _service.UploadReportCardAsync(input, ManagerId, ManagerChapterId);
+        var result = await _service.UploadReportCardAsync(input, ManagerId);
 
         result.IsSuccess.Should().BeFalse();
         result.Errors.Should().Contain(DocumentMessages.ReportCardCannotUseText);
@@ -360,10 +403,10 @@ public class ManagerUploadServiceTests
     public async Task UploadReportCard_File_DelegatesToBlobCreate()
     {
         var input = new ManagerUploadReportCardInputModel(
-            StudentId, new DateOnly(2026, 3, 1), "Boletín 1º trimestre", UploadContentMode.File,
+            StudentId, ManagerChapterId, new DateOnly(2026, 3, 1), "Boletín 1º trimestre", UploadContentMode.File,
             [new UploadFileInputModel(new MemoryStream(new byte[8]), "image/jpeg")], null, null);
 
-        await _service.UploadReportCardAsync(input, ManagerId, ManagerChapterId);
+        await _service.UploadReportCardAsync(input, ManagerId);
 
         await _documentService.Received(1).CreateReportCardWithBlobAsync(Arg.Is<CreateReportCardWithBlobInputModel>(m =>
             m.StudentId == StudentId
@@ -377,10 +420,10 @@ public class ManagerUploadServiceTests
     public async Task UploadOther_Text_DelegatesWithTextFileKind()
     {
         var input = new ManagerUploadOtherInputModel(
-            StudentId, "Certificado de alumno regular", UploadContentMode.Text,
+            StudentId, ManagerChapterId, "Certificado de alumno regular", UploadContentMode.Text,
             null, "un texto", null, null);
 
-        await _service.UploadOtherDocumentAsync(input, ManagerId, ManagerChapterId);
+        await _service.UploadOtherDocumentAsync(input, ManagerId);
 
         await _documentService.Received(1).CreateOtherDocumentAsync(Arg.Is<CreateOtherDocumentInputModel>(m =>
             m.FileKind == FileKind.Text
@@ -393,10 +436,10 @@ public class ManagerUploadServiceTests
     public async Task UploadOther_File_DelegatesToBlobCreate()
     {
         var input = new ManagerUploadOtherInputModel(
-            StudentId, "Constancia", UploadContentMode.File,
+            StudentId, ManagerChapterId, "Constancia", UploadContentMode.File,
             [new UploadFileInputModel(new MemoryStream(new byte[8]), "text/plain")], null, null, null);
 
-        await _service.UploadOtherDocumentAsync(input, ManagerId, ManagerChapterId);
+        await _service.UploadOtherDocumentAsync(input, ManagerId);
 
         await _documentService.Received(1).CreateOtherDocumentWithBlobAsync(Arg.Is<CreateOtherDocumentWithBlobInputModel>(m =>
             m.StudentId == StudentId

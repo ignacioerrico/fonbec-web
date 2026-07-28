@@ -29,7 +29,8 @@ public interface IFacilitatorUploadService
 public class FacilitatorUploadService(
     IFacilitatorRepository facilitatorRepository,
     IDocumentService documentService,
-    ILetterExemptionService letterExemptionService) : IFacilitatorUploadService
+    ILetterExemptionService letterExemptionService,
+    TimeProvider timeProvider) : IFacilitatorUploadService
 {
     public async Task<FacilitatorUploadContextViewModel?> GetUploadContextAsync(
         int facilitatorId, int studentId, string documentType,
@@ -103,7 +104,8 @@ public class FacilitatorUploadService(
             StudentFullName = $"{context.StudentFirstName} {context.StudentLastName}".Trim(),
             ChapterId = context.ChapterId,
             DocumentType = type.Value,
-            EducationLevel = UploadDocumentHelper.ResolveEducationLevel(context.SecondarySchoolStartYear, context.UniversityStartYear),
+            EducationLevel = UploadDocumentHelper.ResolveEducationLevel(
+                context.SecondarySchoolStartYear, context.UniversityStartYear, timeProvider.GetUtcNow().UtcDateTime),
             PlanId = resolvedPlanId,
             PlanPeriodLabel = planPeriodLabel,
             SponsorId = resolvedSponsorId,

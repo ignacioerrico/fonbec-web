@@ -118,25 +118,22 @@
                 </FilterTemplate>
             </PropertyColumn>
 
-            <PropertyColumn Property="vm => vm.StudentEmail" Title="Correo electrónico" Required="false">
+            <PropertyColumn Property="@(vm => string.Join(", ", vm.ActiveSponsors.Select(s => s.Name)))"
+                            Title="Padrinos activos" Editable="false" Sortable="false">
                 <CellTemplate>
-                    <MudLink Href="@($"mailto:{context.Item.StudentEmail}")">
-                        @context.Item.StudentEmail
-                    </MudLink>
+                    @if (context.Item.ActiveSponsors.Count > 0)
+                    {
+                        <div class="d-flex flex-wrap gap-1">
+                            @foreach (var sponsor in context.Item.ActiveSponsors)
+                            {
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Default"
+                                         Icon="@(sponsor.IsCompany ? Icons.Material.Filled.Factory : Icons.Material.Filled.Person)">
+                                    @sponsor.Name
+                                </MudChip>
+                            }
+                        </div>
+                    }
                 </CellTemplate>
-                <EditTemplate>
-                    <MudTextField T="string" @bind-Value="context.Item.StudentEmail" Immediate="true"
-                                  Label="Correo electrónico" Variant="Variant.Outlined" Margin="Margin.Dense"
-                                  MaxLength="MaxLength.FonbecWebUser.Email" />
-                </EditTemplate>
-            </PropertyColumn>
-
-            <PropertyColumn Property="vm => vm.StudentPhoneNumber" Title="Teléfono" Required="false">
-                <EditTemplate>
-                    <MudTextField T="string" @bind-Value="context.Item.StudentPhoneNumber" Immediate="true"
-                                  Label="Teléfono" Variant="Variant.Outlined" Margin="Margin.Dense"
-                                  MaxLength="MaxLength.FonbecWebUser.PhoneNumber" />
-                </EditTemplate>
             </PropertyColumn>
 
             <PropertyColumn Property="vm => vm.Notes" Title="Información adicional" Hidden="true" Required="false">
@@ -177,13 +174,16 @@
                     </AuthorizeView>
 
                     <AuthorizeView Policy="@nameof(ManagerUploadDocument)" Context="uploadContext">
-                        <MudTooltip Text="Subir documento" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary">
-                            <MudIconButton OnClick="@(() => OpenUploadDialogAsync(context.Item))"
-                                           Disabled="@(!context.Item.IsStudentActive)"
-                                           Icon="@Icons.Material.Outlined.CloudUpload"
-                                           Size="@Size.Small"
-                                           Color="Color.Primary" />
-                        </MudTooltip>
+                        @if (context.Item.HasActiveSponsors)
+                        {
+                            <MudTooltip Text="Subir documento" Arrow="true" Placement="Placement.Bottom" Color="Color.Secondary">
+                                <MudIconButton OnClick="@(() => OpenUploadDialogAsync(context.Item))"
+                                               Disabled="@(!context.Item.IsStudentActive)"
+                                               Icon="@Icons.Material.Outlined.FileUpload"
+                                               Size="@Size.Small"
+                                               Color="Color.Secondary" />
+                            </MudTooltip>
+                        }
                     </AuthorizeView>
                 </CellTemplate>
             </TemplateColumn>

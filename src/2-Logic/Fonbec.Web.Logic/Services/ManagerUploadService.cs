@@ -30,15 +30,17 @@ public interface IManagerUploadService
     Task<ManagerLetterRecipientOptionsViewModel?> GetLetterRecipientOptionsAsync(
         int managerChapterId, int studentId);
 
-    Task<CrudResult<long>> UploadLetterAsync(ManagerUploadLetterInputModel input, int uploadedById, int managerChapterId);
-    Task<CrudResult<long>> UploadReportCardAsync(ManagerUploadReportCardInputModel input, int uploadedById, int managerChapterId);
-    Task<CrudResult<long>> UploadOtherDocumentAsync(ManagerUploadOtherInputModel input, int uploadedById, int managerChapterId);
+    Task<CrudResult<long>> UploadLetterAsync(ManagerUploadLetterInputModel input, int uploadedById);
+    Task<CrudResult<long>> UploadReportCardAsync(ManagerUploadReportCardInputModel input, int uploadedById);
+    Task<CrudResult<long>> UploadOtherDocumentAsync(ManagerUploadOtherInputModel input, int uploadedById);
 }
 
 public class ManagerUploadService(
     IManagerUploadRepository managerUploadRepository,
     IDocumentService documentService,
-    ILetterExemptionService letterExemptionService) : IManagerUploadService
+    IDocumentRepository documentRepository,
+    ILetterExemptionService letterExemptionService,
+    TimeProvider timeProvider) : IManagerUploadService
 {
     public async Task<ManagerUploadContextViewModel?> GetUploadContextAsync(
         int managerId, int managerChapterId, int studentId, string documentType,
@@ -112,7 +114,8 @@ public class ManagerUploadService(
             StudentFullName = $"{context.StudentFirstName} {context.StudentLastName}".Trim(),
             ChapterId = context.ChapterId,
             DocumentType = type.Value,
-            EducationLevel = UploadDocumentHelper.ResolveEducationLevel(context.SecondarySchoolStartYear, context.UniversityStartYear),
+            EducationLevel = UploadDocumentHelper.ResolveEducationLevel(
+                context.SecondarySchoolStartYear, context.UniversityStartYear, timeProvider.GetUtcNow().UtcDateTime),
             FacilitatorFullName = $"{context.FacilitatorFirstName} {context.FacilitatorLastName}".Trim(),
             PlanId = resolvedPlanId,
             PlanPeriodLabel = planPeriodLabel,
@@ -139,26 +142,53 @@ public class ManagerUploadService(
 
         var isExempt = await letterExemptionService.IsExemptAsync(studentId, currentPlan.PlanId);
 
-        var sponsorships = await managerUploadRepository.GetActiveSponsorshipsAsync(studentId);
+        var options = isExempt
+            ? []
+            : await BuildRecipientOptionsAsync(studentId, currentPlan.PlanId);
 
         return new ManagerLetterRecipientOptionsViewModel
         {
             PlanId = currentPlan.PlanId,
             PlanPeriodLabel = UploadDocumentHelper.FormatPeriod(currentPlan.StartsOn),
             IsExempt = isExempt,
-            Options = isExempt
-                ? []
-                : sponsorships.Select(s => new ManagerLetterRecipientOptionViewModel
-                {
-                    SponsorId = s.SponsorId,
-                    CompanyId = s.CompanyId,
-                    RecipientName = s.RecipientName,
-                }).ToList(),
+            Options = options,
         };
     }
 
+    private async Task<List<ManagerLetterRecipientOptionViewModel>> BuildRecipientOptionsAsync(int studentId, int planId)
+    {
+        var sponsorships = await managerUploadRepository.GetActiveSponsorshipsAsync(studentId);
+
+        var options = new List<ManagerLetterRecipientOptionViewModel>();
+        foreach (var sponsorship in sponsorships)
+        {
+            // Defensive: a recipient with no resolvable name is not a valid letter target.
+            if (string.IsNullOrWhiteSpace(sponsorship.RecipientName))
+            {
+                continue;
+            }
+
+            // Surface an existing (non-rejected) letter now so the manager sees it here instead of
+            // only being blocked after filling in the upload form.
+            var alreadyHasLetter = sponsorship.SponsorId.HasValue
+                ? await documentRepository.HasDuplicateLetterAsync(studentId, sponsorship.SponsorId.Value, planId)
+                : sponsorship.CompanyId.HasValue
+                  && await documentRepository.HasDuplicateCompanyLetterAsync(studentId, sponsorship.CompanyId.Value, planId);
+
+            options.Add(new ManagerLetterRecipientOptionViewModel
+            {
+                SponsorId = sponsorship.SponsorId,
+                CompanyId = sponsorship.CompanyId,
+                RecipientName = sponsorship.RecipientName,
+                AlreadyHasLetterForPlan = alreadyHasLetter,
+            });
+        }
+
+        return options;
+    }
+
     public async Task<CrudResult<long>> UploadLetterAsync(
-        ManagerUploadLetterInputModel input, int uploadedById, int managerChapterId)
+        ManagerUploadLetterInputModel input, int uploadedById)
     {
         // A letter is addressed to exactly one recipient: a sponsor XOR a company.
         if (input.SponsorId.HasValue == input.CompanyId.HasValue)
@@ -171,7 +201,7 @@ public class ManagerUploadService(
             return new CrudResult<long>(Errors: [DocumentMessages.LetterExemptForPlan]);
         }
 
-        var user = BuildUserContext(uploadedById, managerChapterId);
+        var user = BuildUserContext(uploadedById, input.ManagerChapterId);
 
         switch (input.ContentMode)
         {
@@ -208,9 +238,9 @@ public class ManagerUploadService(
     }
 
     public async Task<CrudResult<long>> UploadReportCardAsync(
-        ManagerUploadReportCardInputModel input, int uploadedById, int managerChapterId)
+        ManagerUploadReportCardInputModel input, int uploadedById)
     {
-        var user = BuildUserContext(uploadedById, managerChapterId);
+        var user = BuildUserContext(uploadedById, input.ManagerChapterId);
 
         switch (input.ContentMode)
         {
@@ -243,9 +273,9 @@ public class ManagerUploadService(
     }
 
     public async Task<CrudResult<long>> UploadOtherDocumentAsync(
-        ManagerUploadOtherInputModel input, int uploadedById, int managerChapterId)
+        ManagerUploadOtherInputModel input, int uploadedById)
     {
-        var user = BuildUserContext(uploadedById, managerChapterId);
+        var user = BuildUserContext(uploadedById, input.ManagerChapterId);
 
         switch (input.ContentMode)
         {
