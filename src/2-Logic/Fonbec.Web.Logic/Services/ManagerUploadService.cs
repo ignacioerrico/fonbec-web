@@ -1,4 +1,3 @@
-using System.Globalization;
 using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Repositories;
@@ -41,17 +40,11 @@ public class ManagerUploadService(
     IDocumentService documentService,
     ILetterExemptionService letterExemptionService) : IManagerUploadService
 {
-    public const string TipoCarta = "carta";
-    public const string TipoBoletin = "boletin";
-    public const string TipoOtro = "otro";
-
-    private static readonly CultureInfo EsAr = CultureInfo.GetCultureInfo("es-AR");
-
     public async Task<ManagerUploadContextViewModel?> GetUploadContextAsync(
         int managerId, int managerChapterId, int studentId, string documentType,
         int? sponsorId, int? companyId, int? planId)
     {
-        var type = ParseDocumentType(documentType);
+        var type = UploadDocumentHelper.ParseDocumentType(documentType);
         if (type is null)
         {
             return null;
@@ -110,7 +103,7 @@ public class ManagerUploadService(
             }
 
             resolvedPlanId = planId;
-            planPeriodLabel = FormatPeriod(context.PlanStartsOn.Value);
+            planPeriodLabel = UploadDocumentHelper.FormatPeriod(context.PlanStartsOn.Value);
         }
 
         return new ManagerUploadContextViewModel
@@ -119,7 +112,7 @@ public class ManagerUploadService(
             StudentFullName = $"{context.StudentFirstName} {context.StudentLastName}".Trim(),
             ChapterId = context.ChapterId,
             DocumentType = type.Value,
-            EducationLevel = ResolveEducationLevel(context.SecondarySchoolStartYear, context.UniversityStartYear),
+            EducationLevel = UploadDocumentHelper.ResolveEducationLevel(context.SecondarySchoolStartYear, context.UniversityStartYear),
             FacilitatorFullName = $"{context.FacilitatorFirstName} {context.FacilitatorLastName}".Trim(),
             PlanId = resolvedPlanId,
             PlanPeriodLabel = planPeriodLabel,
@@ -151,7 +144,7 @@ public class ManagerUploadService(
         return new ManagerLetterRecipientOptionsViewModel
         {
             PlanId = currentPlan.PlanId,
-            PlanPeriodLabel = FormatPeriod(currentPlan.StartsOn),
+            PlanPeriodLabel = UploadDocumentHelper.FormatPeriod(currentPlan.StartsOn),
             IsExempt = isExempt,
             Options = isExempt
                 ? []
@@ -288,32 +281,4 @@ public class ManagerUploadService(
 
     private static CreateDocumentUserContext BuildUserContext(int uploadedById, int managerChapterId) =>
         new(uploadedById, FonbecRole.Manager, ChapterId: managerChapterId, FonbecAuthClaim: null);
-
-    private static DocumentType? ParseDocumentType(string? documentType) =>
-        documentType?.Trim().ToLowerInvariant() switch
-        {
-            TipoCarta => DocumentType.Letter,
-            TipoBoletin => DocumentType.ReportCard,
-            TipoOtro => DocumentType.Other,
-            _ => null,
-        };
-
-    private static string FormatPeriod(DateTime startsOn)
-    {
-        var label = startsOn.ToString("MMM yyyy", EsAr).Replace(".", string.Empty);
-        return EsAr.TextInfo.ToTitleCase(label);
-    }
-
-    private static EducationLevel ResolveEducationLevel(DateTime? secondarySchoolStartYear, DateTime? universityStartYear)
-    {
-        var now = DateTime.UtcNow;
-        if (universityStartYear <= now)
-        {
-            return EducationLevel.University;
-        }
-
-        return secondarySchoolStartYear <= now
-            ? EducationLevel.SecondarySchool
-            : EducationLevel.PrimarySchool;
-    }
 }

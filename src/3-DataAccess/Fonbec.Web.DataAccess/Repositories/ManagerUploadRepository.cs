@@ -23,6 +23,8 @@ public class ManagerUploadRepository(
     {
         await using var db = await dbContext.CreateDbContextAsync();
 
+        var utcNow = timeProvider.GetUtcNow().UtcDateTime;
+
         var student = await db.Students
             .AsNoTracking()
             .Where(s => s.Id == studentId && !s.IsDeleted)
@@ -45,24 +47,39 @@ public class ManagerUploadRepository(
             return null;
         }
 
+        // Only resolve a plan that is genuinely valid for this student's chapter, matching the
+        // server-side create check; an invalid plan yields a null start date so the upload
+        // context resolution fails instead of rendering a form that would be rejected on submit.
         DateTime? planStartsOn = null;
         if (planId.HasValue)
         {
             planStartsOn = await db.PlannedDeliveries
                 .AsNoTracking()
-                .Where(p => p.Id == planId.Value)
+                .Where(p => p.Id == planId.Value
+                            && p.IsActive
+                            && !p.Completed
+                            && (p.ChapterId == null || p.ChapterId == student.ChapterId))
                 .Select(p => (DateTime?)p.StartsOn)
                 .FirstOrDefaultAsync();
         }
 
+        // Resolve the recipient name only from an active sponsorship with the student, so an
+        // unrelated or inactive sponsor/company does not produce a renderable letter context.
         string? sponsorFirstName = null;
         string? sponsorLastName = null;
         if (sponsorId.HasValue)
         {
-            var sponsor = await db.Sponsors
+            var sponsor = await db.Sponsorships
                 .AsNoTracking()
-                .Where(s => s.Id == sponsorId.Value && !s.IsDeleted)
-                .Select(s => new { s.FirstName, s.LastName })
+                .Where(sp => sp.StudentId == studentId
+                             && sp.SponsorId == sponsorId.Value
+                             && sp.IsActive
+                             && sp.StartDate <= utcNow
+                             && (sp.EndDate == null || sp.EndDate >= utcNow)
+                             && sp.Sponsor != null
+                             && sp.Sponsor.IsActive
+                             && !sp.Sponsor.IsDeleted)
+                .Select(sp => new { sp.Sponsor!.FirstName, sp.Sponsor.LastName })
                 .FirstOrDefaultAsync();
             sponsorFirstName = sponsor?.FirstName;
             sponsorLastName = sponsor?.LastName;
@@ -71,10 +88,16 @@ public class ManagerUploadRepository(
         string? companyName = null;
         if (companyId.HasValue)
         {
-            companyName = await db.Companies
+            companyName = await db.Sponsorships
                 .AsNoTracking()
-                .Where(c => c.Id == companyId.Value)
-                .Select(c => c.Name)
+                .Where(sp => sp.StudentId == studentId
+                             && sp.CompanyId == companyId.Value
+                             && sp.IsActive
+                             && sp.StartDate <= utcNow
+                             && (sp.EndDate == null || sp.EndDate >= utcNow)
+                             && sp.Company != null
+                             && sp.Company.IsActive)
+                .Select(sp => sp.Company!.Name)
                 .FirstOrDefaultAsync();
         }
 
@@ -103,6 +126,7 @@ public class ManagerUploadRepository(
         var utcNow = timeProvider.GetUtcNow().UtcDateTime;
 
         return await db.Sponsorships
+            .AsNoTracking()
             .Where(sp => sp.StudentId == studentId
                          && sp.IsActive
                          && sp.StartDate <= utcNow

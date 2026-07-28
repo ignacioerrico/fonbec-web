@@ -1,0 +1,183 @@
+@using Fonbec.Web.DataAccess.Entities.Enums
+@using Fonbec.Web.Logic.Models.Facilitators.Input
+
+<MudPaper Elevation="0" Outlined="true" Class="pa-6 mx-auto" Style="max-width: 720px;">
+
+    <div class="d-flex align-center gap-3">
+        <MudIcon Icon="@DocumentTypeIcon" Color="Color.Primary" Size="Size.Large" />
+        <div class="flex-grow-1">
+            <MudText Typo="Typo.h6">@StudentFullName</MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">@DocumentTypeLabel</MudText>
+        </div>
+    </div>
+
+    @if (DocumentType == DocumentType.Letter || FacilitatorFullName is not null)
+    {
+        <div class="d-flex flex-wrap gap-2 mt-3">
+            @if (DocumentType == DocumentType.Letter)
+            {
+                <MudChip T="string" Icon="@RecipientIcon" Size="Size.Small"
+                         Variant="Variant.Text" Color="Color.Default">@RecipientName</MudChip>
+                <MudChip T="string" Icon="@Icons.Material.Filled.Event" Size="Size.Small"
+                         Variant="Variant.Text" Color="Color.Default">@PlanPeriodLabel</MudChip>
+            }
+            @if (FacilitatorFullName is not null)
+            {
+                <MudChip T="string" Icon="@Icons.Material.Filled.SupportAgent" Size="Size.Small"
+                         Variant="Variant.Text" Color="Color.Default">Mediador asignado: @FacilitatorFullName</MudChip>
+            }
+        </div>
+    }
+
+    <MudDivider Class="my-4" />
+
+    <MudForm @ref="_form" @bind-IsValid="@_formValidationSucceeded">
+
+        <MudToggleGroup T="UploadContentMode" @bind-Value="_bindModel.ContentMode"
+                        Color="Color.Primary" Size="Size.Small" Class="mb-4">
+            <MudToggleItem Value="UploadContentMode.File">Archivo</MudToggleItem>
+            @if (AllowsTextContent)
+            {
+                <MudToggleItem Value="UploadContentMode.Text">Texto</MudToggleItem>
+            }
+            <MudToggleItem Value="UploadContentMode.YouTube">YouTube</MudToggleItem>
+        </MudToggleGroup>
+
+        @if (DocumentType != DocumentType.Letter)
+        {
+            @if (_descriptionOptions.Any())
+            {
+                <MudSelect T="string" @bind-Value="_bindModel.SelectedDescriptionOption"
+                           Label="Descripción (opción predefinida)" Clearable="true" Dense="true"
+                           Class="mb-3">
+                    @foreach (var option in _descriptionOptions)
+                    {
+                        <MudSelectItem T="string" Value="@option">@option</MudSelectItem>
+                    }
+                </MudSelect>
+            }
+            <MudTextField @bind-Value="_bindModel.FreeTextDescription"
+                          Label="Descripción (texto libre)"
+                          HelperText="Si lo completás, se usa en lugar de la opción predefinida."
+                          Immediate="true" Class="mb-3" />
+        }
+
+        @if (DocumentType == DocumentType.ReportCard)
+        {
+            <MudDatePicker @bind-Date="_bindModel.Period"
+                           Label="Período (mes y año)"
+                           OpenTo="OpenTo.Month"
+                           FixDay="1"
+                           DateFormat="MMMM yyyy"
+                           Class="mb-3" />
+        }
+
+        @if (_bindModel.ContentMode == UploadContentMode.File)
+        {
+            <MudFileUpload T="IReadOnlyList<IBrowserFile>" FilesChanged="OnFilesSelected"
+                           Accept="@AcceptedExtensions" Hidden="false" Class="relative"
+                           InputClass="absolute mud-width-full mud-height-full overflow-hidden z-10"
+                           InputStyle="opacity:0;cursor:pointer;"
+                           @ondragenter="SetDragClass" @ondragleave="ClearDragClass"
+                           @ondragend="ClearDragClass" @ondrop="ClearDragClass">
+                <ActivatorContent>
+                    <MudPaper Outlined="true" Class="@_dropZoneClass">
+                        <MudIcon Icon="@Icons.Material.Filled.CloudUpload" Color="Color.Primary" Size="Size.Large" />
+                        <MudText Typo="Typo.body1">
+                            Arrastrá los archivos acá o hacé clic para seleccionarlos
+                        </MudText>
+                        <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                            TXT, PDF, JPG, PNG · hasta @FormatBytes(_maxFileSizeBytes) en total ·
+                            varias imágenes = varias páginas
+                        </MudText>
+                    </MudPaper>
+                </ActivatorContent>
+            </MudFileUpload>
+
+            @if (_selectedFiles.Count == 1)
+            {
+                var file = _selectedFiles[0];
+                <MudPaper Class="pa-2 d-flex align-center mt-3" Outlined="true">
+                    <MudIcon Icon="@FileIcon(file)" Class="me-2 mud-text-secondary" />
+                    <MudText Typo="Typo.body2" Class="flex-grow-1">
+                        @file.Name (@FormatBytes(file.Size))
+                    </MudText>
+                    <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
+                                   OnClick="@(() => RemoveFile(file))" />
+                </MudPaper>
+            }
+            else if (_selectedFiles.Count > 1)
+            {
+                <MudText Typo="Typo.caption" Class="mud-text-secondary d-block mt-3">
+                    Arrastrá para reordenar las páginas. El orden se conserva al subir.
+                </MudText>
+
+                <MudDropContainer T="IBrowserFile" @ref="_dropContainer" Items="_selectedFiles"
+                                  ItemsSelector="@((item, zone) => true)" ItemDropped="OnFileDropped"
+                                  Class="mt-2">
+                    <ChildContent>
+                        <MudDropZone T="IBrowserFile" Identifier="pages" AllowReorder="true"
+                                     Class="d-flex flex-column gap-2" />
+                    </ChildContent>
+                    <ItemRenderer>
+                        <MudPaper Class="pa-2 d-flex align-center" Outlined="true" Style="cursor: grab;">
+                            <MudIcon Icon="@Icons.Material.Filled.DragIndicator" Class="me-2 mud-text-secondary" />
+                            <MudText Typo="Typo.body2" Class="flex-grow-1">
+                                @($"{_selectedFiles.IndexOf(context) + 1}. {context.Name}") (@FormatBytes(context.Size))
+                            </MudText>
+                            <MudIconButton Icon="@Icons.Material.Filled.Close" Size="Size.Small"
+                                           OnClick="@(() => RemoveFile(context))" />
+                        </MudPaper>
+                    </ItemRenderer>
+                </MudDropContainer>
+            }
+
+            @if (_selectedFiles.Count > 0)
+            {
+                <MudText Typo="Typo.caption"
+                         Class="@($"d-block mt-2 {(TotalSizeExceeded ? "mud-error-text" : "mud-text-secondary")}")">
+                    Total: @FormatBytes(TotalSelectedSize) / @FormatBytes(_maxFileSizeBytes)
+                </MudText>
+            }
+
+            @if (AnySelectedFileIsImage)
+            {
+                <MudAlert Severity="Severity.Info" Class="mt-3" Dense="true">
+                    Las imágenes (JPG/PNG) pasan por un proceso de mejora digital antes de la revisión.
+                </MudAlert>
+            }
+        }
+        else if (_bindModel.ContentMode == UploadContentMode.Text)
+        {
+            <MudTextField @bind-Value="_bindModel.TextContent"
+                          Label="Texto del documento"
+                          Lines="6" Immediate="true" />
+        }
+        else if (_bindModel.ContentMode == UploadContentMode.YouTube)
+        {
+            <MudTextField @bind-Value="_bindModel.YouTubeUrlOrId"
+                          Label="Enlace o ID de YouTube"
+                          HelperText="Podés pegar la URL completa o solo el ID del video."
+                          Immediate="true" />
+        }
+
+        <MudTextField @bind-Value="_bindModel.UploaderNotes"
+                      Label="Notas (opcional)"
+                      Lines="2" Class="mt-4" />
+
+        <MudDivider Class="my-4" />
+
+        <div class="d-flex justify-end gap-2">
+            <MudButton Href="@CancelHref" Variant="Variant.Text" Color="Color.Default">
+                Cancelar
+            </MudButton>
+            <MudButton OnClick="Save" Disabled="SaveButtonDisabled"
+                       Variant="Variant.Filled" Color="Color.Primary"
+                       StartIcon="@Icons.Material.Filled.CloudUpload">
+                Subir
+            </MudButton>
+        </div>
+    </MudForm>
+</MudPaper>
+
+<LoadingIndicator Loading="_saving" LoadingText="Subiendo el documento" />
