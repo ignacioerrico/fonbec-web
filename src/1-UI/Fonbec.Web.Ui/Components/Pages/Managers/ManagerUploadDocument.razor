@@ -1,5 +1,5 @@
-@attribute [Route(NavRoutes.FacilitatorUploadDocumentTemplate)]
-@attribute [Authorize(Policy = nameof(FacilitatorUploadDocument))]
+@attribute [Route(NavRoutes.ManagerUploadDocumentTemplate)]
+@attribute [Authorize(Policy = nameof(ManagerUploadDocument))]
 @inherits AuthenticationRequiredComponentBase
 
 @using Fonbec.Web.Ui.Components.NonPages.Documents
@@ -14,10 +14,11 @@
                         EducationLevel="_context.EducationLevel"
                         AllowsTextContent="_context.AllowsTextContent"
                         StudentFullName="@_context.StudentFullName"
+                        FacilitatorFullName="@_context.FacilitatorFullName"
                         RecipientName="@_context.RecipientName"
                         PlanPeriodLabel="@_context.PlanPeriodLabel"
                         RecipientIsCompany="_context.CompanyId.HasValue"
                         ChapterId="_context.ChapterId"
-                        CancelHref="@NavRoutes.FacilitatorStudents"
+                        CancelHref="@NavRoutes.Students"
                         OnSubmit="HandleSubmitAsync" />
 }

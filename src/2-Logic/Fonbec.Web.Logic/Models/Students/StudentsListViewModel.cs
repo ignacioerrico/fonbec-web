@@ -23,6 +23,9 @@ public class StudentsListViewModel : AuditableViewModel, IDetectChanges<Students
     public DateTime? StudentUniversityStartYear { get; set; }
     public string StudentPhoneNumber { get; set; } = string.Empty;
     public string StudentChapterName { get; set; } = string.Empty;
+    public List<StudentActiveSponsorViewModel> ActiveSponsors { get; set; } = [];
+
+    public bool HasActiveSponsors => ActiveSponsors.Count > 0;
 
     public bool IsIdenticalTo(StudentsListViewModel other) =>
         StudentFirstName == other.StudentFirstName.NormalizeText()
@@ -34,6 +37,13 @@ public class StudentsListViewModel : AuditableViewModel, IDetectChanges<Students
         && StudentEmail == other.StudentEmail.Trim().ToLower()
         && StudentPhoneNumber == other.StudentPhoneNumber.NullOrTrimmed()
         && Notes == other.Notes.NullOrTrimmed();
+}
+
+public class StudentActiveSponsorViewModel
+{
+    public string Name { get; set; } = string.Empty;
+
+    public bool IsCompany { get; set; }
 }
 
 public class StudentsListViewModelMappingDefinitions : IRegister
@@ -56,7 +66,12 @@ public class StudentsListViewModelMappingDefinitions : IRegister
             .Map(dest => dest.StudentSecondarySchoolStartYear, src => src.StudentSecondarySchoolStartYear)
             .Map(dest => dest.StudentUniversityStartYear, src => src.StudentUniversityStartYear)
             .Map(dest => dest.StudentPhoneNumber, src => src.StudentPhoneNumber ?? string.Empty)
-            .Map(dest => dest.StudentChapterName, src => src.StudentChapterName);
+            .Map(dest => dest.StudentChapterName, src => src.StudentChapterName)
+            .Map(dest => dest.ActiveSponsors, src => src.ActiveSponsors);
+
+        config.NewConfig<StudentActiveSponsorDataModel, StudentActiveSponsorViewModel>()
+            .Map(dest => dest.Name, src => src.Name)
+            .Map(dest => dest.IsCompany, src => src.IsCompany);
 
         // Mapping required for the StudentSelector component
         config.NewConfig<StudentsListViewModel, SelectableModel<int>>()

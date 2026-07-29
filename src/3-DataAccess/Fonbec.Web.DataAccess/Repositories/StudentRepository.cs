@@ -18,6 +18,8 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
     {
         await using var db = await dbContext.CreateDbContextAsync();
 
+        var utcNow = DateTime.UtcNow;
+
         var allStudents = await db.Students
             .Include(s => s.Facilitator)
             .Include(s => s.CreatedBy)
@@ -47,6 +49,27 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
                 StudentUniversityStartYear = s.UniversityStartYear,
                 StudentPhoneNumber = s.PhoneNumber,
                 StudentChapterName = s.Chapter.Name,
+                ActiveSponsors = s.Sponsorships
+                    .Where(sp => sp.IsActive
+                                 && sp.StartDate <= utcNow
+                                 && (sp.EndDate == null || sp.EndDate >= utcNow)
+                                 && ((sp.SponsorId != null
+                                      && sp.Sponsor != null
+                                      && sp.Sponsor.IsActive
+                                      && !sp.Sponsor.IsDeleted)
+                                     || (sp.CompanyId != null
+                                         && sp.Company != null
+                                         && sp.Company.IsActive)))
+                    .Select(sp => new StudentActiveSponsorDataModel
+                    {
+                        IsCompany = sp.CompanyId != null,
+                        Name = sp.CompanyId != null && sp.Company != null
+                            ? sp.Company.Name
+                            : sp.Sponsor != null
+                                ? sp.Sponsor.FirstName + " " + sp.Sponsor.LastName
+                                : string.Empty,
+                    })
+                    .ToList(),
             })
             .OrderBy(s => s.StudentFirstName)
             .ThenBy(s => s.StudentLastName)

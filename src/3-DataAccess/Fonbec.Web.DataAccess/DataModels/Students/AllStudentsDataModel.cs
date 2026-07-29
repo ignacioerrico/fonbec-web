@@ -38,4 +38,6 @@ public class AllStudentsDataModel(Auditable auditable) : AuditableDataModel(audi
     public DateTime? StudentUniversityStartYear { get; set; }
 
     public string? StudentPhoneNumber { get; set; }
+
+    public List<StudentActiveSponsorDataModel> ActiveSponsors { get; set; } = [];
 }

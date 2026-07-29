@@ -70,6 +70,7 @@ public static class ConfigureServices
         services.AddScoped<IStudentService, StudentService>();
         services.AddScoped<IFacilitatorService, FacilitatorService>();
         services.AddScoped<IFacilitatorUploadService, FacilitatorUploadService>();
+        services.AddScoped<IManagerUploadService, ManagerUploadService>();
         services.AddScoped<ILetterExemptionService, LetterExemptionService>();
         services.AddScoped<ISponsorService, SponsorService>();
         services.AddScoped<ISponsorshipService, SponsorshipService>();
@@ -84,6 +85,7 @@ public static class ConfigureServices
         services.AddScoped<IPlannedDeliveryRepository, PlannedDeliveryRepository>();
         services.AddScoped<IStudentRepository, StudentRepository>();
         services.AddScoped<IFacilitatorRepository, FacilitatorRepository>();
+        services.AddScoped<IManagerUploadRepository, ManagerUploadRepository>();
         services.AddScoped<ILetterExemptionRepository, LetterExemptionRepository>();
         services.AddScoped<ISponsorRepository, SponsorRepository>();
         services.AddScoped<ISponsorshipRepository, SponsorshipRepository>();

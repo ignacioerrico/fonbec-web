@@ -1,8 +1,12 @@
 using Fonbec.Web.Logic.Models.Facilitators.Input;
 
-namespace Fonbec.Web.Ui.Models.Facilitator;
+namespace Fonbec.Web.Ui.Models.Documents;
 
-public class FacilitatorUploadDocumentBindModel
+/// <summary>
+/// Form state for the shared document upload form, used by both the facilitator and manager
+/// upload pages.
+/// </summary>
+public class UploadDocumentBindModel
 {
     public UploadContentMode ContentMode { get; set; } = UploadContentMode.File;
 
