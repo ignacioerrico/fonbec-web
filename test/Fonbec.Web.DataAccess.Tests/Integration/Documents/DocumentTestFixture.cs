@@ -75,7 +75,11 @@ internal sealed class DocumentTestFixture
             })
             .Build();
 
-        var notificationService = new DocumentNotificationService(DocumentRepository, EmailSender, configuration);
+        var notificationService = new DocumentNotificationService(
+            DocumentRepository,
+            EmailSender,
+            configuration,
+            NullLogger<DocumentNotificationService>.Instance);
         var pages = new List<PageAccessInfo>
         {
             new(DocumentPermission.DigitalImprovement, "Digital improvement", ["Reviewer", "Manager"]),

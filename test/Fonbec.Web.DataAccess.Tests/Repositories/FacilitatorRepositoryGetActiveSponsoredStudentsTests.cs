@@ -251,7 +251,7 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
         var factory = CreateDbContextFactory();
         await SeedAsync(factory, studentId: 10);
 
-        await using (var db = await factory.CreateDbContextAsync())
+        await using (var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken))
         {
             db.Set<Sponsor>().Add(new Sponsor
             {
@@ -276,11 +276,11 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
                 CreatedOnUtc = UtcNow,
             });
 
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-            var inactiveSponsor = await db.Set<Sponsor>().SingleAsync(s => s.Id == 21);
+            var inactiveSponsor = await db.Set<Sponsor>().SingleAsync(s => s.Id == 21, TestContext.Current.CancellationToken);
             inactiveSponsor.DisabledById = 1;
-            await db.SaveChangesAsync();
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
         var repository = CreateRepository(factory);

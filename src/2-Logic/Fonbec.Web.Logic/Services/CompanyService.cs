@@ -30,8 +30,8 @@ public class CompanyService(ICompanyRepository companyRepository) : ICompanyServ
 
     public async Task<List<SelectableModel<int>>> GetAllCompaniesForSelectionAsync()
     {
-        return await GetAllCompaniesAsync()
-            .ContinueWith(t => t.Result.Adapt<List<SelectableModel<int>>>());
+        var companies = await GetAllCompaniesAsync();
+        return companies.Adapt<List<SelectableModel<int>>>();
     }
 
     public async Task<bool> CompanyNameExistsAsync(string companyName, int? excludeCompanyId = null)

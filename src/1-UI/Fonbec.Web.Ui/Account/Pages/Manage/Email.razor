@@ -61,7 +61,12 @@
     private HttpContext HttpContext { get; set; } = null!;
 
     [SupplyParameterFromForm(FormName = "change-email")]
-    private InputModel Input { get; set; } = new();
+    private InputModel Input { get; set; } = null!;
+
+    protected override void OnParametersSet()
+    {
+        Input ??= new();
+    }
 
     protected override async Task OnInitializedAsync()
     {
@@ -74,6 +79,11 @@
 
     private async Task OnValidSubmitAsync()
     {
+        if (Input is null)
+        {
+            return;
+        }
+
         if (Input.NewEmail is null || Input.NewEmail == _email)
         {
             _message = "Tu correo no cambió.";

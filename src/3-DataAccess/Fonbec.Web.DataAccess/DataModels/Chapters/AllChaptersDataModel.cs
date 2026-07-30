@@ -6,7 +6,7 @@ public class AllChaptersDataModel(Auditable auditable) : AuditableDataModel(audi
 {
     public int ChapterId { get; set; }
 
-    public string ChapterName { get; set; } = string.Empty;
+    public string ChapterName { get; set; } = null!;
     
     public bool IsChapterActive { get; set; }
 }

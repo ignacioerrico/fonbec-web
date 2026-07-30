@@ -27,8 +27,8 @@ public class StudentService(IStudentRepository studentRepository) : IStudentServ
 
     public async Task<List<SelectableModel<int>>> GetAllStudentsForSelectionAsync(int? chapterId)
     {
-        return await GetAllStudentsAsync(chapterId)
-            .ContinueWith(s => s.Result.Adapt<List<SelectableModel<int>>>());
+        var students = await GetAllStudentsAsync(chapterId);
+        return students.Adapt<List<SelectableModel<int>>>();
     }
 
     public async Task<CrudResult> CreateStudentAsync(CreateStudentInputModel inputModel)

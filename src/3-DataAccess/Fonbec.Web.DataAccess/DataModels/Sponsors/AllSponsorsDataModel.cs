@@ -8,7 +8,7 @@ public class AllSponsorsDataModel(Auditable auditable) : AuditableDataModel(audi
 {
     public int SponsorId { get; set; }
 
-    public string SponsorChapterName { get; set; }
+    public string SponsorChapterName { get; set; } = null!;
 
     public string SponsorFirstName { get; set; } = null!;
 

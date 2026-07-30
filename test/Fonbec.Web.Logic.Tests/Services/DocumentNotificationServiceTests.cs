@@ -4,7 +4,9 @@ using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Logic.Util;
 using Microsoft.Extensions.Configuration;
+using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 
 namespace Fonbec.Web.Logic.Tests.Services;
 
@@ -18,6 +20,9 @@ public class DocumentNotificationServiceTests
     {
         _configuration["App:BaseUrl"].Returns("https://fonbec.test");
     }
+
+    private DocumentNotificationService CreateService() =>
+        new(_documentRepository, _emailMessageSender, _configuration, NullLogger<DocumentNotificationService>.Instance);
 
     [Fact]
     public async Task NotifySponsorsAsync_Sends_Email_With_Personalized_Content()
@@ -40,10 +45,7 @@ public class DocumentNotificationServiceTests
             },
         ]);
 
-        var service = new DocumentNotificationService(
-            _documentRepository, _emailMessageSender, _configuration);
-
-        await service.NotifySponsorsAsync(42);
+        await CreateService().NotifySponsorsAsync(42);
 
         await _emailMessageSender.Received(1).SendEmailAsync(
             "padrino@test.com",
@@ -77,10 +79,7 @@ public class DocumentNotificationServiceTests
             },
         ]);
 
-        var service = new DocumentNotificationService(
-            _documentRepository, _emailMessageSender, _configuration);
-
-        await service.NotifySponsorsAsync(42);
+        await CreateService().NotifySponsorsAsync(42);
 
         await _emailMessageSender.Received(1).SendEmailAsync(
             "empresa@test.com",
@@ -111,13 +110,113 @@ public class DocumentNotificationServiceTests
             },
         ]);
 
-        var service = new DocumentNotificationService(
-            _documentRepository, _emailMessageSender, _configuration);
-
-        await service.NotifySponsorsAsync(42);
+        await CreateService().NotifySponsorsAsync(42);
 
         await _emailMessageSender.DidNotReceive().SendEmailAsync(
             Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
         await _documentRepository.Received(1).MarkShareNotifiedAsync(9, Arg.Any<DateTime>());
+    }
+
+    [Fact]
+    public async Task NotifySponsorsAsync_Retries_And_Succeeds_On_Second_Attempt()
+    {
+        _documentRepository.GetUnnotifiedSharesAsync(42).Returns(
+        [
+            new DocumentShareNotificationDataModel
+            {
+                DocumentShareId = 3,
+                RecipientEmail = "retry@test.com",
+                RecipientName = "Juan",
+                PublicAccessToken = Guid.NewGuid(),
+                StudentId = 7,
+                StudentFirstName = "María",
+                StudentLastName = "García",
+                StudentGender = Gender.Female,
+            },
+        ]);
+
+        _emailMessageSender
+            .SendEmailAsync("retry@test.com", Arg.Any<string>(), Arg.Any<string>())
+            .Returns(
+                _ => throw new InvalidOperationException("transient"),
+                _ => Task.CompletedTask);
+
+        await CreateService().NotifySponsorsAsync(42);
+
+        await _emailMessageSender.Received(2).SendEmailAsync(
+            "retry@test.com", Arg.Any<string>(), Arg.Any<string>());
+        await _documentRepository.Received(1).MarkShareNotifiedAsync(3, Arg.Any<DateTime>());
+    }
+
+    [Fact]
+    public async Task NotifySponsorsAsync_Leaves_Share_Unmarked_After_Exhausted_Retries()
+    {
+        _documentRepository.GetUnnotifiedSharesAsync(42).Returns(
+        [
+            new DocumentShareNotificationDataModel
+            {
+                DocumentShareId = 4,
+                RecipientEmail = "fail@test.com",
+                RecipientName = "Juan",
+                PublicAccessToken = Guid.NewGuid(),
+                StudentId = 7,
+                StudentFirstName = "María",
+                StudentLastName = "García",
+                StudentGender = Gender.Female,
+            },
+        ]);
+
+        _emailMessageSender
+            .SendEmailAsync("fail@test.com", Arg.Any<string>(), Arg.Any<string>())
+            .ThrowsAsync(new InvalidOperationException("permanent"));
+
+        await CreateService().NotifySponsorsAsync(42);
+
+        await _emailMessageSender.Received(3).SendEmailAsync(
+            "fail@test.com", Arg.Any<string>(), Arg.Any<string>());
+        await _documentRepository.DidNotReceive().MarkShareNotifiedAsync(4, Arg.Any<DateTime>());
+    }
+
+    [Fact]
+    public async Task NotifySponsorsAsync_Continues_Notifying_Remaining_Shares_After_Failure()
+    {
+        _documentRepository.GetUnnotifiedSharesAsync(42).Returns(
+        [
+            new DocumentShareNotificationDataModel
+            {
+                DocumentShareId = 10,
+                RecipientEmail = "fail@test.com",
+                RecipientName = "Fallo",
+                PublicAccessToken = Guid.NewGuid(),
+                StudentId = 7,
+                StudentFirstName = "María",
+                StudentLastName = "García",
+                StudentGender = Gender.Female,
+            },
+            new DocumentShareNotificationDataModel
+            {
+                DocumentShareId = 11,
+                RecipientEmail = "ok@test.com",
+                RecipientName = "Ok",
+                PublicAccessToken = Guid.NewGuid(),
+                StudentId = 7,
+                StudentFirstName = "María",
+                StudentLastName = "García",
+                StudentGender = Gender.Female,
+            },
+        ]);
+
+        _emailMessageSender
+            .SendEmailAsync("fail@test.com", Arg.Any<string>(), Arg.Any<string>())
+            .ThrowsAsync(new InvalidOperationException("permanent"));
+
+        await CreateService().NotifySponsorsAsync(42);
+
+        await _emailMessageSender.Received(3).SendEmailAsync(
+            "fail@test.com", Arg.Any<string>(), Arg.Any<string>());
+        await _emailMessageSender.Received(1).SendEmailAsync(
+            "ok@test.com", Arg.Any<string>(), Arg.Any<string>());
+        await _documentRepository.DidNotReceive().MarkShareNotifiedAsync(10, Arg.Any<DateTime>());
+        await _documentRepository.Received(1).MarkShareNotifiedAsync(11, Arg.Any<DateTime>());
     }
 }

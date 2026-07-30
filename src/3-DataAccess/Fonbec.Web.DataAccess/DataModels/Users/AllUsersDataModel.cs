@@ -6,7 +6,7 @@ public class AllUsersDataModel
 {
     public List<AllUsersUserDataModel> Users { get; set; } = null!;
 
-    public List<AllUsersUsersInRoleDataModel> UsersInRoles { get; set; } = new();
+    public List<AllUsersUsersInRoleDataModel> UsersInRoles { get; set; } = null!;
 }
 
 public class AllUsersUserDataModel

@@ -27,8 +27,8 @@ public class SponsorService(ISponsorRepository sponsorRepository) : ISponsorServ
 
     public async Task<List<SelectableModel<int>>> GetAllSponsorsForSelectionAsync(int? chapterId)
     {
-        return await GetAllSponsorsAsync(chapterId)
-            .ContinueWith(s => s.Result.Adapt<List<SelectableModel<int>>>());
+        var sponsors = await GetAllSponsorsAsync(chapterId);
+        return sponsors.Adapt<List<SelectableModel<int>>>();
     }
 
     public async Task<CrudResult> CreateSponsorAsync(CreateSponsorInputModel inputModel)

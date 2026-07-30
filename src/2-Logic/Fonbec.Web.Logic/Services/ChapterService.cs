@@ -33,8 +33,8 @@ public class ChapterService(IChapterRepository chapterRepository) : IChapterServ
 
     public async Task<List<SelectableModel<int>>> GetAllChaptersForSelectionAsync()
     {
-        return await GetAllChaptersAsync()
-            .ContinueWith(t => t.Result.Adapt<List<SelectableModel<int>>>());
+        var chapters = await GetAllChaptersAsync();
+        return chapters.Adapt<List<SelectableModel<int>>>();
     }
 
     public async Task<CrudResult> CreateChapterAsync(CreateChapterInputModel inputModel)

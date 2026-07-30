@@ -20,8 +20,8 @@ public class SponsorshipRepository(IDbContextFactory<FonbecWebDbContext> dbConte
         var allSponsorshipsForStudent = await db.Sponsorships
             .AsNoTracking()
             .Include(s => s.Student)
-            .Include(s => s.Sponsor)
-            .ThenInclude(s => s.Company)
+            .Include(s => s.Sponsor!)
+                .ThenInclude(sp => sp.Company)
             .Include(s => s.Company)
             .Include(s => s.CreatedBy)
             .Include(s => s.LastUpdatedBy)
