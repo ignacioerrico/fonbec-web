@@ -20,6 +20,7 @@ public class CompanyRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
         await using var db = await dbContext.CreateDbContextAsync();
 
         var allCompanies = await db.Companies
+            .AsNoTracking()
             .Include(c => c.CreatedBy)
             .Include(c => c.LastUpdatedBy)
             .Include(c => c.DisabledBy)
@@ -45,6 +46,7 @@ public class CompanyRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
         await using var db = await dbContext.CreateDbContextAsync();
 
         var nameExists = await db.Companies
+            .AsNoTracking()
             .AnyAsync(c => c.Name == companyName && (!excludeCompanyId.HasValue || c.Id != excludeCompanyId.Value));
 
         return nameExists;

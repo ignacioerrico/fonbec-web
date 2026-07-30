@@ -114,6 +114,7 @@ public class DocumentRepository(
     {
         await using var db = await dbContext.CreateDbContextAsync();
         return await db.Set<Letter>()
+            .AsNoTracking()
             .AnyAsync(l => l.StudentId == studentId
                            && l.SponsorId == sponsorId
                            && l.PlanId == planId
@@ -124,6 +125,7 @@ public class DocumentRepository(
     {
         await using var db = await dbContext.CreateDbContextAsync();
         return await db.Set<Letter>()
+            .AsNoTracking()
             .AnyAsync(l => l.StudentId == studentId
                            && l.CompanyId == companyId
                            && l.PlanId == planId

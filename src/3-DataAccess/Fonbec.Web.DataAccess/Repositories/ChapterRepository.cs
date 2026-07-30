@@ -19,11 +19,11 @@ public class ChapterRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
     {
         await using var db = await dbContext.CreateDbContextAsync();
         
-        var chapter = await db.Chapters.FindAsync(chapterId);
-            
-        return chapter is { IsActive: true }
-            ? chapter.Name
-            : null;
+        return await db.Chapters
+            .AsNoTracking()
+            .Where(ch => ch.Id == chapterId && ch.IsActive)
+            .Select(ch => ch.Name)
+            .FirstOrDefaultAsync();
     }
 
     public async Task<List<AllChaptersDataModel>> GetAllChaptersAsync()
@@ -31,6 +31,7 @@ public class ChapterRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
         await using var db = await dbContext.CreateDbContextAsync();
 
         var allChapters = await db.Chapters
+            .AsNoTracking()
             .Include(ch => ch.CreatedBy)
             .Include(ch => ch.LastUpdatedBy)
             .Include(ch => ch.DisabledBy)

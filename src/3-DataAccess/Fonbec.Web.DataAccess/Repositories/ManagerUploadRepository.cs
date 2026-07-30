@@ -161,6 +161,7 @@ public class ManagerUploadRepository(
         // The current plan is the most recently started, still-active planned delivery
         // for the manager's chapter whose collection window has already begun.
         return await db.PlannedDeliveries
+            .AsNoTracking()
             .Where(pd => pd.IsActive
                          && pd.ChapterId == chapterId
                          && pd.StartsOn <= utcNow)

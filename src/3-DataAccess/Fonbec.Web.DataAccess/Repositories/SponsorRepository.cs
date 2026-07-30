@@ -26,6 +26,7 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
         await using var db = await dbContext.CreateDbContextAsync();
 
         var allSponsors = await db.Sponsors
+            .AsNoTracking()
             .Include(s => s.CreatedBy)
             .Include(s => s.LastUpdatedBy)
             .Include(s => s.DisabledBy)

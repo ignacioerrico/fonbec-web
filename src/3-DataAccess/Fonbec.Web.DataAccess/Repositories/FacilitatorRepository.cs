@@ -29,6 +29,7 @@ public class FacilitatorRepository(
         // predicate is inlined (not a shared method) because EF Core cannot translate a custom
         // method call into SQL. Keep both copies in sync.
         var students = await db.Students
+            .AsNoTracking()
             .Include(s => s.Facilitator)
             .Include(s => s.CreatedBy)
             .Include(s => s.LastUpdatedBy)
@@ -97,6 +98,7 @@ public class FacilitatorRepository(
         var utcNow = timeProvider.GetUtcNow().UtcDateTime;
 
         var chapterId = await db.Users
+            .AsNoTracking()
             .Where(u => u.Id == facilitatorId)
             .Select(u => u.ChapterId)
             .FirstOrDefaultAsync();
@@ -104,6 +106,7 @@ public class FacilitatorRepository(
         // The current plan is the most recently started, still-active planned delivery
         // for the facilitator's chapter whose collection window has already begun.
         return await db.PlannedDeliveries
+            .AsNoTracking()
             .Where(pd => pd.IsActive
                          && pd.ChapterId == chapterId
                          && pd.StartsOn <= utcNow)

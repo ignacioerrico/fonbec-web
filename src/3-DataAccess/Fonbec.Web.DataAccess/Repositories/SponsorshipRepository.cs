@@ -18,6 +18,7 @@ public class SponsorshipRepository(IDbContextFactory<FonbecWebDbContext> dbConte
         await using var db = await dbContext.CreateDbContextAsync();
 
         var allSponsorshipsForStudent = await db.Sponsorships
+            .AsNoTracking()
             .Include(s => s.Student)
             .Include(s => s.Sponsor)
             .ThenInclude(s => s.Company)

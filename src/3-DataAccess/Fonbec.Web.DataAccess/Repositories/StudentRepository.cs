@@ -21,6 +21,7 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
         var utcNow = DateTime.UtcNow;
 
         var allStudents = await db.Students
+            .AsNoTracking()
             .Include(s => s.Facilitator)
             .Include(s => s.CreatedBy)
             .Include(s => s.LastUpdatedBy)

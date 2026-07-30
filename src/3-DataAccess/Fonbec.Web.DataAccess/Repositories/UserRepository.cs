@@ -38,9 +38,11 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
 
     public async Task<FonbecWebUser?> ValidateUniqueFullNameAsync(string firstName, string lastName)
     {
-        var fonbecUser = await userManager.Users.FirstOrDefaultAsync(u =>
-            u.FirstName == firstName
-            && u.LastName == lastName);
+        var fonbecUser = await userManager.Users
+            .AsNoTracking()
+            .FirstOrDefaultAsync(u =>
+                u.FirstName == firstName
+                && u.LastName == lastName);
         return fonbecUser;
     }
 
@@ -67,6 +69,7 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
         var result = new AllUsersDataModel();
 
         var users = await userManager.Users
+            .AsNoTracking()
             .Include(u => u.CreatedBy)
             .Include(u => u.LastUpdatedBy)
             .Include(u => u.DisabledBy)
