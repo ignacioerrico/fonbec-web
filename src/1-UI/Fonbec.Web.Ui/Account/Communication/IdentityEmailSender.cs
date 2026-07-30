@@ -13,11 +13,11 @@ internal sealed class IdentityEmailSender(IEmailSender emailSender) : IEmailSend
 
     public async Task SendPasswordResetLinkAsync(FonbecWebUser user, string email, string resetLink)
     {
-        await emailSender.SendEmailAsync(email, "Reseteá tu contraseña", $"Reseteá tu contraseña <a href='{resetLink}'>haciendo clic acá</a>.");
+        await emailSender.SendEmailAsync(email, "Restablecé tu contraseña", $"Restablecé tu contraseña <a href='{resetLink}'>haciendo clic acá</a>.");
     }
 
     public async Task SendPasswordResetCodeAsync(FonbecWebUser user, string email, string resetCode)
     {
-        await emailSender.SendEmailAsync(email, "Reseteá tu contraseña", $"Reseteá tu contraseña usando este código: {resetCode}");
+        await emailSender.SendEmailAsync(email, "Restablecé tu contraseña", $"Restablecé tu contraseña usando este código: {resetCode}");
     }
 }

@@ -9,25 +9,25 @@
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<ResetAuthenticator> Logger
 
-<PageTitle>Reset authenticator key</PageTitle>
+<PageTitle>Restablecer clave de autenticación</PageTitle>
 
-<MudText Typo="Typo.h6" GutterBottom="true">Reset authenticator key</MudText>
+<MudText Typo="Typo.h6" GutterBottom="true">Restablecer clave de autenticación</MudText>
 
 <StatusMessage />
 
 <MudAlert Severity="Severity.Warning" Variant="Variant.Text">
-    If you reset your authenticator key your authenticator app will not work until you reconfigure it.
+    Si restablecés tu clave de autenticación, tu app de autenticación no va a funcionar hasta que la reconfigures.
 </MudAlert>
 
 <MudText Typo="Typo.body2" Class="my-4">
-    This process disables 2FA until you verify your authenticator app.
-    If you do not complete your authenticator app configuration you may lose access to your account.
+    Este proceso desactiva la 2FA hasta que verifiques tu app de autenticación.
+    Si no completás la configuración de tu app de autenticación, podés perder el acceso a tu cuenta.
 </MudText>
 
 <form @formname="reset-authenticator" @onsubmit="OnSubmitAsync" method="post">
     <AntiforgeryToken />
 
-    <MudStaticButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" FormAction="FormAction.Submit">Reset authenticator key</MudStaticButton>
+    <MudStaticButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" FormAction="FormAction.Submit">Restablecer clave de autenticación</MudStaticButton>
 </form>
 
 @code {
@@ -46,7 +46,7 @@
 
         RedirectManager.RedirectToWithStatus(
             "Account/Manage/EnableAuthenticator",
-            "Your authenticator app key has been reset, you will need to configure your authenticator app using the new key.",
+            "Se restableció la clave de tu app de autenticación. Vas a tener que configurarla de nuevo con la nueva clave.",
             HttpContext);
     }
 }

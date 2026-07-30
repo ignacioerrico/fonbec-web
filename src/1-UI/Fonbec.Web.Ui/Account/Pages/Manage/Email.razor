@@ -12,9 +12,9 @@
 @inject IdentityUserAccessor UserAccessor
 @inject NavigationManager NavigationManager
 
-<PageTitle>Manage email</PageTitle>
+<PageTitle>Administrar correo</PageTitle>
 
-<MudText Typo="Typo.h6" GutterBottom="true">Manage email</MudText>
+<MudText Typo="Typo.h6" GutterBottom="true">Administrar correo</MudText>
 
 <StatusMessage Message="@_message" />
 
@@ -28,25 +28,25 @@
         @if (_isEmailConfirmed)
         {
             <MudItem md="12">
-                <MudStaticTextField Value="@_email" Label="Email" Placeholder="Please enter your email." Disabled="true" AdornmentIcon="Icons.Material.Filled.Check" AdornmentColor="Color.Success" />
+                <MudStaticTextField Value="@_email" Label="Correo electrónico" Placeholder="Ingresá tu correo electrónico." Disabled="true" AdornmentIcon="Icons.Material.Filled.Check" AdornmentColor="Color.Success" />
             </MudItem>
         }
         else
         {
             <MudItem md="12">
-                <MudStaticTextField Value="@_email" Label="Email" Placeholder="Please enter your email." Disabled="true" />
+                <MudStaticTextField Value="@_email" Label="Correo electrónico" Placeholder="Ingresá tu correo electrónico." Disabled="true" />
             </MudItem>
             <MudItem md="12">
-                <MudStaticButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" FormAction="FormAction.Submit">Send verification email</MudStaticButton>
+                <MudStaticButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" FormAction="FormAction.Submit">Enviar correo de verificación</MudStaticButton>
             </MudItem>
         }
 
         <MudItem md="12">
-            <MudStaticTextField @bind-Value="@Input.NewEmail" For="@(() => Input.NewEmail)" UserAttributes="@(new() { { "autocomplete", "email" }, { "aria-required", "true" } })" Label="New Email" HelperText="Please enter new email." />
+            <MudStaticTextField @bind-Value="@Input.NewEmail" For="@(() => Input.NewEmail)" UserAttributes="@(new() { { "autocomplete", "email" }, { "aria-required", "true" } })" Label="Nuevo correo" HelperText="Ingresá el nuevo correo." />
         </MudItem>
 
         <MudItem md="12">
-            <MudStaticButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" FormAction="FormAction.Submit">Change email</MudStaticButton>
+            <MudStaticButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" FormAction="FormAction.Submit">Cambiar correo</MudStaticButton>
         </MudItem>
     </MudGrid>
 </EditForm>
@@ -76,7 +76,7 @@
     {
         if (Input.NewEmail is null || Input.NewEmail == _email)
         {
-            _message = "Your email is unchanged.";
+            _message = "Tu correo no cambió.";
             return;
         }
 
@@ -89,7 +89,7 @@
 
         await EmailSender.SendConfirmationLinkAsync(_user, Input.NewEmail, HtmlEncoder.Default.Encode(callbackUrl));
 
-        _message = "Confirmation link to change email sent. Please check your email.";
+        _message = "Se envió el enlace de confirmación para cambiar el correo. Revisá tu correo.";
     }
 
     private async Task OnSendEmailVerificationAsync()
@@ -108,14 +108,14 @@
 
         await EmailSender.SendConfirmationLinkAsync(_user, _email, HtmlEncoder.Default.Encode(callbackUrl));
 
-        _message = "Verification email sent. Please check your email.";
+        _message = "Se envió el correo de verificación. Revisá tu correo.";
     }
 
     private sealed class InputModel
     {
         [Required]
         [EmailAddress]
-        [Display(Name = "New email")]
+        [Display(Name = "Nuevo correo")]
         public string? NewEmail { get; set; }
     }
 }

@@ -11,7 +11,7 @@ internal sealed class IdentityUserAccessor(UserManager<FonbecWebUser> userManage
 
         if (user is null)
         {
-            redirectManager.RedirectToWithStatus("Account/InvalidUser", $"Error: Unable to load user with ID '{userManager.GetUserId(context.User)}'.", context);
+            redirectManager.RedirectToWithStatus("Account/InvalidUser", $"Error: No se pudo cargar el usuario con ID '{userManager.GetUserId(context.User)}'.", context);
         }
 
         return user;

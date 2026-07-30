@@ -2,31 +2,31 @@
 
 @inject IdentityUserAccessor UserAccessor
 
-<PageTitle>Personal Data</PageTitle>
+<PageTitle>Datos personales</PageTitle>
 
-<MudText Typo="Typo.h6" GutterBottom="true">Personal data</MudText>
+<MudText Typo="Typo.h6" GutterBottom="true">Datos personales</MudText>
 
 <StatusMessage />
 
 <MudGrid>
     <MudItem md="12">
         <MudText Typo="Typo.body1">
-            Your account contains personal data that you have given us. This page allows you to download or delete that data.
+            Tu cuenta contiene datos personales que nos diste. Esta página te permite descargarlos o eliminarlos.
         </MudText>
     </MudItem>
     <MudItem md="12">
         <MudAlert Severity="Severity.Warning" Variant="Variant.Text">
-            Deleting this data will permanently remove your account, and this cannot be recovered.
+            Eliminar estos datos va a remover permanentemente tu cuenta, y esto no se puede recuperar.
         </MudAlert>
     </MudItem>
     <MudItem md="12">
         <form action="Account/Manage/DownloadPersonalData" method="post">
             <AntiforgeryToken />
-            <MudStaticButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" FormAction="FormAction.Submit">Download</MudStaticButton>
+            <MudStaticButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" FormAction="FormAction.Submit">Descargar</MudStaticButton>
         </form>
     </MudItem>
     <MudItem md="12">
-        <MudLink Href="Account/Manage/DeletePersonalData" Color="Color.Error">Delete</MudLink>
+        <MudLink Href="Account/Manage/DeletePersonalData" Color="Color.Error">Eliminar</MudLink>
     </MudItem>
 </MudGrid>
 

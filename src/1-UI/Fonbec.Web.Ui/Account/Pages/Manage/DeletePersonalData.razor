@@ -10,14 +10,14 @@
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<DeletePersonalData> Logger
 
-<PageTitle>Delete Personal Data</PageTitle>
+<PageTitle>Eliminar datos personales</PageTitle>
 
-<MudText Typo="Typo.h6" GutterBottom="true">Delete personal data</MudText>
+<MudText Typo="Typo.h6" GutterBottom="true">Eliminar datos personales</MudText>
 
 <StatusMessage Message="@_message" />
 
 <MudAlert Severity="Severity.Error" Variant="Variant.Text">
-    Deleting this data will permanently remove your account, and this cannot be recovered.
+    Eliminar estos datos va a remover permanentemente tu cuenta, y esto no se puede recuperar.
 </MudAlert>
 
 <EditForm Model="Input" FormName="delete-user" OnValidSubmit="OnValidSubmitAsync" method="post">
@@ -28,7 +28,7 @@
         {
             <MudItem md="12">
                 <MudStaticTextField For="@(() => Input.Password)" @bind-Value="Input.Password"
-                                    Label="Password" Placeholder="password" HelperText="Please enter your new password."
+                                    Label="Contraseña" Placeholder="contraseña" HelperText="Ingresá tu contraseña."
                                     InputType="InputType.Password"
                                     Adornment="Adornment.End"
                                     AdornmentIcon="@Icons.Material.Outlined.Visibility"
@@ -38,7 +38,7 @@
             </MudItem>
         }
         <MudItem md="12">
-            <MudStaticButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" FormAction="FormAction.Submit">Delete data and close my account</MudStaticButton>
+            <MudStaticButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" FormAction="FormAction.Submit">Eliminar datos y cerrar mi cuenta</MudStaticButton>
         </MudItem>
     </MudGrid>
 </EditForm>
@@ -65,7 +65,7 @@
     {
         if (_requirePassword && !await UserManager.CheckPasswordAsync(_user, Input.Password))
         {
-            _message = "Error: Incorrect password.";
+            _message = "Error: Contraseña incorrecta.";
             return;
         }
 
@@ -86,6 +86,7 @@
     private sealed class InputModel
     {
         [DataType(DataType.Password)]
+        [Display(Name = "Contraseña")]
         public string Password { get; set; } = "";
     }
 }

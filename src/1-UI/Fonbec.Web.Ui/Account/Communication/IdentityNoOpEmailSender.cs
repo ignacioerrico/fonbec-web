@@ -10,11 +10,11 @@ internal sealed class IdentityNoOpEmailSender : IEmailSender<FonbecWebUser>
     private readonly IEmailSender _emailSender = new NoOpEmailSender();
 
     public Task SendConfirmationLinkAsync(FonbecWebUser user, string email, string confirmationLink) =>
-        _emailSender.SendEmailAsync(email, "Confirm your email", $"Please confirm your account by <a href='{confirmationLink}'>clicking here</a>.");
- 
+        _emailSender.SendEmailAsync(email, "Confirmá tu correo electrónico", $"Confirmá tu cuenta <a href='{confirmationLink}'>haciendo clic acá</a>.");
+
     public Task SendPasswordResetLinkAsync(FonbecWebUser user, string email, string resetLink) =>
-        _emailSender.SendEmailAsync(email, "Reset your password", $"Please reset your password by <a href='{resetLink}'>clicking here</a>.");
- 
+        _emailSender.SendEmailAsync(email, "Restablecé tu contraseña", $"Restablecé tu contraseña <a href='{resetLink}'>haciendo clic acá</a>.");
+
     public Task SendPasswordResetCodeAsync(FonbecWebUser user, string email, string resetCode) =>
-        _emailSender.SendEmailAsync(email, "Reset your password", $"Please reset your password using the following code: {resetCode}");
+        _emailSender.SendEmailAsync(email, "Restablecé tu contraseña", $"Restablecé tu contraseña usando este código: {resetCode}");
 }

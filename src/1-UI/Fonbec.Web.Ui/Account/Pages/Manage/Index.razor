@@ -9,9 +9,9 @@
 @inject IdentityUserAccessor UserAccessor
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Profile</PageTitle>
+<PageTitle>Perfil</PageTitle>
 
-<MudText Typo="Typo.h6" GutterBottom="true">Profile</MudText>
+<MudText Typo="Typo.h6" GutterBottom="true">Perfil</MudText>
 
 <StatusMessage />
 
@@ -20,15 +20,15 @@
 
     <MudGrid>
         <MudItem md="12">
-            <MudStaticTextField Value="@_username" Label="Username" Disabled="true" Placeholder="Please choose your username." />
+            <MudStaticTextField Value="@_username" Label="Nombre de usuario" Disabled="true" Placeholder="Elegí tu nombre de usuario." />
         </MudItem>
         <MudItem md="12">
             <MudStaticTextField For="@(() => Input.PhoneNumber)" @bind-Value="Input.PhoneNumber"
-                                Label="Phone Number" HelperText="Please enter your phone number."
+                                Label="Teléfono" HelperText="Ingresá tu número de teléfono."
                                 UserAttributes="@(new() { { "autocomplete", "tel-national" } })" />
         </MudItem>
         <MudItem md="12">
-            <MudStaticButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" FormAction="FormAction.Submit">Save</MudStaticButton>
+            <MudStaticButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" FormAction="FormAction.Submit">Guardar</MudStaticButton>
         </MudItem>
     </MudGrid>
 </EditForm>
@@ -60,18 +60,18 @@
             var setPhoneResult = await UserManager.SetPhoneNumberAsync(_user, Input.PhoneNumber);
             if (!setPhoneResult.Succeeded)
             {
-                RedirectManager.RedirectToCurrentPageWithStatus("Error: Failed to set phone number.", HttpContext);
+                RedirectManager.RedirectToCurrentPageWithStatus("Error: No se pudo actualizar el número de teléfono.", HttpContext);
             }
         }
 
         await SignInManager.RefreshSignInAsync(_user);
-        RedirectManager.RedirectToCurrentPageWithStatus("Your profile has been updated", HttpContext);
+        RedirectManager.RedirectToCurrentPageWithStatus("Tu perfil fue actualizado.", HttpContext);
     }
 
     private sealed class InputModel
     {
         [Phone]
-        [Display(Name = "Phone number")]
+        [Display(Name = "Teléfono")]
         public string? PhoneNumber { get; set; }
     }
 }

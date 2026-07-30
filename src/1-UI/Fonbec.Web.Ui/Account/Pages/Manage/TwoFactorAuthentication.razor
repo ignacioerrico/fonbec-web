@@ -9,9 +9,9 @@
 @inject IdentityUserAccessor UserAccessor
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Two-factor authentication (2FA)</PageTitle>
+<PageTitle>Autenticación en dos pasos (2FA)</PageTitle>
 
-<MudText Typo="Typo.h6" GutterBottom="true">Two-factor authentication (2FA)</MudText>
+<MudText Typo="Typo.h6" GutterBottom="true">Autenticación en dos pasos (2FA)</MudText>
 
 <StatusMessage />
 
@@ -21,27 +21,27 @@
     {
         if (_recoveryCodesLeft == 0)
         {
-            <MudAlert Variant="Variant.Text" Severity="Severity.Error">You have no recovery codes left.</MudAlert>
+            <MudAlert Variant="Variant.Text" Severity="Severity.Error">No te quedan códigos de recuperación.</MudAlert>
 
             <MudText Typo="Typo.body1" Class="pt-4">
-                You must <MudLink Href="Account/Manage/GenerateRecoveryCodes">generate a new set of recovery codes</MudLink>
-                before you can log in with a recovery code.
+                Tenés que <MudLink Href="Account/Manage/GenerateRecoveryCodes">generar un nuevo conjunto de códigos de recuperación</MudLink>
+                antes de poder iniciar sesión con un código de recuperación.
             </MudText>
         }
         else if (_recoveryCodesLeft == 1)
         {
-            <MudAlert Variant="Variant.Text" Severity="Severity.Warning">You have 1 recovery code left.</MudAlert>
+            <MudAlert Variant="Variant.Text" Severity="Severity.Warning">Te queda 1 código de recuperación.</MudAlert>
 
             <MudText Typo="Typo.body1" Class="pt-4">
-                You can <MudLink Href="Account/Manage/GenerateRecoveryCodes">generate a new set of recovery codes</MudLink>.
+                Podés <MudLink Href="Account/Manage/GenerateRecoveryCodes">generar un nuevo conjunto de códigos de recuperación</MudLink>.
             </MudText>
         }
         else if (_recoveryCodesLeft <= 3)
         {
-            <MudAlert Variant="Variant.Text" Severity="Severity.Warning">You have @_recoveryCodesLeft recovery codes left.</MudAlert>
+            <MudAlert Variant="Variant.Text" Severity="Severity.Warning">Te quedan @_recoveryCodesLeft códigos de recuperación.</MudAlert>
 
             <MudText Typo="Typo.body1" Class="pt-4">
-                You should <MudLink Href="Account/Manage/GenerateRecoveryCodes">generate a new set of recovery codes</MudLink>.
+                Deberías <MudLink Href="Account/Manage/GenerateRecoveryCodes">generar un nuevo conjunto de códigos de recuperación</MudLink>.
             </MudText>
         }
 
@@ -50,35 +50,35 @@
             <form style="display: inline-block" @formname="forget-browser" @onsubmit="OnSubmitForgetBrowserAsync" method="post">
                 <AntiforgeryToken />
 
-                <MudStaticButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" FormAction="FormAction.Submit">Forget this browser</MudStaticButton>
+                <MudStaticButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" FormAction="FormAction.Submit">Olvidar este navegador</MudStaticButton>
             </form>
         }
 
-        <MudLink Href="Account/Manage/Disable2fa">Disable 2FA</MudLink>
+        <MudLink Href="Account/Manage/Disable2fa">Desactivar 2FA</MudLink>
         <br />
-        <MudLink Href="Account/Manage/GenerateRecoveryCodes">Reset recovery codes</MudLink>
+        <MudLink Href="Account/Manage/GenerateRecoveryCodes">Restablecer códigos de recuperación</MudLink>
     }
 
-    <MudText Typo="Typo.h6" GutterBottom="true">Authenticator app</MudText>
+    <MudText Typo="Typo.h6" GutterBottom="true">App de autenticación</MudText>
 
     @if (!_hasAuthenticator)
     {
-        <MudLink Href="Account/Manage/EnableAuthenticator">Add authenticator app</MudLink>
+        <MudLink Href="Account/Manage/EnableAuthenticator">Agregar app de autenticación</MudLink>
         <br />
     }
     else
     {
-        <MudLink Href="Account/Manage/EnableAuthenticator">Set up authenticator app</MudLink>
+        <MudLink Href="Account/Manage/EnableAuthenticator">Configurar app de autenticación</MudLink>
         <br />
-        <MudLink Href="Account/Manage/ResetAuthenticator">Reset authenticator app</MudLink>
+        <MudLink Href="Account/Manage/ResetAuthenticator">Restablecer app de autenticación</MudLink>
     }
 }
 else
 {
-    <MudAlert Variant="Variant.Text" Severity="Severity.Error">Privacy and cookie policy have not been accepted.</MudAlert>
+    <MudAlert Variant="Variant.Text" Severity="Severity.Error">La política de privacidad y cookies no fue aceptada.</MudAlert>
 
     <MudText Typo="Typo.body1" Class="pt-4">
-        You must accept the policy before you can enable two factor authentication.
+        Tenés que aceptar la política antes de poder activar la autenticación en dos pasos.
     </MudText>
 }
 
@@ -107,7 +107,7 @@ else
         await SignInManager.ForgetTwoFactorClientAsync();
 
         RedirectManager.RedirectToCurrentPageWithStatus(
-            "The current browser has been forgotten. When you login again from this browser you will be prompted for your 2fa code.",
+            "Se olvidó el navegador actual. Cuando vuelvas a iniciar sesión desde este navegador, se te va a pedir tu código 2FA.",
             HttpContext);
     }
 }

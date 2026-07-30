@@ -62,6 +62,7 @@ builder.Services.AddIdentityCore<FonbecWebUser>(options =>
     .AddRoles<FonbecWebRole>()
     .AddEntityFrameworkStores<FonbecWebDbContext>()
     .AddSignInManager()
+    .AddErrorDescriber<SpanishIdentityErrorDescriber>()
     .AddDefaultTokenProviders();
 
 ConfigureServices.RegisterOptions(builder.Services, builder.Configuration);

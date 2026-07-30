@@ -6,13 +6,13 @@
 @inject UserManager<FonbecWebUser> UserManager
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Register confirmation</PageTitle>
+<PageTitle>Confirmación de registro</PageTitle>
 
-<h1>Register confirmation</h1>
+<h1>Confirmación de registro</h1>
 
 <StatusMessage Message="@_statusMessage" />
 
-<p role="alert">Please check your email to confirm your account.</p>
+<p role="alert">Revisá tu correo para confirmar tu cuenta.</p>
 
 @code {
     private string? _statusMessage;
@@ -37,7 +37,7 @@
         if (user is null)
         {
             HttpContext.Response.StatusCode = StatusCodes.Status404NotFound;
-            _statusMessage = "Error finding user for unspecified email";
+            _statusMessage = "Error al encontrar el usuario para el correo indicado";
         }
     }
 }

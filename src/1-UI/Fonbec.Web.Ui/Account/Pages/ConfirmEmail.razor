@@ -8,9 +8,9 @@
 @inject UserManager<FonbecWebUser> UserManager
 @inject IdentityRedirectManager RedirectManager
 
-<PageTitle>Confirm email</PageTitle>
+<PageTitle>Confirmar correo</PageTitle>
 
-<h1>Confirm email</h1>
+<h1>Confirmar correo</h1>
 <StatusMessage Message="@_statusMessage" />
 
 @code {
@@ -36,13 +36,13 @@
         if (user is null)
         {
             HttpContext.Response.StatusCode = StatusCodes.Status404NotFound;
-            _statusMessage = $"Error loading user with ID {UserId}";
+            _statusMessage = $"Error al cargar el usuario con ID {UserId}";
         }
         else
         {
             var code = Encoding.UTF8.GetString(WebEncoders.Base64UrlDecode(Code));
             var result = await UserManager.ConfirmEmailAsync(user, code);
-            _statusMessage = result.Succeeded ? "Thank you for confirming your email." : "Error confirming your email.";
+            _statusMessage = result.Succeeded ? "Gracias por confirmar tu correo." : "Error al confirmar tu correo.";
         }
     }
 }
