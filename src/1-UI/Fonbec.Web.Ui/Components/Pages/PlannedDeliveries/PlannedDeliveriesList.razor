@@ -2,6 +2,7 @@
 @attribute [Authorize(Policy = nameof(PlannedDeliveriesList))]
 @inherits AuthenticationRequiredComponentBase
 
+@using Fonbec.Web.Logic.ExtensionMethods
 @using Fonbec.Web.Logic.Models.PlannedDeliveries
 
 <PageHeader Title="Cartas" />
@@ -100,7 +101,7 @@
                                     Filterable="false">
                         <CellTemplate>
                             <AuditableItemDisplay Id="@context.Item.PlannedDeliveryId"
-                                                  ItemName="@context.Item.PlannedDeliveryStartsOnText"
+                                                  ItemName="@context.Item.PlannedDeliveryStartsOnText.CapitalizeFirstLetter()"
                                                   IsActive="true"
                                                   AuditableViewModel="@context.Item" />
                         </CellTemplate>
