@@ -32,8 +32,14 @@ public partial class ManagerUploadDocument : AuthenticationRequiredComponentBase
     [SupplyParameterFromQuery(Name = "planId")]
     public int? PlanId { get; set; }
 
+    [SupplyParameterFromQuery(Name = "volver")]
+    public string? Volver { get; set; }
+
     [Inject]
     public IManagerUploadService ManagerUploadService { get; set; } = null!;
+
+    private string CancelHref =>
+        IsSafeLocalReturnUrl(Volver) ? Volver! : NavRoutes.Students;
 
     protected override async Task OnInitializedAsync()
     {
@@ -45,7 +51,7 @@ public partial class ManagerUploadDocument : AuthenticationRequiredComponentBase
         if (FonbecClaim.ChapterId is not { } managerChapterId)
         {
             Snackbar.Add("No se puede subir el documento para este becario.", Severity.Error);
-            NavigationManager.NavigateTo(NavRoutes.Students);
+            NavigationManager.NavigateTo(CancelHref);
             return;
         }
 
@@ -57,12 +63,18 @@ public partial class ManagerUploadDocument : AuthenticationRequiredComponentBase
         if (_context is null)
         {
             Snackbar.Add("No se puede subir el documento para este becario.", Severity.Error);
-            NavigationManager.NavigateTo(NavRoutes.Students);
+            NavigationManager.NavigateTo(CancelHref);
             return;
         }
 
         Loading = false;
     }
+
+    /// <summary>Allows only same-app relative paths (blocks open redirects).</summary>
+    private static bool IsSafeLocalReturnUrl(string? url) =>
+        !string.IsNullOrWhiteSpace(url)
+        && url.StartsWith('/')
+        && !url.StartsWith("//");
 
     private async Task<CrudResult<long>> HandleSubmitAsync(UploadDocumentFormSubmission submission) =>
         _context!.DocumentType switch

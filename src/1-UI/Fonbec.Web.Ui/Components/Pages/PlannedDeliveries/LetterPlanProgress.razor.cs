@@ -116,7 +116,12 @@ public partial class LetterPlanProgress
         row.Status is LetterPlanDisplayStatus.Missing or LetterPlanDisplayStatus.Rejected;
 
     private string UploadUrl(LetterPlanProgressRowViewModel row) =>
-        NavRoutes.ManagerUploadLetter(row.StudentId, PlanId, row.SponsorId, row.CompanyId);
+        NavRoutes.ManagerUploadLetter(
+            row.StudentId,
+            PlanId,
+            row.SponsorId,
+            row.CompanyId,
+            NavRoutes.LetterPlanProgress(PlanId));
 
     private async Task ExemptStudentAsync(int studentId)
     {
