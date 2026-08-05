@@ -4,6 +4,8 @@
 
 @using Fonbec.Web.DataAccess.Entities.Enums
 @using Fonbec.Web.Logic.Models.Facilitators
+@using Fonbec.Web.Logic.Models.Students
+@using Fonbec.Web.Ui.Components.NonPages.Letters
 
 <PageHeader Title="Mis becarios" />
 
@@ -47,6 +49,9 @@
 			</PropertyColumn>
 			<TemplateColumn Title="@LetterColumnTitle" Filterable="false" Sortable="false">
 				<CellTemplate>
+					<MudTooltip Text="@context.Item.LetterAggregate.Label()">
+						<MudIcon Icon="@context.Item.LetterAggregate.Icon()" Color="@context.Item.LetterAggregate.Color()" />
+					</MudTooltip>
 				</CellTemplate>
 			</TemplateColumn>
 			<TemplateColumn Title="Calificaciones" Filterable="false" Sortable="false">
@@ -85,6 +90,23 @@
 							}
 						</MudStack>
 					</MudStack>
+					<MudStack Spacing="1">
+						<MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+							<MudIcon Icon="@Icons.Material.Filled.Mail" Size="Size.Small" />
+							<MudText Typo="Typo.subtitle2">Carta</MudText>
+						</MudStack>
+						@if (context.Item.LetterAggregate is LetterAggregateStatus.Exempt or LetterAggregateStatus.NoPlan)
+						{
+							<div class="d-flex align-center gap-2">
+								<MudIcon Icon="@context.Item.LetterAggregate.Icon()" Color="@context.Item.LetterAggregate.Color()" Size="Size.Small" />
+								<MudText Typo="Typo.body2">@context.Item.LetterAggregate.Label()</MudText>
+							</div>
+						}
+						else
+						{
+							<SponsorLetterStatusList Sponsors="@context.Item.LetterStatuses" />
+						}
+					</MudStack>
 				</MudStack>
 
 				<MudDivider Class="my-3" />
@@ -115,15 +137,10 @@
 					}
 					else
 					{
-						<MudMenu Label="Subir carta" StartIcon="@Icons.Material.Filled.Mail" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small">
-							@foreach (var sponsor in letterSponsors)
-							{
-								<MudMenuItem Href="@LetterUploadUrl(context.Item, sponsor)"
-											 Icon="@(sponsor.CompanyId.HasValue ? Icons.Material.Filled.Factory : Icons.Material.Filled.Person)">
-									@sponsor.RecipientName
-								</MudMenuItem>
-							}
-						</MudMenu>
+						<MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Mail" Size="Size.Small"
+								   OnClick="@(() => OpenLetterSponsorPickerAsync(context.Item))">
+							Subir carta
+						</MudButton>
 					}
 					<MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Description" Size="Size.Small"
 							   Href="@NavRoutes.FacilitatorUploadReportCard(context.Item.StudentId)">

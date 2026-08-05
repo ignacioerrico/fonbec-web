@@ -1,0 +1,19 @@
+@using Fonbec.Web.Logic.Models.Students
+@using Fonbec.Web.Ui.Constants
+
+<div class="d-flex flex-column gap-1">
+    @foreach (var sponsor in Sponsors)
+    {
+        <div class="d-flex align-center gap-2">
+            <MudIcon Icon="@sponsor.Status.Icon()" Color="@sponsor.Status.Color()" Size="Size.Small" />
+            <MudText Typo="Typo.body2" Class="flex-grow-1">@sponsor.RecipientName</MudText>
+            <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                @sponsor.Status.Label()
+                @if (sponsor.Status == LetterSlotStatus.Rejected && !string.IsNullOrWhiteSpace(sponsor.RejectionReason))
+                {
+                    @($" — \"{sponsor.RejectionReason}\"")
+                }
+            </MudText>
+        </div>
+    }
+</div>

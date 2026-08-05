@@ -2,6 +2,7 @@ using System.Globalization;
 using Fonbec.Web.DataAccess.DataModels.Facilitators;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.Logic.ExtensionMethods;
+using Fonbec.Web.Logic.Models.Students;
 using Mapster;
 
 namespace Fonbec.Web.Logic.Models.Facilitators;
@@ -52,8 +53,9 @@ public class FacilitatorStudentsListViewModel : AuditableViewModel, IDetectChang
     /// When set, the "Subir carta" action is unavailable.
     /// </summary>
     public bool IsLetterExemptForCurrentPlan { get; set; }
-
+    public LetterAggregateStatus LetterAggregate { get; set; }
     public List<DashboardSponsorViewModel> Sponsors { get; set; } = [];
+    public List<SponsorLetterStatusViewModel> LetterStatuses { get; set; } = [];
 
     public bool IsIdenticalTo(FacilitatorStudentsListViewModel other) =>
         StudentFirstName == other.StudentFirstName.NormalizeText()
