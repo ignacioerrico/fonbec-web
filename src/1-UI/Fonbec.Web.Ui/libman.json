@@ -1,0 +1,13 @@
+{
+  "version": "1.0",
+  "defaultProvider": "jsdelivr",
+  "libraries": [
+    {
+      "library": "canvas-confetti@1.9.4",
+      "destination": "wwwroot/lib/canvas-confetti/",
+      "files": [
+        "dist/confetti.browser.min.js"
+      ]
+    }
+  ]
+}

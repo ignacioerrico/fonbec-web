@@ -2,16 +2,6 @@
 
 <div class="d-flex justify-center my-6">
     <div class="achievement-card">
-        @if (_showConfetti)
-        {
-            <div class="achievement-confetti" aria-hidden="true">
-                @for (var i = 0; i < ConfettiCount; i++)
-                {
-                    <span class="achievement-confetti__piece"></span>
-                }
-            </div>
-        }
-
         <MudPaper Class="pa-6 d-flex flex-column align-center achievement-card__surface" Elevation="0">
             <div class="achievement-trophy-wrap">
                 <MudIcon Icon="@Icons.Material.Filled.EmojiEvents"
@@ -48,6 +38,10 @@
             <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-4 text-center">
                 ¡Campaña completada!
             </MudText>
+
+            <div @ref="_originElement">
+                @* This is where the confetti effect will begin *@
+            </div>
         </MudPaper>
     </div>
 </div>

@@ -1,12 +1,15 @@
 ﻿using Microsoft.AspNetCore.Components;
+using Microsoft.JSInterop;
 
 namespace Fonbec.Web.Ui.Components.NonPages;
 
 public partial class LetterPlanAchievement
 {
-    private const int ConfettiCount = 24;
+    private ElementReference _originElement;
+    private bool _confettiFired;
 
-    private bool _showConfetti;
+    [Inject]
+    public IJSRuntime JsRuntime { get; set; } = null!;
 
     [Parameter, EditorRequired]
     public string PlanLabel { get; set; } = null!;
@@ -17,13 +20,26 @@ public partial class LetterPlanAchievement
     [Parameter]
     public int ExemptStudents { get; set; }
 
-    protected override void OnAfterRender(bool firstRender)
+    protected override async Task OnAfterRenderAsync(bool firstRender)
     {
-        // Prerender would play (and finish) the animation before the UI is interactive.
-        if (firstRender)
+        if (_confettiFired)
         {
-            _showConfetti = true;
-            StateHasChanged();
+            return;
+        }
+
+        try
+        {
+            // Retry across renders: firstRender can run before JS interop is available.
+            var fired = await JsRuntime.InvokeAsync<bool>("fonbecBurstConfetti", _originElement);
+            _confettiFired = fired;
+        }
+        catch (JSException)
+        {
+            // Script not loaded yet.
+        }
+        catch (InvalidOperationException)
+        {
+            // JS interop unavailable (e.g. prerender).
         }
     }
 }
