@@ -32,12 +32,6 @@
                     </MudNavLink>
                 </AuthorizeView>
 
-                <AuthorizeView Policy="@nameof(PlannedDeliveriesList)">
-                    <MudNavLink Href="@NavRoutes.PlannedDeliveries" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.CalendarMonth">
-                        Planificaciones de envíos
-                    </MudNavLink>
-                </AuthorizeView>
-
                 <AuthorizeView Policy="@nameof(UsersList)">
                     <MudNavLink Href="@NavRoutes.Users" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AccountBox">
                         Usuarios
@@ -59,6 +53,12 @@
                 <AuthorizeView Policy="@nameof(CompaniesList)">
                     <MudNavLink Href="@NavRoutes.Companies" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Factory">
                         Empresas
+                    </MudNavLink>
+                </AuthorizeView>
+
+                <AuthorizeView Policy="@nameof(PlannedDeliveriesList)">
+                    <MudNavLink Href="@NavRoutes.PlannedDeliveries" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.MailOutline">
+                        Cartas
                     </MudNavLink>
                 </AuthorizeView>
 

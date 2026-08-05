@@ -8,6 +8,7 @@ namespace Fonbec.Web.DataAccess.Repositories;
 public interface IStudentRepository
 {
     Task<List<AllStudentsDataModel>> GetAllStudentsAsync(int? chapterId);
+    Task<int?> GetStudentChapterIdAsync(int studentId);
     Task<int> CreateStudentAsync(CreateStudentInputDataModel inputDataModel);
     Task<int> UpdateStudentAsync(UpdateStudentInputDataModel dataModel);
 }
@@ -77,6 +78,17 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             .ToListAsync();
 
         return allStudents;
+    }
+
+    public async Task<int?> GetStudentChapterIdAsync(int studentId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        return await db.Students
+            .AsNoTracking()
+            .Where(s => s.Id == studentId && !s.IsDeleted)
+            .Select(s => (int?)s.ChapterId)
+            .FirstOrDefaultAsync();
     }
 
     public async Task<int> CreateStudentAsync(CreateStudentInputDataModel inputDataModel)

@@ -21,6 +21,7 @@ public class DocumentServiceBlobTests
     private readonly IDocumentNotificationService _notificationService = Substitute.For<IDocumentNotificationService>();
     private readonly IUserService _userService = Substitute.For<IUserService>();
     private readonly IBlobStorageService _blobStorageService = Substitute.For<IBlobStorageService>();
+    private readonly ILetterPlanProgressService _letterPlanProgressService = Substitute.For<ILetterPlanProgressService>();
 
     private const int UploaderId = 10;
     private const int StudentId = 5;
@@ -34,6 +35,7 @@ public class DocumentServiceBlobTests
             _notificationService,
             _userService,
             _blobStorageService,
+            _letterPlanProgressService,
             Microsoft.Extensions.Options.Options.Create(options ?? new BlobStorageOptions()),
             NullLogger<DocumentService>.Instance);
 

@@ -1,0 +1,53 @@
+@using Fonbec.Web.Logic.ExtensionMethods
+
+<div class="d-flex justify-center my-6">
+    <div class="achievement-card">
+        @if (_showConfetti)
+        {
+            <div class="achievement-confetti" aria-hidden="true">
+                @for (var i = 0; i < ConfettiCount; i++)
+                {
+                    <span class="achievement-confetti__piece"></span>
+                }
+            </div>
+        }
+
+        <MudPaper Class="pa-6 d-flex flex-column align-center achievement-card__surface" Elevation="0">
+            <div class="achievement-trophy-wrap">
+                <MudIcon Icon="@Icons.Material.Filled.EmojiEvents"
+                         Color="Color.Warning"
+                         Class="achievement-trophy" />
+            </div>
+
+            <div class="achievement-plan-label">
+                <MudText Typo="Typo.h5" Class="mt-2">
+                    @PlanLabel.CapitalizeFirstLetter()
+                </MudText>
+            </div>
+
+            <div class="achievement-count">
+                <MudText Typo="Typo.h3" Class="mt-2">
+                    @LettersDelivered
+                </MudText>
+            </div>
+
+            <MudText Typo="Typo.h6" Color="Color.Secondary">
+                @(LettersDelivered == 1 ? "carta enviada" : "cartas enviadas")
+            </MudText>
+
+            @if (ExemptStudents > 0)
+            {
+                <MudChip T="string" Size="Size.Small" Color="Color.Default" Variant="Variant.Outlined" Class="mt-3"
+                         Icon="@Icons.Material.Filled.Block">
+                    @(ExemptStudents == 1
+                        ? "1 becario eximido"
+                        : $"{ExemptStudents} becarios eximidos")
+                </MudChip>
+            }
+
+            <MudText Typo="Typo.caption" Color="Color.Secondary" Class="mt-4 text-center">
+                ¡Campaña completada!
+            </MudText>
+        </MudPaper>
+    </div>
+</div>

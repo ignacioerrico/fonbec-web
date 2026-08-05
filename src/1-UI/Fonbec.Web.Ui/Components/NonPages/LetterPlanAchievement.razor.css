@@ -1,0 +1,164 @@
+.achievement-card {
+    position: relative;
+    width: 100%;
+    max-width: 280px;
+    overflow: hidden;
+    border-radius: 1rem;
+    text-align: center;
+    background: linear-gradient(
+        165deg,
+        rgba(255, 193, 7, 0.12) 0%,
+        rgba(255, 255, 255, 0.95) 42%,
+        rgba(76, 175, 80, 0.08) 100%
+    );
+    box-shadow: var(--mud-elevation-4);
+}
+
+.achievement-card ::deep .achievement-card__surface {
+    position: relative;
+    z-index: 1;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.achievement-trophy-wrap {
+    position: relative;
+    z-index: 1;
+    animation: trophy-pop 0.7s cubic-bezier(0.2, 1.4, 0.3, 1);
+}
+
+.achievement-card ::deep .achievement-trophy {
+    font-size: 3rem !important;
+    width: 3rem !important;
+    height: 3rem !important;
+    filter: drop-shadow(0 3px 8px rgba(255, 193, 7, 0.4));
+}
+
+.achievement-plan-label,
+.achievement-count {
+    position: relative;
+    z-index: 1;
+}
+
+.achievement-plan-label {
+    font-weight: 600;
+    animation: content-fade-up 0.55s ease-out 0.15s;
+}
+
+.achievement-count {
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--mud-palette-primary);
+    animation: content-fade-up 0.55s ease-out 0.2s;
+}
+
+.achievement-confetti {
+    position: absolute;
+    inset: 0;
+    z-index: 2;
+    pointer-events: none;
+    overflow: hidden;
+}
+
+.achievement-confetti__piece {
+    position: absolute;
+    top: -12px;
+    width: 8px;
+    height: 12px;
+    border-radius: 2px;
+    opacity: 1;
+    animation: confetti-fall 1.35s ease-in forwards;
+}
+
+.achievement-confetti__piece:nth-child(4n + 2) {
+    width: 7px;
+    height: 7px;
+    border-radius: 1px;
+}
+
+.achievement-confetti__piece:nth-child(4n + 3) {
+    width: 4px;
+    height: 14px;
+    border-radius: 999px;
+}
+
+.achievement-confetti__piece:nth-child(1) { left: 4%; background: #e53935; animation-delay: 0s; animation-duration: 1.15s; }
+.achievement-confetti__piece:nth-child(2) { left: 10%; background: #fb8c00; animation-delay: 0.04s; animation-duration: 1.3s; }
+.achievement-confetti__piece:nth-child(3) { left: 16%; background: #fdd835; animation-delay: 0.08s; animation-duration: 1.2s; }
+.achievement-confetti__piece:nth-child(4) { left: 22%; background: #43a047; animation-delay: 0.02s; animation-duration: 1.4s; }
+.achievement-confetti__piece:nth-child(5) { left: 28%; background: #1e88e5; animation-delay: 0.12s; animation-duration: 1.25s; }
+.achievement-confetti__piece:nth-child(6) { left: 34%; background: #8e24aa; animation-delay: 0.06s; animation-duration: 1.35s; }
+.achievement-confetti__piece:nth-child(7) { left: 40%; background: #ec407a; animation-delay: 0.16s; animation-duration: 1.18s; }
+.achievement-confetti__piece:nth-child(8) { left: 46%; background: #00acc1; animation-delay: 0.1s; animation-duration: 1.32s; }
+.achievement-confetti__piece:nth-child(9) { left: 52%; background: #ef6c00; animation-delay: 0.03s; animation-duration: 1.22s; }
+.achievement-confetti__piece:nth-child(10) { left: 58%; background: #7cb342; animation-delay: 0.14s; animation-duration: 1.38s; }
+.achievement-confetti__piece:nth-child(11) { left: 64%; background: #5e35b1; animation-delay: 0.07s; animation-duration: 1.28s; }
+.achievement-confetti__piece:nth-child(12) { left: 70%; background: #c0ca33; animation-delay: 0.18s; animation-duration: 1.16s; }
+.achievement-confetti__piece:nth-child(13) { left: 76%; background: #d81b60; animation-delay: 0.05s; animation-duration: 1.34s; }
+.achievement-confetti__piece:nth-child(14) { left: 82%; background: #039be5; animation-delay: 0.11s; animation-duration: 1.24s; }
+.achievement-confetti__piece:nth-child(15) { left: 88%; background: #f4511e; animation-delay: 0.09s; animation-duration: 1.36s; }
+.achievement-confetti__piece:nth-child(16) { left: 94%; background: #8e24aa; animation-delay: 0.15s; animation-duration: 1.2s; }
+.achievement-confetti__piece:nth-child(17) { left: 7%; background: #43a047; animation-delay: 0.2s; animation-duration: 1.3s; }
+.achievement-confetti__piece:nth-child(18) { left: 19%; background: #e53935; animation-delay: 0.22s; animation-duration: 1.26s; }
+.achievement-confetti__piece:nth-child(19) { left: 31%; background: #fdd835; animation-delay: 0.19s; animation-duration: 1.4s; }
+.achievement-confetti__piece:nth-child(20) { left: 43%; background: #1e88e5; animation-delay: 0.24s; animation-duration: 1.18s; }
+.achievement-confetti__piece:nth-child(21) { left: 55%; background: #ec407a; animation-delay: 0.21s; animation-duration: 1.33s; }
+.achievement-confetti__piece:nth-child(22) { left: 67%; background: #00acc1; animation-delay: 0.26s; animation-duration: 1.22s; }
+.achievement-confetti__piece:nth-child(23) { left: 79%; background: #fb8c00; animation-delay: 0.23s; animation-duration: 1.37s; }
+.achievement-confetti__piece:nth-child(24) { left: 91%; background: #7cb342; animation-delay: 0.27s; animation-duration: 1.28s; }
+
+@keyframes confetti-fall {
+    0% {
+        transform: translateY(0) rotate(0deg);
+        opacity: 1;
+    }
+
+    85% {
+        opacity: 1;
+    }
+
+    100% {
+        transform: translateY(260px) rotate(520deg);
+        opacity: 0;
+    }
+}
+
+@keyframes trophy-pop {
+    0% {
+        transform: scale(0.4) rotate(-12deg);
+        opacity: 0;
+    }
+
+    60% {
+        transform: scale(1.12) rotate(4deg);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+@keyframes content-fade-up {
+    from {
+        transform: translateY(8px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    /* Keep the short confetti fall — reduced-motion was freezing pieces into a static line. */
+    .achievement-trophy-wrap,
+    .achievement-plan-label,
+    .achievement-count {
+        animation: none !important;
+        opacity: 1;
+        transform: none;
+    }
+}

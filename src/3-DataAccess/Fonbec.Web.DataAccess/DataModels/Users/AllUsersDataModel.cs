@@ -4,9 +4,9 @@ namespace Fonbec.Web.DataAccess.DataModels.Users;
 
 public class AllUsersDataModel
 {
-    public List<AllUsersUserDataModel> Users { get; set; } = null!;
+    public List<AllUsersUserDataModel> Users { get; set; } = [];
 
-    public List<AllUsersUsersInRoleDataModel> UsersInRoles { get; set; } = null!;
+    public List<AllUsersUsersInRoleDataModel> UsersInRoles { get; set; } = [];
 }
 
 public class AllUsersUserDataModel

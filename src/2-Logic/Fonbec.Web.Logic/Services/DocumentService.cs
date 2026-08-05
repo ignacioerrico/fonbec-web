@@ -1,6 +1,7 @@
 using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.DataModels.Documents;
 using Fonbec.Web.DataAccess.DataModels.Documents.Input;
+using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Constants;
@@ -49,6 +50,7 @@ public class DocumentService(
     IDocumentNotificationService documentNotificationService,
     IUserService userService,
     IBlobStorageService blobStorageService,
+    ILetterPlanProgressService letterPlanProgressService,
     IOptions<BlobStorageOptions> blobStorageOptions,
     ILogger<DocumentService> logger) : IDocumentService
 {
@@ -511,6 +513,12 @@ public class DocumentService(
         }
 
         await documentNotificationService.NotifySponsorsAsync(input.DocumentId);
+
+        if (document is Letter letter)
+        {
+            await letterPlanProgressService.TryCompletePlanIfDoneAsync(letter.PlanId, letter.ChapterId);
+        }
+
         return new ReviewResult(true);
     }
 
@@ -750,7 +758,7 @@ public class DocumentService(
             _ => null,
         };
 
-    private bool CanReview(string userRole) =>
+    private static bool CanReview(string userRole) =>
         userRole is FonbecRole.Reviewer or FonbecRole.Manager;
 
     private bool CanImproveDigitally(string userRole, string? fonbecAuthClaim) =>
@@ -888,7 +896,7 @@ public class DocumentService(
         };
     }
 
-    private bool IsAuthorizedForActiveDownload(
+    private static bool IsAuthorizedForActiveDownload(
         (string Role, int? ChapterId, string? FonbecAuthClaim) user,
         DocumentBlobContextDataModel context,
         int requestingUserId) =>

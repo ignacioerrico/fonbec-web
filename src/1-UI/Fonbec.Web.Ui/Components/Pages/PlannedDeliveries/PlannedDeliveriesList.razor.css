@@ -1,0 +1,14 @@
+.plan-highlight {
+    overflow: hidden;
+    opacity: 1;
+    max-height: 40rem;
+    transition: opacity 0.28s ease, max-height 0.28s ease, margin 0.28s ease;
+}
+
+.plan-highlight--faded {
+    opacity: 0;
+    max-height: 0;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    pointer-events: none;
+}

@@ -14,6 +14,46 @@ public class LetterExemptionRepositoryTests
     private static readonly DateTime UtcNow = new(2026, 6, 15, 12, 0, 0, DateTimeKind.Utc);
 
     [Fact]
+    public async Task CreateExemptionAsync_Returns_False_When_Already_Exempt()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedExemptionAsync(factory, studentId: StudentId, planId: PlanId, isRevoked: false);
+        var repository = new LetterExemptionRepository(factory);
+
+        var result = await repository.CreateExemptionAsync(
+            StudentId, PlanId, ChapterId, "Otro motivo", 1, UtcNow);
+
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task CreateExemptionAsync_Creates_Active_Exemption()
+    {
+        var factory = CreateDbContextFactory();
+        var repository = new LetterExemptionRepository(factory);
+
+        var result = await repository.CreateExemptionAsync(
+            StudentId, PlanId, ChapterId, "Motivo", 1, UtcNow);
+
+        result.Should().BeTrue();
+        await using var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        (await db.Set<LetterExemption>().CountAsync(TestContext.Current.CancellationToken)).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task RevokeExemptionAsync_Revokes_Active_Exemption()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedExemptionAsync(factory, studentId: StudentId, planId: PlanId, isRevoked: false);
+        var repository = new LetterExemptionRepository(factory);
+
+        var result = await repository.RevokeExemptionAsync(StudentId, PlanId, 1, UtcNow);
+
+        result.Should().BeTrue();
+        (await repository.IsActiveExemptionAsync(StudentId, PlanId)).Should().BeFalse();
+    }
+
+    [Fact]
     public async Task IsActiveExemptionAsync_Returns_True_For_Active_Exemption()
     {
         var factory = CreateDbContextFactory();

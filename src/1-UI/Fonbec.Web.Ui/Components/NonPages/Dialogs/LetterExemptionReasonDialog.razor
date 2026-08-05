@@ -1,0 +1,24 @@
+@using Fonbec.Web.DataAccess.Constants
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">@Title</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText Class="mb-2">@Prompt</MudText>
+        <MudTextField @bind-Value="_reason"
+                      Lines="3"
+                      Required="true"
+                      RequiredError="El motivo es obligatorio."
+                      MaxLength="MaxLength.LetterExemption.Reason"
+                      Counter="MaxLength.LetterExemption.Reason"
+                      Immediate="true"
+                      Variant="Variant.Outlined" />
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Confirm" Disabled="@string.IsNullOrWhiteSpace(_reason)">
+            Confirmar
+        </MudButton>
+    </DialogActions>
+</MudDialog>

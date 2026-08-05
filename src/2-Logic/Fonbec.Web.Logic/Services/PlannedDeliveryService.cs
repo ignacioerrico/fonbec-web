@@ -9,19 +9,36 @@ namespace Fonbec.Web.Logic.Services;
 
 public interface IPlannedDeliveryService
 {
-    Task<List<PlannedDeliveriesListViewModel>> GetAllPlannedDeliveriesAsync();
+    Task<CurrentPlannedDeliveryViewModel?> GetCurrentPlanAsync(int chapterId);
+    Task<CurrentPlannedDeliveryViewModel?> GetLatestCompletedPlanAsync(int chapterId);
+    Task<List<PlannedDeliveriesListViewModel>> GetCompletedPlansAsync(int chapterId);
     Task<List<DateTime>> GetPlannedDeliveryDatesAsync(int? chapterId, DateTime? from = null);
     Task<CrudResult> CreatePlannedDeliveryAsync(CreatePlannedDeliveryInputModel inputModel);
     Task<CrudResult> UpdatePlannedDeliveryAsync(UpdatePlannedDeliveryInputModel inputModel);
+    Task<bool> MarkPlanCompletedAsync(int planId);
 }
 
 public class PlannedDeliveryService(IPlannedDeliveryRepository plannedDeliveryRepository) : IPlannedDeliveryService
 {
-    public async Task<List<PlannedDeliveriesListViewModel>> GetAllPlannedDeliveriesAsync()
+    public const string IncompletePlanAlreadyExists =
+        "Ya existe una planificación en curso. Debe completarse antes de crear una nueva.";
+
+    public async Task<CurrentPlannedDeliveryViewModel?> GetCurrentPlanAsync(int chapterId)
     {
-        var allPlannedDeliveriesDataModel = await plannedDeliveryRepository.GetAllPlannedDeliveriesAsync();
-        var plannedDeliveriesListViewModel = allPlannedDeliveriesDataModel.Adapt<List<PlannedDeliveriesListViewModel>>();
-        return plannedDeliveriesListViewModel;
+        var dataModel = await plannedDeliveryRepository.GetCurrentPlanAsync(chapterId);
+        return dataModel?.Adapt<CurrentPlannedDeliveryViewModel>();
+    }
+
+    public async Task<CurrentPlannedDeliveryViewModel?> GetLatestCompletedPlanAsync(int chapterId)
+    {
+        var dataModel = await plannedDeliveryRepository.GetLatestCompletedPlanAsync(chapterId);
+        return dataModel?.Adapt<CurrentPlannedDeliveryViewModel>();
+    }
+
+    public async Task<List<PlannedDeliveriesListViewModel>> GetCompletedPlansAsync(int chapterId)
+    {
+        var dataModels = await plannedDeliveryRepository.GetCompletedPlansAsync(chapterId);
+        return dataModels.Adapt<List<PlannedDeliveriesListViewModel>>();
     }
 
     public async Task<List<DateTime>> GetPlannedDeliveryDatesAsync(int? chapterId, DateTime? from = null)
@@ -37,6 +54,11 @@ public class PlannedDeliveryService(IPlannedDeliveryRepository plannedDeliveryRe
 
     public async Task<CrudResult> CreatePlannedDeliveryAsync(CreatePlannedDeliveryInputModel inputModel)
     {
+        if (await plannedDeliveryRepository.HasIncompletePlanAsync(inputModel.ChapterId))
+        {
+            return new CrudResult(Errors: [IncompletePlanAlreadyExists]);
+        }
+
         var inputDataModel = inputModel.Adapt<CreatePlannedDeliveryInputDataModel>();
         var affectedRows = await plannedDeliveryRepository.CreatePlannedDeliveryAsync(inputDataModel);
         return new CrudResult(affectedRows);
@@ -48,4 +70,7 @@ public class PlannedDeliveryService(IPlannedDeliveryRepository plannedDeliveryRe
         var affectedRows = await plannedDeliveryRepository.UpdatePlannedDeliveryAsync(updatePlannedDeliveryInputDataModel);
         return new CrudResult(affectedRows);
     }
+
+    public Task<bool> MarkPlanCompletedAsync(int planId) =>
+        plannedDeliveryRepository.MarkPlanCompletedAsync(planId);
 }

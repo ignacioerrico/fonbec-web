@@ -97,11 +97,14 @@ internal sealed class DocumentTestFixture
         var blobOptions = Microsoft.Extensions.Options.Options.Create(new BlobStorageOptions());
 
         TypeAdapterConfig.GlobalSettings.Scan(typeof(DocumentService).Assembly);
+        var letterPlanProgressService = Substitute.For<ILetterPlanProgressService>();
+
         DocumentService = new DocumentService(
             DocumentRepository,
             notificationService,
             userService,
             BlobStorageService,
+            letterPlanProgressService,
             blobOptions,
             NullLogger<DocumentService>.Instance);
     }
