@@ -17,7 +17,7 @@ public class FacilitatorServiceGetActiveSponsoredStudentsTests : MappingTestBase
     {
         _facilitatorRepository = Substitute.For<IFacilitatorRepository>();
         _letterExemptionService = Substitute.For<ILetterExemptionService>();
-        _letterExemptionService.GetExemptStudentIdsForPlanAsync(Arg.Any<int>()).Returns([]);
+        _letterExemptionService.GetActiveExemptionReasonsForPlanAsync(Arg.Any<int>()).Returns(new Dictionary<int, string>());
         _facilitatorService = new FacilitatorService(_facilitatorRepository, _letterExemptionService);
     }
 
@@ -58,7 +58,7 @@ public class FacilitatorServiceGetActiveSponsoredStudentsTests : MappingTestBase
         var result = await _facilitatorService.GetStudentsDashboardAsync(2);
 
         result.CurrentPlanId.Should().Be(7);
-        result.CurrentPlanLabel.Should().Be("Jun 2026");
+        result.CurrentPlanLabel.Should().Be("junio de 2026");
     }
 
     [Fact]
@@ -71,11 +71,14 @@ public class FacilitatorServiceGetActiveSponsoredStudentsTests : MappingTestBase
             ]);
         _facilitatorRepository.GetCurrentPlanForFacilitatorAsync(2)
             .Returns(new CurrentPlanDataModel { PlanId = 7, StartsOn = new DateTime(2026, 6, 1) });
-        _letterExemptionService.GetExemptStudentIdsForPlanAsync(7).Returns([10]);
+        _letterExemptionService.GetActiveExemptionReasonsForPlanAsync(7)
+            .Returns(new Dictionary<int, string> { [10] = "Motivo" });
 
         var result = await _facilitatorService.GetStudentsDashboardAsync(2);
 
-        result.Students.Single(s => s.StudentId == 10).IsLetterExemptForCurrentPlan.Should().BeTrue();
+        var exemptStudent = result.Students.Single(s => s.StudentId == 10);
+        exemptStudent.IsLetterExemptForCurrentPlan.Should().BeTrue();
+        exemptStudent.LetterExemptionReason.Should().Be("Motivo");
         result.Students.Single(s => s.StudentId == 11).IsLetterExemptForCurrentPlan.Should().BeFalse();
     }
 
@@ -90,7 +93,7 @@ public class FacilitatorServiceGetActiveSponsoredStudentsTests : MappingTestBase
         var result = await _facilitatorService.GetStudentsDashboardAsync(2);
 
         result.Students.Single().IsLetterExemptForCurrentPlan.Should().BeFalse();
-        await _letterExemptionService.DidNotReceive().GetExemptStudentIdsForPlanAsync(Arg.Any<int>());
+        await _letterExemptionService.DidNotReceive().GetActiveExemptionReasonsForPlanAsync(Arg.Any<int>());
     }
 
     [Fact]

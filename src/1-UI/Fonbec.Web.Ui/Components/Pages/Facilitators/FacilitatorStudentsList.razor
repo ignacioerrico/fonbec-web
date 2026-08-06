@@ -9,152 +9,184 @@
 
 <PageHeader Title="Mis becarios" />
 
+@if (_dashboard.CurrentPlanLabel is { } currentPlan)
+{
+    <MudText Typo="Typo.h4" Class="mb-4">Campaña actual: @currentPlan</MudText>
+}
+else
+{
+    <MudText Typo="Typo.h4" Class="mb-4">No hay una campaña activa</MudText>
+}
+
 <MudStack Row="true" AlignItems="AlignItems.Center">
-	<MudSwitch @bind-Value="_letterFilterActive" LabelPlacement="Placement.End" Color="Color.Primary">
-		Solo carta pendiente o rechazada
-	</MudSwitch>
-	<MudSpacer />
-	<MudSwitch @bind-Value="_sortByLastName" LabelPlacement="Placement.Left">
-		@(_sortByLastName ? "Apellido, Nombre" : "Nombre Apellido")
-	</MudSwitch>
+    <MudSwitch @bind-Value="_onlyMissingOrRejectedLetters" LabelPlacement="Placement.End" Color="Color.Primary">
+        Solo cartas faltantes o rechazadas
+    </MudSwitch>
+    <MudSpacer />
+    <MudSwitch @bind-Value="_sortByLastName" LabelPlacement="Placement.Left">
+        @(_sortByLastName ? "Apellido, Nombre" : "Nombre Apellido")
+    </MudSwitch>
 </MudStack>
 
 <LoadingIndicator Loading="Loading"
-				  If="!_dashboard.Students.Any()"
-				  ThenDisplay="No hay becarios." />
+                  If="!_dashboard.Students.Any()"
+                  ThenDisplay="No hay becarios." />
 
 @if (_dashboard.Students.Any())
 {
-	<MudDataGrid T="FacilitatorStudentsListViewModel"
-				 Items="_dashboard.Students"
-				 Dense="true" Hover="true" Striped="true" Bordered="true"
-				 ReadOnly="true"
-				 QuickFilter="FilterStudents"
-				 SortMode="SortMode.Multiple"
-				 Class="mt-4">
-		<ToolBarContent>
-			<MudTextField T="string" @bind-Value="_searchString"
-						  Placeholder="Buscar"
-						  Clearable="true" Immediate="true"
-						  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
-		</ToolBarContent>
-		<Columns>
-			<HierarchyColumn ButtonDisabledFunc="@(vm => false)" EnableHeaderToggle="false" />
-			<PropertyColumn Property="@(vm => _sortByLastName ? vm.StudentLastName : vm.StudentFirstName)" Title="Becario">
-				<CellTemplate>
-					<MudText Color="Color.Primary">
-						<strong>@StudentFullName(context.Item)</strong>
-					</MudText>
-				</CellTemplate>
-			</PropertyColumn>
-			<TemplateColumn Title="@LetterColumnTitle" Filterable="false" Sortable="false">
-				<CellTemplate>
-					<MudTooltip Text="@context.Item.LetterAggregate.Label()">
-						<MudIcon Icon="@context.Item.LetterAggregate.Icon()" Color="@context.Item.LetterAggregate.Color()" />
-					</MudTooltip>
-				</CellTemplate>
-			</TemplateColumn>
-			<TemplateColumn Title="Calificaciones" Filterable="false" Sortable="false">
-				<CellTemplate>
-				</CellTemplate>
-			</TemplateColumn>
-			<TemplateColumn Title="Otros" Filterable="false" Sortable="false">
-				<CellTemplate>
-				</CellTemplate>
-			</TemplateColumn>
-		</Columns>
-		<ChildRowContent>
-			<MudPaper Class="pa-4" Elevation="0">
-				<MudStack Row="true" Spacing="12" AlignItems="AlignItems.Start">
-					<MudStack Spacing="1">
-						<MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
-							<MudIcon Icon="@Icons.Material.Filled.School" Size="Size.Small" />
-							<MudText Typo="Typo.subtitle2">Nivel Académico</MudText>
-						</MudStack>
-						<MudChip T="string" Size="Size.Small" Color="Color.Primary">
-							@context.Item.EducationLevel.EnumToString()
-						</MudChip>
-					</MudStack>
-					<MudStack Spacing="1">
-						<MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
-							<MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Small" />
-							<MudText Typo="Typo.subtitle2">Padrinos Asignados (@context.Item.Sponsors.Count)</MudText>
-						</MudStack>
-						<MudStack Row="true" Spacing="1">
-							@foreach (var sponsor in context.Item.Sponsors)
-							{
-								<MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Outlined"
-										 Icon="@(sponsor.CompanyId.HasValue ? Icons.Material.Filled.Factory : Icons.Material.Filled.Person)">
-									@sponsor.RecipientName
-								</MudChip>
-							}
-						</MudStack>
-					</MudStack>
-					<MudStack Spacing="1">
-						<MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
-							<MudIcon Icon="@Icons.Material.Filled.Mail" Size="Size.Small" />
-							<MudText Typo="Typo.subtitle2">Carta</MudText>
-						</MudStack>
-						@if (context.Item.LetterAggregate is LetterAggregateStatus.Exempt or LetterAggregateStatus.NoPlan)
-						{
-							<div class="d-flex align-center gap-2">
-								<MudIcon Icon="@context.Item.LetterAggregate.Icon()" Color="@context.Item.LetterAggregate.Color()" Size="Size.Small" />
-								<MudText Typo="Typo.body2">@context.Item.LetterAggregate.Label()</MudText>
-							</div>
-						}
-						else
-						{
-							<SponsorLetterStatusList Sponsors="@context.Item.LetterStatuses" />
-						}
-					</MudStack>
-				</MudStack>
+    <MudDataGrid T="FacilitatorStudentsListViewModel"
+                 Items="_dashboard.Students"
+                 Dense="true" Hover="true" Striped="true" Bordered="true"
+                 ReadOnly="true"
+                 QuickFilter="FilterStudents"
+                 SortMode="SortMode.Multiple"
+                 Class="mt-4">
+        <ToolBarContent>
+            <MudTextField T="string" @bind-Value="_searchString"
+                          Placeholder="Buscar"
+                          Clearable="true" Immediate="true"
+                          Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
+        </ToolBarContent>
+        <Columns>
+            <HierarchyColumn ButtonDisabledFunc="@(vm => false)" EnableHeaderToggle="true" />
+            <PropertyColumn Property="@(vm => _sortByLastName ? vm.StudentLastName : vm.StudentFirstName)" Title="Becario">
+                <CellTemplate>
+                    <MudText Color="Color.Primary">
+                        <strong>@StudentFullName(context.Item)</strong>
+                    </MudText>
+                </CellTemplate>
+            </PropertyColumn>
+            <TemplateColumn Title="@LetterColumnTitle" Filterable="false" Sortable="false">
+                <CellTemplate>
+                    <div class="mt-2 d-flex align-center gap-2">
+                        <MudTooltip Text="@context.Item.LetterAggregate.Label()" Arrow="true" Placement="Placement.Right">
+                            @if (context.Item.ShowLetterCountBadge)
+                            {
+                                <MudBadge Content="@($"{context.Item.UploadedLetterCount}/{context.Item.SponsorLetterCount}")"
+                                          Color="@context.Item.LetterAggregate.Color()" Overlap="true" Bordered="true">
+                                    <MudIcon Icon="@context.Item.LetterAggregate.Icon()" Color="@context.Item.LetterAggregate.Color()" />
+                                </MudBadge>
+                            }
+                            else
+                            {
+                                <MudIcon Icon="@context.Item.LetterAggregate.Icon()" Color="@context.Item.LetterAggregate.Color()" />
+                            }
+                        </MudTooltip>
+                    </div>
+                </CellTemplate>
+            </TemplateColumn>
+            <TemplateColumn Title="Calificaciones" Filterable="false" Sortable="false">
+                <CellTemplate>
+                </CellTemplate>
+            </TemplateColumn>
+            <TemplateColumn Title="Otros" Filterable="false" Sortable="false">
+                <CellTemplate>
+                </CellTemplate>
+            </TemplateColumn>
+        </Columns>
+        <ChildRowContent>
+            <MudPaper Class="pa-4" Elevation="0">
+                <MudStack Row="true" Spacing="12" AlignItems="AlignItems.Start">
+                    <MudStack Spacing="1" Class="mt-2">
+                        <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                            <MudIcon Icon="@Icons.Material.Filled.School" Size="Size.Small" />
+                            <MudText Typo="Typo.subtitle2">Nivel Académico</MudText>
+                        </MudStack>
+                        <MudChip T="string" Size="Size.Small" Color="Color.Primary">
+                            @context.Item.EducationLevel.EnumToString()
+                        </MudChip>
+                    </MudStack>
+                    @if (context.Item.LetterAggregate is LetterAggregateStatus.Exempt or LetterAggregateStatus.NoPlan)
+                    {
+                        <MudStack Spacing="1">
+                            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                                <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Small" />
+                                <MudText Typo="Typo.subtitle2">Padrinos (@context.Item.Sponsors.Count)</MudText>
+                            </MudStack>
+                            @foreach (var sponsor in context.Item.Sponsors)
+                            {
+                                <div class="d-flex align-center gap-2">
+                                    <MudIcon Icon="@(sponsor.IsCompany ? Icons.Material.Filled.Factory : Icons.Material.Filled.Person)" Size="Size.Small" />
+                                    <MudText Typo="Typo.body2">@sponsor.RecipientName</MudText>
+                                </div>
+                            }
+                        </MudStack>
+                        <MudStack Spacing="1">
+                            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                                <MudIcon Icon="@Icons.Material.Filled.Mail" Size="Size.Small" />
+                                <MudText Typo="Typo.subtitle2">Carta</MudText>
+                            </MudStack>
+                            <div class="d-flex align-center gap-2">
+                                <MudIcon Icon="@context.Item.LetterAggregate.Icon()" Color="@context.Item.LetterAggregate.Color()" Size="Size.Small" />
+                                <MudText Typo="Typo.body2">@LetterDetailText(context.Item)</MudText>
+                            </div>
+                        </MudStack>
+                    }
+                    else
+                    {
+                        <SponsorLetterStatusList Sponsors="@context.Item.LetterStatuses" />
+                    }
+                </MudStack>
 
-				<MudDivider Class="my-3" />
+                <MudDivider Class="my-3" />
 
-				<MudText Typo="Typo.subtitle2" Class="mb-2">Acciones</MudText>
-				@{
-					var letterSponsors = LetterSponsors(context.Item);
-				}
-				<MudStack Row="true" Spacing="2">
-					@if (context.Item.IsLetterExemptForCurrentPlan)
-					{
-						<MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Block" Size="Size.Small" Disabled="true">
-							Eximido
-						</MudButton>
-					}
-					else if (_dashboard.CurrentPlanId is null || letterSponsors.Count == 0)
-					{
-						<MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Mail" Size="Size.Small" Disabled="true">
-							Subir carta
-						</MudButton>
-					}
-					else if (letterSponsors.Count == 1)
-					{
-						<MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Mail" Size="Size.Small"
-								   Href="@LetterUploadUrl(context.Item, letterSponsors[0])">
-							Subir carta
-						</MudButton>
-					}
-					else
-					{
-						<MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Mail" Size="Size.Small"
-								   OnClick="@(() => OpenLetterSponsorPickerAsync(context.Item))">
-							Subir carta
-						</MudButton>
-					}
-					<MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Description" Size="Size.Small"
-							   Href="@NavRoutes.FacilitatorUploadReportCard(context.Item.StudentId)">
-						@ReportCardUploadLabel(context.Item)
-					</MudButton>
-					<MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Upload" Size="Size.Small"
-							   Href="@NavRoutes.FacilitatorUploadOther(context.Item.StudentId)">
-						Subir otro documento
-					</MudButton>
-				</MudStack>
-			</MudPaper>
-		</ChildRowContent>
-		<PagerContent>
-			<MudDataGridPager T="FacilitatorStudentsListViewModel" RowsPerPageString="Filas por página:" InfoFormat="{first_item}-{last_item} of {all_items}" />
-		</PagerContent>
-	</MudDataGrid>
+                <MudText Typo="Typo.subtitle2" Class="mb-2">Acciones</MudText>
+                @{
+                    var sponsorsNeedingLetter = context.Item.SponsorsNeedingLetter;
+                }
+                <MudStack Row="true" Spacing="2">
+                    @if (context.Item.IsLetterExemptForCurrentPlan)
+                    {
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Block" Size="Size.Small" Disabled="true">
+                            Eximido
+                        </MudButton>
+                    }
+                    else if (_dashboard.CurrentPlanId is null || sponsorsNeedingLetter.Count == 0)
+                    {
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Mail" Size="Size.Small" Disabled="true">
+                            Subir carta
+                        </MudButton>
+                    }
+                    else if (context.Item.SponsorLetterCount == 1)
+                    {
+                        <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Mail" Size="Size.Small"
+                                   Href="@LetterUploadUrl(context.Item, sponsorsNeedingLetter[0])">
+                            Subir carta
+                        </MudButton>
+                    }
+                    else
+                    {
+                        <MudMenu>
+                            <ActivatorContent>
+                                <MudButton Variant="Variant.Filled" Color="Color.Primary" StartIcon="@Icons.Material.Filled.Mail"
+                                           EndIcon="@Icons.Material.Filled.ArrowDropDown" Size="Size.Small">
+                                    Subir carta
+                                </MudButton>
+                            </ActivatorContent>
+                            <ChildContent>
+                                @foreach (var sponsor in sponsorsNeedingLetter)
+                                {
+                                    <MudMenuItem Href="@LetterUploadUrl(context.Item, sponsor)"
+                                                 Icon="@(sponsor.IsCompany ? Icons.Material.Filled.Factory : Icons.Material.Filled.Person)">
+                                        @sponsor.RecipientName
+                                    </MudMenuItem>
+                                }
+                            </ChildContent>
+                        </MudMenu>
+                    }
+                    <MudButton Variant="Variant.Filled" Color="Color.Info" StartIcon="@Icons.Material.Filled.Description" Size="Size.Small"
+                               Href="@NavRoutes.FacilitatorUploadReportCard(context.Item.StudentId)">
+                        @ReportCardUploadLabel(context.Item)
+                    </MudButton>
+                    <MudButton Variant="Variant.Filled" Color="Color.Secondary" StartIcon="@Icons.Material.Filled.Upload" Size="Size.Small"
+                               Href="@NavRoutes.FacilitatorUploadOther(context.Item.StudentId)">
+                        Subir otro documento
+                    </MudButton>
+                </MudStack>
+            </MudPaper>
+        </ChildRowContent>
+        <PagerContent>
+            <MudDataGridPager T="FacilitatorStudentsListViewModel" RowsPerPageString="Filas por página:" InfoFormat="{first_item}-{last_item} of {all_items}" />
+        </PagerContent>
+    </MudDataGrid>
 }

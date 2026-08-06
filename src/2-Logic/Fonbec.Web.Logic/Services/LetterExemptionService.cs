@@ -11,9 +11,10 @@ public interface ILetterExemptionService
     Task<bool> IsExemptAsync(int studentId, int planId);
 
     /// <summary>
-    /// Returns the set of student ids exempt from letters for the given plan.
+    /// Returns the exemption reason keyed by student id for every student exempt from letters for the plan.
+    /// A present key means the student is exempt; the value is the reason. Duplicate exemptions keep the first.
     /// </summary>
-    Task<HashSet<int>> GetExemptStudentIdsForPlanAsync(int planId);
+    Task<Dictionary<int, string>> GetActiveExemptionReasonsForPlanAsync(int planId);
 }
 
 public class LetterExemptionService(ILetterExemptionRepository letterExemptionRepository) : ILetterExemptionService
@@ -21,9 +22,11 @@ public class LetterExemptionService(ILetterExemptionRepository letterExemptionRe
     public Task<bool> IsExemptAsync(int studentId, int planId) =>
         letterExemptionRepository.IsActiveExemptionAsync(studentId, planId);
 
-    public async Task<HashSet<int>> GetExemptStudentIdsForPlanAsync(int planId)
+    public async Task<Dictionary<int, string>> GetActiveExemptionReasonsForPlanAsync(int planId)
     {
-        var ids = await letterExemptionRepository.GetActiveExemptStudentIdsForPlanAsync(planId);
-        return ids.ToHashSet();
+        var exemptions = await letterExemptionRepository.GetActiveExemptionsForPlanAsync(planId);
+        return exemptions
+            .GroupBy(e => e.StudentId)
+            .ToDictionary(g => g.Key, g => g.First().Reason);
     }
 }

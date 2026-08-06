@@ -1,19 +1,39 @@
-@using Fonbec.Web.Logic.Models.Students
 @using Fonbec.Web.Ui.Constants
 
-<div class="d-flex flex-column gap-1">
-    @foreach (var sponsor in Sponsors)
-    {
-        <div class="d-flex align-center gap-2">
-            <MudIcon Icon="@sponsor.Status.Icon()" Color="@sponsor.Status.Color()" Size="Size.Small" />
-            <MudText Typo="Typo.body2" Class="flex-grow-1">@sponsor.RecipientName</MudText>
-            <MudText Typo="Typo.body2" Class="mud-text-secondary">
-                @sponsor.Status.Label()
-                @if (sponsor.Status == LetterSlotStatus.Rejected && !string.IsNullOrWhiteSpace(sponsor.RejectionReason))
-                {
-                    @($" — \"{sponsor.RejectionReason}\"")
-                }
-            </MudText>
-        </div>
-    }
-</div>
+<MudSimpleTable Dense="true" Hover="true" Bordered="false" Elevation="0" Class="mt-1">
+    <thead>
+        <tr>
+            <th>
+                <div class="d-flex align-center gap-2">
+                    <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Small" />
+                    <span>Padrinos (@Sponsors.Count)</span>
+                </div>
+            </th>
+            <th>
+                <div class="d-flex align-center gap-2">
+                    <MudIcon Icon="@Icons.Material.Filled.Mail" Size="Size.Small" />
+                    <span>Carta</span>
+                </div>
+            </th>
+        </tr>
+    </thead>
+    <tbody>
+        @foreach (var sponsor in Sponsors)
+        {
+            <tr>
+                <td>
+                    <div class="d-flex align-center gap-2">
+                        <MudIcon Icon="@(sponsor.IsCompany ? Icons.Material.Filled.Factory : Icons.Material.Filled.Person)" Size="Size.Small" />
+                        <MudText Typo="Typo.body2">@sponsor.RecipientName</MudText>
+                    </div>
+                </td>
+                <td>
+                    <div class="d-flex align-center gap-2">
+                        <MudIcon Icon="@sponsor.Status.Icon()" Color="@sponsor.Status.Color()" Size="Size.Small" />
+                        <MudText Typo="Typo.body2">@LetterStatusText(sponsor)</MudText>
+                    </div>
+                </td>
+            </tr>
+        }
+    </tbody>
+</MudSimpleTable>

@@ -10,7 +10,7 @@ public class LetterAggregationTests
     public void Aggregate_Returns_NoPlan_When_No_Active_Plan()
     {
         var result = LetterAggregation.Aggregate(
-            hasActivePlan: false, isExempt: false, slotStatuses: [LetterSlotStatus.Rejected]);
+            hasActivePlan: false, isExempt: false, slotStatuses: [LetterSlotStatus.None]);
 
         result.Should().Be(LetterAggregateStatus.NoPlan);
     }
@@ -36,60 +36,91 @@ public class LetterAggregationTests
     }
 
     [Fact]
-    public void Aggregate_Returns_Rejected_When_Any_Slot_Is_Rejected()
+    public void Aggregate_Returns_NotUploaded_When_No_Letters()
     {
         var result = LetterAggregation.Aggregate(
             hasActivePlan: true,
             isExempt: false,
-            slotStatuses: [LetterSlotStatus.Approved, LetterSlotStatus.Rejected, LetterSlotStatus.Approved]);
+            slotStatuses: [LetterSlotStatus.None, LetterSlotStatus.None]);
 
-        result.Should().Be(LetterAggregateStatus.Rejected);
+        result.Should().Be(LetterAggregateStatus.NotUploaded);
     }
 
     [Fact]
-    public void Aggregate_Rejected_Wins_Over_Pending()
+    public void Aggregate_Returns_NotUploaded_When_Every_Letter_Was_Rejected()
     {
+        // Rejected letters still need a (re)upload, so nothing counts as satisfied.
         var result = LetterAggregation.Aggregate(
             hasActivePlan: true,
             isExempt: false,
-            slotStatuses: [LetterSlotStatus.Rejected, LetterSlotStatus.None, LetterSlotStatus.InReview]);
+            slotStatuses: [LetterSlotStatus.Rejected, LetterSlotStatus.None]);
 
-        result.Should().Be(LetterAggregateStatus.Rejected);
+        result.Should().Be(LetterAggregateStatus.NotUploaded);
     }
 
     [Theory]
     [InlineData(LetterSlotStatus.None)]
-    [InlineData(LetterSlotStatus.InReview)]
-    public void Aggregate_Returns_Pending_When_Any_Slot_Is_Not_Approved(LetterSlotStatus incompleteStatus)
+    [InlineData(LetterSlotStatus.Rejected)]
+    public void Aggregate_Returns_Partial_When_Some_Uploaded_And_Some_Missing(LetterSlotStatus needsUploadStatus)
     {
         var result = LetterAggregation.Aggregate(
             hasActivePlan: true,
             isExempt: false,
-            slotStatuses: [LetterSlotStatus.Approved, incompleteStatus]);
+            slotStatuses: [LetterSlotStatus.Approved, needsUploadStatus]);
 
-        result.Should().Be(LetterAggregateStatus.Pending);
-    }
-
-    [Fact]
-    public void Aggregate_Returns_Approved_When_All_Slots_Approved()
-    {
-        var result = LetterAggregation.Aggregate(
-            hasActivePlan: true,
-            isExempt: false,
-            slotStatuses: [LetterSlotStatus.Approved, LetterSlotStatus.Approved]);
-
-        result.Should().Be(LetterAggregateStatus.Approved);
+        result.Should().Be(LetterAggregateStatus.Partial);
     }
 
     [Theory]
-    [InlineData(LetterAggregateStatus.Rejected, true, true)]
-    [InlineData(LetterAggregateStatus.Pending, true, true)]
-    [InlineData(LetterAggregateStatus.Approved, true, false)]
+    [InlineData(LetterSlotStatus.Approved, LetterSlotStatus.Approved)]
+    [InlineData(LetterSlotStatus.InReview, LetterSlotStatus.InReview)]
+    [InlineData(LetterSlotStatus.Approved, LetterSlotStatus.InReview)]
+    public void Aggregate_Returns_Complete_When_Every_Sponsor_Has_A_Letter(LetterSlotStatus first, LetterSlotStatus second)
+    {
+        var result = LetterAggregation.Aggregate(
+            hasActivePlan: true, isExempt: false, slotStatuses: [first, second]);
+
+        result.Should().Be(LetterAggregateStatus.Complete);
+    }
+
+    [Fact]
+    public void Aggregate_Returns_Complete_When_There_Are_No_Sponsors()
+    {
+        var result = LetterAggregation.Aggregate(
+            hasActivePlan: true, isExempt: false, slotStatuses: []);
+
+        result.Should().Be(LetterAggregateStatus.Complete);
+    }
+
+    [Theory]
+    [InlineData(LetterSlotStatus.InReview, true)]
+    [InlineData(LetterSlotStatus.Approved, true)]
+    [InlineData(LetterSlotStatus.None, false)]
+    [InlineData(LetterSlotStatus.Rejected, false)]
+    public void IsSatisfied_Is_True_Only_For_InReview_Or_Approved(LetterSlotStatus status, bool expected)
+    {
+        LetterAggregation.IsSatisfied(status).Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData(LetterSlotStatus.None, true)]
+    [InlineData(LetterSlotStatus.Rejected, true)]
+    [InlineData(LetterSlotStatus.InReview, false)]
+    [InlineData(LetterSlotStatus.Approved, false)]
+    public void NeedsUpload_Is_True_Only_For_Missing_Or_Rejected(LetterSlotStatus status, bool expected)
+    {
+        LetterAggregation.NeedsUpload(status).Should().Be(expected);
+    }
+
+    [Theory]
+    [InlineData(LetterAggregateStatus.NotUploaded, true, true)]
+    [InlineData(LetterAggregateStatus.Partial, true, true)]
+    [InlineData(LetterAggregateStatus.Complete, true, false)]
     [InlineData(LetterAggregateStatus.Exempt, true, false)]
     [InlineData(LetterAggregateStatus.NoPlan, true, false)]
-    [InlineData(LetterAggregateStatus.Rejected, false, true)]
-    [InlineData(LetterAggregateStatus.Approved, false, true)]
-    public void MatchesLetterFilter_Includes_Only_Rejected_Or_Pending_When_Active(
+    [InlineData(LetterAggregateStatus.NotUploaded, false, true)]
+    [InlineData(LetterAggregateStatus.Complete, false, true)]
+    public void MatchesLetterFilter_Includes_Only_Students_Still_Owing_Letters_When_Active(
         LetterAggregateStatus aggregate, bool filterActive, bool expectedMatch)
     {
         var result = LetterAggregation.MatchesLetterFilter(aggregate, filterActive);

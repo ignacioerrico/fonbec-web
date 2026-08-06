@@ -7,9 +7,9 @@ public static class LetterStatusDisplay
 {
     public static string Icon(this LetterAggregateStatus status) => status switch
     {
-        LetterAggregateStatus.Approved => Icons.Material.Filled.Check,
-        LetterAggregateStatus.Pending => Icons.Material.Filled.HourglassEmpty,
-        LetterAggregateStatus.Rejected => Icons.Material.Filled.Close,
+        LetterAggregateStatus.NotUploaded => Icons.Material.Filled.UploadFile,
+        LetterAggregateStatus.Partial => Icons.Material.Filled.Warning,
+        LetterAggregateStatus.Complete => Icons.Material.Filled.CheckCircle,
         LetterAggregateStatus.Exempt => Icons.Material.Filled.RemoveCircleOutline,
         LetterAggregateStatus.NoPlan => Icons.Material.Filled.Remove,
         _ => Icons.Material.Filled.Remove,
@@ -17,9 +17,9 @@ public static class LetterStatusDisplay
 
     public static Color Color(this LetterAggregateStatus status) => status switch
     {
-        LetterAggregateStatus.Approved => MudBlazor.Color.Success,
-        LetterAggregateStatus.Pending => MudBlazor.Color.Warning,
-        LetterAggregateStatus.Rejected => MudBlazor.Color.Error,
+        LetterAggregateStatus.NotUploaded => MudBlazor.Color.Error,
+        LetterAggregateStatus.Partial => MudBlazor.Color.Warning,
+        LetterAggregateStatus.Complete => MudBlazor.Color.Success,
         LetterAggregateStatus.Exempt => MudBlazor.Color.Info,
         LetterAggregateStatus.NoPlan => MudBlazor.Color.Default,
         _ => MudBlazor.Color.Default,
@@ -27,37 +27,38 @@ public static class LetterStatusDisplay
 
     public static string Label(this LetterAggregateStatus status) => status switch
     {
-        LetterAggregateStatus.Approved => "Aprobada",
-        LetterAggregateStatus.Pending => "Pendiente",
-        LetterAggregateStatus.Rejected => "Rechazada",
+        LetterAggregateStatus.NotUploaded => "Falta subir",
+        LetterAggregateStatus.Partial => "Faltan cartas",
+        LetterAggregateStatus.Complete => "Carta subida",
         LetterAggregateStatus.Exempt => "Eximido",
-        LetterAggregateStatus.NoPlan => "Sin plan activo",
+        LetterAggregateStatus.NoPlan => "Sin campaña activa",
         _ => string.Empty,
     };
 
     public static string Icon(this LetterSlotStatus status) => status switch
     {
-        LetterSlotStatus.Approved => Icons.Material.Filled.Check,
-        LetterSlotStatus.Rejected => Icons.Material.Filled.Close,
-        LetterSlotStatus.InReview => Icons.Material.Filled.HourglassEmpty,
-        LetterSlotStatus.None => Icons.Material.Filled.HourglassEmpty,
+        LetterSlotStatus.None => Icons.Material.Filled.UploadFile,
+        LetterSlotStatus.InReview => Icons.Material.Filled.HourglassTop,
+        LetterSlotStatus.Approved => Icons.Material.Filled.CheckCircle,
+        LetterSlotStatus.Rejected => Icons.Material.Filled.Replay,
         _ => Icons.Material.Filled.Remove,
     };
 
     public static Color Color(this LetterSlotStatus status) => status switch
     {
+        LetterSlotStatus.None => MudBlazor.Color.Error,
+        LetterSlotStatus.InReview => MudBlazor.Color.Info,
         LetterSlotStatus.Approved => MudBlazor.Color.Success,
         LetterSlotStatus.Rejected => MudBlazor.Color.Error,
-        LetterSlotStatus.InReview or LetterSlotStatus.None => MudBlazor.Color.Warning,
         _ => MudBlazor.Color.Default,
     };
 
     public static string Label(this LetterSlotStatus status) => status switch
     {
+        LetterSlotStatus.None => "Falta subir",
+        LetterSlotStatus.InReview => "Esperando aprobación",
         LetterSlotStatus.Approved => "Aprobada",
         LetterSlotStatus.Rejected => "Rechazada",
-        LetterSlotStatus.InReview => "Pendiente (en revisión)",
-        LetterSlotStatus.None => "Pendiente (sin carta)",
         _ => string.Empty,
     };
 }

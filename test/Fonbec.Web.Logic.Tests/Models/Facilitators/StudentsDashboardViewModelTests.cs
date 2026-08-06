@@ -21,6 +21,6 @@ public class StudentsDashboardViewModelTests
             CurrentPlanStartsOn = new DateTime(2026, 6, 1),
         };
 
-        viewModel.CurrentPlanLabel.Should().Be("Jun 2026");
+        viewModel.CurrentPlanLabel.Should().Be("junio de 2026");
     }
 }

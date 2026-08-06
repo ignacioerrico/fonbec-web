@@ -25,7 +25,7 @@ public class FacilitatorServiceLetterStatusTests : MappingTestBase
     {
         _facilitatorRepository = Substitute.For<IFacilitatorRepository>();
         _letterExemptionService = Substitute.For<ILetterExemptionService>();
-        _letterExemptionService.GetExemptStudentIdsForPlanAsync(Arg.Any<int>()).Returns([]);
+        _letterExemptionService.GetActiveExemptionReasonsForPlanAsync(Arg.Any<int>()).Returns(new Dictionary<int, string>());
         _facilitatorService = new FacilitatorService(_facilitatorRepository, _letterExemptionService);
 
         _facilitatorRepository.GetCurrentPlanForFacilitatorAsync(FacilitatorId)
@@ -45,7 +45,7 @@ public class FacilitatorServiceLetterStatusTests : MappingTestBase
     }
 
     [Fact]
-    public async Task GetStudentsDashboardAsync_Sets_Approved_When_All_Sponsors_Approved()
+    public async Task GetStudentsDashboardAsync_Sets_Complete_When_All_Sponsors_Have_A_Letter()
     {
         SetupStudentWithOneSponsor();
         _facilitatorRepository.GetCurrentLetterStatusesAsync(PlanId, Arg.Any<List<int>>())
@@ -55,11 +55,11 @@ public class FacilitatorServiceLetterStatusTests : MappingTestBase
 
         var result = await _facilitatorService.GetStudentsDashboardAsync(FacilitatorId);
 
-        result.Students.Single().LetterAggregate.Should().Be(LetterAggregateStatus.Approved);
+        result.Students.Single().LetterAggregate.Should().Be(LetterAggregateStatus.Complete);
     }
 
     [Fact]
-    public async Task GetStudentsDashboardAsync_Sets_Pending_When_Sponsor_Has_No_Letter()
+    public async Task GetStudentsDashboardAsync_Sets_NotUploaded_When_Sponsor_Has_No_Letter()
     {
         SetupStudentWithOneSponsor();
         _facilitatorRepository.GetCurrentLetterStatusesAsync(PlanId, Arg.Any<List<int>>())
@@ -67,11 +67,11 @@ public class FacilitatorServiceLetterStatusTests : MappingTestBase
 
         var result = await _facilitatorService.GetStudentsDashboardAsync(FacilitatorId);
 
-        result.Students.Single().LetterAggregate.Should().Be(LetterAggregateStatus.Pending);
+        result.Students.Single().LetterAggregate.Should().Be(LetterAggregateStatus.NotUploaded);
     }
 
     [Fact]
-    public async Task GetStudentsDashboardAsync_Sets_Rejected_When_Any_Sponsor_Rejected()
+    public async Task GetStudentsDashboardAsync_Sets_Partial_When_One_Uploaded_And_One_Rejected()
     {
         SetupStudentWithTwoSponsors();
         _facilitatorRepository.GetCurrentLetterStatusesAsync(PlanId, Arg.Any<List<int>>())
@@ -82,7 +82,26 @@ public class FacilitatorServiceLetterStatusTests : MappingTestBase
 
         var result = await _facilitatorService.GetStudentsDashboardAsync(FacilitatorId);
 
-        result.Students.Single().LetterAggregate.Should().Be(LetterAggregateStatus.Rejected);
+        var student = result.Students.Single();
+        student.LetterAggregate.Should().Be(LetterAggregateStatus.Partial);
+        student.UploadedLetterCount.Should().Be(1);
+        student.SponsorLetterCount.Should().Be(2);
+        student.SponsorsNeedingLetter.Should().ContainSingle(s => s.CompanyId == CompanyId);
+    }
+
+    [Fact]
+    public async Task GetStudentsDashboardAsync_Sets_Exempt_When_Student_Is_Exempt_For_Current_Plan()
+    {
+        SetupStudentWithOneSponsor();
+        _facilitatorRepository.GetCurrentLetterStatusesAsync(PlanId, Arg.Any<List<int>>()).Returns([]);
+        _letterExemptionService.GetActiveExemptionReasonsForPlanAsync(PlanId)
+            .Returns(new Dictionary<int, string> { [StudentId] = "Beca de intercambio" });
+
+        var result = await _facilitatorService.GetStudentsDashboardAsync(FacilitatorId);
+
+        var student = result.Students.Single();
+        student.LetterAggregate.Should().Be(LetterAggregateStatus.Exempt);
+        student.LetterExemptionReason.Should().Be("Beca de intercambio");
     }
 
     [Fact]

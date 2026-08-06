@@ -24,13 +24,14 @@ public class FacilitatorService(
 
         if (currentPlan is not null)
         {
-            var exemptStudentIds = await letterExemptionService.GetExemptStudentIdsForPlanAsync(currentPlan.PlanId);
+            var exemptionReasons = await letterExemptionService.GetActiveExemptionReasonsForPlanAsync(currentPlan.PlanId);
             var letterStatuses = await facilitatorRepository.GetCurrentLetterStatusesAsync(
                 currentPlan.PlanId, students.Select(s => s.StudentId).ToList());
 
             foreach (var student in students)
             {
-                student.IsLetterExemptForCurrentPlan = exemptStudentIds.Contains(student.StudentId);
+                student.IsLetterExemptForCurrentPlan = exemptionReasons.TryGetValue(student.StudentId, out var reason);
+                student.LetterExemptionReason = reason;
                 student.LetterStatuses = BuildLetterStatuses(student.StudentId, student.Sponsors, letterStatuses);
                 student.LetterAggregate = LetterAggregation.Aggregate(
                     hasActivePlan: true,
