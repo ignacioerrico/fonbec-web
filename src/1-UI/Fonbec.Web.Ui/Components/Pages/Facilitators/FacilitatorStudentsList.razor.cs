@@ -2,6 +2,7 @@ using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models.Facilitators;
+using Fonbec.Web.Logic.Models.Students;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Ui.Constants;
 using Microsoft.AspNetCore.Components;
@@ -16,9 +17,7 @@ public partial class FacilitatorStudentsList : AuthenticationRequiredComponentBa
     private string _searchString = string.Empty;
     private bool _sortByLastName;
 
-    // Bound to the "Solo carta pendiente o rechazada" toggle. The filtering logic itself
-    // lives in the Carta column (US 107); the shell only exposes the toggle state.
-    private bool _letterFilterActive;
+    private bool _onlyMissingOrRejectedLetters;
 
     [Inject]
     public IFacilitatorService FacilitatorService { get; set; } = null!;
@@ -34,14 +33,20 @@ public partial class FacilitatorStudentsList : AuthenticationRequiredComponentBa
 
     private string LetterColumnTitle =>
         _dashboard.CurrentPlanLabel is { } label
-            ? $"Carta {label}"
+            ? $"Carta de {label}"
             : "Carta";
 
     private bool FilterStudents(FacilitatorStudentsListViewModel viewModel) =>
+        MatchesSearch(viewModel) && MatchesLetterFilter(viewModel);
+
+    private bool MatchesSearch(FacilitatorStudentsListViewModel viewModel) =>
         string.IsNullOrWhiteSpace(_searchString)
         || $"{viewModel.StudentFirstName} {viewModel.StudentLastName}".ContainsIgnoringAccents(_searchString)
         || (!string.IsNullOrEmpty(viewModel.StudentNickName)
             && $"{viewModel.StudentNickName} {viewModel.StudentLastName}".ContainsIgnoringAccents(_searchString));
+
+    private bool MatchesLetterFilter(FacilitatorStudentsListViewModel viewModel) =>
+        LetterAggregation.MatchesLetterFilter(viewModel.LetterAggregate, _onlyMissingOrRejectedLetters);
 
     private string StudentFullName(FacilitatorStudentsListViewModel viewModel) =>
         _sortByLastName
@@ -53,12 +58,15 @@ public partial class FacilitatorStudentsList : AuthenticationRequiredComponentBa
             ? "Subir libreta universitaria"
             : "Subir boletín";
 
-    // Letters can be addressed to either an individual sponsor or a company (each sponsorship
-    // resolves to exactly one recipient), so all of a student's sponsorships are letter recipients.
-    private static List<DashboardSponsorViewModel> LetterSponsors(FacilitatorStudentsListViewModel viewModel) =>
-        viewModel.Sponsors;
-
-    private string LetterUploadUrl(FacilitatorStudentsListViewModel viewModel, DashboardSponsorViewModel sponsor) =>
+    private string LetterUploadUrl(FacilitatorStudentsListViewModel viewModel, SponsorLetterStatusViewModel sponsor) =>
         NavRoutes.FacilitatorUploadLetter(
             viewModel.StudentId, _dashboard.CurrentPlanId!.Value, sponsor.SponsorId, sponsor.CompanyId);
+
+    // Detail "Carta" text for students with no letter slots to list (exempt or no active plan).
+    private static string LetterDetailText(FacilitatorStudentsListViewModel viewModel) =>
+        viewModel.LetterAggregate == LetterAggregateStatus.Exempt
+            ? string.IsNullOrWhiteSpace(viewModel.LetterExemptionReason)
+                ? "Eximido"
+                : $"Eximido: {viewModel.LetterExemptionReason}"
+            : "Sin campaña activa";
 }

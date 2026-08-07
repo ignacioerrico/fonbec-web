@@ -1,4 +1,5 @@
 using Fonbec.Web.DataAccess.DataModels.Facilitators;
+using Fonbec.Web.DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
 
 namespace Fonbec.Web.DataAccess.Repositories;
@@ -11,6 +12,8 @@ public interface IFacilitatorRepository
 
     Task<FacilitatorUploadContextDataModel?> GetUploadContextAsync(
         int studentId, int? planId, int? sponsorId, int? companyId);
+
+    Task<List<SponsorLetterStatusDataModel>> GetCurrentLetterStatusesAsync(int planId, List<int> studentIds);
 }
 
 public class FacilitatorRepository(
@@ -193,5 +196,32 @@ public class FacilitatorRepository(
             SponsorLastName = sponsorLastName,
             CompanyName = companyName,
         };
+    }
+
+    public async Task<List<SponsorLetterStatusDataModel>> GetCurrentLetterStatusesAsync(int planId, List<int> studentIds)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var letters = await db.Set<Letter>()
+            .AsNoTracking()
+            .Where(l => l.PlanId == planId && studentIds.Contains(l.StudentId))
+            .OrderByDescending(l => l.UploadedOn)
+            .ThenByDescending(l => l.DocumentId)
+            .Select(l => new SponsorLetterStatusDataModel
+            {
+                StudentId = l.StudentId,
+                SponsorId = l.SponsorId,
+                CompanyId = l.CompanyId,
+                Status = l.Status,
+                RejectionReason = l.RejectedReason != null ? l.RejectedReason.Description : l.RejectionNotes,
+            })
+            .ToListAsync();
+
+        // A slot (student + sponsor/company) can have several letters across resubmissions;
+        // only the most recent one (already sorted above) is the "current" one for that slot.
+        return letters
+            .GroupBy(l => (l.StudentId, l.SponsorId, l.CompanyId))
+            .Select(g => g.First())
+            .ToList();
     }
 }

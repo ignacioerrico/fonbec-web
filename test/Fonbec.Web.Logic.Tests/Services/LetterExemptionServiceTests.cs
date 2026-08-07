@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Fonbec.Web.DataAccess.DataModels.LetterExemptions;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Services;
 using NSubstitute;
@@ -28,12 +29,20 @@ public class LetterExemptionServiceTests
     }
 
     [Fact]
-    public async Task GetExemptStudentIdsForPlanAsync_ReturnsSetFromRepository()
+    public async Task GetActiveExemptionReasonsForPlanAsync_ReturnsReasonsByStudent_KeepingFirstForDuplicates()
     {
-        _repository.GetActiveExemptStudentIdsForPlanAsync(7).Returns([10, 11, 11]);
+        _repository.GetActiveExemptionsForPlanAsync(7).Returns([
+            new LetterExemptionReasonDataModel { StudentId = 10, Reason = "Viaje" },
+            new LetterExemptionReasonDataModel { StudentId = 11, Reason = "Enfermedad" },
+            new LetterExemptionReasonDataModel { StudentId = 11, Reason = "Duplicado" },
+        ]);
 
-        var result = await _service.GetExemptStudentIdsForPlanAsync(7);
+        var result = await _service.GetActiveExemptionReasonsForPlanAsync(7);
 
-        result.Should().BeEquivalentTo(new HashSet<int> { 10, 11 });
+        result.Should().BeEquivalentTo(new Dictionary<int, string>
+        {
+            [10] = "Viaje",
+            [11] = "Enfermedad",
+        });
     }
 }
