@@ -17,6 +17,7 @@ public class LetterPlanProgressRepositoryTests
     private const int CompanyId = 40;
     private const int StudentId = 10;
     private static readonly DateTime UtcNow = new(2026, 6, 15, 12, 0, 0, DateTimeKind.Utc);
+    private static readonly DateTime PlanStartsOn = new(2026, 3, 1);
 
     [Fact]
     public async Task GetProgressAsync_Returns_Null_When_Plan_Belongs_To_Other_Chapter()
@@ -57,10 +58,22 @@ public class LetterPlanProgressRepositoryTests
     }
 
     [Fact]
-    public async Task GetProgressAsync_Excludes_Expired_Sponsorship()
+    public async Task GetProgressAsync_Excludes_Sponsorship_Not_In_Effect_At_Plan_Start()
     {
         var factory = CreateDbContextFactory();
-        await SeedBaseAsync(factory, sponsorshipEnd: UtcNow.AddMonths(-1));
+        await SeedBaseAsync(factory, sponsorshipEnd: PlanStartsOn.AddMonths(-1));
+        var repository = CreateRepository(factory);
+
+        var result = await repository.GetProgressAsync(PlanId, ChapterId);
+
+        result!.Rows.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetProgressAsync_Excludes_Sponsorship_Starting_After_Plan_Start()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedBaseAsync(factory, sponsorshipStart: PlanStartsOn.AddMonths(1));
         var repository = CreateRepository(factory);
 
         var result = await repository.GetProgressAsync(PlanId, ChapterId);
@@ -121,12 +134,7 @@ public class LetterPlanProgressRepositoryTests
     }
 
     private static LetterPlanProgressRepository CreateRepository(TestDbContextFactory factory) =>
-        new(factory, new FixedTimeProvider(new DateTimeOffset(UtcNow)));
-
-    private sealed class FixedTimeProvider(DateTimeOffset utcNow) : TimeProvider
-    {
-        public override DateTimeOffset GetUtcNow() => utcNow;
-    }
+        new(factory);
 
     private static TestDbContextFactory CreateDbContextFactory() =>
         new(Guid.NewGuid().ToString());
@@ -135,6 +143,7 @@ public class LetterPlanProgressRepositoryTests
         TestDbContextFactory factory,
         int chapterId = ChapterId,
         bool disableStudent = false,
+        DateTime? sponsorshipStart = null,
         DateTime? sponsorshipEnd = null,
         bool useCompanySponsorship = false)
     {
@@ -183,7 +192,7 @@ public class LetterPlanProgressRepositoryTests
         {
             Id = PlanId,
             ChapterId = chapterId,
-            StartsOn = new DateTime(2026, 3, 1),
+            StartsOn = PlanStartsOn,
             Completed = false,
             CreatedById = 1,
             CreatedOnUtc = UtcNow,
@@ -208,8 +217,8 @@ public class LetterPlanProgressRepositoryTests
             StudentId = StudentId,
             SponsorId = useCompanySponsorship ? null : SponsorId,
             CompanyId = useCompanySponsorship ? CompanyId : null,
-            StartDate = UtcNow.AddMonths(-1),
-            EndDate = sponsorshipEnd ?? UtcNow.AddMonths(1),
+            StartDate = sponsorshipStart ?? PlanStartsOn.AddMonths(-1),
+            EndDate = sponsorshipEnd ?? PlanStartsOn.AddMonths(1),
             CreatedById = 1,
             CreatedOnUtc = UtcNow,
             IsActive = true,

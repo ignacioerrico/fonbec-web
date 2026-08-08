@@ -11,8 +11,7 @@ public interface ILetterPlanProgressRepository
 }
 
 public class LetterPlanProgressRepository(
-    IDbContextFactory<FonbecWebDbContext> dbContext,
-    TimeProvider timeProvider) : ILetterPlanProgressRepository
+    IDbContextFactory<FonbecWebDbContext> dbContext) : ILetterPlanProgressRepository
 {
     public async Task<LetterPlanProgressQueryResultDataModel?> GetProgressAsync(int planId, int chapterId)
     {
@@ -34,14 +33,17 @@ public class LetterPlanProgressRepository(
             return null;
         }
 
-        var utcNow = timeProvider.GetUtcNow().UtcDateTime;
+        // Only sponsorships in effect at this point in time need to be considered.
+        var planStartsOn = plan.StartsOn;
 
         var exemptions = await db.LetterExemptions
             .AsNoTracking()
             .Where(e => e.PlannedDeliveryId == planId && !e.IsRevoked)
             .ToDictionaryAsync(e => e.StudentId, e => e.Reason);
 
-        // NOTE: the sponsorship predicate below mirrors FacilitatorRepository; keep both in sync.
+        // NOTE: the sponsorship predicate below mirrors FacilitatorRepository, except that eligibility
+        // is evaluated as of the plan's start date (planStartsOn) rather than "now": the sponsorships
+        // that must receive a letter are those in effect when the plan started.
         var slots = await db.Students
             .AsNoTracking()
             .Where(s => s.ChapterId == chapterId
@@ -49,8 +51,8 @@ public class LetterPlanProgressRepository(
                         && !s.IsDeleted
                         && s.Sponsorships.Any(sp =>
                             sp.IsActive
-                            && sp.StartDate <= utcNow
-                            && (sp.EndDate == null || sp.EndDate >= utcNow)
+                            && sp.StartDate <= planStartsOn
+                            && (sp.EndDate == null || sp.EndDate >= planStartsOn)
                             && (
                                 (sp.SponsorId != null
                                  && sp.Sponsor != null
@@ -62,8 +64,8 @@ public class LetterPlanProgressRepository(
             .SelectMany(s => s.Sponsorships
                 .Where(sp =>
                     sp.IsActive
-                    && sp.StartDate <= utcNow
-                    && (sp.EndDate == null || sp.EndDate >= utcNow)
+                    && sp.StartDate <= planStartsOn
+                    && (sp.EndDate == null || sp.EndDate >= planStartsOn)
                     && (
                         (sp.SponsorId != null
                          && sp.Sponsor != null

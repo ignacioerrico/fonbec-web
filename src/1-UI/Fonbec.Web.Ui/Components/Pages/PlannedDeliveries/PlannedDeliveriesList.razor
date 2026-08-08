@@ -34,7 +34,7 @@
                                        ExemptStudents="@LatestCompletedExemptStudents" />
             </div>
         }
-        else if (!_showPreviousPlans)
+        else
         {
             <MudText Typo="Typo.h6" Class="mt-4">No hay una campaña activa.</MudText>
         }
@@ -62,16 +62,18 @@
         }
     }
 
-    <MudButton Variant="Variant.Outlined" Color="Color.Primary" Class="mt-4"
-               StartIcon="@(_showPreviousPlans ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.History)"
-               OnClick="TogglePreviousPlansAsync"
-               Disabled="_loadingPreviousPlans">
-        @if (_loadingPreviousPlans)
-        {
-            <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="me-2" />
-        }
-        Campañas anteriores
-    </MudButton>
+    <div>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" Class="mt-4"
+                   StartIcon="@(_showPreviousPlans ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.History)"
+                   OnClick="TogglePreviousPlansAsync"
+                   Disabled="_loadingPreviousPlans">
+            @if (_loadingPreviousPlans)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="me-2" />
+            }
+            Campañas anteriores
+        </MudButton>
+    </div>
 
     @if (_showPreviousPlans)
     {
