@@ -1,0 +1,5 @@
+/* Keep row hover highlighting for data rows only, not the header row. */
+thead tr:hover,
+thead tr:hover th {
+    background-color: transparent !important;
+}

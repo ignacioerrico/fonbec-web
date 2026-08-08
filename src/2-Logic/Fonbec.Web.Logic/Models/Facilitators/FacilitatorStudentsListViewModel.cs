@@ -2,14 +2,13 @@ using System.Globalization;
 using Fonbec.Web.DataAccess.DataModels.Facilitators;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.Logic.ExtensionMethods;
+using Fonbec.Web.Logic.Models.Students;
 using Mapster;
 
 namespace Fonbec.Web.Logic.Models.Facilitators;
 
 public class StudentsDashboardViewModel
 {
-    private static readonly CultureInfo EsAr = new("es-AR");
-
     public int? CurrentPlanId { get; set; }
 
     public DateTime? CurrentPlanStartsOn { get; set; }
@@ -17,7 +16,7 @@ public class StudentsDashboardViewModel
     public List<FacilitatorStudentsListViewModel> Students { get; set; } = [];
 
     /// <summary>
-    /// The current plan period rendered for the "Carta" column header, e.g. "Jun 2026".
+    /// The current plan period rendered for the "Carta" column header, e.g. "junio de 2026".
     /// Null when the facilitator's chapter has no active plan.
     /// </summary>
     public string? CurrentPlanLabel
@@ -29,8 +28,7 @@ public class StudentsDashboardViewModel
                 return null;
             }
 
-            var month = startsOn.ToString("MMM", EsAr).Replace(".", string.Empty);
-            return $"{EsAr.TextInfo.ToTitleCase(month)} {startsOn.Year}";
+            return CurrentPlanStartsOn.Value.ToString(@"MMMM \d\e yyyy", new CultureInfo("es-AR"));
         }
     }
 }
@@ -53,7 +51,32 @@ public class FacilitatorStudentsListViewModel : AuditableViewModel, IDetectChang
     /// </summary>
     public bool IsLetterExemptForCurrentPlan { get; set; }
 
+    /// <summary>Reason for the current-plan letter exemption (us110), when the student is exempt.</summary>
+    public string? LetterExemptionReason { get; set; }
+
+    public LetterAggregateStatus LetterAggregate { get; set; }
     public List<DashboardSponsorViewModel> Sponsors { get; set; } = [];
+    public List<SponsorLetterStatusViewModel> LetterStatuses { get; set; } = [];
+
+    /// <summary>Total number of letter slots (one per active sponsorship).</summary>
+    public int SponsorLetterCount => LetterStatuses.Count;
+
+    /// <summary>Number of sponsors whose letter is already uploaded (in review or approved).</summary>
+    public int UploadedLetterCount => LetterStatuses.Count(s => LetterAggregation.IsSatisfied(s.Status));
+
+    /// <summary>
+    /// True when the aggregate badge (uploaded/total) should be shown: more than one sponsor and an
+    /// upload-based aggregate state (exempt / no-plan have no meaningful count).
+    /// </summary>
+    public bool ShowLetterCountBadge =>
+        LetterStatuses.Count > 1
+        && LetterAggregate is LetterAggregateStatus.NotUploaded
+            or LetterAggregateStatus.Partial
+            or LetterAggregateStatus.Complete;
+
+    /// <summary>Sponsors whose letter is missing or was rejected, i.e. the ones that still need a (re)upload.</summary>
+    public IReadOnlyList<SponsorLetterStatusViewModel> SponsorsNeedingLetter =>
+        LetterStatuses.Where(s => LetterAggregation.NeedsUpload(s.Status)).ToList();
 
     public bool IsIdenticalTo(FacilitatorStudentsListViewModel other) =>
         StudentFirstName == other.StudentFirstName.NormalizeText()

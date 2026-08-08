@@ -90,18 +90,22 @@ public class LetterExemptionRepositoryTests
     }
 
     [Fact]
-    public async Task GetActiveExemptStudentIdsForPlanAsync_Returns_Only_Active_For_Plan()
+    public async Task GetActiveExemptionsForPlanAsync_Returns_Only_Active_For_Plan_With_Reason()
     {
         var factory = CreateDbContextFactory();
-        await SeedExemptionAsync(factory, id: 1, studentId: 10, planId: PlanId, isRevoked: false);
+        await SeedExemptionAsync(factory, id: 1, studentId: 10, planId: PlanId, isRevoked: false, reason: "Motivo 10");
         await SeedExemptionAsync(factory, id: 2, studentId: 11, planId: PlanId, isRevoked: true);
         await SeedExemptionAsync(factory, id: 3, studentId: 12, planId: PlanId + 1, isRevoked: false);
-        await SeedExemptionAsync(factory, id: 4, studentId: 13, planId: PlanId, isRevoked: false);
+        await SeedExemptionAsync(factory, id: 4, studentId: 13, planId: PlanId, isRevoked: false, reason: "Motivo 13");
         var repository = new LetterExemptionRepository(factory);
 
-        var result = await repository.GetActiveExemptStudentIdsForPlanAsync(PlanId);
+        var result = await repository.GetActiveExemptionsForPlanAsync(PlanId);
 
-        result.Should().BeEquivalentTo([10, 13]);
+        result.Should().BeEquivalentTo(new[]
+        {
+            new { StudentId = 10, Reason = "Motivo 10" },
+            new { StudentId = 13, Reason = "Motivo 13" },
+        });
     }
 
     private static TestDbContextFactory CreateDbContextFactory() =>
@@ -112,7 +116,8 @@ public class LetterExemptionRepositoryTests
         int studentId,
         int planId,
         bool isRevoked,
-        int id = 1)
+        int id = 1,
+        string reason = "Motivo")
     {
         await using var db = await factory.CreateDbContextAsync();
         db.Set<LetterExemption>().Add(new LetterExemption
@@ -121,7 +126,7 @@ public class LetterExemptionRepositoryTests
             StudentId = studentId,
             PlannedDeliveryId = planId,
             ChapterId = ChapterId,
-            Reason = "Motivo",
+            Reason = reason,
             CreatedByFonbecUserId = 1,
             CreatedOnUtc = UtcNow,
             IsRevoked = isRevoked,
