@@ -1,0 +1,41 @@
+@using Fonbec.Web.Logic.ExtensionMethods
+
+<MudPaper Class="pa-4" Elevation="2">
+    <MudStack Spacing="3">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+            <MudText Typo="Typo.h5">@Title.CapitalizeFirstLetter()</MudText>
+            <MudText Typo="Typo.h6" Color="Color.Primary">
+                @Summary.Approved / @Summary.TotalRequired
+                <MudText Typo="Typo.caption" Class="ml-1">
+                    (@Summary.CompletionPercent%)
+                </MudText>
+            </MudText>
+        </MudStack>
+
+        <MudTooltip Text="@($"Enviadas: {Summary.Approved}; Pendientes: {Summary.InProgress}")"
+                    Arrow="true" Placement="Placement.Top" Delay="100">
+            <MudProgressLinear Color="Color.Success" Size="Size.Large" Rounded="true" Buffer="true"
+                               Max="@(Summary.TotalRequired > 0 ? Summary.TotalRequired : 1)"
+                               Value="@Summary.Approved"
+                               BufferValue="@(Summary.Approved + Summary.InProgress)" />
+        </MudTooltip>
+
+        <MudStack Row Wrap="Wrap.Wrap" Spacing="2" Justify="Justify.Center">
+            <MudChip T="string" Icon="@Icons.Material.Filled.CheckCircle"
+                     Color="Color.Success" Variant="Variant.Text">
+                Enviadas: @Summary.Approved
+            </MudChip>
+
+            <MudChip T="string" Icon="@Icons.Material.Filled.HourglassTop"
+                     Color="Color.Info" Variant="Variant.Text">
+                Pendientes: @Summary.InProgress
+            </MudChip>
+
+            <MudChip T="string" Icon="@Icons.Material.Filled.Warning"
+                     Color="Color.Error"
+                     Variant="@(Summary.MissingOrRejected > 0 ? Variant.Filled : Variant.Text)">
+                Faltantes: @Summary.MissingOrRejected
+            </MudChip>
+        </MudStack>
+    </MudStack>
+</MudPaper>

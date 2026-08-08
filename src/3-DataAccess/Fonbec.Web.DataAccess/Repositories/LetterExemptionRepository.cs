@@ -1,3 +1,4 @@
+using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.DataAccess.DataModels.LetterExemptions;
 using Microsoft.EntityFrameworkCore;
 
@@ -14,6 +15,16 @@ public interface ILetterExemptionRepository
     /// Returns the active (non-revoked) letter exemptions for the plan, each with its student and reason.
     /// </summary>
     Task<List<LetterExemptionReasonDataModel>> GetActiveExemptionsForPlanAsync(int plannedDeliveryId);
+
+    /// <summary>
+    /// Creates an active letter exemption for the student and plan. Returns false when already exempt.
+    /// </summary>
+    Task<bool> CreateExemptionAsync(int studentId, int plannedDeliveryId, int chapterId, string reason, int createdByUserId, DateTime createdOnUtc);
+
+    /// <summary>
+    /// Revokes the active exemption for the student and plan. Returns false when no active exemption exists.
+    /// </summary>
+    Task<bool> RevokeExemptionAsync(int studentId, int plannedDeliveryId, int revokedByUserId, DateTime revokedOnUtc);
 }
 
 public class LetterExemptionRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : ILetterExemptionRepository
@@ -33,12 +44,64 @@ public class LetterExemptionRepository(IDbContextFactory<FonbecWebDbContext> dbC
         await using var db = await dbContext.CreateDbContextAsync();
         return await db.LetterExemptions
             .AsNoTracking()
-            .Where(e => e.PlannedDeliveryId == plannedDeliveryId && !e.IsRevoked)
+            .Where(e => e.PlannedDeliveryId == plannedDeliveryId
+                        && !e.IsRevoked)
             .Select(e => new LetterExemptionReasonDataModel
             {
                 StudentId = e.StudentId,
                 Reason = e.Reason,
             })
             .ToListAsync();
+    }
+
+    public async Task<bool> CreateExemptionAsync(int studentId, int plannedDeliveryId, int chapterId, string reason, int createdByUserId, DateTime createdOnUtc)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var alreadyExempt = await db.LetterExemptions
+            .AnyAsync(e => e.StudentId == studentId
+                           && e.PlannedDeliveryId == plannedDeliveryId
+                           && !e.IsRevoked);
+
+        if (alreadyExempt)
+        {
+            return false;
+        }
+
+        db.LetterExemptions.Add(new LetterExemption
+        {
+            StudentId = studentId,
+            PlannedDeliveryId = plannedDeliveryId,
+            ChapterId = chapterId,
+            Reason = reason,
+            CreatedByFonbecUserId = createdByUserId,
+            CreatedOnUtc = createdOnUtc,
+            IsRevoked = false,
+        });
+
+        await db.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<bool> RevokeExemptionAsync(int studentId, int plannedDeliveryId, int revokedByUserId, DateTime revokedOnUtc)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var exemption = await db.LetterExemptions
+            .FirstOrDefaultAsync(e => e.StudentId == studentId
+                                      && e.PlannedDeliveryId == plannedDeliveryId
+                                      && !e.IsRevoked);
+
+        if (exemption is null)
+        {
+            return false;
+        }
+
+        exemption.IsRevoked = true;
+        exemption.RevokedByFonbecUserId = revokedByUserId;
+        exemption.RevokedOnUtc = revokedOnUtc;
+
+        await db.SaveChangesAsync();
+        return true;
     }
 }

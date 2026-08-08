@@ -1,0 +1,153 @@
+@attribute [Route(NavRoutes.LetterPlanProgressRouteTemplate)]
+@attribute [Authorize(Policy = nameof(LetterPlanProgress))]
+@inherits AuthenticationRequiredComponentBase
+
+@using Fonbec.Web.Logic.Models.LetterPlanProgress
+
+<PageHeader Title="@_pageTitle" />
+
+@if (_accessDenied)
+{
+    <MudAlert Severity="Severity.Error" Class="mt-4">
+        No tenés acceso a esta planificación.
+    </MudAlert>
+}
+else if (_viewModel is not null)
+{
+    <MudStack StretchItems="StretchItems.Middle" Row="true" Class="mt-2">
+        <MudButton Href="@NavRoutes.PlannedDeliveries"
+                   StartIcon="@Icons.Material.Filled.ArrowBack"
+                   Variant="Variant.Text"
+                   Color="Color.Default">
+            Volver
+        </MudButton>
+
+        <MudSpacer />
+
+        <MudSwitch @bind-Value="_sortByLastName" LabelPlacement="Placement.Left">
+            @(_sortByLastName ? "Apellido, Nombre" : "Nombre Apellido")
+        </MudSwitch>
+    </MudStack>
+
+    <LoadingIndicator Loading="Loading"
+                      If="!_viewModel.Rows.Any()"
+                      ThenDisplay="@EmptyGridMessage" />
+
+    @if (_viewModel.Rows.Any())
+    {
+        <MudDataGrid T="LetterPlanProgressRowViewModel"
+                     Items="_viewModel.Rows"
+                     Dense="true" Hover="true" Striped="true" Bordered="true"
+                     ReadOnly="true"
+                     QuickFilter="FilterRows"
+                     Filterable="true"
+                     FilterMode="DataGridFilterMode.ColumnFilterRow"
+                     FilterCaseSensitivity="DataGridFilterCaseSensitivity.CaseInsensitive"
+                     SortMode="SortMode.Multiple"
+                     Class="mt-4">
+            <ToolBarContent>
+                <MudTextField T="string" @bind-Value="_searchString"
+                              Placeholder="Buscar becario…"
+                              Clearable="true" Immediate="true"
+                              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
+            </ToolBarContent>
+            <Columns>
+                <PropertyColumn Property="@(vm => _sortByLastName ? vm.StudentLastName : vm.StudentFirstName)" Title="Becario">
+                    <CellTemplate>
+                        <MudText>
+                            <MudText Color="Color.Primary" HtmlTag="span">
+                                <strong>@StudentFullName(context.Item)</strong>
+                            </MudText>
+                            @if (!string.IsNullOrWhiteSpace(context.Item.StudentNickName))
+                            {
+                                <MudText HtmlTag="span">
+                                    (<em>@context.Item.StudentNickName</em>)
+                                </MudText>
+                            }
+                        </MudText>
+                    </CellTemplate>
+                </PropertyColumn>
+                <PropertyColumn Property="vm => vm.FacilitatorFullName" Title="Mediador">
+                    <FilterTemplate>
+                        <FilterByList T="LetterPlanProgressRowViewModel"
+                                      AllItems="_allFacilitators"
+                                      FilterContext="context"
+                                      FilterBy="@(vm => vm.FacilitatorFullName)" />
+                    </FilterTemplate>
+                </PropertyColumn>
+                <PropertyColumn Property="vm => vm.RecipientName" Title="Destinatario" Sortable="true">
+                    <CellTemplate>
+                        <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Default"
+                                 Icon="@(context.Item.IsCompanySponsorship ? Icons.Material.Filled.Factory : Icons.Material.Filled.Person)">
+                            @context.Item.RecipientName
+                        </MudChip>
+                    </CellTemplate>
+                </PropertyColumn>
+                <PropertyColumn Property="vm => vm.StatusLabel" Title="Estado">
+                    <CellTemplate>
+                        @{
+                            var row = context.Item;
+                            var chipColor = ChipColorForStatus(row.Status);
+                        }
+                        <MudTooltip Text="@StatusTooltip(row)" Arrow="true">
+                            <MudChip T="string" Size="Size.Small" Color="@chipColor" Variant="Variant.Filled">
+                                @row.StatusLabel
+                            </MudChip>
+                        </MudTooltip>
+                        @if (row.Status == LetterPlanDisplayStatus.Rejected && !string.IsNullOrWhiteSpace(row.RejectionReason))
+                        {
+                            <MudText Typo="Typo.caption" Class="mt-1">@row.RejectionReason</MudText>
+                        }
+                    </CellTemplate>
+                    <FilterTemplate>
+                        <FilterByList T="LetterPlanProgressRowViewModel"
+                                      AllItems="_allStatuses"
+                                      FilterContext="context"
+                                      FilterBy="@(vm => vm.StatusLabel)" />
+                    </FilterTemplate>
+                </PropertyColumn>
+                @if (!_viewModel.IsPlanCompleted)
+                {
+                    <TemplateColumn Title="Acciones" Filterable="false" Sortable="false">
+                        <CellTemplate>
+                            @if (LetterPendingUpload(context.Item))
+                            {
+                                <MudTooltip Text="Subir carta" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
+                                    <MudIconButton Icon="@Icons.Material.Outlined.FileUpload"
+                                                   Size="Size.Small"
+                                                   Color="Color.Secondary"
+                                                   Href="@UploadUrl(context.Item)" />
+                                </MudTooltip>
+                            }
+
+                            @if (context.Item.IsStudentExempt)
+                            {
+                                @if (context.Item.IsFirstRowForStudent)
+                                {
+                                    <MudTooltip Text="Quitar exención" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
+                                        <MudIconButton Icon="@Icons.Material.Filled.LockOpen"
+                                                       Size="Size.Small"
+                                                       Color="Color.Primary"
+                                                       OnClick="@(() => RevokeExemptionAsync(context.Item.StudentId))" />
+                                    </MudTooltip>
+                                }
+                            }
+                            else if (LetterPendingUpload(context.Item))
+                            {
+                                <MudTooltip Text="Eximir de carta" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Block"
+                                                   Size="Size.Small"
+                                                   Color="Color.Primary"
+                                                   OnClick="@(() => ExemptStudentAsync(context.Item.StudentId))" />
+                                </MudTooltip>
+                            }
+                        </CellTemplate>
+                    </TemplateColumn>
+                }
+            </Columns>
+            <PagerContent>
+                <MudDataGridPager T="LetterPlanProgressRowViewModel" RowsPerPageString="Filas por página:" InfoFormat="{first_item}-{last_item} of {all_items}" />
+            </PagerContent>
+        </MudDataGrid>
+    }
+}

@@ -114,4 +114,34 @@ public class StringExtensionMethodsTests
         // Assert
         result.Should().Be(expected);
     }
+
+    [Theory]
+    [InlineData(null)]
+    [InlineData("")]
+    [InlineData("   ")]
+    [InlineData("\t\r\n ")]
+    public void CapitalizeFirstLetter_ReturnsEmpty_WhenNullOrWhitespace(string? value)
+    {
+        // Act
+        var result = value.CapitalizeFirstLetter();
+
+        // Assert
+        result.Should().BeEmpty();
+    }
+
+    [Theory]
+    [InlineData("marzo de 2026", "Marzo de 2026")]
+    [InlineData(" Marzo de 2026 ", "Marzo de 2026")]
+    [InlineData("MARZO", "MARZO")]
+    [InlineData("ábc", "Ábc")]
+    [InlineData("ñandú", "Ñandú")]
+    [InlineData("a", "A")]
+    public void CapitalizeFirstLetter_CapitalizesFirstLetter_AndTrims(string value, string expected)
+    {
+        // Act
+        var result = value.CapitalizeFirstLetter();
+
+        // Assert
+        result.Should().Be(expected);
+    }
 }

@@ -5,6 +5,8 @@ namespace Fonbec.Web.Logic.ExtensionMethods;
 
 public static class StringExtensionMethods
 {
+    private static readonly CultureInfo EsAr = CultureInfo.GetCultureInfo("es-AR");
+
     public static bool ContainsIgnoringAccents(this string source, string subString)
     {
         const CompareOptions compareOptions = CompareOptions.IgnoreCase
@@ -66,5 +68,17 @@ public static class StringExtensionMethods
         return string.IsNullOrWhiteSpace(value)
             ? null
             : value.Trim();
+    }
+
+    public static string CapitalizeFirstLetter(this string? value)
+    {
+        if (string.IsNullOrWhiteSpace(value))
+        {
+            return string.Empty;
+        }
+
+        value = value.Trim();
+
+        return char.ToUpper(value[0], EsAr) + value[1..];
     }
 }

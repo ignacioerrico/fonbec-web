@@ -1,0 +1,92 @@
+.achievement-card {
+    position: relative;
+    width: 100%;
+    max-width: 280px;
+    overflow: hidden;
+    border-radius: 1rem;
+    text-align: center;
+    background: linear-gradient(
+        165deg,
+        rgba(255, 193, 7, 0.12) 0%,
+        rgba(255, 255, 255, 0.95) 42%,
+        rgba(76, 175, 80, 0.08) 100%
+    );
+    box-shadow: var(--mud-elevation-4);
+}
+
+.achievement-card ::deep .achievement-card__surface {
+    position: relative;
+    z-index: 1;
+    background: transparent !important;
+    box-shadow: none !important;
+}
+
+.achievement-trophy-wrap {
+    position: relative;
+    z-index: 1;
+    animation: trophy-pop 0.7s cubic-bezier(0.2, 1.4, 0.3, 1);
+}
+
+.achievement-card ::deep .achievement-trophy {
+    font-size: 3rem !important;
+    width: 3rem !important;
+    height: 3rem !important;
+    filter: drop-shadow(0 3px 8px rgba(255, 193, 7, 0.4));
+}
+
+.achievement-plan-label,
+.achievement-count {
+    position: relative;
+    z-index: 1;
+}
+
+.achievement-plan-label {
+    font-weight: 600;
+    animation: content-fade-up 0.55s ease-out 0.15s;
+}
+
+.achievement-count {
+    font-weight: 700;
+    line-height: 1.1;
+    color: var(--mud-palette-primary);
+    animation: content-fade-up 0.55s ease-out 0.2s;
+}
+
+@keyframes trophy-pop {
+    0% {
+        transform: scale(0.4) rotate(-12deg);
+        opacity: 0;
+    }
+
+    60% {
+        transform: scale(1.12) rotate(4deg);
+        opacity: 1;
+    }
+
+    100% {
+        transform: scale(1) rotate(0deg);
+        opacity: 1;
+    }
+}
+
+@keyframes content-fade-up {
+    from {
+        transform: translateY(8px);
+        opacity: 0;
+    }
+
+    to {
+        transform: translateY(0);
+        opacity: 1;
+    }
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .achievement-trophy-wrap,
+    .achievement-plan-label,
+    .achievement-count {
+        animation: none !important;
+        opacity: 1;
+        transform: none;
+    }
+}

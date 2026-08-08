@@ -10,6 +10,8 @@ public class PlannedDeliveriesListViewModel : AuditableViewModel, IDetectChanges
     public int PlannedDeliveryId { get; init; }
     public DateTime PlannedDeliveryStartsOn { get; set; }
     public bool IsPlannedDeliveryCompleted { get; set; }
+    public int LettersDelivered { get; set; }
+    public int ExemptStudents { get; set; }
 
     public string PlannedDeliveryStartsOnText => PlannedDeliveryStartsOn.ToString(@"MMMM \d\e yyyy", new CultureInfo("es-AR"));
 
@@ -27,6 +29,8 @@ public class PlannedDeliveriesListViewModelMappingDefinitions : IRegister
         config.NewConfig<AllPlannedDeliveriesDataModel, PlannedDeliveriesListViewModel>()
             .Map(dest => dest.PlannedDeliveryId, src => src.PlannedDeliveryId)
             .Map(dest => dest.PlannedDeliveryStartsOn, src => src.PlannedDeliveryStartsOn)
-            .Map(dest => dest.IsPlannedDeliveryCompleted, src => src.IsPlannedDeliveryCompleted);
+            .Map(dest => dest.IsPlannedDeliveryCompleted, src => src.IsPlannedDeliveryCompleted)
+            .Map(dest => dest.LettersDelivered, src => src.LettersDelivered)
+            .Map(dest => dest.ExemptStudents, src => src.ExemptStudents);
     }
 }

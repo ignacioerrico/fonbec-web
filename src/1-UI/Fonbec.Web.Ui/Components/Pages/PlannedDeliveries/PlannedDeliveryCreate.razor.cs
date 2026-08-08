@@ -36,12 +36,21 @@ public partial class PlannedDeliveryCreate : AuthenticationRequiredComponentBase
         {
             Snackbar.Add("Esta página requiere un usuario que pertenezca a una filial.", Severity.Error);
             NavigationManager.NavigateTo(NavRoutes.PlannedDeliveries);
+            return;
         }
-
-        var currentMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
 
         Loading = true;
 
+        var currentPlan = await PlannedDeliveryService.GetCurrentPlanAsync(FonbecClaim.ChapterId.Value);
+        if (currentPlan is not null)
+        {
+            Loading = false;
+            Snackbar.Add(Logic.Services.PlannedDeliveryService.IncompletePlanAlreadyExists, Severity.Warning);
+            NavigationManager.NavigateTo(NavRoutes.PlannedDeliveries);
+            return;
+        }
+
+        var currentMonth = new DateTime(DateTime.Today.Year, DateTime.Today.Month, 1);
         _existingPlansDates = await PlannedDeliveryService.GetPlannedDeliveryDatesAsync(FonbecClaim.ChapterId, from: currentMonth);
 
         Loading = false;
@@ -84,6 +93,15 @@ public partial class PlannedDeliveryCreate : AuthenticationRequiredComponentBase
         var result = await PlannedDeliveryService.CreatePlannedDeliveryAsync(createPlannedDeliveryInputModel);
 
         _saving = false;
+
+        if (!result.IsSuccess)
+        {
+            var message = result.Errors is { Count: > 0 }
+                ? result.Errors[0]
+                : "No se pudo crear la planificación.";
+            Snackbar.Add(message, Severity.Error);
+            return;
+        }
 
         if (!result.AnyAffectedRows)
         {

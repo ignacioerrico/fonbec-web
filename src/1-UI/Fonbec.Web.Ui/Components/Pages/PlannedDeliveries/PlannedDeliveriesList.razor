@@ -2,90 +2,165 @@
 @attribute [Authorize(Policy = nameof(PlannedDeliveriesList))]
 @inherits AuthenticationRequiredComponentBase
 
+@using Fonbec.Web.Logic.ExtensionMethods
 @using Fonbec.Web.Logic.Models.PlannedDeliveries
 
-<PageHeader Title="Planificaciones de envíos" />
+<PageHeader Title="Cartas" />
 
-<AuthorizeView Policy="@nameof(PlannedDeliveryCreate)">
-    <MudTooltip Text="Crear planificación"
-                Arrow="true" Placement="Placement.Right"
-                Color="Color.Primary">
-        <MudFab Href="@NavRoutes.PlannnedDeliveryCreate"
-                StartIcon="@Icons.Material.Filled.Add"
-                Color="Color.Primary" />
-    </MudTooltip>
-</AuthorizeView>
-
-<LoadingIndicator Loading="Loading"
-                  If="!_viewModels.Any()"
-                  ThenDisplay="No hay planificaciones de envíos." />
-
-@if (_viewModels.Any())
+@if (_canCreatePlan)
 {
-    <MudDataGrid T="PlannedDeliveriesListViewModel"
-                 Items="_viewModels"
-                 Dense="true" Hover="true" Striped="true" Bordered="true"
-                 ReadOnly="false"
-                 CommittedItemChanges="@(async viewModel => await CommittedItemChangesAsync(viewModel))"
-                 EditMode="DataGridEditMode.Form"
-                 EditTrigger="DataGridEditTrigger.Manual"
-                 Filterable="true"
-                 FilterMode="DataGridFilterMode.Simple"
-                 FilterCaseSensitivity="DataGridFilterCaseSensitivity.CaseInsensitive"
-                 StartedEditingItem="StartedEditingItem"
-                 SortMode="SortMode.Multiple"
-                 Class="mt-4">
-        <Columns>
-            <PropertyColumn Property="vm => vm.PlannedDeliveryStartsOn"
-                            Title="Mes y Año"
-                            InitialDirection="SortDirection.Descending"
-                            Filterable="false">
-                <CellTemplate>
-                    <AuditableItemDisplay Id="@context.Item.PlannedDeliveryId"
-                                          ItemName="@context.Item.PlannedDeliveryStartsOnText"
-                                          IsActive="true"
-                                          AuditableViewModel="@context.Item" />
-                </CellTemplate>
-                <EditTemplate>
-                    <MudDatePicker Label="Mes y Año"
-                                   @bind-Date="@_plannedDeliveryStartsOn"
-                                   MinDate="@_minDate"
-                                   OpenTo="OpenTo.Month"
-                                   FixDay="1"
-                                   DateFormat="MMMM \d\e yyyy"
-                                   TitleDateFormat="MMM yyyy"
-                                   Culture="@System.Globalization.CultureInfo.GetCultureInfo("es-AR")"
-                                   Required="true" RequiredError="Se debe especificar el mes y el año de recolección de cartas."
-                                   Validation="@((Func<DateTime?, string>)ValidatePlanIsNotDuplicate)"
-                                   Variant="Variant.Outlined"
-                                   Margin="Margin.Dense" />
-                </EditTemplate>
-            </PropertyColumn>
+    <AuthorizeView Policy="@nameof(PlannedDeliveryCreate)">
+        <MudTooltip Text="Crear campaña"
+                    Arrow="true" Placement="Placement.Right"
+                    Color="Color.Primary">
+            <MudFab Href="@NavRoutes.PlannnedDeliveryCreate"
+                    StartIcon="@Icons.Material.Filled.Add"
+                    Color="Color.Primary" />
+        </MudTooltip>
+    </AuthorizeView>
+}
 
-            <PropertyColumn Property="vm => vm.PlannedDeliveryStatusText" Title="Estado">
-                <CellTemplate>
-                    @context.Item.PlannedDeliveryStatusText
-                    @(context.Item.IsPlannedDeliveryCompleted ? CheckMarkEmoji : NineOClockEmoji )
-                </CellTemplate>
-                <EditTemplate>
-                </EditTemplate>
-            </PropertyColumn>
+<LoadingIndicator Loading="Loading" />
 
-            <PropertyColumn Property="vm => vm.Notes" Hidden="true" />
+@if (!Loading)
+{
+    @if (_currentPlan is null)
+    {
+        @if (_latestCompletedProgress is not null && _latestCompletedPlan is not null)
+        {
+            <div class="plan-highlight @(_showPreviousPlans ? "plan-highlight--faded" : null)">
+                <LetterPlanAchievement PlanLabel="@_latestCompletedPlan.PlannedDeliveryStartsOnText"
+                                       LettersDelivered="@_latestCompletedProgress.Summary.Approved"
+                                       ExemptStudents="@LatestCompletedExemptStudents" />
+            </div>
+        }
+        else
+        {
+            <MudText Typo="Typo.h6" Class="mt-4">No hay una campaña activa.</MudText>
+        }
+    }
+    else if (_currentProgress is not null)
+    {
+        <LetterPlanProgressSummary Summary="_currentProgress.Summary"
+                                   Title="@_currentPlan.PlannedDeliveryStartsOnText" />
 
-            <TemplateColumn Title="Acciones" Filterable="false" Sortable="false">
-                <CellTemplate>
-                    <AuthorizeView Policy="@nameof(PlannedDeliveryCreate)" Context="innerContext">
-                        <MudTooltip Text="Editar" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
-                            <MudIconButton OnClick="@context.Actions.StartEditingItemAsync"
-                                           Icon="@Icons.Material.Outlined.Edit" Size="@Size.Small" Color="Color.Primary" />
-                        </MudTooltip>
-                    </AuthorizeView>
-                </CellTemplate>
-            </TemplateColumn>
-        </Columns>
-        <PagerContent>
-            <MudDataGridPager T="PlannedDeliveriesListViewModel" RowsPerPageString="Filas por página:" InfoFormat="{first_item}-{last_item} of {all_items}" />
-        </PagerContent>
-    </MudDataGrid>
+        <MudStack Row="true" Spacing="2" Class="mt-4" Wrap="Wrap.Wrap">
+            <MudButton Variant="Variant.Filled" Color="Color.Primary"
+                       StartIcon="@Icons.Material.Outlined.Assessment"
+                       Href="@NavRoutes.LetterPlanProgress(_currentPlan.PlannedDeliveryId)">
+                Ver detalle
+            </MudButton>
+        </MudStack>
+
+        @if (_latestCompletedProgress is not null && _latestCompletedPlan is not null)
+        {
+            <div class="plan-highlight @(_showPreviousPlans ? "plan-highlight--faded" : null)">
+                <MudAlert Severity="Severity.Info" Class="mt-4" Dense="true" Variant="Variant.Outlined">
+                    @PreviousPlanInfoMessage
+                </MudAlert>
+            </div>
+        }
+    }
+
+    <div>
+        <MudButton Variant="Variant.Outlined" Color="Color.Primary" Class="mt-4"
+                   StartIcon="@(_showPreviousPlans ? Icons.Material.Filled.ExpandLess : Icons.Material.Filled.History)"
+                   OnClick="TogglePreviousPlansAsync"
+                   Disabled="_loadingPreviousPlans">
+            @if (_loadingPreviousPlans)
+            {
+                <MudProgressCircular Size="Size.Small" Indeterminate="true" Class="me-2" />
+            }
+            Campañas anteriores
+        </MudButton>
+    </div>
+
+    @if (_showPreviousPlans)
+    {
+        @if (!_loadingPreviousPlans && !_previousPlans.Any())
+        {
+            <MudText Typo="Typo.body1" Class="mt-4">No hay campañas anteriores.</MudText>
+        }
+        else if (_previousPlans.Any())
+        {
+            <MudDataGrid T="PlannedDeliveriesListViewModel"
+                         Items="_previousPlans"
+                         Dense="true" Hover="true" Striped="true" Bordered="true"
+                         ReadOnly="false"
+                         CommittedItemChanges="@(async viewModel => await CommittedItemChangesAsync(viewModel))"
+                         EditMode="DataGridEditMode.Form"
+                         EditTrigger="DataGridEditTrigger.Manual"
+                         Filterable="true"
+                         FilterMode="DataGridFilterMode.Simple"
+                         FilterCaseSensitivity="DataGridFilterCaseSensitivity.CaseInsensitive"
+                         StartedEditingItem="StartedEditingItem"
+                         SortMode="SortMode.Multiple"
+                         Class="mt-4">
+                <Columns>
+                    <PropertyColumn Property="vm => vm.PlannedDeliveryStartsOn"
+                                    Title="Mes y Año"
+                                    InitialDirection="SortDirection.Descending"
+                                    Filterable="false">
+                        <CellTemplate>
+                            <AuditableItemDisplay Id="@context.Item.PlannedDeliveryId"
+                                                  ItemName="@context.Item.PlannedDeliveryStartsOnText.CapitalizeFirstLetter()"
+                                                  IsActive="true"
+                                                  AuditableViewModel="@context.Item" />
+                        </CellTemplate>
+                        <EditTemplate>
+                            <MudDatePicker Label="Mes y Año"
+                                           @bind-Date="@_plannedDeliveryStartsOn"
+                                           MinDate="@_minDate"
+                                           OpenTo="OpenTo.Month"
+                                           FixDay="1"
+                                           DateFormat="MMMM \d\e yyyy"
+                                           TitleDateFormat="MMM yyyy"
+                                           Culture="@System.Globalization.CultureInfo.GetCultureInfo("es-AR")"
+                                           Required="true" RequiredError="Se debe especificar el mes y el año de recolección de cartas."
+                                           Validation="@((Func<DateTime?, string>)ValidatePlanIsNotDuplicate)"
+                                           Variant="Variant.Outlined"
+                                           Margin="Margin.Dense" />
+                        </EditTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="vm => vm.PlannedDeliveryStatusText" Title="Estado">
+                        <CellTemplate>
+                            @context.Item.PlannedDeliveryStatusText
+                            @CheckMarkEmoji
+                        </CellTemplate>
+                        <EditTemplate>
+                        </EditTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="vm => vm.LettersDelivered" Title="Cartas" Sortable="true" Filterable="false">
+                        <CellTemplate>
+                            <span>@FormatLettersCell(context.Item)</span>
+                        </CellTemplate>
+                        <EditTemplate>
+                        </EditTemplate>
+                    </PropertyColumn>
+
+                    <PropertyColumn Property="vm => vm.Notes" Hidden="true" />
+
+                    <TemplateColumn Title="Acciones" Filterable="false" Sortable="false">
+                        <CellTemplate>
+                            <AuthorizeView Policy="@nameof(PlannedDeliveryCreate)" Context="innerContext">
+                                <MudTooltip Text="Editar" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
+                                    <MudIconButton OnClick="@context.Actions.StartEditingItemAsync"
+                                                   Icon="@Icons.Material.Outlined.Edit" Size="@Size.Small" Color="Color.Primary" />
+                                </MudTooltip>
+                            </AuthorizeView>
+                            <MudTooltip Text="Ver detalle" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
+                                <MudIconButton Href="@NavRoutes.LetterPlanProgress(context.Item.PlannedDeliveryId)"
+                                               Icon="@Icons.Material.Outlined.Assessment" Size="@Size.Small" Color="Color.Primary" />
+                            </MudTooltip>
+                        </CellTemplate>
+                    </TemplateColumn>
+                </Columns>
+                <PagerContent>
+                    <MudDataGridPager T="PlannedDeliveriesListViewModel" RowsPerPageString="Filas por página:" InfoFormat="{first_item}-{last_item} of {all_items}" />
+                </PagerContent>
+            </MudDataGrid>
+        }
+    }
 }

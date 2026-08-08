@@ -18,6 +18,10 @@ public static class NavRoutes
 
     public const string PlannnedDeliveryCreate = $"{PlannedDeliveries}/alta";
 
+    public static string LetterPlanProgress(int planId) => $"{PlannedDeliveries}/{planId}/cartas";
+
+    public const string LetterPlanProgressRouteTemplate = $"{PlannedDeliveries}/{{PlanId:int}}/cartas";
+
     public const string Students = "/becarios";
 
     public const string StudentCreate = $"{Students}/alta";
@@ -62,7 +66,12 @@ public static class NavRoutes
     public static string ManagerUploadDocument(int studentId) =>
         $"{Students}/{studentId}/subir";
 
-    public static string ManagerUploadLetter(int studentId, int planId, int? sponsorId, int? companyId)
+    public static string ManagerUploadLetter(
+        int studentId,
+        int planId,
+        int? sponsorId,
+        int? companyId,
+        string? returnUrl = null)
     {
         var query = $"tipo=carta&planId={planId}";
         if (sponsorId.HasValue)
@@ -73,6 +82,11 @@ public static class NavRoutes
         if (companyId.HasValue)
         {
             query += $"&empresaId={companyId.Value}";
+        }
+
+        if (!string.IsNullOrWhiteSpace(returnUrl))
+        {
+            query += $"&volver={Uri.EscapeDataString(returnUrl)}";
         }
 
         return $"{ManagerUploadDocument(studentId)}?{query}";
