@@ -1,0 +1,91 @@
+@attribute [Route(NavRoutes.ReviewDocumentRouteTemplate)]
+@attribute [Authorize(Policy = nameof(ReviewDocument))]
+@inherits AuthenticationRequiredComponentBase
+
+@using Fonbec.Web.DataAccess.Entities.Enums
+@using Fonbec.Web.Ui.Components.NonPages.Review
+
+<LoadingIndicator Loading="Loading" />
+
+@if (_workspace is not null)
+{
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4 flex-wrap">
+        <MudText Typo="Typo.h4">Revisar documento</MudText>
+        <MudChip T="string" Color="Color.Primary" Variant="Variant.Filled">
+            Tipo: @DocumentTypeLabel(_workspace.DocumentType)
+        </MudChip>
+        <MudSpacer />
+        <ReviewLockCountdown ExpiresAtUtc="_workspace.LockExpiresAtUtc" OnExpired="OnCountdownExpired" />
+    </MudStack>
+
+    <MudPaper Class="pa-4 mb-4" Elevation="1">
+        <MudText Typo="Typo.h6" Class="mb-2">Documento</MudText>
+
+        @switch (_workspace.FileKind)
+        {
+            case FileKind.Text:
+                <MudText Style="white-space: pre-wrap;">@_workspace.TextContent</MudText>
+                break;
+
+            case FileKind.YouTube when !string.IsNullOrWhiteSpace(_workspace.YouTubeVideoId):
+                <div class="mud-width-full" style="max-width: 640px;">
+                    <iframe style="width: 100%; height: 360px; border: 0;"
+                            src="@($"https://www.youtube.com/embed/{_workspace.YouTubeVideoId}")"
+                            title="Video del documento"
+                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                            allowfullscreen>
+                    </iframe>
+                </div>
+                break;
+
+            case FileKind.Blob:
+                <MudStack Row="true" Spacing="2" Class="flex-wrap">
+                    @foreach (var pageNumber in Enumerable.Range(1, Math.Max(_workspace.PageCount, 1)))
+                    {
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Primary"
+                                   StartIcon="@Icons.Material.Filled.Download"
+                                   Href="@NavRoutes.ReviewDocumentPage(_workspace.DocumentId, pageNumber)"
+                                   Target="_blank">
+                            @(_workspace.PageCount > 1 ? $"Descargar / Ver (página {pageNumber})" : "Descargar / Ver")
+                        </MudButton>
+                    }
+                </MudStack>
+                break;
+
+            default:
+                <MudText Color="Color.Error">Contenido no disponible.</MudText>
+                break;
+        }
+
+        @if (!string.IsNullOrWhiteSpace(_workspace.UploaderNotes))
+        {
+            <MudDivider Class="my-3" />
+            <MudText Typo="Typo.subtitle2">Notas del mediador</MudText>
+            <MudText Style="white-space: pre-wrap;">@_workspace.UploaderNotes</MudText>
+        }
+    </MudPaper>
+
+    @switch (_workspace.DocumentType)
+    {
+        case DocumentType.Letter:
+            <PlaceholderReviewPanel DocumentType="DocumentType.Letter" />
+            break;
+        case DocumentType.ReportCard:
+            <PlaceholderReviewPanel DocumentType="DocumentType.ReportCard" />
+            break;
+        default:
+            <PlaceholderReviewPanel DocumentType="DocumentType.Other" />
+            break;
+    }
+
+    <MudStack Row="true" Class="mt-2">
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Default"
+                   StartIcon="@Icons.Material.Filled.LockOpen"
+                   Disabled="_expired"
+                   OnClick="ReleaseAsync">
+            Liberar
+        </MudButton>
+    </MudStack>
+}

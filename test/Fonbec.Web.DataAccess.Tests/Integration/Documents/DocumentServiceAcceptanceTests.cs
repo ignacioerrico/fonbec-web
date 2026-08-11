@@ -805,6 +805,88 @@ public class DocumentServiceAcceptanceTests
     }
 
     [Fact]
+    public async Task Scenario32b_TakeNextForReview_WithActiveLock_ResumesSameDocumentWithoutResettingTimer()
+    {
+        await _fixture.InitializeAsync();
+
+        // Two review-ready documents.
+        await _fixture.DocumentService.CreateReportCardAsync(new CreateReportCardInputModel(
+            _fixture.StudentId, _fixture.UploaderContext,
+            FileKind.Blob, Period: new DateOnly(2026, 5, 1), Description: "Primero",
+            Blob: new CreateBlobPathInputModel("first.pdf", "application/pdf")));
+        await _fixture.DocumentService.CreateReportCardAsync(new CreateReportCardInputModel(
+            _fixture.StudentId, _fixture.UploaderContext,
+            FileKind.Blob, Period: new DateOnly(2026, 6, 1), Description: "Segundo",
+            Blob: new CreateBlobPathInputModel("second.pdf", "application/pdf")));
+
+        // Reviewer takes the first document.
+        var first = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer");
+        first.Should().NotBeNull();
+        var lockedAtAfterFirstTake = (await _fixture.GetQueueItemAsync(first!.DocumentId)).ReviewLockedAt;
+
+        // Taking "next" again while still holding a valid lock resumes the SAME document — a reviewer
+        // may only hold one at a time — and must not take the second document.
+        var resumed = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer");
+        resumed.Should().NotBeNull();
+        resumed!.DocumentId.Should().Be(first.DocumentId);
+
+        var queueItem = await _fixture.GetQueueItemAsync(first.DocumentId);
+        // The original lock timestamp is preserved (the countdown continues; it is not reset)...
+        queueItem.ReviewLockedAt.Should().Be(lockedAtAfterFirstTake);
+        // ...and resuming does not count as a fresh dequeue.
+        queueItem.DequeueCount.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task Scenario32c_GetActiveReviewLockedDocumentId_ReturnsValidLock_NullAfterExpiry()
+    {
+        await _fixture.InitializeAsync();
+
+        await _fixture.DocumentService.CreateReportCardAsync(new CreateReportCardInputModel(
+            _fixture.StudentId, _fixture.UploaderContext,
+            FileKind.Blob, Period: new DateOnly(2026, 5, 1), Description: "Boletín",
+            Blob: new CreateBlobPathInputModel("a.pdf", "application/pdf")));
+
+        var locked = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer");
+        locked.Should().NotBeNull();
+
+        var active = await _fixture.DocumentRepository.GetActiveReviewLockedDocumentIdAsync(_fixture.ReviewerId);
+        active.Should().Be(locked!.DocumentId);
+
+        // Once the lock has expired it is no longer considered an active hold.
+        await _fixture.ExpireReviewLockAsync(locked.DocumentId, TimeSpan.FromMinutes(41));
+
+        var afterExpiry = await _fixture.DocumentRepository.GetActiveReviewLockedDocumentIdAsync(_fixture.ReviewerId);
+        afterExpiry.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Scenario32d_ReleaseExpiredReviewLocks_FreesAbandonedDocument()
+    {
+        await _fixture.InitializeAsync();
+
+        await _fixture.DocumentService.CreateReportCardAsync(new CreateReportCardInputModel(
+            _fixture.StudentId, _fixture.UploaderContext,
+            FileKind.Blob, Period: new DateOnly(2026, 5, 1), Description: "Boletín",
+            Blob: new CreateBlobPathInputModel("a.pdf", "application/pdf")));
+
+        var locked = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer");
+        locked.Should().NotBeNull();
+
+        // The reviewer closes the browser and never returns; the lock ages past the timeout.
+        await _fixture.ExpireReviewLockAsync(locked!.DocumentId, TimeSpan.FromMinutes(41));
+
+        await _fixture.DocumentRepository.ReleaseExpiredReviewLocksAsync();
+
+        var queueItem = await _fixture.GetQueueItemAsync(locked.DocumentId);
+        queueItem.ReviewLockedById.Should().BeNull();
+        queueItem.ReviewLockedAt.Should().BeNull();
+
+        var doc = await _fixture.GetDocumentAsync(locked.DocumentId);
+        doc.Status.Should().Be(DocumentStatus.Pending);
+    }
+
+    [Fact]
     public async Task Scenario33_TakeNextForDigitalImprovement_ReTakesDocumentAfterLockExpires()
     {
         await _fixture.InitializeAsync();

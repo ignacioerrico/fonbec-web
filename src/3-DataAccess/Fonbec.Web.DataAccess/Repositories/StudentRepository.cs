@@ -1,4 +1,5 @@
-﻿using Fonbec.Web.DataAccess.DataModels.Students;
+﻿using Fonbec.Web.DataAccess.DataModels.Review;
+using Fonbec.Web.DataAccess.DataModels.Students;
 using Fonbec.Web.DataAccess.DataModels.Students.Input;
 using Fonbec.Web.DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -11,6 +12,15 @@ public interface IStudentRepository
     Task<int?> GetStudentChapterIdAsync(int studentId);
     Task<int> CreateStudentAsync(CreateStudentInputDataModel inputDataModel);
     Task<int> UpdateStudentAsync(UpdateStudentInputDataModel dataModel);
+
+    /// <summary>Get a single student's name, or <c>null</c> when the student does not exist.</summary>
+    Task<CandidateNameDataModel?> GetStudentNameAsync(int studentId);
+
+    /// <summary>
+    /// Get up to <paramref name="count"/> random student names, excluding <paramref name="excludeStudentId"/>.
+    /// Sampling is performed server-side (SQL Server <c>NEWID()</c>) and is not chapter-restricted.
+    /// </summary>
+    Task<List<CandidateNameDataModel>> GetRandomStudentNamesAsync(int excludeStudentId, int count);
 }
 
 public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : IStudentRepository
@@ -139,5 +149,44 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
 
         db.Students.Update(studentDb);
         return await db.SaveChangesAsync();
+    }
+
+    public async Task<CandidateNameDataModel?> GetStudentNameAsync(int studentId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        return await db.Students
+            .AsNoTracking()
+            .Where(s => s.Id == studentId)
+            .Select(s => new CandidateNameDataModel
+            {
+                Id = s.Id,
+                FirstName = s.FirstName,
+                LastName = s.LastName,
+            })
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<List<CandidateNameDataModel>> GetRandomStudentNamesAsync(int excludeStudentId, int count)
+    {
+        if (count <= 0)
+        {
+            return [];
+        }
+
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        return await db.Students
+            .AsNoTracking()
+            .Where(s => s.Id != excludeStudentId && s.IsActive)
+            .OrderBy(_ => Guid.NewGuid())
+            .Take(count)
+            .Select(s => new CandidateNameDataModel
+            {
+                Id = s.Id,
+                FirstName = s.FirstName,
+                LastName = s.LastName,
+            })
+            .ToListAsync();
     }
 }

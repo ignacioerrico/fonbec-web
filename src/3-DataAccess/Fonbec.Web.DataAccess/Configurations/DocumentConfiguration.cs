@@ -68,6 +68,9 @@ internal class DocumentConfiguration : IEntityTypeConfiguration<Document>
 
         builder.HasIndex(d => new { d.Status, d.UploadedOn });
 
+        // Serves the server-side review-progress aggregation (GROUP BY DocumentType, Status).
+        builder.HasIndex(d => new { d.DocumentType, d.Status });
+
         builder.ToTable(t =>
         {
             t.HasCheckConstraint(
@@ -128,6 +131,9 @@ internal class LetterConfiguration : IEntityTypeConfiguration<Letter>
         builder.HasIndex(l => new { l.StudentId, l.CompanyId, l.PlanId })
             .IsUnique()
             .HasFilter($"[{nameof(Document.DocumentType)}] = {(byte)DocumentType.Letter} AND [{nameof(Document.Status)}] <> {(byte)DocumentStatus.Rejected} AND [{nameof(Letter.CompanyId)}] IS NOT NULL");
+
+        // Serves per-plan letter-progress aggregation (WHERE PlanId [AND ChapterId] GROUP BY Status).
+        builder.HasIndex(l => new { l.PlanId, l.ChapterId, l.Status });
 
         builder.ToTable(t =>
         {

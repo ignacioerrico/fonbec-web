@@ -1,4 +1,5 @@
-﻿using Fonbec.Web.DataAccess.DataModels.Sponsors;
+﻿using Fonbec.Web.DataAccess.DataModels.Review;
+using Fonbec.Web.DataAccess.DataModels.Sponsors;
 using Fonbec.Web.DataAccess.DataModels.Sponsors.Input;
 using Fonbec.Web.DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
@@ -17,6 +18,15 @@ public interface ISponsorRepository
     Task<int> CreateSponsorAsync(CreateSponsorInputDataModel dataModel);
 
     Task<int> UpdateSponsorAsync(UpdateSponsorInputDataModel dataModel);
+
+    /// <summary>Get a single sponsor's name, or <c>null</c> when the sponsor does not exist.</summary>
+    Task<CandidateNameDataModel?> GetSponsorNameAsync(int sponsorId);
+
+    /// <summary>
+    /// Get up to <paramref name="count"/> random sponsor names, excluding <paramref name="excludeSponsorId"/>.
+    /// Sampling is performed server-side (SQL Server <c>NEWID()</c>) and is not chapter-restricted.
+    /// </summary>
+    Task<List<CandidateNameDataModel>> GetRandomSponsorNamesAsync(int excludeSponsorId, int count);
 }
 
 public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : ISponsorRepository
@@ -100,5 +110,44 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
 
         db.Sponsors.Update(sponsorDb);
         return await db.SaveChangesAsync();
+    }
+
+    public async Task<CandidateNameDataModel?> GetSponsorNameAsync(int sponsorId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        return await db.Sponsors
+            .AsNoTracking()
+            .Where(s => s.Id == sponsorId)
+            .Select(s => new CandidateNameDataModel
+            {
+                Id = s.Id,
+                FirstName = s.FirstName,
+                LastName = s.LastName,
+            })
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<List<CandidateNameDataModel>> GetRandomSponsorNamesAsync(int excludeSponsorId, int count)
+    {
+        if (count <= 0)
+        {
+            return [];
+        }
+
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        return await db.Sponsors
+            .AsNoTracking()
+            .Where(s => s.Id != excludeSponsorId && !s.IsDeleted)
+            .OrderBy(_ => Guid.NewGuid())
+            .Take(count)
+            .Select(s => new CandidateNameDataModel
+            {
+                Id = s.Id,
+                FirstName = s.FirstName,
+                LastName = s.LastName,
+            })
+            .ToListAsync();
     }
 }

@@ -27,6 +27,25 @@ public class SponsorDocumentHistoryViewModel
     public List<SharedDocumentViewModel> Documents { get; init; } = [];
 }
 
+public class ReviewWorkspaceViewModel
+{
+    public long DocumentId { get; init; }
+    public DocumentType DocumentType { get; init; }
+    public FileKind FileKind { get; init; }
+    public string? TextContent { get; init; }
+    public string? YouTubeVideoId { get; init; }
+
+    /// <summary>Number of file pages (0 for Text/YouTube; 1 for a PDF/single image; N for a multi-image document).</summary>
+    public int PageCount { get; init; }
+
+    public string? UploaderNotes { get; init; }
+
+    /// <summary>UTC instant the current review lock expires; the workspace countdown ticks down to this.</summary>
+    public DateTime LockExpiresAtUtc { get; init; }
+
+    public byte[] RowVersion { get; init; } = null!;
+}
+
 public class ReviewProgressViewModel
 {
     public int PendingLetters { get; init; }

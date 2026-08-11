@@ -1,8 +1,11 @@
+using System.Security.Claims;
 using Fonbec.Web.DataAccess;
 using Fonbec.Web.DataAccess.Entities;
+using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Ui.Account;
 using Fonbec.Web.Ui.Components;
 using Fonbec.Web.Ui.Configuration;
+using Fonbec.Web.Ui.Constants;
 using Mapster;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -107,5 +110,23 @@ app.MapRazorComponents<App>()
 
 // Add additional endpoints required by the Identity /Account Razor components.
 app.MapAdditionalIdentityEndpoints();
+
+// Serves a document page's active blob for reading in the review workspace. The domain download
+// check authorizes the requesting user (reviewers/managers), so no content leaks without it.
+app.MapGet(NavRoutes.ReviewDocumentPageRouteTemplate,
+    async (long documentId, int pageNumber, ClaimsPrincipal user, IDocumentService documentService) =>
+    {
+        var userIdString = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdString, out var userId))
+        {
+            return Results.Unauthorized();
+        }
+
+        var blob = await documentService.DownloadDocumentBlobAsync(documentId, pageNumber, userId);
+        return blob is null
+            ? Results.NotFound()
+            : Results.File(blob.Content, blob.MimeType);
+    })
+    .RequireAuthorization();
 
 app.Run();
