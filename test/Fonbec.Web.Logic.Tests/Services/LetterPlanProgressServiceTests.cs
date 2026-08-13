@@ -17,7 +17,7 @@ public class LetterPlanProgressServiceTests
 
     private readonly ILetterPlanProgressRepository _progressRepository = Substitute.For<ILetterPlanProgressRepository>();
     private readonly ILetterExemptionRepository _exemptionRepository = Substitute.For<ILetterExemptionRepository>();
-    private readonly IPlannedDeliveryRepository _plannedDeliveryRepository = Substitute.For<IPlannedDeliveryRepository>();
+    private readonly IPlanCompletionService _planCompletionService = Substitute.For<IPlanCompletionService>();
     private readonly IStudentRepository _studentRepository = Substitute.For<IStudentRepository>();
     private readonly LetterPlanProgressService _service;
 
@@ -26,7 +26,7 @@ public class LetterPlanProgressServiceTests
         _service = new LetterPlanProgressService(
             _progressRepository,
             _exemptionRepository,
-            _plannedDeliveryRepository,
+            _planCompletionService,
             _studentRepository,
             TimeProvider.System);
     }
@@ -106,80 +106,6 @@ public class LetterPlanProgressServiceTests
         var result = await _service.ExemptStudentAsync(PlanId, StudentId, ChapterId, ManagerId, "Motivo");
 
         result.Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task TryCompletePlanIfDoneAsync_Completes_When_All_Approved()
-    {
-        _progressRepository.GetProgressAsync(PlanId, ChapterId).Returns(new LetterPlanProgressQueryResultDataModel
-        {
-            PlanStartsOn = new DateTime(2026, 3, 1),
-            Rows =
-            [
-                Row(StudentId, DocumentStatus.Approved),
-                Row(StudentId + 1, DocumentStatus.Approved),
-            ],
-        });
-        _plannedDeliveryRepository.MarkPlanCompletedAsync(PlanId).Returns(true);
-
-        var result = await _service.TryCompletePlanIfDoneAsync(PlanId, ChapterId);
-
-        result.Should().BeTrue();
-        await _plannedDeliveryRepository.Received(1).MarkPlanCompletedAsync(PlanId);
-    }
-
-    [Fact]
-    public async Task TryCompletePlanIfDoneAsync_Completes_When_Remaining_Are_Exempt()
-    {
-        _progressRepository.GetProgressAsync(PlanId, ChapterId).Returns(new LetterPlanProgressQueryResultDataModel
-        {
-            PlanStartsOn = new DateTime(2026, 3, 1),
-            Rows =
-            [
-                Row(StudentId, DocumentStatus.Approved),
-                ExemptRow(StudentId + 1),
-            ],
-        });
-        _plannedDeliveryRepository.MarkPlanCompletedAsync(PlanId).Returns(true);
-
-        var result = await _service.TryCompletePlanIfDoneAsync(PlanId, ChapterId);
-
-        result.Should().BeTrue();
-    }
-
-    [Fact]
-    public async Task TryCompletePlanIfDoneAsync_Does_Not_Complete_With_Missing()
-    {
-        _progressRepository.GetProgressAsync(PlanId, ChapterId).Returns(new LetterPlanProgressQueryResultDataModel
-        {
-            PlanStartsOn = new DateTime(2026, 3, 1),
-            Rows =
-            [
-                Row(StudentId, DocumentStatus.Approved),
-                Row(StudentId + 1, null),
-            ],
-        });
-
-        var result = await _service.TryCompletePlanIfDoneAsync(PlanId, ChapterId);
-
-        result.Should().BeFalse();
-        await _plannedDeliveryRepository.DidNotReceive().MarkPlanCompletedAsync(Arg.Any<int>());
-    }
-
-    [Fact]
-    public async Task TryCompletePlanIfDoneAsync_Is_Idempotent_When_Already_Completed()
-    {
-        _progressRepository.GetProgressAsync(PlanId, ChapterId).Returns(new LetterPlanProgressQueryResultDataModel
-        {
-            PlanStartsOn = new DateTime(2026, 3, 1),
-            IsPlanCompleted = true,
-            Rows = [Row(StudentId, DocumentStatus.Approved)],
-        });
-
-        var result = await _service.TryCompletePlanIfDoneAsync(PlanId, ChapterId);
-
-        result.Should().BeFalse();
-        await _plannedDeliveryRepository.DidNotReceive().MarkPlanCompletedAsync(Arg.Any<int>());
     }
 
     private static LetterPlanProgressRowDataModel Row(int studentId, DocumentStatus? status) =>

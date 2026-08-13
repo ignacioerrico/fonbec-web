@@ -18,7 +18,7 @@ public class PlannedDeliveryRepositoryCurrentPlanTests
         var factory = CreateDbContextFactory();
         await SeedPlanAsync(factory, planId: 100, chapterId: ChapterId, completed: false, startsOn: UtcNow.AddMonths(-1));
         await SeedPlanAsync(factory, planId: 101, chapterId: ChapterId, completed: true, startsOn: UtcNow.AddMonths(-2));
-        var repository = new PlannedDeliveryRepository(factory);
+        var repository = new PlannedDeliveryRepository(factory, TimeProvider.System);
 
         var current = await repository.GetCurrentPlanAsync(ChapterId);
 
@@ -32,7 +32,7 @@ public class PlannedDeliveryRepositoryCurrentPlanTests
     {
         var factory = CreateDbContextFactory();
         await SeedPlanAsync(factory, planId: 100, chapterId: ChapterId, completed: true, startsOn: UtcNow);
-        var repository = new PlannedDeliveryRepository(factory);
+        var repository = new PlannedDeliveryRepository(factory, TimeProvider.System);
 
         var current = await repository.GetCurrentPlanAsync(ChapterId);
 
@@ -44,7 +44,7 @@ public class PlannedDeliveryRepositoryCurrentPlanTests
     {
         var factory = CreateDbContextFactory();
         await SeedPlanAsync(factory, planId: 100, chapterId: OtherChapterId, completed: false, startsOn: UtcNow);
-        var repository = new PlannedDeliveryRepository(factory);
+        var repository = new PlannedDeliveryRepository(factory, TimeProvider.System);
 
         var current = await repository.GetCurrentPlanAsync(ChapterId);
 
@@ -58,7 +58,7 @@ public class PlannedDeliveryRepositoryCurrentPlanTests
         await SeedPlanAsync(factory, planId: 100, chapterId: ChapterId, completed: true, startsOn: UtcNow.AddMonths(-1));
         await SeedPlanAsync(factory, planId: 101, chapterId: ChapterId, completed: false, startsOn: UtcNow);
         await SeedPlanAsync(factory, planId: 102, chapterId: OtherChapterId, completed: true, startsOn: UtcNow.AddMonths(-2));
-        var repository = new PlannedDeliveryRepository(factory);
+        var repository = new PlannedDeliveryRepository(factory, TimeProvider.System);
 
         var completed = await repository.GetCompletedPlansAsync(ChapterId);
 
@@ -72,7 +72,7 @@ public class PlannedDeliveryRepositoryCurrentPlanTests
         await SeedPlanAsync(factory, planId: 100, chapterId: ChapterId, completed: true, startsOn: UtcNow.AddMonths(-2));
         await SeedPlanAsync(factory, planId: 101, chapterId: ChapterId, completed: true, startsOn: UtcNow.AddMonths(-1));
         await SeedPlanAsync(factory, planId: 102, chapterId: ChapterId, completed: false, startsOn: UtcNow);
-        var repository = new PlannedDeliveryRepository(factory);
+        var repository = new PlannedDeliveryRepository(factory, TimeProvider.System);
 
         var latest = await repository.GetLatestCompletedPlanAsync(ChapterId);
 
@@ -85,36 +85,73 @@ public class PlannedDeliveryRepositoryCurrentPlanTests
     {
         var factory = CreateDbContextFactory();
         await SeedPlanAsync(factory, planId: 100, chapterId: ChapterId, completed: false, startsOn: UtcNow);
-        var repository = new PlannedDeliveryRepository(factory);
+        var repository = new PlannedDeliveryRepository(factory, TimeProvider.System);
 
         (await repository.HasIncompletePlanAsync(ChapterId)).Should().BeTrue();
         (await repository.HasIncompletePlanAsync(OtherChapterId)).Should().BeFalse();
     }
 
     [Fact]
-    public async Task MarkPlanCompletedAsync_Sets_Completed()
+    public async Task SetPlanCompletedAsync_Completes_And_Records_Updater()
     {
         var factory = CreateDbContextFactory();
         await SeedPlanAsync(factory, planId: 100, chapterId: ChapterId, completed: false, startsOn: UtcNow);
-        var repository = new PlannedDeliveryRepository(factory);
+        var repository = new PlannedDeliveryRepository(factory, TimeProvider.System);
 
-        var marked = await repository.MarkPlanCompletedAsync(100);
+        var changed = await repository.SetPlanCompletedAsync(100, completed: true, updatedById: 1);
 
-        marked.Should().BeTrue();
+        changed.Should().BeTrue();
         (await repository.GetCurrentPlanAsync(ChapterId)).Should().BeNull();
         (await repository.GetCompletedPlansAsync(ChapterId)).Should().ContainSingle(p => p.PlannedDeliveryId == 100);
+
+        await using var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        var plan = await db.Set<PlannedDelivery>().SingleAsync(p => p.Id == 100, TestContext.Current.CancellationToken);
+        plan.Completed.Should().BeTrue();
+        plan.CompletedById.Should().Be(1);
+        plan.CompletedOnUtc.Should().NotBeNull();
     }
 
     [Fact]
-    public async Task MarkPlanCompletedAsync_Is_Idempotent_When_Already_Completed()
+    public async Task SetPlanCompletedAsync_Reopens_Completed_Plan_And_Clears_Completer()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedPlanAsync(factory, planId: 100, chapterId: ChapterId, completed: false, startsOn: UtcNow);
+        var repository = new PlannedDeliveryRepository(factory, TimeProvider.System);
+        await repository.SetPlanCompletedAsync(100, completed: true, updatedById: 1);
+
+        var changed = await repository.SetPlanCompletedAsync(100, completed: false, updatedById: 1);
+
+        changed.Should().BeTrue();
+        (await repository.GetCurrentPlanAsync(ChapterId))!.PlannedDeliveryId.Should().Be(100);
+
+        await using var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        var plan = await db.Set<PlannedDelivery>().SingleAsync(p => p.Id == 100, TestContext.Current.CancellationToken);
+        plan.Completed.Should().BeFalse();
+        plan.CompletedById.Should().BeNull();
+        plan.CompletedOnUtc.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task SetPlanCompletedAsync_Is_NoOp_When_Already_At_Requested_Value()
     {
         var factory = CreateDbContextFactory();
         await SeedPlanAsync(factory, planId: 100, chapterId: ChapterId, completed: true, startsOn: UtcNow);
-        var repository = new PlannedDeliveryRepository(factory);
+        var repository = new PlannedDeliveryRepository(factory, TimeProvider.System);
 
-        var marked = await repository.MarkPlanCompletedAsync(100);
+        var changed = await repository.SetPlanCompletedAsync(100, completed: true, updatedById: 1);
 
-        marked.Should().BeFalse();
+        changed.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task SetPlanCompletedAsync_Returns_False_When_Plan_Missing()
+    {
+        var factory = CreateDbContextFactory();
+        var repository = new PlannedDeliveryRepository(factory, TimeProvider.System);
+
+        var changed = await repository.SetPlanCompletedAsync(999, completed: true, updatedById: 1);
+
+        changed.Should().BeFalse();
     }
 
     private static TestDbContextFactory CreateDbContextFactory() =>

@@ -36,6 +36,9 @@ public partial class PlannedDeliveriesList : AuthenticationRequiredComponentBase
     [Inject]
     public ILetterPlanProgressService LetterPlanProgressService { get; set; } = null!;
 
+    [Inject]
+    public IPlanCompletionService PlanCompletionService { get; set; } = null!;
+
     private int LatestCompletedExemptStudents =>
         _latestCompletedProgress?.Rows
             .Where(r => r.IsStudentExempt)
@@ -85,8 +88,8 @@ public partial class PlannedDeliveriesList : AuthenticationRequiredComponentBase
 
         if (_currentPlan is not null)
         {
-            await LetterPlanProgressService.TryCompletePlanIfDoneAsync(
-                _currentPlan.PlannedDeliveryId, chapterId);
+            await PlanCompletionService.EvaluateAndUpdateAsync(
+                _currentPlan.PlannedDeliveryId, chapterId, FonbecClaim.UserId);
 
             // Reload in case auto-complete removed the current plan.
             _currentPlan = await PlannedDeliveryService.GetCurrentPlanAsync(chapterId);

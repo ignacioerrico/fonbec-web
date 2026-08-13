@@ -46,6 +46,7 @@ internal sealed class DocumentTestFixture
 
     public IDbContextFactory<FonbecWebDbContext> Factory { get; private set; } = null!;
     public IDocumentRepository DocumentRepository { get; private set; } = null!;
+    public IPlannedDeliveryRepository PlannedDeliveryRepository { get; private set; } = null!;
     public IDocumentService DocumentService { get; private set; } = null!;
     public IEmailMessageSender EmailSender { get; private set; } = null!;
     public IBlobStorageService BlobStorageService { get; private set; } = null!;
@@ -99,12 +100,18 @@ internal sealed class DocumentTestFixture
         TypeAdapterConfig.GlobalSettings.Scan(typeof(DocumentService).Assembly);
         var letterPlanProgressService = Substitute.For<ILetterPlanProgressService>();
 
+        PlannedDeliveryRepository = new PlannedDeliveryRepository(Factory, TimeProvider.System);
+        var planCompletionService = new PlanCompletionService(
+            new LetterPlanProgressRepository(Factory),
+            PlannedDeliveryRepository);
+
         DocumentService = new DocumentService(
             DocumentRepository,
             notificationService,
             userService,
             BlobStorageService,
             letterPlanProgressService,
+            planCompletionService,
             blobOptions,
             NullLogger<DocumentService>.Instance);
     }

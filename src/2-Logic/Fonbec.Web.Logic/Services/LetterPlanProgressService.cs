@@ -13,18 +13,12 @@ public interface ILetterPlanProgressService
 
     Task<bool> RevokeExemptionAsync(
         int planId, int studentId, int managerChapterId, int managerUserId);
-
-    /// <summary>
-    /// Marks the plan completed when every letter slot is approved or the student is exempt
-    /// (no in-progress or missing/rejected slots remain).
-    /// </summary>
-    Task<bool> TryCompletePlanIfDoneAsync(int planId, int chapterId);
 }
 
 public class LetterPlanProgressService(
     ILetterPlanProgressRepository letterPlanProgressRepository,
     ILetterExemptionRepository letterExemptionRepository,
-    IPlannedDeliveryRepository plannedDeliveryRepository,
+    IPlanCompletionService planCompletionService,
     IStudentRepository studentRepository,
     TimeProvider timeProvider) : ILetterPlanProgressService
 {
@@ -74,7 +68,7 @@ public class LetterPlanProgressService(
 
         if (created)
         {
-            await TryCompletePlanIfDoneAsync(planId, managerChapterId);
+            await planCompletionService.EvaluateAndUpdateAsync(planId, managerChapterId, managerUserId);
         }
 
         return created;
@@ -105,23 +99,6 @@ public class LetterPlanProgressService(
             planId,
             managerUserId,
             timeProvider.GetUtcNow().UtcDateTime);
-    }
-
-    public async Task<bool> TryCompletePlanIfDoneAsync(int planId, int chapterId)
-    {
-        var result = await letterPlanProgressRepository.GetProgressAsync(planId, chapterId);
-        if (result is null || result.IsPlanCompleted)
-        {
-            return false;
-        }
-
-        var viewModel = MapToViewModel(result);
-        if (viewModel.Summary.InProgress == 0 && viewModel.Summary.MissingOrRejected == 0)
-        {
-            return await plannedDeliveryRepository.MarkPlanCompletedAsync(planId);
-        }
-
-        return false;
     }
 
     private static LetterPlanProgressViewModel MapToViewModel(LetterPlanProgressQueryResultDataModel result)
@@ -159,29 +136,11 @@ public class LetterPlanProgressService(
             }
         }
 
-        var requiredRows = rows.Where(r => r.Status != LetterPlanDisplayStatus.Exempt).ToList();
-
-        var totalRequired = requiredRows.Count;
-        var approved = requiredRows.Count(r => r.Status.CountsAsApproved());
-        var inProgress = requiredRows.Count(r => r.Status.CountsAsInProgress());
-        var missingOrRejected = requiredRows.Count(r => r.Status.CountsAsMissingOrRejected());
-
-        var completionPercent = totalRequired == 0
-            ? 0m
-            : Math.Round(100m * approved / totalRequired, 0);
-
         return new LetterPlanProgressViewModel
         {
             PlanLabel = LetterPlanProgressFormatting.FormatPlanLabel(result.PlanStartsOn),
             IsPlanCompleted = result.IsPlanCompleted,
-            Summary = new LetterPlanProgressSummaryViewModel
-            {
-                TotalRequired = totalRequired,
-                Approved = approved,
-                InProgress = inProgress,
-                MissingOrRejected = missingOrRejected,
-                CompletionPercent = completionPercent,
-            },
+            Summary = rows.Select(r => r.Status).ToSummary(),
             Rows = rows,
         };
     }
