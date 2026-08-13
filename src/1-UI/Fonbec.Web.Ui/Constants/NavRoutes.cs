@@ -105,4 +105,16 @@ public static class NavRoutes
     public const string Companies = "/empresas";
 
     public const string CompanyCreate = $"{Companies}/alta";
+
+    public const string ReviewQueue = "/revisar";
+
+    public static string ReviewDocument(long documentId) => $"{ReviewQueue}/{documentId}";
+
+    public const string ReviewDocumentRouteTemplate = $"{ReviewQueue}/{{DocumentId:long}}";
+
+    public static string ReviewDocumentPage(long documentId, int pageNumber) =>
+        $"{ReviewQueue}/documento/{documentId}/pagina/{pageNumber}";
+
+    public const string ReviewDocumentPageRouteTemplate =
+        $"{ReviewQueue}/documento/{{documentId:long}}/pagina/{{pageNumber:int}}";
 }

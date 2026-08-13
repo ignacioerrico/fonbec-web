@@ -21,6 +21,13 @@ public interface IDocumentRepository
     Task<CreateDocumentResultDataModel> CreateReportCardAsync(CreateReportCardInputDataModel input);
     Task<CreateDocumentResultDataModel> CreateOtherDocumentAsync(CreateOtherDocumentInputDataModel input);
     Task<DocumentQueueItemDataModel?> TakeNextForReviewAsync(int userId);
+
+    /// <summary>Document id the user currently holds a valid (non-expired) review lock on, or <c>null</c>.</summary>
+    Task<long?> GetActiveReviewLockedDocumentIdAsync(int userId);
+
+    /// <summary>Releases every review lock whose timeout has elapsed, returning those documents to the queue.</summary>
+    Task ReleaseExpiredReviewLocksAsync();
+
     Task ReleaseReviewLockAsync(long documentId, int userId);
     Task<DocumentQueueItemDataModel?> TakeNextForDigitalImprovementAsync(int userId);
     Task<List<string>> SubmitDigitalImprovementAsync(SubmitDigitalImprovementInputDataModel input);
@@ -33,6 +40,7 @@ public interface IDocumentRepository
     Task<List<string>> RejectOtherDocumentAsync(RejectOtherDocumentInputDataModel input);
     Task<SponsorDocumentHistoryDataModel> GetSharedDocumentsAsync(Guid sponsorPublicAccessToken, int studentId);
     Task<SponsorDocumentHistoryDataModel> GetSharedDocumentsForCompanyAsync(Guid companyPublicAccessToken, int studentId);
+    Task<ReviewWorkspaceDataModel?> GetReviewWorkspaceAsync(long documentId);
     Task<ReviewProgressDataModel> GetGlobalReviewProgressAsync(int? planId);
     Task<LetterPlanProgressDataModel> GetLetterPlanProgressAsync(int planId, int? chapterId);
     Task<List<DocumentShareNotificationDataModel>> GetUnnotifiedSharesAsync(long documentId);
@@ -269,6 +277,20 @@ public class DocumentRepository(
 
     public async Task<DocumentQueueItemDataModel?> TakeNextForReviewAsync(int userId)
     {
+        // Free any abandoned (expired) review locks first so no document stays locked forever and
+        // the queue metrics stay honest ("check for documents that need to be unlocked").
+        await ReleaseExpiredReviewLocksAsync();
+
+        // A reviewer may hold only one review lock at a time. If they still hold a valid lock (e.g.
+        // they navigated away, closed the browser, or signed in elsewhere), resume that document
+        // rather than locking a new one — the original ReviewLockedAt is preserved, so the on-screen
+        // countdown continues from where it was.
+        var existingLock = await GetActiveReviewLockedQueueItemAsync(userId);
+        if (existingLock is not null)
+        {
+            return existingLock;
+        }
+
         // Lock the first review-eligible document whose lock is free: either never locked
         // (Status Pending) or taken but abandoned past the timeout (Status Processing with a
         // stale ReviewLockedAt). Ordering is Priority then EnqueuedAt, so an expired lock is
@@ -325,6 +347,80 @@ public class DocumentRepository(
             {
                 // Another reviewer took this document first; loop and pick the next free one.
             }
+        }
+    }
+
+    public async Task<long?> GetActiveReviewLockedDocumentIdAsync(int userId)
+    {
+        var queueItem = await GetActiveReviewLockedQueueItemAsync(userId);
+        return queueItem?.DocumentId;
+    }
+
+    /// <summary>
+    /// Returns the queue item the user currently holds a valid (non-expired) review lock on, or
+    /// <c>null</c>. Read-only: the existing <c>ReviewLockedAt</c> is not touched, so a resumed lock
+    /// keeps its original expiry.
+    /// </summary>
+    private async Task<DocumentQueueItemDataModel?> GetActiveReviewLockedQueueItemAsync(int userId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var utcNow = timeProvider.GetUtcNow().UtcDateTime;
+        var lockValidFrom = utcNow - LockTimeout;
+
+        var queueItem = await db.DocumentQueueItems
+            .AsNoTracking()
+            .Include(q => q.Document)
+            .Where(q => q.ReviewLockedById == userId
+                        && q.ReviewLockedAt != null
+                        && q.ReviewLockedAt >= lockValidFrom)
+            .OrderByDescending(q => q.ReviewLockedAt)
+            .FirstOrDefaultAsync();
+
+        return queueItem is null ? null : MapQueueItem(queueItem);
+    }
+
+    /// <summary>
+    /// Releases every review lock whose timeout has elapsed: clears the lock fields and returns the
+    /// document to <see cref="DocumentStatus.Pending"/>. Best-effort — a concurrent take-next that
+    /// swept the same items wins and this call simply no-ops.
+    /// </summary>
+    public async Task ReleaseExpiredReviewLocksAsync()
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var utcNow = timeProvider.GetUtcNow().UtcDateTime;
+        var lockExpiredBefore = utcNow - LockTimeout;
+
+        var expired = await db.DocumentQueueItems
+            .Include(q => q.Document)
+            .Where(q => q.ReviewLockedById != null
+                        && q.ReviewLockedAt != null
+                        && q.ReviewLockedAt < lockExpiredBefore)
+            .ToListAsync();
+
+        if (expired.Count == 0)
+        {
+            return;
+        }
+
+        foreach (var queueItem in expired)
+        {
+            queueItem.ReviewLockedById = null;
+            queueItem.ReviewLockedAt = null;
+            if (queueItem.Document.Status == DocumentStatus.Processing)
+            {
+                queueItem.Document.Status = DocumentStatus.Pending;
+            }
+        }
+
+        try
+        {
+            await db.SaveChangesAsync();
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            // Another reviewer's take-next swept the same locks first; the documents are already free.
         }
     }
 
@@ -691,6 +787,36 @@ public class DocumentRepository(
         };
     }
 
+    public async Task<ReviewWorkspaceDataModel?> GetReviewWorkspaceAsync(long documentId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var workspace = await db.DocumentQueueItems
+            .AsNoTracking()
+            .Where(q => q.DocumentId == documentId)
+            .Select(q => new ReviewWorkspaceDataModel
+            {
+                DocumentId = q.Document.DocumentId,
+                DocumentType = q.Document.DocumentType,
+                FileKind = q.Document.FileKind,
+                TextContent = q.Document.TextContent,
+                YouTubeVideoId = q.Document.YouTubeVideoId,
+                PageCount = q.Document.Pages.Count,
+                UploaderNotes = q.Document.UploaderNotes,
+                ReviewLockedById = q.ReviewLockedById,
+                ReviewLockedAt = q.ReviewLockedAt,
+                RowVersion = q.Document.RowVersion,
+            })
+            .FirstOrDefaultAsync();
+
+        if (workspace is not null && workspace.ReviewLockedAt is { } lockedAt)
+        {
+            workspace.LockExpiresAtUtc = lockedAt + LockTimeout;
+        }
+
+        return workspace;
+    }
+
     public async Task<ReviewProgressDataModel> GetGlobalReviewProgressAsync(int? planId)
     {
         await using var db = await dbContext.CreateDbContextAsync();
@@ -704,19 +830,35 @@ public class DocumentRepository(
                 .Where(l => l.PlanId == planId.Value);
         }
 
-        var documents = await query.ToListAsync();
+        // Aggregate on the server so we only transfer one row per (type, status)
+        // combination instead of materializing every document.
+        var counts = await query
+            .GroupBy(d => new { d.DocumentType, d.Status })
+            .Select(g => new
+            {
+                g.Key.DocumentType,
+                g.Key.Status,
+                Count = g.Count(),
+            })
+            .ToListAsync();
 
         return new ReviewProgressDataModel
         {
-            PendingLetters = documents.Count(d => d.DocumentType == DocumentType.Letter
-                                                && d.Status == DocumentStatus.Pending),
-            PendingReportCards = documents.Count(d => d.DocumentType == DocumentType.ReportCard
-                                                      && d.Status == DocumentStatus.Pending),
-            PendingOther = documents.Count(d => d.DocumentType == DocumentType.Other
-                                                && d.Status == DocumentStatus.Pending),
-            PendingImprovement = documents.Count(d => d.Status == DocumentStatus.PendingImprovement
-                                                      || d.Status == DocumentStatus.ProcessingImprovement),
-            Processing = documents.Count(d => d.Status == DocumentStatus.Processing),
+            PendingLetters = counts
+                .Where(c => c.DocumentType == DocumentType.Letter && c.Status == DocumentStatus.Pending)
+                .Sum(c => c.Count),
+            PendingReportCards = counts
+                .Where(c => c.DocumentType == DocumentType.ReportCard && c.Status == DocumentStatus.Pending)
+                .Sum(c => c.Count),
+            PendingOther = counts
+                .Where(c => c.DocumentType == DocumentType.Other && c.Status == DocumentStatus.Pending)
+                .Sum(c => c.Count),
+            PendingImprovement = counts
+                .Where(c => c.Status is DocumentStatus.PendingImprovement or DocumentStatus.ProcessingImprovement)
+                .Sum(c => c.Count),
+            Processing = counts
+                .Where(c => c.Status == DocumentStatus.Processing)
+                .Sum(c => c.Count),
         };
     }
 
@@ -724,21 +866,35 @@ public class DocumentRepository(
     {
         await using var db = await dbContext.CreateDbContextAsync();
 
-        var letters = await db.Set<Letter>()
+        // Aggregate on the server so we only transfer one row per status
+        // instead of materializing every letter in the plan.
+        var counts = await db.Set<Letter>()
             .AsNoTracking()
             .Where(l => l.PlanId == planId
                         && (!chapterId.HasValue || l.ChapterId == chapterId))
+            .GroupBy(l => l.Status)
+            .Select(g => new
+            {
+                Status = g.Key,
+                Count = g.Count(),
+            })
             .ToListAsync();
 
         return new LetterPlanProgressDataModel
         {
-            TotalLetters = letters.Count,
-            ApprovedLetters = letters.Count(l => l.Status == DocumentStatus.Approved),
-            PendingLetters = letters.Count(l => l.Status is DocumentStatus.Pending
-                or DocumentStatus.PendingImprovement
-                or DocumentStatus.ProcessingImprovement
-                or DocumentStatus.Processing),
-            RejectedLetters = letters.Count(l => l.Status == DocumentStatus.Rejected),
+            TotalLetters = counts.Sum(c => c.Count),
+            ApprovedLetters = counts
+                .Where(c => c.Status == DocumentStatus.Approved)
+                .Sum(c => c.Count),
+            PendingLetters = counts
+                .Where(c => c.Status is DocumentStatus.Pending
+                    or DocumentStatus.PendingImprovement
+                    or DocumentStatus.ProcessingImprovement
+                    or DocumentStatus.Processing)
+                .Sum(c => c.Count),
+            RejectedLetters = counts
+                .Where(c => c.Status == DocumentStatus.Rejected)
+                .Sum(c => c.Count),
         };
     }
 

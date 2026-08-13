@@ -28,6 +28,20 @@ public interface IDocumentService
     Task<DownloadBlobResult?> DownloadOriginalDocumentBlobAsync(long documentId, int pageNumber, int requestingUserId);
     Task<CrudResult> SubmitDigitalImprovementWithBlobAsync(SubmitDigitalImprovementWithBlobInputModel input);
     Task<DocumentQueueItemViewModel?> TakeNextForReviewAsync(int userId, string userRole);
+
+    /// <summary>
+    /// Returns the id of the document the reviewer currently holds a valid lock on, or <c>null</c>.
+    /// Used to enforce one active review at a time and to resume an in-progress document.
+    /// </summary>
+    Task<long?> GetActiveReviewLockAsync(int userId, string userRole);
+
+    /// <summary>
+    /// Loads the review workspace for a document that must be currently locked to <paramref name="userId"/>.
+    /// Returns <c>null</c> when the caller cannot review, the document does not exist, the lock is held by
+    /// another user, or the lock has expired — in which case the UI redirects back to the queue.
+    /// </summary>
+    Task<ReviewWorkspaceViewModel?> GetReviewWorkspaceAsync(long documentId, int userId, string userRole);
+
     Task ReleaseReviewLockAsync(long documentId, int userId);
     Task<DocumentQueueItemViewModel?> TakeNextForDigitalImprovementAsync(int userId, string userRole, string? fonbecAuthClaim);
     Task<CrudResult> SubmitDigitalImprovementAsync(SubmitDigitalImprovementInputModel input);
@@ -451,6 +465,48 @@ public class DocumentService(
 
         var item = await documentRepository.TakeNextForReviewAsync(userId);
         return item?.Adapt<DocumentQueueItemViewModel>();
+    }
+
+    public async Task<long?> GetActiveReviewLockAsync(int userId, string userRole)
+    {
+        if (!CanReview(userRole))
+        {
+            return null;
+        }
+
+        return await documentRepository.GetActiveReviewLockedDocumentIdAsync(userId);
+    }
+
+    public async Task<ReviewWorkspaceViewModel?> GetReviewWorkspaceAsync(long documentId, int userId, string userRole)
+    {
+        if (!CanReview(userRole))
+        {
+            return null;
+        }
+
+        var workspace = await documentRepository.GetReviewWorkspaceAsync(documentId);
+
+        // Only the user who currently holds a non-expired lock may open the workspace. The server
+        // re-enforces lock ownership on every review action; this check gates the read.
+        if (workspace?.ReviewLockedById != userId
+            || workspace.LockExpiresAtUtc is not { } expiresAt
+            || expiresAt <= DateTime.UtcNow)
+        {
+            return null;
+        }
+
+        return new ReviewWorkspaceViewModel
+        {
+            DocumentId = workspace.DocumentId,
+            DocumentType = workspace.DocumentType,
+            FileKind = workspace.FileKind,
+            TextContent = workspace.TextContent,
+            YouTubeVideoId = workspace.YouTubeVideoId,
+            PageCount = workspace.PageCount,
+            UploaderNotes = workspace.UploaderNotes,
+            LockExpiresAtUtc = expiresAt,
+            RowVersion = workspace.RowVersion,
+        };
     }
 
     public Task ReleaseReviewLockAsync(long documentId, int userId) =>

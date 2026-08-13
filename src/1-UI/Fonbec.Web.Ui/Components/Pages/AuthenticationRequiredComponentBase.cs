@@ -14,6 +14,8 @@ public abstract class AuthenticationRequiredComponentBase : ComponentBase
 
     private protected FonbecClaimModel FonbecClaim { get; private set; } = null!;
 
+    private protected string UserRole { get; private set; } = string.Empty;
+
     [CascadingParameter]
     private Task<AuthenticationState>? AuthenticationState { get; set; }
 
@@ -75,6 +77,8 @@ public abstract class AuthenticationRequiredComponentBase : ComponentBase
         int? chapterId = int.TryParse(chapterIdString, out var chapterIdParsed)
             ? chapterIdParsed
             : null;
+
+        UserRole = user.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
 
         FonbecClaim = new FonbecClaimModel(
             userId,

@@ -2,6 +2,7 @@
 @using Fonbec.Web.Ui.Components.Pages.Chapters
 @using Fonbec.Web.Ui.Components.Pages.Companies
 @using Fonbec.Web.Ui.Components.Pages.PlannedDeliveries
+@using Fonbec.Web.Ui.Components.Pages.Review
 @using Fonbec.Web.Ui.Components.Pages.Sponsors
 @using Fonbec.Web.Ui.Components.Pages.Facilitators
 @using Fonbec.Web.Ui.Components.Pages.Students
@@ -65,6 +66,12 @@
                 <AuthorizeView Policy="@nameof(FacilitatorStudentsList)">
                     <MudNavLink Href="@NavRoutes.FacilitatorStudents" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Face">
                         Mis becarios
+                    </MudNavLink>
+                </AuthorizeView>
+
+                <AuthorizeView Policy="@nameof(ReviewQueue)">
+                    <MudNavLink Href="@NavRoutes.ReviewQueue" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.RateReview">
+                        Revisar documentos
                     </MudNavLink>
                 </AuthorizeView>
             </Authorized>

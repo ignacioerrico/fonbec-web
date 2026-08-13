@@ -32,6 +32,9 @@ public static class ConfigureServices
 
         services.Configure<DocumentQueueOptions>(
             configuration.GetSection(DocumentQueueOptions.SectionName));
+
+        services.Configure<ReviewOptions>(
+            configuration.GetSection(ReviewOptions.SectionName));
     }
 
     public static void RegisterServices(IServiceCollection services, IConfiguration configuration)
@@ -78,6 +81,7 @@ public static class ConfigureServices
         services.AddScoped<ICompanyService, CompanyService>();
         services.AddScoped<IDocumentService, DocumentService>();
         services.AddScoped<IDocumentNotificationService, DocumentNotificationService>();
+        services.AddScoped<ICandidateNamePickerService, CandidateNamePickerService>();
 
         services.AddSingleton(TimeProvider.System);
 

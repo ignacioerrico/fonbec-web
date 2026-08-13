@@ -1,0 +1,34 @@
+@attribute [Route(NavRoutes.ReviewQueue)]
+@attribute [Authorize(Policy = nameof(ReviewQueue))]
+@inherits AuthenticationRequiredComponentBase
+
+<PageHeader Title="Revisión de documentos" />
+
+<LoadingIndicator Loading="Loading" />
+
+@if (!Loading)
+{
+    <MudPaper Class="pa-6" Elevation="2">
+        <MudStack Spacing="6" AlignItems="AlignItems.Center">
+            <MudStack Row="true" Spacing="8" Justify="Justify.Center" AlignItems="AlignItems.Center" Class="flex-wrap">
+                <MudStack Spacing="0" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.h3" Color="Color.Primary">@Pending</MudText>
+                    <MudText Typo="Typo.subtitle1">Pendientes</MudText>
+                </MudStack>
+                <MudStack Spacing="0" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.h3" Color="Color.Warning">@_progress.Processing</MudText>
+                    <MudText Typo="Typo.subtitle1">En revisión</MudText>
+                </MudStack>
+            </MudStack>
+
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       Size="Size.Large"
+                       StartIcon="@Icons.Material.Filled.PlayArrow"
+                       Disabled="_takingNext"
+                       OnClick="ReviewNextAsync">
+                Revisar siguiente
+            </MudButton>
+        </MudStack>
+    </MudPaper>
+}

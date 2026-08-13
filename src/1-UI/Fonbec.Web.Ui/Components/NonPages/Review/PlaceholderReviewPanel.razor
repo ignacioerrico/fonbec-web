@@ -1,0 +1,20 @@
+@using Fonbec.Web.DataAccess.Entities.Enums
+
+<MudPaper Class="pa-4 mb-4" Outlined="true">
+    <MudAlert Severity="Severity.Info" Class="mb-3">
+        This review panel will be implemented in user stories 117 (letter), 118 (report card), and 119 (other docs).
+    </MudAlert>
+    <MudStack Row="true" Justify="Justify.FlexEnd" Spacing="2">
+        <MudButton Variant="Variant.Filled" Color="Color.Success" StartIcon="@Icons.Material.Filled.Check" Disabled="true">
+            Aprobar
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Error" StartIcon="@Icons.Material.Filled.Close" Disabled="true">
+            Rechazar
+        </MudButton>
+    </MudStack>
+</MudPaper>
+
+@code {
+    [Parameter]
+    public DocumentType DocumentType { get; set; }
+}

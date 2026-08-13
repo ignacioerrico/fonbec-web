@@ -30,6 +30,27 @@ public class SponsorDocumentHistoryDataModel
     public List<SharedDocumentDataModel> Documents { get; init; } = [];
 }
 
+public class ReviewWorkspaceDataModel
+{
+    public long DocumentId { get; init; }
+    public DocumentType DocumentType { get; init; }
+    public FileKind FileKind { get; init; }
+    public string? TextContent { get; init; }
+    public string? YouTubeVideoId { get; init; }
+
+    /// <summary>Number of file pages (0 for Text/YouTube; 1 for a PDF/single image; N for a multi-image document).</summary>
+    public int PageCount { get; init; }
+
+    public string? UploaderNotes { get; init; }
+    public int? ReviewLockedById { get; init; }
+    public DateTime? ReviewLockedAt { get; init; }
+
+    /// <summary>UTC instant the current review lock expires, or <c>null</c> when the item is not locked.</summary>
+    public DateTime? LockExpiresAtUtc { get; set; }
+
+    public byte[] RowVersion { get; init; } = null!;
+}
+
 public class ReviewProgressDataModel
 {
     public int PendingLetters { get; init; }
