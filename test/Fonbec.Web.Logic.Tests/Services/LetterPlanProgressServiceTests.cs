@@ -88,6 +88,116 @@ public class LetterPlanProgressServiceTests
         var result = await _service.ExemptStudentAsync(PlanId, StudentId, ChapterId, ManagerId, "  ");
 
         result.Should().BeFalse();
+        await _exemptionRepository.DidNotReceiveWithAnyArgs()
+            .CreateExemptionAsync(default, default, default, default!, default, default);
+    }
+
+    [Fact]
+    public async Task ExemptStudentAsync_Returns_False_When_Student_Chapter_Mismatches()
+    {
+        _studentRepository.GetStudentChapterIdAsync(StudentId).Returns(ChapterId + 1);
+
+        var result = await _service.ExemptStudentAsync(PlanId, StudentId, ChapterId, ManagerId, "Motivo");
+
+        result.Should().BeFalse();
+        await _exemptionRepository.DidNotReceiveWithAnyArgs()
+            .CreateExemptionAsync(default, default, default, default!, default, default);
+    }
+
+    [Fact]
+    public async Task ExemptStudentAsync_Returns_False_When_Plan_Outside_Chapter()
+    {
+        _studentRepository.GetStudentChapterIdAsync(StudentId).Returns(ChapterId);
+        _progressRepository.GetProgressAsync(PlanId, ChapterId).Returns((LetterPlanProgressQueryResultDataModel?)null);
+
+        var result = await _service.ExemptStudentAsync(PlanId, StudentId, ChapterId, ManagerId, "Motivo");
+
+        result.Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData(DocumentStatus.Pending)]
+    [InlineData(DocumentStatus.PendingImprovement)]
+    [InlineData(DocumentStatus.ProcessingImprovement)]
+    [InlineData(DocumentStatus.Processing)]
+    [InlineData(DocumentStatus.Approved)]
+    public async Task ExemptStudentAsync_Returns_False_When_Any_Letter_Was_Provided(
+        DocumentStatus providedLetterStatus)
+    {
+        _studentRepository.GetStudentChapterIdAsync(StudentId).Returns(ChapterId);
+        _progressRepository.GetProgressAsync(PlanId, ChapterId).Returns(new LetterPlanProgressQueryResultDataModel
+        {
+            PlanStartsOn = new DateTime(2026, 3, 1),
+            Rows =
+            [
+                Row(StudentId, providedLetterStatus),
+                Row(StudentId, null),
+            ],
+        });
+
+        var result = await _service.ExemptStudentAsync(PlanId, StudentId, ChapterId, ManagerId, "Motivo");
+
+        result.Should().BeFalse();
+        await _exemptionRepository.DidNotReceiveWithAnyArgs()
+            .CreateExemptionAsync(default, default, default, default!, default, default);
+    }
+
+    // A rejected letter still has to be provided, so it leaves the student exemptable.
+    [Fact]
+    public async Task ExemptStudentAsync_Creates_Exemption_When_Letters_Are_Missing_Or_Rejected()
+    {
+        _studentRepository.GetStudentChapterIdAsync(StudentId).Returns(ChapterId);
+        _progressRepository.GetProgressAsync(PlanId, ChapterId).Returns(new LetterPlanProgressQueryResultDataModel
+        {
+            PlanStartsOn = new DateTime(2026, 3, 1),
+            Rows =
+            [
+                Row(StudentId, DocumentStatus.Rejected),
+                Row(StudentId, null),
+            ],
+        });
+        _exemptionRepository.CreateExemptionAsync(
+                StudentId, PlanId, ChapterId, "Motivo", ManagerId, Arg.Any<DateTime>())
+            .Returns(true);
+
+        var result = await _service.ExemptStudentAsync(PlanId, StudentId, ChapterId, ManagerId, "Motivo");
+
+        result.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ExemptStudentAsync_Returns_False_When_Student_Has_No_Required_Letters()
+    {
+        _studentRepository.GetStudentChapterIdAsync(StudentId).Returns(ChapterId);
+        _progressRepository.GetProgressAsync(PlanId, ChapterId).Returns(new LetterPlanProgressQueryResultDataModel
+        {
+            PlanStartsOn = new DateTime(2026, 3, 1),
+            Rows = [Row(StudentId + 1, null)],
+        });
+
+        var result = await _service.ExemptStudentAsync(PlanId, StudentId, ChapterId, ManagerId, "Motivo");
+
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ExemptStudentAsync_Returns_False_When_Already_Exempt()
+    {
+        _studentRepository.GetStudentChapterIdAsync(StudentId).Returns(ChapterId);
+        _progressRepository.GetProgressAsync(PlanId, ChapterId).Returns(new LetterPlanProgressQueryResultDataModel
+        {
+            PlanStartsOn = new DateTime(2026, 3, 1),
+            Rows = [Row(StudentId, null)],
+        });
+        _exemptionRepository.CreateExemptionAsync(
+                StudentId, PlanId, ChapterId, "Motivo", ManagerId, Arg.Any<DateTime>())
+            .Returns(false);
+
+        var result = await _service.ExemptStudentAsync(PlanId, StudentId, ChapterId, ManagerId, "Motivo");
+
+        result.Should().BeFalse();
+        await _planCompletionService.DidNotReceiveWithAnyArgs()
+            .EvaluateAndUpdateAsync(default, default, default);
     }
 
     [Fact]
@@ -106,6 +216,70 @@ public class LetterPlanProgressServiceTests
         var result = await _service.ExemptStudentAsync(PlanId, StudentId, ChapterId, ManagerId, "Motivo");
 
         result.Should().BeTrue();
+        await _planCompletionService.Received(1)
+            .EvaluateAndUpdateAsync(PlanId, ChapterId, ManagerId);
+    }
+
+    [Fact]
+    public async Task RevokeExemptionAsync_Returns_False_When_Student_Chapter_Mismatches()
+    {
+        _studentRepository.GetStudentChapterIdAsync(StudentId).Returns(ChapterId + 1);
+
+        var result = await _service.RevokeExemptionAsync(PlanId, StudentId, ChapterId, ManagerId);
+
+        result.Should().BeFalse();
+        await _exemptionRepository.DidNotReceiveWithAnyArgs()
+            .RevokeExemptionAsync(default, default, default, default);
+    }
+
+    [Fact]
+    public async Task RevokeExemptionAsync_Returns_False_When_Plan_Outside_Chapter()
+    {
+        _studentRepository.GetStudentChapterIdAsync(StudentId).Returns(ChapterId);
+        _progressRepository.GetProgressAsync(PlanId, ChapterId).Returns((LetterPlanProgressQueryResultDataModel?)null);
+
+        var result = await _service.RevokeExemptionAsync(PlanId, StudentId, ChapterId, ManagerId);
+
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task RevokeExemptionAsync_Revokes_And_Reevaluates_Even_When_Plan_Completed()
+    {
+        _studentRepository.GetStudentChapterIdAsync(StudentId).Returns(ChapterId);
+        _progressRepository.GetProgressAsync(PlanId, ChapterId).Returns(new LetterPlanProgressQueryResultDataModel
+        {
+            PlanStartsOn = new DateTime(2026, 3, 1),
+            IsPlanCompleted = true,
+            Rows = [ExemptRow(StudentId)],
+        });
+        _exemptionRepository.RevokeExemptionAsync(StudentId, PlanId, ManagerId, Arg.Any<DateTime>())
+            .Returns(true);
+
+        var result = await _service.RevokeExemptionAsync(PlanId, StudentId, ChapterId, ManagerId);
+
+        result.Should().BeTrue();
+        await _planCompletionService.Received(1)
+            .EvaluateAndUpdateAsync(PlanId, ChapterId, ManagerId);
+    }
+
+    [Fact]
+    public async Task RevokeExemptionAsync_Does_Not_Reevaluate_When_No_Active_Exemption()
+    {
+        _studentRepository.GetStudentChapterIdAsync(StudentId).Returns(ChapterId);
+        _progressRepository.GetProgressAsync(PlanId, ChapterId).Returns(new LetterPlanProgressQueryResultDataModel
+        {
+            PlanStartsOn = new DateTime(2026, 3, 1),
+            Rows = [Row(StudentId, null)],
+        });
+        _exemptionRepository.RevokeExemptionAsync(StudentId, PlanId, ManagerId, Arg.Any<DateTime>())
+            .Returns(false);
+
+        var result = await _service.RevokeExemptionAsync(PlanId, StudentId, ChapterId, ManagerId);
+
+        result.Should().BeFalse();
+        await _planCompletionService.DidNotReceiveWithAnyArgs()
+            .EvaluateAndUpdateAsync(default, default, default);
     }
 
     private static LetterPlanProgressRowDataModel Row(int studentId, DocumentStatus? status) =>

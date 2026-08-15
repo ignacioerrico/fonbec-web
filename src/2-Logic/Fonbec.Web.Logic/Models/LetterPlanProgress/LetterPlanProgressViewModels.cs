@@ -39,7 +39,6 @@ public class LetterPlanProgressRowViewModel
     public string? RejectionReason { get; set; }
     public string? ExemptionReason { get; set; }
     public DateTime? ApprovedOn { get; set; }
-    public bool IsFirstRowForStudent { get; set; }
     public bool IsStudentExempt { get; set; }
 }
 

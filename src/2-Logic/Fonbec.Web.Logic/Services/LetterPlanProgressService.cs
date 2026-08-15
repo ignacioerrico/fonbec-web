@@ -1,4 +1,5 @@
 using Fonbec.Web.DataAccess.DataModels.LetterPlanProgress;
+using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Models.LetterPlanProgress;
 
@@ -58,6 +59,18 @@ public class LetterPlanProgressService(
             return false;
         }
 
+        var studentRows = progress.Rows
+            .Where(row => row.StudentId == studentId)
+            .ToList();
+
+        // Exemption is an alternative to the student's entire letter obligation for this plan: it is
+        // all or nothing. Once a letter stands for any sponsor, the student must complete the rest and
+        // can no longer be exempted. A rejected letter still has to be provided, so it does not count.
+        if (studentRows.Count == 0 || studentRows.Any(row => row.LetterStatus is not null and not DocumentStatus.Rejected))
+        {
+            return false;
+        }
+
         var created = await letterExemptionRepository.CreateExemptionAsync(
             studentId,
             planId,
@@ -83,22 +96,26 @@ public class LetterPlanProgressService(
             return false;
         }
 
+        // Plan chapter scoping: progress is null when the plan is outside the manager's chapter.
+        // Revoke remains allowed on completed plans so an unapproved reintroduced slot can reopen them.
         var progress = await letterPlanProgressRepository.GetProgressAsync(planId, managerChapterId);
         if (progress is null)
         {
             return false;
         }
 
-        if (progress.IsPlanCompleted)
-        {
-            return false;
-        }
-
-        return await letterExemptionRepository.RevokeExemptionAsync(
+        var revoked = await letterExemptionRepository.RevokeExemptionAsync(
             studentId,
             planId,
             managerUserId,
             timeProvider.GetUtcNow().UtcDateTime);
+
+        if (revoked)
+        {
+            await planCompletionService.EvaluateAndUpdateAsync(planId, managerChapterId, managerUserId);
+        }
+
+        return revoked;
     }
 
     private static LetterPlanProgressViewModel MapToViewModel(LetterPlanProgressQueryResultDataModel result)
@@ -126,15 +143,6 @@ public class LetterPlanProgressService(
                 IsStudentExempt = row.IsExempt,
             };
         }).ToList();
-
-        var seenStudents = new HashSet<int>();
-        foreach (var row in rows)
-        {
-            if (seenStudents.Add(row.StudentId))
-            {
-                row.IsFirstRowForStudent = true;
-            }
-        }
 
         return new LetterPlanProgressViewModel
         {

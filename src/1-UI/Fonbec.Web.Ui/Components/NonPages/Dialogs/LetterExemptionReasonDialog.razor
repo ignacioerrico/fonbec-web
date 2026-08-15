@@ -1,12 +1,17 @@
 @using Fonbec.Web.DataAccess.Constants
+@using Fonbec.Web.Logic.ExtensionMethods
 
 <MudDialog>
     <TitleContent>
         <MudText Typo="Typo.h6">@Title</MudText>
     </TitleContent>
     <DialogContent>
-        <MudText Class="mb-2">@Prompt</MudText>
+        @if (!string.IsNullOrWhiteSpace(PlanLabel))
+        {
+            <MudText Typo="Typo.subtitle2" Class="mb-3">Campaña: @PlanLabel.CapitalizeFirstLetter()</MudText>
+        }
         <MudTextField @bind-Value="_reason"
+                      Label="@Prompt"
                       Lines="3"
                       Required="true"
                       RequiredError="El motivo es obligatorio."
@@ -14,11 +19,14 @@
                       Counter="MaxLength.LetterExemption.Reason"
                       Immediate="true"
                       Variant="Variant.Outlined" />
+        <MudText Typo="Typo.caption" Class="mt-3 mud-text-secondary">
+            Se exime al becario de entregar las cartas de la campaña de @PlanLabel. El mediador verá esta exención.
+        </MudText>
     </DialogContent>
     <DialogActions>
         <MudButton OnClick="Cancel">Cancelar</MudButton>
         <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="Confirm" Disabled="@string.IsNullOrWhiteSpace(_reason)">
-            Confirmar
+            Eximir
         </MudButton>
     </DialogActions>
 </MudDialog>
