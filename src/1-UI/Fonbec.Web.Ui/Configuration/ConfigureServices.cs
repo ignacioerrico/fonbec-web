@@ -70,6 +70,7 @@ public static class ConfigureServices
         services.AddScoped<IChapterService, ChapterService>();
         services.AddScoped<IUserService, UserService>();
         services.AddScoped<ILetterPlanProgressService, LetterPlanProgressService>();
+        services.AddScoped<IPlanCompletionService, PlanCompletionService>();
         services.AddScoped<IPlannedDeliveryService, PlannedDeliveryService>();
         services.AddScoped<IStudentService, StudentService>();
         services.AddScoped<IFacilitatorService, FacilitatorService>();

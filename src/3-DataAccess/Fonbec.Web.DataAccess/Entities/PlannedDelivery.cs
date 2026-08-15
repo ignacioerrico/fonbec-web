@@ -12,4 +12,8 @@ public class PlannedDelivery : Auditable
     public DateTime StartsOn { get; set; }
 
     public bool Completed { get; set; }
+
+    public int? CompletedById { get; set; }
+    public FonbecWebUser? CompletedBy { get; set; }
+    public DateTime? CompletedOnUtc { get; set; }
 }

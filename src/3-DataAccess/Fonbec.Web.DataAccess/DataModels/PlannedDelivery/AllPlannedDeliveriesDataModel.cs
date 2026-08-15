@@ -1,4 +1,5 @@
-﻿using Fonbec.Web.DataAccess.Entities.Abstract;
+﻿using Fonbec.Web.DataAccess.Entities;
+using Fonbec.Web.DataAccess.Entities.Abstract;
 
 namespace Fonbec.Web.DataAccess.DataModels.PlannedDelivery;
 
@@ -9,4 +10,6 @@ public class AllPlannedDeliveriesDataModel(Auditable auditable) : AuditableDataM
     public bool IsPlannedDeliveryCompleted { get; set; }
     public int LettersDelivered { get; init; }
     public int ExemptStudents { get; init; }
+    public FonbecWebUser? CompletedBy { get; init; }
+    public DateTime? CompletedOnUtc { get; init; }
 }

@@ -15,10 +15,19 @@ public interface IPlannedDeliveryRepository
     Task<List<DateTime>> GetPlannedDeliveryDatesAsync(int chapterId, DateTime? from);
     Task<int> CreatePlannedDeliveryAsync(CreatePlannedDeliveryInputDataModel dataModel);
     Task<int> UpdatePlannedDeliveryAsync(UpdatePlannedDeliveryInputDataModel dataModel);
-    Task<bool> MarkPlanCompletedAsync(int planId);
+
+    /// <summary>
+    /// Sets the plan's <c>Completed</c> flag to <paramref name="completed"/>. When completing, records the
+    /// triggering user and time in <c>CompletedById</c>/<c>CompletedOnUtc</c>; when reopening, clears them.
+    /// Idempotent: returns <c>false</c> when the plan is missing or already at the requested value; returns
+    /// <c>true</c> only when the flag actually changed.
+    /// </summary>
+    Task<bool> SetPlanCompletedAsync(int planId, bool completed, int updatedById);
 }
 
-public class PlannedDeliveryRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : IPlannedDeliveryRepository
+public class PlannedDeliveryRepository(
+    IDbContextFactory<FonbecWebDbContext> dbContext,
+    TimeProvider timeProvider) : IPlannedDeliveryRepository
 {
     public async Task<CurrentPlannedDeliveryDataModel?> GetCurrentPlanAsync(int chapterId)
     {
@@ -74,6 +83,7 @@ public class PlannedDeliveryRepository(IDbContextFactory<FonbecWebDbContext> dbC
             .Include(pd => pd.LastUpdatedBy)
             .Include(pd => pd.DisabledBy)
             .Include(pd => pd.ReenabledBy)
+            .Include(pd => pd.CompletedBy)
             .Where(pd => pd.IsActive
                          && pd.ChapterId == chapterId
                          && pd.Completed)
@@ -83,6 +93,8 @@ public class PlannedDeliveryRepository(IDbContextFactory<FonbecWebDbContext> dbC
                 PlannedDeliveryId = pd.Id,
                 PlannedDeliveryStartsOn = pd.StartsOn,
                 IsPlannedDeliveryCompleted = pd.Completed,
+                CompletedBy = pd.CompletedBy,
+                CompletedOnUtc = pd.CompletedOnUtc,
                 LettersDelivered = db.Set<Letter>()
                     .Count(l => l.PlanId == pd.Id && l.Status == DocumentStatus.Approved),
                 ExemptStudents = db.LetterExemptions
@@ -158,17 +170,19 @@ public class PlannedDeliveryRepository(IDbContextFactory<FonbecWebDbContext> dbC
         return await db.SaveChangesAsync();
     }
 
-    public async Task<bool> MarkPlanCompletedAsync(int planId)
+    public async Task<bool> SetPlanCompletedAsync(int planId, bool completed, int updatedById)
     {
         await using var db = await dbContext.CreateDbContextAsync();
 
         var plannedDelivery = await db.PlannedDeliveries.FindAsync(planId);
-        if (plannedDelivery is null || plannedDelivery.Completed)
+        if (plannedDelivery is null || plannedDelivery.Completed == completed)
         {
             return false;
         }
 
-        plannedDelivery.Completed = true;
+        plannedDelivery.Completed = completed;
+        plannedDelivery.CompletedById = completed ? updatedById : null;
+        plannedDelivery.CompletedOnUtc = completed ? timeProvider.GetUtcNow().UtcDateTime : null;
         await db.SaveChangesAsync();
         return true;
     }

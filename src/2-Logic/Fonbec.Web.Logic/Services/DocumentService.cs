@@ -65,6 +65,7 @@ public class DocumentService(
     IUserService userService,
     IBlobStorageService blobStorageService,
     ILetterPlanProgressService letterPlanProgressService,
+    IPlanCompletionService planCompletionService,
     IOptions<BlobStorageOptions> blobStorageOptions,
     ILogger<DocumentService> logger) : IDocumentService
 {
@@ -572,7 +573,21 @@ public class DocumentService(
 
         if (document is Letter letter)
         {
-            await letterPlanProgressService.TryCompletePlanIfDoneAsync(letter.PlanId, letter.ChapterId);
+            // Eventual consistency: a failure to re-evaluate plan completion must not roll back the
+            // already-committed letter approval. The plan can be reconciled later.
+            try
+            {
+                await planCompletionService.EvaluateAndUpdateAsync(
+                    letter.PlanId,
+                    letter.ChapterId,
+                    input.ReviewerId);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex,
+                    "Failed to evaluate plan completion for plan {PlanId} in chapter {ChapterId} after approving letter {DocumentId}.",
+                    letter.PlanId, letter.ChapterId, input.DocumentId);
+            }
         }
 
         return new ReviewResult(true);

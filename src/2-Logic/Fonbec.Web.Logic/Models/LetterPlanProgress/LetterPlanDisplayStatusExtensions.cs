@@ -52,4 +52,30 @@ public static class LetterPlanDisplayStatusExtensions
 
     public static bool CountsAsMissingOrRejected(this LetterPlanDisplayStatus status) =>
         status is LetterPlanDisplayStatus.Missing or LetterPlanDisplayStatus.Rejected;
+
+    /// <summary>
+    /// Single definition of the required-slot counts. Exempt slots are excluded from the required
+    /// set; every other slot is classified via the <c>CountsAs*</c> rules above. Shared by the progress
+    /// UI projection and the plan-completion evaluation so their counts cannot drift.
+    /// </summary>
+    public static LetterPlanProgressSummaryViewModel ToSummary(this IEnumerable<LetterPlanDisplayStatus> statuses)
+    {
+        var required = statuses
+            .Where(status => status != LetterPlanDisplayStatus.Exempt)
+            .ToList();
+
+        var totalRequired = required.Count;
+        var approved = required.Count(status => status.CountsAsApproved());
+
+        return new LetterPlanProgressSummaryViewModel
+        {
+            TotalRequired = totalRequired,
+            Approved = approved,
+            InProgress = required.Count(status => status.CountsAsInProgress()),
+            MissingOrRejected = required.Count(status => status.CountsAsMissingOrRejected()),
+            CompletionPercent = totalRequired == 0
+                ? 0m
+                : Math.Round(100m * approved / totalRequired, 0),
+        };
+    }
 }
