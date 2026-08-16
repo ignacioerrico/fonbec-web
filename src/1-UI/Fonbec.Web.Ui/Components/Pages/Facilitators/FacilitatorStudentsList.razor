@@ -6,6 +6,7 @@
 @using Fonbec.Web.Logic.Models.Facilitators
 @using Fonbec.Web.Logic.Models.Students
 @using Fonbec.Web.Ui.Components.NonPages.Letters
+@using Fonbec.Web.Ui.Components.NonPages.ReportCards
 
 <PageHeader Title="Mis becarios" />
 
@@ -77,6 +78,25 @@ else
             </TemplateColumn>
             <TemplateColumn Title="Calificaciones" Filterable="false" Sortable="false">
                 <CellTemplate>
+                    @if (context.Item.ReportCardChip.Count > 0)
+                    {
+                        @foreach (var report in context.Item.ReportCardChip)
+                        {                           
+                            <MudChip T="string"
+                                     Size="Size.Small"
+                                     Class="me-1">
+                                @report.PeriodLabel
+                            </MudChip>
+                        }
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2">
+                            @(context.Item.EducationLevel == EducationLevel.University
+                                ? "Sin libretas"
+                                : "Sin boletines")
+                        </MudText>
+                    }
                 </CellTemplate>
             </TemplateColumn>
             <TemplateColumn Title="Otros" Filterable="false" Sortable="false">
@@ -125,6 +145,8 @@ else
                     else
                     {
                         <SponsorLetterStatusList Sponsors="@context.Item.LetterStatuses" />
+                        <ReportCardList Reports="@context.Item.ReportCardChip"
+                                        EducationLevel="@context.Item.EducationLevel" />
                     }
                 </MudStack>
 
