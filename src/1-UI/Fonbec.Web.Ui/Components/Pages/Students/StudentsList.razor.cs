@@ -107,7 +107,7 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
         {
             // Update timestamp in UI
             _viewModels.Single(vm => vm.StudentId == modifiedViewModel.StudentId).LastUpdatedOnUtc = DateTime.Now;
-            Snackbar.Add("Padrino actualizado correctamente.", Severity.Success);
+            Snackbar.Add("Becario actualizado correctamente.", Severity.Success);
         }
         else
         {
