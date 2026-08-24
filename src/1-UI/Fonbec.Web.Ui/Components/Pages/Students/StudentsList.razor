@@ -116,12 +116,11 @@
                                   FilterContext="context"
                                   FilterBy="@(vm => vm.StudentCurrentEducationLevel)" />
                 </FilterTemplate>
-            </PropertyColumn>
-
+            </PropertyColumn>          
             <PropertyColumn Property="@(vm => string.Join(", ", vm.ActiveSponsors.Select(s => s.Name)))"
                             Title="Padrinos activos" Editable="false" Sortable="false">
-                <CellTemplate>
-                    @if (context.Item.ActiveSponsors.Count > 0)
+            <CellTemplate>
+                @if (context.Item.ActiveSponsors.Count > 0)
                     {
                         <div class="d-flex flex-wrap gap-1">
                             @foreach (var sponsor in context.Item.ActiveSponsors)
@@ -134,6 +133,9 @@
                         </div>
                     }
                 </CellTemplate>
+                <EditTemplate>
+                    <!-- Empty EditTemplate  -->
+                </EditTemplate>
             </PropertyColumn>
 
             <PropertyColumn Property="vm => vm.Notes" Title="Información adicional" Hidden="true" Required="false">
