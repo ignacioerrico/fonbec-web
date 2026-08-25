@@ -121,6 +121,14 @@ public class DocumentDescriptionOptionDataModel
     public int SortOrder { get; init; }
 }
 
+public class RejectedReasonDataModel
+{
+    public int RejectedReasonId { get; init; }
+    public string Code { get; init; } = string.Empty;
+    public string Description { get; init; } = string.Empty;
+    public bool RequiresNotes { get; init; }
+}
+
 public class BlobPathDataModel
 {
     public string StoragePath { get; init; } = string.Empty;

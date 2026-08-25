@@ -1,0 +1,34 @@
+<MudText Typo="Typo.subtitle2" Class="mb-2">Motivo de rechazo (si corresponde)</MudText>
+
+<MudRadioGroup T="int?" @bind-Value="_selectedReasonId">
+    @foreach (var reason in _reasons)
+    {
+        <MudRadio T="int?" Value="@((int?)reason.RejectedReasonId)" Color="Color.Primary">
+            @reason.Description
+        </MudRadio>
+
+        @if (reason.RequiresNotes && _selectedReasonId == reason.RejectedReasonId)
+        {
+            <MudTextField @bind-Value="_rejectionNotes"
+                          Label="Notas"
+                          Lines="2" Immediate="true" Class="ms-8 mb-2" Style="width: calc(100% - 2rem);" />
+        }
+    }
+</MudRadioGroup>
+
+<MudDivider Class="my-4" />
+
+<div class="d-flex justify-end gap-2">
+    <MudButton OnClick="Reject" Disabled="RejectDisabled"
+               Variant="Variant.Outlined" Color="Color.Error"
+               StartIcon="@Icons.Material.Filled.Close">
+        Rechazar
+    </MudButton>
+    <MudButton OnClick="Approve" Disabled="ApproveDisabled"
+               Variant="Variant.Filled" Color="Color.Success"
+               StartIcon="@Icons.Material.Filled.Check">
+        Aprobar
+    </MudButton>
+</div>
+
+<LoadingIndicator Loading="_saving" LoadingText="Guardando la revisión" />
