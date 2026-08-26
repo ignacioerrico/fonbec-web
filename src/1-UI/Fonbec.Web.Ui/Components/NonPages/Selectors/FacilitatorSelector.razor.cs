@@ -10,6 +10,7 @@ public partial class FacilitatorSelector
     private readonly List<SelectableModel<int>> _facilitators = [];
 
     private bool _loading;
+    private int? _previousChapterId;
 
     [Parameter]
     public bool SelectFirstItemOnLoad { get; set; }
@@ -29,6 +30,40 @@ public partial class FacilitatorSelector
     [Inject]
     public IUserService UserService { get; set; } = null!;
 
+    [Parameter]
+    public int? ChapterId { get; set; }
+
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+
+        // Reload only if ChapterId has changed or on first parameter load
+        if (_previousChapterId != ChapterId)
+        {
+            _previousChapterId = ChapterId;
+            await LoadFacilitatorsAsync();
+        }
+    }
+
+    private async Task LoadFacilitatorsAsync()
+    {
+        _loading = true;
+        _facilitators.Clear();
+
+        var facilitators = await UserService.GetAllUsersInRoleForSelectionAsync(FonbecRole.Uploader);
+
+        if (ChapterId.HasValue && ChapterId.Value > 0)
+        {
+            var chapterUsers = await UserService.GetAllUsersAsync(ChapterId.Value);
+            var chapterUserIds = chapterUsers.Select(u => u.UserId).ToHashSet();
+            facilitators = facilitators.Where(f => chapterUserIds.Contains(f.Key)).ToList();
+        }
+
+        _loading = false;
+        _facilitators.AddRange(facilitators);
+
+        await NumberOfFacilitatorsLoaded.InvokeAsync(_facilitators.Count);
+    }
     protected override async Task OnInitializedAsync()
     {
         _loading = true;

@@ -13,12 +13,11 @@ public partial class StudentCreate : AuthenticationRequiredComponentBase
 {
     private readonly StudentCreateBindModel _bindModel = new();
 
-    private bool IsFormDisabled => !_anyChapters || !_anyFacilitators;
-    private bool _anyChapters;
+    private bool IsFormDisabled => _facilitatorsLoaded && !_anyFacilitators && _bindModel.ChapterId > 0;
     private bool _anyFacilitators;
+    private bool _facilitatorsLoaded;
 
     private bool _formValidationSucceeded;
-
     private bool _saving;
 
     private bool SaveButtonDisabled => Loading
@@ -29,25 +28,31 @@ public partial class StudentCreate : AuthenticationRequiredComponentBase
     [Inject]
     public IStudentService StudentService { get; set; } = null!;
 
-    private async Task OnChaptersLoaded(int chaptersCount) =>
-        _anyChapters = chaptersCount > 0;
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
 
-    private async Task NumberOfFacilitatorsLoaded(int totalFacilitators) =>
+        if (FonbecClaim?.ChapterId.HasValue == true)
+        {
+            _bindModel.ChapterId = FonbecClaim.ChapterId.Value;
+        }
+    }
+    private async Task NumberOfFacilitatorsLoaded(int totalFacilitators)
+    {
         _anyFacilitators = totalFacilitators > 0;
+        _facilitatorsLoaded = true;
+    }
 
     private async Task Save()
     {
-        if (FonbecClaim.ChapterId is null)
-        {
-            if (_bindModel.ChapterId == 0)
-            {
-                Snackbar.Add("La filial no es válida.", Severity.Error);
-                return;
-            }
-        }
-        else
+        if (FonbecClaim?.ChapterId.HasValue == true)
         {
             _bindModel.ChapterId = FonbecClaim.ChapterId.Value;
+        }
+        if (_bindModel.ChapterId == 0)
+        {
+            Snackbar.Add("La filial no es válida.", Severity.Error);
+            return;
         }
 
         if (_bindModel.FacilitatorId == 0)

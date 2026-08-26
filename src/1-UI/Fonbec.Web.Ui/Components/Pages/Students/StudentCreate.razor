@@ -6,20 +6,29 @@
 
 <PageHeader Title="Alta de becario" />
 
-@if (!_anyChapters)
+@if (_facilitatorsLoaded && !_anyFacilitators && _bindModel.ChapterId > 0)
 {
-    <MudAlert Severity="Severity.Error">No hay filiales. Para dar de alta usuarios se requiere <MudLink Href="@NavRoutes.ChapterCreate" Typo="Typo.body2">al menos una filial</MudLink>.</MudAlert>
+    <MudAlert Severity="Severity.Error">
+        No hay mediadores en la filial seleccionada. Para dar de alta becarios se requiere <MudLink Href="@NavRoutes.UserCreate" Typo="Typo.body2">al menos un mediador</MudLink>.
+    </MudAlert>
 }
-else if (!_anyFacilitators)
-{
-    <MudAlert Severity="Severity.Error">No hay mediadores. Para dar de alta becarios se requiere <MudLink Href="@NavRoutes.UserCreate" Typo="Typo.body2">al menos un mediador</MudLink>.</MudAlert>
-}
-
 <LoadingIndicator Loading="Loading" />
 
 <MudForm @bind-IsValid="@_formValidationSucceeded" Disabled="IsFormDisabled">
-    <ChapterSelector @bind-SelectedChapterId="_bindModel.ChapterId"
-                     NumberOfChaptersLoaded="OnChaptersLoaded" />
+    @if (FonbecClaim?.ChapterId is null)
+    {
+        <ChapterSelector @bind-SelectedChapterId="_bindModel.ChapterId"
+                         SelectFirstItemOnLoad="false" />
+    }
+    else
+    {
+        @* MANAGER / COORDINATOR: Read-only chapter *@
+        <MudTextField T="string"
+                      Label="Filial"
+                      Value="@FonbecClaim.ChapterName"
+                      ReadOnly="true"
+                      Variant="Variant.Outlined" />
+    }
 
     <MudTextField T="string" Label="Nombre" @bind-Value="_bindModel.StudentFirstName" Immediate="true" AutoFocus="!IsFormDisabled"
                   Required="true" RequiredError="Este es un campo obligatorio."
@@ -38,6 +47,7 @@ else if (!_anyFacilitators)
                             @bind-UniversityStartYear="_bindModel.StudentUniversityStartYear" />
 
     <FacilitatorSelector @bind-SelectedFacilitatorId="_bindModel.FacilitatorId"
+                         ChapterId="_bindModel.ChapterId"
                          NumberOfFacilitatorsLoaded="NumberOfFacilitatorsLoaded" />
 
     <MudTextField T="string" Label="Correo electrónico" @bind-Value="_bindModel.StudentEmail" Immediate="true"
