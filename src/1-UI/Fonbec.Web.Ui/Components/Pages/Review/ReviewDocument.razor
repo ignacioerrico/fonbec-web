@@ -3,6 +3,7 @@
 @inherits AuthenticationRequiredComponentBase
 
 @using Fonbec.Web.DataAccess.Entities.Enums
+@using Fonbec.Web.Ui.Components.NonPages.Documents
 @using Fonbec.Web.Ui.Components.NonPages.Review
 
 <LoadingIndicator Loading="Loading" />
@@ -75,7 +76,11 @@
             <PlaceholderReviewPanel DocumentType="DocumentType.ReportCard" />
             break;
         default:
-            <PlaceholderReviewPanel DocumentType="DocumentType.Other" />
+            <OtherReviewPanel DocumentId="_workspace.DocumentId"
+                              RowVersion="_workspace.RowVersion"
+                              ReviewerId="FonbecClaim.UserId"
+                              ReviewerRole="UserRole"
+                              Expired="_expired" />
             break;
     }
 

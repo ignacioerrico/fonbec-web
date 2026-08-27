@@ -37,6 +37,9 @@ public partial class OtherReviewPanel : ComponentBase
     [EditorRequired]
     public string ReviewerRole { get; set; } = string.Empty;
 
+    [Parameter]
+    public bool Expired { get; set; }
+
     [Inject]
     public IDocumentService DocumentService { get; set; } = null!;
 
@@ -49,10 +52,11 @@ public partial class OtherReviewPanel : ComponentBase
     private RejectedReasonViewModel? SelectedReason =>
         _reasons.SingleOrDefault(r => r.RejectedReasonId == _selectedReasonId);
 
-    private bool ApproveDisabled => _saving;
+    private bool ApproveDisabled => _saving || Expired;
 
     private bool RejectDisabled =>
         _saving
+        || Expired
         || _selectedReasonId is null
         || (SelectedReason?.RequiresNotes == true && string.IsNullOrWhiteSpace(_rejectionNotes));
 
@@ -64,6 +68,11 @@ public partial class OtherReviewPanel : ComponentBase
 
     private async Task Approve()
     {
+        if (_saving)
+        {
+            return;
+        }
+
         _saving = true;
         try
         {
@@ -80,6 +89,11 @@ public partial class OtherReviewPanel : ComponentBase
 
     private async Task Reject()
     {
+        if (_saving)
+        {
+            return;
+        }
+
         _saving = true;
         try
         {
@@ -98,9 +112,16 @@ public partial class OtherReviewPanel : ComponentBase
     {
         if (!result.IsSuccess)
         {
-            foreach (var error in result.Errors ?? [])
+            if (result.Errors is null or { Count: 0 })
             {
-                Snackbar.Add(error, Severity.Error);
+                Snackbar.Add("No se pudo guardar la revisión.", Severity.Error);
+            }
+            else
+            {
+                foreach (var error in result.Errors)
+                {
+                    Snackbar.Add(error, Severity.Error);
+                }
             }
 
             return;

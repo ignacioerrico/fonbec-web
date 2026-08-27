@@ -41,8 +41,9 @@ public static class DocumentMessages
 
     public const string RejectionReasonRequired = "Debe indicar un motivo de rechazo.";
 
-    public const string RejectionNotesRequiredForOtherReason =
-        "Debe indicar notas cuando el motivo de rechazo es \"Otro\".";
+    public const string RejectionReasonNotApplicable = "El motivo de rechazo no aplica a este tipo de documento.";
+
+    public const string RejectionNotesRequiredForOtherReason = "Debe indicar notas cuando el motivo de rechazo es \"Otro\".";
 
     public const string NotAuthorizedReviewProgress = "No está autorizado para ver el progreso de revisión.";
 

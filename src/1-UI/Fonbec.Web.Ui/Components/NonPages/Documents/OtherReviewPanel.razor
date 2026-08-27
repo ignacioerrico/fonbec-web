@@ -6,15 +6,15 @@
         <MudRadio T="int?" Value="@((int?)reason.RejectedReasonId)" Color="Color.Primary">
             @reason.Description
         </MudRadio>
-
-        @if (reason.RequiresNotes && _selectedReasonId == reason.RejectedReasonId)
-        {
-            <MudTextField @bind-Value="_rejectionNotes"
-                          Label="Notas"
-                          Lines="2" Immediate="true" Class="ms-8 mb-2" Style="width: calc(100% - 2rem);" />
-        }
     }
 </MudRadioGroup>
+
+@if (SelectedReason?.RequiresNotes == true)
+{
+    <MudTextField @bind-Value="_rejectionNotes"
+                  Label="Notas"
+                  Lines="2" Immediate="true" Class="ms-8 mb-2" Style="width: calc(100% - 2rem);" />
+}
 
 <MudDivider Class="my-4" />
 

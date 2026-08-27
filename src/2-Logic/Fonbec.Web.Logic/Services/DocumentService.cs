@@ -689,9 +689,10 @@ public class DocumentService(
 
         var applicableReasons = await documentRepository.GetApplicableRejectedReasonsAsync(DocumentType.Other);
         var reason = applicableReasons.SingleOrDefault(r => r.RejectedReasonId == input.RejectedReasonId.Value);
+
         if (reason is null)
         {
-            return new ReviewResult(false, [DocumentMessages.RejectionReasonRequired]);
+            return new ReviewResult(false, [DocumentMessages.RejectionReasonNotApplicable]);
         }
 
         if (reason.RequiresNotes && string.IsNullOrWhiteSpace(input.RejectionNotes))
