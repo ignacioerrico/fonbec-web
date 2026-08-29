@@ -49,6 +49,7 @@ public interface IDocumentRepository
     Task<DocumentBlobContextDataModel?> GetDocumentBlobContextAsync(long documentId);
     Task<List<int>> GetActiveSponsorIdsForStudentAsync(int studentId);
     Task<List<DocumentDescriptionOptionDataModel>> GetDescriptionOptionsAsync(int chapterId, DocumentType documentType);
+    Task<List<RejectedReasonDataModel>> GetApplicableRejectedReasonsAsync(DocumentType documentType);
 }
 
 public class DocumentRepository(
@@ -1022,6 +1023,24 @@ public class DocumentRepository(
                 DocumentDescriptionOptionId = o.DocumentDescriptionOptionId,
                 Text = o.Text,
                 SortOrder = o.SortOrder,
+            })
+            .ToListAsync();
+    }
+
+    public async Task<List<RejectedReasonDataModel>> GetApplicableRejectedReasonsAsync(DocumentType documentType)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+        return await db.RejectedReasons
+            .AsNoTracking()
+            .Where(r => r.AppliesToDocumentType == documentType || r.AppliesToDocumentType == null)
+            .OrderBy(r => r.AppliesToDocumentType == null ? 1 : 0)
+            .ThenBy(r => r.Id)
+            .Select(r => new RejectedReasonDataModel
+            {
+                RejectedReasonId = r.Id,
+                Code = r.Code,
+                Description = r.Description,
+                RequiresNotes = r.RequiresNotes,
             })
             .ToListAsync();
     }

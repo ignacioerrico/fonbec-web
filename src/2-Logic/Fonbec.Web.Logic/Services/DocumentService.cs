@@ -57,6 +57,7 @@ public interface IDocumentService
     Task<ReviewProgressViewModel> GetGlobalReviewProgressAsync(int userId, string userRole, int? planId);
     Task<LetterPlanProgressViewModel> GetLetterPlanProgressAsync(int userId, string userRole, int planId, int? chapterId);
     Task<List<DocumentDescriptionOptionViewModel>> GetDescriptionOptionsAsync(int chapterId, DocumentType documentType);
+    Task<List<RejectedReasonViewModel>> GetApplicableRejectedReasonsAsync(DocumentType documentType);
 }
 
 public class DocumentService(
@@ -686,6 +687,19 @@ public class DocumentService(
             return new ReviewResult(false, [DocumentMessages.RejectionReasonRequired]);
         }
 
+        var applicableReasons = await documentRepository.GetApplicableRejectedReasonsAsync(DocumentType.Other);
+        var reason = applicableReasons.SingleOrDefault(r => r.RejectedReasonId == input.RejectedReasonId.Value);
+
+        if (reason is null)
+        {
+            return new ReviewResult(false, [DocumentMessages.RejectionReasonNotApplicable]);
+        }
+
+        if (reason.RequiresNotes && string.IsNullOrWhiteSpace(input.RejectionNotes))
+        {
+            return new ReviewResult(false, [DocumentMessages.RejectionNotesRequiredForOtherReason]);
+        }
+
         var dataModel = input.Adapt<DataAccess.DataModels.Documents.Input.RejectOtherDocumentInputDataModel>();
         var errors = await documentRepository.RejectOtherDocumentAsync(dataModel);
         return errors.Count == 0
@@ -744,6 +758,12 @@ public class DocumentService(
     {
         var options = await documentRepository.GetDescriptionOptionsAsync(chapterId, documentType);
         return options.Adapt<List<DocumentDescriptionOptionViewModel>>();
+    }
+
+    public async Task<List<RejectedReasonViewModel>> GetApplicableRejectedReasonsAsync(DocumentType documentType)
+    {
+        var reasons = await documentRepository.GetApplicableRejectedReasonsAsync(documentType);
+        return reasons.Adapt<List<RejectedReasonViewModel>>();
     }
 
     private async Task<string?> ValidateUploadAuthorizationAsync(CreateDocumentUserContext user, int studentId)

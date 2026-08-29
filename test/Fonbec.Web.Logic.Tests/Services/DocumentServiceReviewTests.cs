@@ -1,8 +1,10 @@
 using FluentAssertions;
 using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.DataModels.Documents;
+using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Repositories;
+using Fonbec.Web.Logic.Models.Documents.Input;
 using Fonbec.Web.Logic.Options;
 using Fonbec.Web.Logic.Services;
 using Microsoft.Extensions.Logging.Abstractions;
@@ -186,5 +188,54 @@ public class DocumentServiceReviewTests
         var act = () => service.GetGlobalReviewProgressAsync(ReviewerId, FonbecRole.Uploader, null);
 
         await act.Should().ThrowAsync<UnauthorizedAccessException>();
+    }
+
+    private static readonly byte[] RowVersion = [1, 2, 3];
+
+    [Fact]
+    public async Task ApproveOtherDocument_Reviewer_NotifiesSponsorsAndReturnsSuccess()
+    {
+        _repository.GetDocumentByIdAsync(DocumentId)
+            .Returns(new OtherDocument { DocumentId = DocumentId, DocumentType = DocumentType.Other });
+        _repository.ApproveOtherDocumentAsync(Arg.Any<DataAccess.DataModels.Documents.Input.ApproveOtherDocumentInputDataModel>())
+            .Returns([]);
+
+        var service = CreateService();
+
+        var result = await service.ApproveOtherDocumentAsync(
+            new ApproveOtherDocumentInputModel(DocumentId, ReviewerId, FonbecRole.Reviewer, RowVersion));
+
+        result.IsSuccess.Should().BeTrue();
+        await _notificationService.Received(1).NotifySponsorsAsync(DocumentId);
+    }
+
+    [Fact]
+    public async Task RejectOtherDocument_NoReasonId_ReturnsRequiredErrorWithoutQueryingReasons()
+    {
+        var service = CreateService();
+
+        var result = await service.RejectOtherDocumentAsync(
+            new RejectOtherDocumentInputModel(DocumentId, ReviewerId, FonbecRole.Reviewer, RowVersion, null, null));
+
+        result.IsSuccess.Should().BeFalse();
+        result.Errors.Should().Contain(DocumentMessages.RejectionReasonRequired);
+        await _repository.DidNotReceive().GetApplicableRejectedReasonsAsync(Arg.Any<DocumentType>());
+    }
+
+    [Fact]
+    public async Task RejectOtherDocument_ReasonRequiresNotesButNoneProvided_ReturnsNotesRequiredError()
+    {
+        _repository.GetApplicableRejectedReasonsAsync(DocumentType.Other).Returns([
+            new RejectedReasonDataModel { RejectedReasonId = 11, Code = "Other", Description = "Otro", RequiresNotes = true },
+        ]);
+
+        var service = CreateService();
+
+        var result = await service.RejectOtherDocumentAsync(new RejectOtherDocumentInputModel(
+            DocumentId, ReviewerId, FonbecRole.Reviewer, RowVersion, 11, "   "));
+
+        result.IsSuccess.Should().BeFalse();
+        result.Errors.Should().Contain(DocumentMessages.RejectionNotesRequiredForOtherReason);
+        await _repository.DidNotReceive().RejectOtherDocumentAsync(Arg.Any<DataAccess.DataModels.Documents.Input.RejectOtherDocumentInputDataModel>());
     }
 }

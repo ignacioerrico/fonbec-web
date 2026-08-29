@@ -69,3 +69,11 @@ public class DocumentDescriptionOptionViewModel
     public string Text { get; init; } = string.Empty;
     public int SortOrder { get; init; }
 }
+
+public class RejectedReasonViewModel
+{
+    public int RejectedReasonId { get; init; }
+    public string Code { get; init; } = string.Empty;
+    public string Description { get; init; } = string.Empty;
+    public bool RequiresNotes { get; init; }
+}
