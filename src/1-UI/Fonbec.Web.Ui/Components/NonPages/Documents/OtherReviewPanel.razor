@@ -1,34 +1,42 @@
-<MudText Typo="Typo.subtitle2" Class="mb-2">Motivo de rechazo (si corresponde)</MudText>
+@using Fonbec.Web.DataAccess.Constants
 
-<MudRadioGroup T="int?" @bind-Value="_selectedReasonId">
-    @foreach (var reason in _reasons)
+<MudPaper Class="pa-4 mb-4" Outlined="true">
+    <MudText Typo="Typo.subtitle2" Class="mb-2">Motivo de rechazo (si corresponde)</MudText>
+
+    <MudRadioGroup T="int?" @bind-Value="_selectedReasonId">
+        @foreach (var reason in _reasons)
+        {
+            <MudRadio T="int?" Value="@((int?)reason.RejectedReasonId)" Color="Color.Primary">
+                @reason.Description
+            </MudRadio>
+        }
+    </MudRadioGroup>
+
+    @if (SelectedReason?.RequiresNotes == true)
     {
-        <MudRadio T="int?" Value="@((int?)reason.RejectedReasonId)" Color="Color.Primary">
-            @reason.Description
-        </MudRadio>
+        <MudTextField @bind-Value="_rejectionNotes"
+                      Label="Notas"
+                      Lines="2"
+                      Immediate="true"
+                      MaxLength="MaxLength.Document.RejectionNotes"
+                      Class="ms-8 mb-2"
+                      Style="width: calc(100% - 2rem);" />
     }
-</MudRadioGroup>
 
-@if (SelectedReason?.RequiresNotes == true)
-{
-    <MudTextField @bind-Value="_rejectionNotes"
-                  Label="Notas"
-                  Lines="2" Immediate="true" Class="ms-8 mb-2" Style="width: calc(100% - 2rem);" />
-}
+    <MudDivider Class="my-4" />
 
-<MudDivider Class="my-4" />
-
-<div class="d-flex justify-end gap-2">
-    <MudButton OnClick="Reject" Disabled="RejectDisabled"
-               Variant="Variant.Outlined" Color="Color.Error"
-               StartIcon="@Icons.Material.Filled.Close">
-        Rechazar
-    </MudButton>
-    <MudButton OnClick="Approve" Disabled="ApproveDisabled"
-               Variant="Variant.Filled" Color="Color.Success"
-               StartIcon="@Icons.Material.Filled.Check">
-        Aprobar
-    </MudButton>
-</div>
+    <div class="d-flex justify-end gap-2">
+        <MudButton OnClick="Reject" Disabled="RejectDisabled"
+                   Variant="Variant.Outlined" Color="Color.Error"
+                   StartIcon="@Icons.Material.Filled.Close">
+            Rechazar
+        </MudButton>
+        <MudButton OnClick="Approve" Disabled="ApproveDisabled"
+                   Variant="Variant.Filled" Color="Color.Success"
+                   StartIcon="@Icons.Material.Filled.Check">
+            Aprobar
+        </MudButton>
+    </div>
+</MudPaper>
 
 <LoadingIndicator Loading="_saving" LoadingText="Guardando la revisión" />

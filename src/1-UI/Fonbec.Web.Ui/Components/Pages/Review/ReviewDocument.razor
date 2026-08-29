@@ -75,12 +75,15 @@
         case DocumentType.ReportCard:
             <PlaceholderReviewPanel DocumentType="DocumentType.ReportCard" />
             break;
-        default:
+        case DocumentType.Other:
             <OtherReviewPanel DocumentId="_workspace.DocumentId"
                               RowVersion="_workspace.RowVersion"
                               ReviewerId="FonbecClaim.UserId"
                               ReviewerRole="UserRole"
                               Expired="_expired" />
+            break;
+        default:
+            <PlaceholderReviewPanel DocumentType="_workspace.DocumentType" />
             break;
     }
 

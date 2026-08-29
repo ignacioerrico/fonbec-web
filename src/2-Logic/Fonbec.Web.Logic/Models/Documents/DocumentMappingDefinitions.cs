@@ -54,6 +54,8 @@ public class DocumentMappingDefinitions : IRegister
         config.NewConfig<LetterPlanProgressDataModel, LetterPlanProgressViewModel>();
 
         config.NewConfig<DocumentDescriptionOptionDataModel, DocumentDescriptionOptionViewModel>();
+
+        config.NewConfig<RejectedReasonDataModel, RejectedReasonViewModel>();
     }
 
     private static List<CreateBlobPathInputDataModel> SingleBlobToList(CreateBlobPathInputModel? blob) =>

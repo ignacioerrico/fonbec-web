@@ -45,6 +45,8 @@ public static class DocumentMessages
 
     public const string RejectionNotesRequiredForOtherReason = "Debe indicar notas cuando el motivo de rechazo es \"Otro\".";
 
+    public const string RejectionNotesTooLong = "Las notas de rechazo no pueden superar los 512 caracteres.";
+
     public const string NotAuthorizedReviewProgress = "No está autorizado para ver el progreso de revisión.";
 
     public const string NotAuthorizedLetterPlanProgress = "No está autorizado para ver el progreso del plan de cartas.";

@@ -687,6 +687,12 @@ public class DocumentService(
             return new ReviewResult(false, [DocumentMessages.RejectionReasonRequired]);
         }
 
+        var document = await documentRepository.GetDocumentByIdAsync(input.DocumentId);
+        if (document?.DocumentType != DocumentType.Other)
+        {
+            return new ReviewResult(false, [DocumentMessages.DocumentIsNotOther]);
+        }
+
         var applicableReasons = await documentRepository.GetApplicableRejectedReasonsAsync(DocumentType.Other);
         var reason = applicableReasons.SingleOrDefault(r => r.RejectedReasonId == input.RejectedReasonId.Value);
 
@@ -698,6 +704,11 @@ public class DocumentService(
         if (reason.RequiresNotes && string.IsNullOrWhiteSpace(input.RejectionNotes))
         {
             return new ReviewResult(false, [DocumentMessages.RejectionNotesRequiredForOtherReason]);
+        }
+
+        if (input.RejectionNotes is { Length: > MaxLength.Document.RejectionNotes })
+        {
+            return new ReviewResult(false, [DocumentMessages.RejectionNotesTooLong]);
         }
 
         var dataModel = input.Adapt<DataAccess.DataModels.Documents.Input.RejectOtherDocumentInputDataModel>();

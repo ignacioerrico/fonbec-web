@@ -1,3 +1,4 @@
+using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.Logic.Models.Documents;
 using Fonbec.Web.Logic.Models.Documents.Input;
@@ -58,7 +59,8 @@ public partial class OtherReviewPanel : ComponentBase
         _saving
         || Expired
         || _selectedReasonId is null
-        || (SelectedReason?.RequiresNotes == true && string.IsNullOrWhiteSpace(_rejectionNotes));
+        || (SelectedReason?.RequiresNotes == true && string.IsNullOrWhiteSpace(_rejectionNotes))
+        || (_rejectionNotes?.Length > MaxLength.Document.RejectionNotes);
 
     protected override async Task OnInitializedAsync()
     {
