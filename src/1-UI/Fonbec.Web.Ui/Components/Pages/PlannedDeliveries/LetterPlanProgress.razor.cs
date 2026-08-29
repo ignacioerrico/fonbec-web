@@ -110,10 +110,33 @@ public partial class LetterPlanProgress
     };
 
     private static string? StatusTooltip(LetterPlanProgressRowViewModel row) =>
-        row.Status == LetterPlanDisplayStatus.Exempt ? row.ExemptionReason : row.RejectionReason;
+        row.Status switch
+        {
+            LetterPlanDisplayStatus.Exempt when !string.IsNullOrWhiteSpace(row.ExemptionReason) => row.ExemptionReason,
+            LetterPlanDisplayStatus.Rejected when !string.IsNullOrWhiteSpace(row.RejectionReason) => row.RejectionReason,
+            _ => null
+        };
 
     private static bool LetterPendingUpload(LetterPlanProgressRowViewModel row) =>
         row.Status is LetterPlanDisplayStatus.Missing or LetterPlanDisplayStatus.Rejected;
+
+    // Exemption replaces the student's entire letter obligation for the plan: it is all or nothing.
+    // Once a letter stands for any sponsor, the student must provide letters for all remaining
+    // sponsors. A rejected letter still has to be provided, so it leaves the student exemptable.
+    private bool StudentCanBeExempted(int studentId)
+    {
+        if (_viewModel is null)
+        {
+            return false;
+        }
+
+        var studentRows = _viewModel.Rows
+            .Where(row => row.StudentId == studentId)
+            .ToList();
+
+        return studentRows.Count > 0
+               && studentRows.All(LetterPendingUpload);
+    }
 
     private string UploadUrl(LetterPlanProgressRowViewModel row) =>
         NavRoutes.ManagerUploadLetter(
@@ -123,15 +146,21 @@ public partial class LetterPlanProgress
             row.CompanyId,
             NavRoutes.LetterPlanProgress(PlanId));
 
-    private async Task ExemptStudentAsync(int studentId)
+    private async Task ExemptStudentAsync(LetterPlanProgressRowViewModel row)
     {
+        var studentName = $"{row.StudentFirstName} {row.StudentLastName}".Trim();
+        var title = string.IsNullOrWhiteSpace(studentName)
+            ? "Eximir de carta"
+            : $"Eximir de carta a {studentName}";
+
         var parameters = new DialogParameters<LetterExemptionReasonDialog>
         {
-            { x => x.Title, "Eximir de carta" },
-            { x => x.Prompt, "Ingresá el motivo de la exención:" },
+            { x => x.Title, title },
+            { x => x.Prompt, "Motivo de la exención (obligatorio)" },
+            { x => x.PlanLabel, _viewModel?.PlanLabel },
         };
 
-        var dialog = await DialogService.ShowAsync<LetterExemptionReasonDialog>("Eximir de carta", parameters);
+        var dialog = await DialogService.ShowAsync<LetterExemptionReasonDialog>(title, parameters);
         var result = await dialog.Result;
 
         if (result is null || result.Canceled || result.Data is not string reason)
@@ -143,7 +172,7 @@ public partial class LetterPlanProgress
 
         var success = await LetterPlanProgressService.ExemptStudentAsync(
             PlanId,
-            studentId,
+            row.StudentId,
             FonbecClaim.ChapterId!.Value,
             FonbecClaim.UserId,
             reason);

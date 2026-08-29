@@ -14,7 +14,10 @@ public partial class LetterExemptionReasonDialog
     public string Title { get; set; } = "Eximir de carta";
 
     [Parameter]
-    public string Prompt { get; set; } = "Ingresá el motivo de la exención:";
+    public string Prompt { get; set; } = "Motivo de la exención (obligatorio)";
+
+    [Parameter]
+    public string? PlanLabel { get; set; }
 
     private void Cancel() => MudDialog.Cancel();
 
