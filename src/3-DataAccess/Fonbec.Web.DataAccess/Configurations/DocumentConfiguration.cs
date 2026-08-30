@@ -71,6 +71,9 @@ internal class DocumentConfiguration : IEntityTypeConfiguration<Document>
         // Serves the server-side review-progress aggregation (GROUP BY DocumentType, Status).
         builder.HasIndex(d => new { d.DocumentType, d.Status });
 
+        // Serves fair review dequeue (next chapter, then oldest document in that chapter).
+        builder.HasIndex(d => new { d.ChapterId, d.Status });
+
         builder.ToTable(t =>
         {
             t.HasCheckConstraint(

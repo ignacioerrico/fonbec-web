@@ -1,0 +1,262 @@
+@using Fonbec.Web.DataAccess.Constants
+@using Fonbec.Web.DataAccess.Entities.Enums
+
+<MudPaper Class="pa-4 mb-4" Outlined="true">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2 flex-wrap">
+        <MudText Typo="Typo.h6">Revisión de la carta</MudText>
+        <MudSpacer />
+        <MudButton Variant="Variant.Outlined"
+                   Color="Color.Error"
+                   StartIcon="@Icons.Material.Filled.VisibilityOff"
+                   Disabled="ActionsDisabled"
+                   OnClick="RejectUnreadableAsync">
+            Ilegible
+        </MudButton>
+        <MudButton Variant="Variant.Outlined"
+                   Color="Color.Error"
+                   StartIcon="@Icons.Material.Filled.Block"
+                   Disabled="ActionsDisabled"
+                   OnClick="RejectNotALetterAsync">
+            No es una carta
+        </MudButton>
+    </MudStack>
+
+    <div class="review-progress">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudText Typo="Typo.caption">Progreso de la revisión</MudText>
+            <MudSpacer />
+            <MudText Typo="Typo.caption">
+                @_decision.CompletedSteps de @_decision.TotalSteps · @_decision.CompletionPercent%
+            </MudText>
+        </MudStack>
+        <MudProgressLinear Value="@_decision.CompletionPercent"
+                           Color="@(_decision.CompletionPercent == 100 ? Color.Success : Color.Primary)"
+                           Rounded="true"
+                           Size="Size.Medium"
+                           Class="mt-1" />
+    </div>
+
+    @if (_loadingChoices)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-3" />
+    }
+    else
+    {
+        <MudStack Spacing="4">
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="mb-2">Fecha escrita</MudText>
+                <MudStack Spacing="2" AlignItems="AlignItems.Start">
+                    @* The popover takes the field's width, so keep it wide enough for a full month. *@
+                    <MudDatePicker @bind-Date="_writtenDate"
+                                   @bind-PickerMonth="WrittenDatePickerMonth"
+                                   DateFormat="dd/MM/yyyy"
+                                   Label="Fecha"
+                                   MaxDate="Today"
+                                   Disabled="ActionsDisabled"
+                                   Variant="Variant.Outlined"
+                                   Style="max-width: 22rem;" />
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Error"
+                               Size="Size.Small"
+                               StartIcon="@Icons.Material.Filled.EventBusy"
+                               Disabled="ActionsDisabled"
+                               OnClick="RejectMissingWrittenDateAsync">
+                        La fecha no figura
+                    </MudButton>
+                </MudStack>
+            </div>
+
+            @if (_addresseeChoices is not null)
+            {
+                <CandidateNameChoice Label="Destinatario (padrino):"
+                                     Names="_addresseeChoices.Names"
+                                     CorrectKey="@_addresseeChoices.CorrectKey"
+                                     Selection="_addresseeSelection"
+                                     SelectionChanged="OnAddresseeSelectionChanged"
+                                     OnNoneOfTheAbove="RejectWrongAddresseeAsync"
+                                     OnNotIndicated="RejectMissingAddresseeAsync"
+                                     Disabled="ActionsDisabled" />
+            }
+
+            @if (_signerChoices is not null)
+            {
+                <CandidateNameChoice Label="Firmante (becario):"
+                                     Names="_signerChoices.Names"
+                                     CorrectKey="@_signerChoices.CorrectKey"
+                                     Selection="_signerSelection"
+                                     SelectionChanged="OnSignerSelectionChanged"
+                                     OnNoneOfTheAbove="RejectWrongSignerAsync"
+                                     OnNotIndicated="RejectMissingAuthorAsync"
+                                     Disabled="ActionsDisabled" />
+            }
+
+            <MudDivider />
+
+            <div>
+                <MudStack Row="true" Spacing="2" Class="flex-wrap">
+                    <ScoreRating Label="Ortografía"
+                                 Value="_spellingScore"
+                                 ValueChanged="@(value => SetScore(ScoreCriterion.Spelling, value))"
+                                 Active="_activeCriterion == ScoreCriterion.Spelling"
+                                 OnActivate="@(() => SetActiveCriterion(ScoreCriterion.Spelling))"
+                                 Disabled="ActionsDisabled" />
+                    <ScoreRating Label="Legibilidad"
+                                 Value="_penmanshipScore"
+                                 ValueChanged="@(value => SetScore(ScoreCriterion.Penmanship, value))"
+                                 Active="_activeCriterion == ScoreCriterion.Penmanship"
+                                 OnActivate="@(() => SetActiveCriterion(ScoreCriterion.Penmanship))"
+                                 Disabled="ActionsDisabled" />
+                    <ScoreRating Label="Contenido"
+                                 Value="_contentScore"
+                                 ValueChanged="@(value => SetScore(ScoreCriterion.Content, value))"
+                                 Active="_activeCriterion == ScoreCriterion.Content"
+                                 OnActivate="@(() => SetActiveCriterion(ScoreCriterion.Content))"
+                                 Disabled="ActionsDisabled" />
+                </MudStack>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                    Atajos: 1–5 puntúan el criterio resaltado · ↑ ↓ cambian de criterio · Ctrl+Enter aprueba
+                </MudText>
+            </div>
+
+            <div>
+                <MudCheckBox T="bool"
+                             @bind-Value="_hasGreenFlags"
+                             Label="Bandera verde"
+                             Disabled="ActionsDisabled"
+                             Dense="true" />
+                @if (_hasGreenFlags)
+                {
+                    <MudTextField @bind-Value="_appraisal"
+                                  Label="Comentario"
+                                  Lines="2"
+                                  Required="true"
+                                  RequiredError="El comentario es obligatorio."
+                                  MaxLength="MaxLength.Assessment.Appraisal"
+                                  Counter="MaxLength.Assessment.Appraisal"
+                                  Immediate="true"
+                                  Variant="Variant.Outlined"
+                                  Disabled="ActionsDisabled"
+                                  Class="mt-2" />
+                }
+            </div>
+
+            <div>
+                <MudCheckBox T="bool"
+                             @bind-Value="_hasRedFlags"
+                             Label="Bandera roja"
+                             Disabled="ActionsDisabled"
+                             Dense="true" />
+                @if (_hasRedFlags)
+                {
+                    <MudText Typo="Typo.subtitle2" Class="mt-2 mb-1">Prioridad</MudText>
+                    <MudRadioGroup T="RedFlagPriority?" @bind-Value="_redFlagPriority" Disabled="ActionsDisabled">
+                        <MudRadio T="RedFlagPriority?" Value="RedFlagPriority.Low" Dense="true">Baja</MudRadio>
+                        <MudRadio T="RedFlagPriority?" Value="RedFlagPriority.Medium" Dense="true">Media</MudRadio>
+                        <MudRadio T="RedFlagPriority?" Value="RedFlagPriority.High" Dense="true">Alta</MudRadio>
+                    </MudRadioGroup>
+                    <MudTextField @bind-Value="_issuesNotes"
+                                  Label="Descripción"
+                                  Lines="2"
+                                  Required="true"
+                                  RequiredError="La descripción es obligatoria."
+                                  MaxLength="MaxLength.Assessment.IssuesNotes"
+                                  Counter="MaxLength.Assessment.IssuesNotes"
+                                  Immediate="true"
+                                  Variant="Variant.Outlined"
+                                  Disabled="ActionsDisabled"
+                                  Class="mt-2" />
+                }
+            </div>
+
+            @* TODO [silent-reject-notice]: delete this whole block. It reveals whether the reviewer
+               picked the right name, which defeats the challenge; it is only here so the silent
+               rejection can be verified while testing. *@
+            @if (_decision.SilentRejectNotice is { } silentRejectNotice)
+            {
+                <MudAlert Severity="Severity.Warning" Dense="true">@silentRejectNotice</MudAlert>
+            }
+
+            @if (_decision.AutoRejectReasonId is { } autoReasonId)
+            {
+                <MudAlert Severity="Severity.Warning" Dense="true">
+                    Se rechazará con el motivo: @ReasonDescription(autoReasonId)
+                </MudAlert>
+            }
+            else if (_showManualRejectReason)
+            {
+                <MudTextField @bind-Value="_rejectionNotes"
+                              Label="Motivo del rechazo"
+                              HelperText="Describí por qué la carta debe rechazarse."
+                              Lines="2"
+                              Required="true"
+                              RequiredError="El motivo del rechazo es obligatorio."
+                              MaxLength="MaxLength.Document.RejectionNotes"
+                              Counter="MaxLength.Document.RejectionNotes"
+                              Immediate="true"
+                              Variant="Variant.Outlined"
+                              Disabled="ActionsDisabled" />
+            }
+        </MudStack>
+    }
+
+    @if (_actionErrors.Count > 0)
+    {
+        <MudAlert Severity="Severity.Error"
+                  ShowCloseIcon="true"
+                  CloseIconClicked="ClearActionErrors"
+                  Dense="true"
+                  Class="mt-4">
+            <MudText Typo="Typo.body2">No se pudo completar la acción. Tus datos siguen cargados.</MudText>
+            <ul class="review-hints">
+                @foreach (var error in _actionErrors)
+                {
+                    <li>@error</li>
+                }
+            </ul>
+        </MudAlert>
+    }
+
+    @if (!_loadingChoices && _decision.BlockingErrors.Count > 0)
+    {
+        <div class="mt-4">
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">Falta para poder aprobar:</MudText>
+            <ul class="review-hints">
+                @foreach (var hint in _decision.BlockingErrors)
+                {
+                    <li>@hint</li>
+                }
+            </ul>
+        </div>
+    }
+
+    <MudStack Row="true"
+              Justify="Justify.SpaceBetween"
+              AlignItems="AlignItems.Center"
+              Spacing="2"
+              Class="mt-4 flex-wrap">
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Default"
+                   StartIcon="@Icons.Material.Filled.LockOpen"
+                   Disabled="ActionsDisabled"
+                   OnClick="ReleaseClickedAsync">
+            Liberar
+        </MudButton>
+
+        <MudStack Row="true" Spacing="2">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Error"
+                       StartIcon="@Icons.Material.Filled.Close"
+                       Disabled="RejectDisabled"
+                       OnClick="RejectAsync">
+                Rechazar
+            </MudButton>
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Success"
+                       StartIcon="@Icons.Material.Filled.Check"
+                       Disabled="ApproveDisabled"
+                       OnClick="ApproveAsync">
+                Aprobar
+            </MudButton>
+        </MudStack>
+    </MudStack>
+</MudPaper>

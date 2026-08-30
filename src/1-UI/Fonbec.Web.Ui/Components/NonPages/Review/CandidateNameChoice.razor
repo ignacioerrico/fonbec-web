@@ -1,0 +1,30 @@
+@using Fonbec.Web.Logic.Models.Review
+
+<MudText Typo="Typo.subtitle2">@Label</MudText>
+<MudRadioGroup T="CandidateNameKey?" Value="_selectedKey" ValueChanged="OnSelectedKeyChanged" Disabled="Disabled">
+    <MudStack Spacing="1">
+        @foreach (var name in Names)
+        {
+            <MudRadio T="CandidateNameKey?" Value="@(name.Key)" Dense="true">@name.DisplayName</MudRadio>
+        }
+    </MudStack>
+</MudRadioGroup>
+
+<MudStack Row="true" Spacing="2" Class="mb-2 flex-wrap">
+    <MudButton Variant="Variant.Outlined"
+               Color="Color.Error"
+               Size="Size.Small"
+               StartIcon="@Icons.Material.Filled.SearchOff"
+               Disabled="Disabled"
+               OnClick="OnNoneOfTheAbove">
+        @NoneOfTheAboveLabel
+    </MudButton>
+    <MudButton Variant="Variant.Outlined"
+               Color="Color.Error"
+               Size="Size.Small"
+               StartIcon="@Icons.Material.Filled.PersonOff"
+               Disabled="Disabled"
+               OnClick="OnNotIndicated">
+        @NotIndicatedLabel
+    </MudButton>
+</MudStack>

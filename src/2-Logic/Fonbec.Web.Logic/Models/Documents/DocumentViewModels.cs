@@ -27,6 +27,15 @@ public class SponsorDocumentHistoryViewModel
     public List<SharedDocumentViewModel> Documents { get; init; } = [];
 }
 
+/// <summary>A single readable page of a blob-backed document under review.</summary>
+public class ReviewWorkspacePageViewModel
+{
+    public int PageNumber { get; init; }
+
+    /// <summary>MIME type of the active (improved when available) file, used to render it inline.</summary>
+    public string MimeType { get; init; } = string.Empty;
+}
+
 public class ReviewWorkspaceViewModel
 {
     public long DocumentId { get; init; }
@@ -38,7 +47,16 @@ public class ReviewWorkspaceViewModel
     /// <summary>Number of file pages (0 for Text/YouTube; 1 for a PDF/single image; N for a multi-image document).</summary>
     public int PageCount { get; init; }
 
+    public List<ReviewWorkspacePageViewModel> Pages { get; init; } = [];
+
+    /// <summary>Start of the planned delivery a letter belongs to; <c>null</c> for other document types.</summary>
+    public DateTime? PlanStartsOn { get; init; }
+
     public string? UploaderNotes { get; init; }
+
+    public int StudentId { get; init; }
+    public int? SponsorId { get; init; }
+    public int? CompanyId { get; init; }
 
     /// <summary>UTC instant the current review lock expires; the workspace countdown ticks down to this.</summary>
     public DateTime LockExpiresAtUtc { get; init; }

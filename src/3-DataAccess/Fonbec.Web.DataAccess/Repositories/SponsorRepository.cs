@@ -23,10 +23,10 @@ public interface ISponsorRepository
     Task<CandidateNameDataModel?> GetSponsorNameAsync(int sponsorId);
 
     /// <summary>
-    /// Get up to <paramref name="count"/> random sponsor names, excluding <paramref name="excludeSponsorId"/>.
-    /// Sampling is performed server-side (SQL Server <c>NEWID()</c>) and is not chapter-restricted.
+    /// Get every non-deleted sponsor name except <paramref name="excludeSponsorId"/>, ordered by id.
+    /// Not chapter-restricted. The review picker samples this pool deterministically.
     /// </summary>
-    Task<List<CandidateNameDataModel>> GetRandomSponsorNamesAsync(int excludeSponsorId, int count);
+    Task<List<CandidateNameDataModel>> GetSponsorCandidateNamesAsync(int? excludeSponsorId);
 }
 
 public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : ISponsorRepository
@@ -124,29 +124,32 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
                 Id = s.Id,
                 FirstName = s.FirstName,
                 LastName = s.LastName,
+                IsCompany = false,
             })
             .FirstOrDefaultAsync();
     }
 
-    public async Task<List<CandidateNameDataModel>> GetRandomSponsorNamesAsync(int excludeSponsorId, int count)
+    public async Task<List<CandidateNameDataModel>> GetSponsorCandidateNamesAsync(int? excludeSponsorId)
     {
-        if (count <= 0)
-        {
-            return [];
-        }
-
         await using var db = await dbContext.CreateDbContextAsync();
 
-        return await db.Sponsors
+        var query = db.Sponsors
             .AsNoTracking()
-            .Where(s => s.Id != excludeSponsorId && !s.IsDeleted)
-            .OrderBy(_ => Guid.NewGuid())
-            .Take(count)
+            .Where(s => !s.IsDeleted);
+
+        if (excludeSponsorId.HasValue)
+        {
+            query = query.Where(s => s.Id != excludeSponsorId.Value);
+        }
+
+        return await query
+            .OrderBy(s => s.Id)
             .Select(s => new CandidateNameDataModel
             {
                 Id = s.Id,
                 FirstName = s.FirstName,
                 LastName = s.LastName,
+                IsCompany = false,
             })
             .ToListAsync();
     }

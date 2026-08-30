@@ -17,10 +17,10 @@ public interface IStudentRepository
     Task<CandidateNameDataModel?> GetStudentNameAsync(int studentId);
 
     /// <summary>
-    /// Get up to <paramref name="count"/> random student names, excluding <paramref name="excludeStudentId"/>.
-    /// Sampling is performed server-side (SQL Server <c>NEWID()</c>) and is not chapter-restricted.
+    /// Get every active student name except <paramref name="excludeStudentId"/>, ordered by id.
+    /// Not chapter-restricted. The review picker samples this pool deterministically.
     /// </summary>
-    Task<List<CandidateNameDataModel>> GetRandomStudentNamesAsync(int excludeStudentId, int count);
+    Task<List<CandidateNameDataModel>> GetStudentCandidateNamesAsync(int excludeStudentId);
 }
 
 public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : IStudentRepository
@@ -167,25 +167,20 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             .FirstOrDefaultAsync();
     }
 
-    public async Task<List<CandidateNameDataModel>> GetRandomStudentNamesAsync(int excludeStudentId, int count)
+    public async Task<List<CandidateNameDataModel>> GetStudentCandidateNamesAsync(int excludeStudentId)
     {
-        if (count <= 0)
-        {
-            return [];
-        }
-
         await using var db = await dbContext.CreateDbContextAsync();
 
         return await db.Students
             .AsNoTracking()
             .Where(s => s.Id != excludeStudentId && s.IsActive)
-            .OrderBy(_ => Guid.NewGuid())
-            .Take(count)
+            .OrderBy(s => s.Id)
             .Select(s => new CandidateNameDataModel
             {
                 Id = s.Id,
                 FirstName = s.FirstName,
                 LastName = s.LastName,
+                IsCompany = false,
             })
             .ToListAsync();
     }

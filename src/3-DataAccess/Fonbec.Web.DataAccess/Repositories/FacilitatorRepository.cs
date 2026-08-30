@@ -213,7 +213,11 @@ public class FacilitatorRepository(
                 SponsorId = l.SponsorId,
                 CompanyId = l.CompanyId,
                 Status = l.Status,
-                RejectionReason = l.RejectedReason != null ? l.RejectedReason.Description : l.RejectionNotes,
+                RejectionReason = l.RejectedReason != null
+                    ? l.RejectionNotes != null && l.RejectionNotes != string.Empty
+                        ? l.RejectedReason.Description + ": " + l.RejectionNotes
+                        : l.RejectedReason.Description
+                    : l.RejectionNotes,
             })
             .ToListAsync();
 

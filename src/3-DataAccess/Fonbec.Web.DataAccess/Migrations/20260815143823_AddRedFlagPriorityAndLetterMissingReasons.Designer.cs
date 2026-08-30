@@ -4,6 +4,7 @@ using Fonbec.Web.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Fonbec.Web.DataAccess.Migrations
 {
     [DbContext(typeof(FonbecWebDbContext))]
-    partial class FonbecWebDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260815143823_AddRedFlagPriorityAndLetterMissingReasons")]
+    partial class AddRedFlagPriorityAndLetterMissingReasons
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -292,6 +295,8 @@ namespace Fonbec.Web.DataAccess.Migrations
 
                     b.HasKey("DocumentId");
 
+                    b.HasIndex("ChapterId");
+
                     b.HasIndex("ImprovementLockedById");
 
                     b.HasIndex("RejectedReasonId");
@@ -301,8 +306,6 @@ namespace Fonbec.Web.DataAccess.Migrations
                     b.HasIndex("StudentId");
 
                     b.HasIndex("UploadedById");
-
-                    b.HasIndex("ChapterId", "Status");
 
                     b.HasIndex("DocumentType", "Status");
 
@@ -495,8 +498,6 @@ namespace Fonbec.Web.DataAccess.Migrations
                         .IsUnique();
 
                     b.HasIndex("ReviewLockedById");
-
-                    b.HasIndex("Priority", "EnqueuedAt");
 
                     b.ToTable("DocumentQueueItems");
                 });
@@ -992,37 +993,13 @@ namespace Fonbec.Web.DataAccess.Migrations
                         {
                             Id = 1,
                             AppliesToDocumentType = (byte)1,
-                            Code = "MissingWrittenDate",
-                            Description = "No figura la fecha",
-                            RequiresNotes = false
-                        },
-                        new
-                        {
-                            Id = 2,
-                            AppliesToDocumentType = (byte)1,
-                            Code = "MissingAddressee",
-                            Description = "No figura el destinatario",
-                            RequiresNotes = false
-                        },
-                        new
-                        {
-                            Id = 3,
-                            AppliesToDocumentType = (byte)1,
-                            Code = "MissingAuthor",
-                            Description = "No figura el firmante",
-                            RequiresNotes = false
-                        },
-                        new
-                        {
-                            Id = 4,
-                            AppliesToDocumentType = (byte)1,
                             Code = "NotALetter",
                             Description = "No es una carta",
                             RequiresNotes = false
                         },
                         new
                         {
-                            Id = 5,
+                            Id = 2,
                             AppliesToDocumentType = (byte)1,
                             Code = "WrongAddressee",
                             Description = "Destinatario incorrecto",
@@ -1030,10 +1007,34 @@ namespace Fonbec.Web.DataAccess.Migrations
                         },
                         new
                         {
-                            Id = 6,
+                            Id = 3,
                             AppliesToDocumentType = (byte)1,
                             Code = "WrongSigner",
-                            Description = "Firmante incorrecto",
+                            Description = "Firma incorrecta",
+                            RequiresNotes = false
+                        },
+                        new
+                        {
+                            Id = 4,
+                            AppliesToDocumentType = (byte)1,
+                            Code = "Illegible",
+                            Description = "Ilegible",
+                            RequiresNotes = false
+                        },
+                        new
+                        {
+                            Id = 5,
+                            AppliesToDocumentType = (byte)1,
+                            Code = "InappropriateContent",
+                            Description = "Contenido inapropiado",
+                            RequiresNotes = false
+                        },
+                        new
+                        {
+                            Id = 6,
+                            AppliesToDocumentType = (byte)1,
+                            Code = "WrongDate",
+                            Description = "Fecha incorrecta",
                             RequiresNotes = false
                         },
                         new
@@ -1055,16 +1056,49 @@ namespace Fonbec.Web.DataAccess.Migrations
                         new
                         {
                             Id = 9,
+                            AppliesToDocumentType = (byte)3,
                             Code = "Unreadable",
-                            Description = "Ilegible",
+                            Description = "No legible",
                             RequiresNotes = false
                         },
                         new
                         {
                             Id = 10,
+                            AppliesToDocumentType = (byte)3,
+                            Code = "WrongDocument",
+                            Description = "Documento incorrecto",
+                            RequiresNotes = false
+                        },
+                        new
+                        {
+                            Id = 11,
                             Code = "Other",
                             Description = "Otro",
                             RequiresNotes = true
+                        },
+                        new
+                        {
+                            Id = 13,
+                            AppliesToDocumentType = (byte)1,
+                            Code = "MissingWrittenDate",
+                            Description = "No figura la fecha",
+                            RequiresNotes = false
+                        },
+                        new
+                        {
+                            Id = 14,
+                            AppliesToDocumentType = (byte)1,
+                            Code = "MissingAddressee",
+                            Description = "No figura el destinatario",
+                            RequiresNotes = false
+                        },
+                        new
+                        {
+                            Id = 15,
+                            AppliesToDocumentType = (byte)1,
+                            Code = "MissingAuthor",
+                            Description = "No figura el firmante",
+                            RequiresNotes = false
                         });
                 });
 
@@ -1099,25 +1133,6 @@ namespace Fonbec.Web.DataAccess.Migrations
                     b.HasIndex("ReviewedById");
 
                     b.ToTable("ReportCardReviews");
-                });
-
-            modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.ReviewQueueCursor", b =>
-                {
-                    b.Property<int>("Id")
-                        .HasColumnType("int");
-
-                    b.Property<int?>("LastServedChapterId")
-                        .HasColumnType("int");
-
-                    b.Property<byte[]>("RowVersion")
-                        .IsConcurrencyToken()
-                        .IsRequired()
-                        .ValueGeneratedOnAddOrUpdate()
-                        .HasColumnType("rowversion");
-
-                    b.HasKey("Id");
-
-                    b.ToTable("ReviewQueueCursors");
                 });
 
             modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.Sponsor", b =>

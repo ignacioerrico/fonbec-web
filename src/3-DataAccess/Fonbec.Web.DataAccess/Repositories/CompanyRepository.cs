@@ -1,5 +1,6 @@
 ﻿using Fonbec.Web.DataAccess.DataModels.Companies;
 using Fonbec.Web.DataAccess.DataModels.Companies.Input;
+using Fonbec.Web.DataAccess.DataModels.Review;
 using Fonbec.Web.DataAccess.Entities;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,6 +12,12 @@ public interface ICompanyRepository
     Task<bool> CompanyNameExistsAsync(string companyName, int? excludeCompanyId = null);
     Task<CreateCompanyRepositoryResult> CreateCompanyAsync(CreateCompanyInputDataModel dataModel);
     Task<int> UpdateCompanyAsync(UpdateCompanyInputDataModel dataModel);
+    Task<CandidateNameDataModel?> GetCompanyNameAsync(int companyId);
+    /// <summary>
+    /// Get every active company name except <paramref name="excludeCompanyId"/>, ordered by id.
+    /// The review picker samples this pool deterministically.
+    /// </summary>
+    Task<List<CandidateNameDataModel>> GetCompanyCandidateNamesAsync(int? excludeCompanyId);
 }
 
 public class CompanyRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : ICompanyRepository
@@ -149,5 +156,47 @@ public class CompanyRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
 
         db.Companies.Update(companyDb);
         return await db.SaveChangesAsync();
+    }
+
+    public async Task<CandidateNameDataModel?> GetCompanyNameAsync(int companyId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        return await db.Companies
+            .AsNoTracking()
+            .Where(c => c.Id == companyId)
+            .Select(c => new CandidateNameDataModel
+            {
+                Id = c.Id,
+                FirstName = c.Name,
+                LastName = string.Empty,
+                IsCompany = true,
+            })
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<List<CandidateNameDataModel>> GetCompanyCandidateNamesAsync(int? excludeCompanyId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var query = db.Companies
+            .AsNoTracking()
+            .Where(c => c.IsActive);
+
+        if (excludeCompanyId.HasValue)
+        {
+            query = query.Where(c => c.Id != excludeCompanyId.Value);
+        }
+
+        return await query
+            .OrderBy(c => c.Id)
+            .Select(c => new CandidateNameDataModel
+            {
+                Id = c.Id,
+                FirstName = c.Name,
+                LastName = string.Empty,
+                IsCompany = true,
+            })
+            .ToListAsync();
     }
 }

@@ -1,0 +1,80 @@
+.doc-body {
+    display: flex;
+    flex-direction: column;
+    overflow: auto;
+    min-height: 240px;
+    max-height: calc(100vh - 22rem);
+    padding: 8px;
+    border-radius: var(--mud-default-borderradius);
+    background-color: var(--mud-palette-background-grey);
+}
+
+.doc-text {
+    width: 100%;
+    text-align: left;
+    white-space: pre-wrap;
+}
+
+/* Images and PDFs are centred; text stays flush left so it reads like the letter does. */
+.doc-image {
+    display: block;
+    max-width: 100%;
+    height: auto;
+    margin-inline: auto;
+}
+
+.doc-frame {
+    width: 100%;
+    height: calc(100vh - 24rem);
+    min-height: 320px;
+    border: 0;
+}
+
+.doc-thumbs {
+    display: flex;
+    gap: 8px;
+    overflow-x: auto;
+    padding-top: 8px;
+}
+
+.doc-thumb {
+    padding: 0;
+    line-height: 0;
+    cursor: pointer;
+    background: none;
+    border: 2px solid transparent;
+    border-radius: 4px;
+}
+
+.doc-thumb-selected {
+    border-color: var(--mud-palette-primary);
+}
+
+.doc-thumb img {
+    display: block;
+    width: 64px;
+    height: 84px;
+    object-fit: cover;
+}
+
+.doc-thumb-placeholder {
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 64px;
+    height: 84px;
+    line-height: normal;
+    background-color: var(--mud-palette-background-grey);
+    color: var(--mud-palette-text-secondary);
+}
+
+/* On narrow screens the document stacks above the form, so let it use its natural height. */
+@media (max-width: 959.98px) {
+    .doc-body {
+        max-height: none;
+    }
+
+    .doc-frame {
+        height: 60vh;
+    }
+}

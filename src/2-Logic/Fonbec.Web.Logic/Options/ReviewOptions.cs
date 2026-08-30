@@ -6,7 +6,8 @@ public class ReviewOptions
 
     /// <summary>
     /// Number of names presented by the candidate-name picker for a multiple-choice confirmation:
-    /// the correct one plus (count - 1) random distractors. Global; default 5.
+    /// the correct one plus (count - 1) distractors. Global; default 5. The set and order are
+    /// deterministic for a given document.
     /// </summary>
     public int CandidateNameCount { get; set; } = 5;
 }

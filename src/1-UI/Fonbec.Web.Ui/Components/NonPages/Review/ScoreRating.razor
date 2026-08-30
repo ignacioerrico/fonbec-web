@@ -1,0 +1,16 @@
+<div class="@RootCssClass" @onclick="ActivateAsync">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+        <MudText Typo="Typo.subtitle2">@Label</MudText>
+        @if (!string.IsNullOrWhiteSpace(ShortcutHint))
+        {
+            <MudText Typo="Typo.caption" Class="score-shortcut">@ShortcutHint</MudText>
+        }
+    </MudStack>
+
+    <MudRating SelectedValue="Value"
+               SelectedValueChanged="OnSelectedValueChanged"
+               HoveredValueChanged="OnHoveredValueChanged"
+               MaxValue="5"
+               Disabled="Disabled" />
+    <MudText Typo="Typo.caption" Class="@CaptionCssClass">@Caption</MudText>
+</div>

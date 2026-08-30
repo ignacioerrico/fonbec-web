@@ -1,0 +1,106 @@
+@using Fonbec.Web.DataAccess.Entities.Enums
+
+<MudPaper Class="pa-4" Elevation="1">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Class="mb-2 flex-wrap">
+        <MudText Typo="Typo.h6">Documento</MudText>
+        @if (HasPages)
+        {
+            <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Default">
+                @($"Página {_selectedPageNumber} de {TotalPages}")
+            </MudChip>
+        }
+        <MudSpacer />
+        @if (FileKind == FileKind.Blob)
+        {
+            <MudButton Variant="Variant.Text"
+                       Color="Color.Primary"
+                       Size="Size.Small"
+                       StartIcon="@Icons.Material.Filled.OpenInNew"
+                       Href="@PageUrl(_selectedPageNumber)"
+                       Target="_blank">
+                Abrir en pestaña nueva
+            </MudButton>
+        }
+    </MudStack>
+
+    <div class="doc-body">
+        @switch (FileKind)
+        {
+            case FileKind.Text:
+                @* A plain element, not MudText: scoped CSS is only applied to markup in this file. *@
+                <div class="doc-text mud-typography mud-typography-body1">@TextContent</div>
+                break;
+
+            case FileKind.YouTube when !string.IsNullOrWhiteSpace(YouTubeVideoId):
+                <iframe class="doc-frame"
+                        src="@($"https://www.youtube.com/embed/{YouTubeVideoId}")"
+                        title="Video del documento"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen>
+                </iframe>
+                break;
+
+            case FileKind.Blob when SelectedPageIsImage:
+                <img class="doc-image" src="@PageUrl(_selectedPageNumber)" alt="@($"Página {_selectedPageNumber}")" />
+                break;
+
+            case FileKind.Blob when SelectedPageIsPdf:
+                <iframe class="doc-frame"
+                        src="@PageUrl(_selectedPageNumber)"
+                        title="@($"Página {_selectedPageNumber} del documento")">
+                </iframe>
+                break;
+
+            case FileKind.Blob:
+                <MudStack AlignItems="AlignItems.Center" Spacing="2" Class="pa-4">
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                        Este archivo no se puede mostrar acá.
+                    </MudText>
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Filled.Download"
+                               Href="@PageUrl(_selectedPageNumber)"
+                               Target="_blank">
+                        Descargar / Ver
+                    </MudButton>
+                </MudStack>
+                break;
+
+            default:
+                <MudText Color="Color.Error">Contenido no disponible.</MudText>
+                break;
+        }
+    </div>
+
+    @if (HasMultiplePages)
+    {
+        <div class="doc-thumbs">
+            @foreach (var thumbnail in OrderedPages)
+            {
+                var pageNumber = thumbnail.PageNumber;
+                var isSelected = pageNumber == _selectedPageNumber;
+                var pageLabel = $"Página {pageNumber}";
+                <button type="button"
+                        class="@($"doc-thumb{(isSelected ? " doc-thumb-selected" : string.Empty)}")"
+                        title="@pageLabel"
+                        @onclick="() => SelectPage(pageNumber)">
+                    @if (IsImage(thumbnail.MimeType))
+                    {
+                        <img src="@PageUrl(pageNumber)" alt="@pageLabel" />
+                    }
+                    else
+                    {
+                        <span class="doc-thumb-placeholder">@pageNumber</span>
+                    }
+                </button>
+            }
+        </div>
+    }
+
+    @if (!string.IsNullOrWhiteSpace(UploaderNotes))
+    {
+        <MudDivider Class="my-3" />
+        <MudText Typo="Typo.subtitle2">Notas del mediador</MudText>
+        <MudText Style="white-space: pre-wrap;">@UploaderNotes</MudText>
+    }
+</MudPaper>
