@@ -16,7 +16,7 @@ public interface IUserRepository
     Task<FonbecWebUser?> ValidateUniqueFullNameAsync(string firstName, string lastName);
     Task<(bool isPasswordValid, List<string> errors)> ValidatePasswordAsync(string password);
     Task<AllUsersDataModel> GetAllUsersAsync(int? chapterId);
-    Task<IEnumerable<SelectableDataModel<int>>> GetAllUsersInRoleForSelectionAsync(string role);
+    Task<IEnumerable<SelectableDataModel<int>>> GetAllUsersInRoleForSelectionAsync(string role, int? chapterId = null);
     Task<GetUserOutputDataModel?> GetUserAsync(int userId);
     Task<(int userId, List<string> errors)> CreateUserAsync(CreateUserInputDataModel model);
     Task<bool> UpdateUserAsync(UpdateUserInputDataModel model);
@@ -125,7 +125,21 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
         return result;
     }
 
-    public async Task<IEnumerable<SelectableDataModel<int>>> GetAllUsersInRoleForSelectionAsync(string role)
+    //public async Task<IEnumerable<SelectableDataModel<int>>> GetAllUsersInRoleForSelectionAsync(string role)
+    //{
+    //    var usersInRole = await userManager.GetUsersInRoleAsync(role);
+
+    //    var activeUsers = usersInRole
+    //        .Where(user => !user.LockoutEnabled
+    //                       || user.LockoutEnd == null
+    //                       || user.LockoutEnd <= DateTimeOffset.UtcNow)
+    //        .Select(u => new SelectableDataModel<int>(u.Id, u.FullName()))
+    //        .OrderBy(u => u.Value);
+
+    //    return activeUsers;
+    //}
+
+    public async Task<IEnumerable<SelectableDataModel<int>>> GetAllUsersInRoleForSelectionAsync(string role, int? chapterId = null)
     {
         var usersInRole = await userManager.GetUsersInRoleAsync(role);
 
@@ -133,6 +147,7 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
             .Where(user => !user.LockoutEnabled
                            || user.LockoutEnd == null
                            || user.LockoutEnd <= DateTimeOffset.UtcNow)
+            .Where(user => chapterId is not > 0 || user.ChapterId == chapterId)
             .Select(u => new SelectableDataModel<int>(u.Id, u.FullName()))
             .OrderBy(u => u.Value);
 

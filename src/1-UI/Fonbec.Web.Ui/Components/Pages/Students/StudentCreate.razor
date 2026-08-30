@@ -18,9 +18,12 @@ else if (!_anyFacilitators)
 <LoadingIndicator Loading="Loading" />
 
 <MudForm @bind-IsValid="@_formValidationSucceeded" Disabled="IsFormDisabled">
-    <ChapterSelector @bind-SelectedChapterId="_bindModel.ChapterId"
-                     NumberOfChaptersLoaded="OnChaptersLoaded" />
-
+    @if (FonbecClaim.ChapterId is null)
+    {
+        <ChapterSelector @bind-SelectedChapterId="_bindModel.ChapterId"
+                         NumberOfChaptersLoaded="OnChaptersLoaded" />
+    }
+   
     <MudTextField T="string" Label="Nombre" @bind-Value="_bindModel.StudentFirstName" Immediate="true" AutoFocus="!IsFormDisabled"
                   Required="true" RequiredError="Este es un campo obligatorio."
                   MaxLength="MaxLength.FonbecWebUser.FirstName" />
@@ -38,6 +41,7 @@ else if (!_anyFacilitators)
                             @bind-UniversityStartYear="_bindModel.StudentUniversityStartYear" />
 
     <FacilitatorSelector @bind-SelectedFacilitatorId="_bindModel.FacilitatorId"
+                         ChapterId="FonbecClaim.ChapterId ?? _bindModel.ChapterId"
                          NumberOfFacilitatorsLoaded="NumberOfFacilitatorsLoaded" />
 
     <MudTextField T="string" Label="Correo electrónico" @bind-Value="_bindModel.StudentEmail" Immediate="true"

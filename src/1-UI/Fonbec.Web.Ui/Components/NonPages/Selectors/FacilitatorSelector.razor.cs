@@ -8,8 +8,9 @@ namespace Fonbec.Web.Ui.Components.NonPages.Selectors;
 public partial class FacilitatorSelector
 {
     private readonly List<SelectableModel<int>> _facilitators = [];
-
+    private int _loadId;
     private bool _loading;
+    private int? _lastChapterId;
 
     [Parameter]
     public bool SelectFirstItemOnLoad { get; set; }
@@ -20,6 +21,9 @@ public partial class FacilitatorSelector
     [Parameter]
     public EventCallback<int> SelectedFacilitatorIdChanged { get; set; }
 
+    [Parameter]
+    public int? ChapterId { get; set; }
+
     /// <summary>
     /// Callback invoked when facilitators are loaded. The int parameter indicates the number of facilitators loaded.
     /// </summary>
@@ -29,29 +33,50 @@ public partial class FacilitatorSelector
     [Inject]
     public IUserService UserService { get; set; } = null!;
 
-    protected override async Task OnInitializedAsync()
+    protected override async Task OnParametersSetAsync()
     {
+        if (ChapterId != _lastChapterId)
+        {
+            _lastChapterId = ChapterId;
+            await LoadFacilitatorsAsync();
+        }
+        await base.OnParametersSetAsync();
+    }
+
+    private async Task LoadFacilitatorsAsync()
+    {
+        var loadId = ++_loadId;
         _loading = true;
+        _facilitators.Clear();
 
-        var facilitators = await UserService.GetAllUsersInRoleForSelectionAsync(FonbecRole.Uploader);
+        List<SelectableModel<int>> facilitators = [];
+        if (ChapterId is > 0)
+        {
+            facilitators = await UserService.GetAllUsersInRoleForSelectionAsync(FonbecRole.Uploader, ChapterId);
+        }
 
-        _loading = false;
+        if (loadId != _loadId)
+        {
+            return;
+        }
 
         _facilitators.AddRange(facilitators);
 
-        await NumberOfFacilitatorsLoaded.InvokeAsync(facilitators.Count);
-
-        if (SelectFirstItemOnLoad && facilitators.Count > 0)
+        // Clear selection if current facilitator is not in the new chapter's list
+        if (SelectedFacilitatorId != 0 && !_facilitators.Any(f => f.Key == SelectedFacilitatorId))
         {
-            if (SelectedFacilitatorId == 0)
-            {
-                SelectedFacilitatorId = facilitators.First().Key;
-            }
+            SelectedFacilitatorId = 0;
+            await SelectedFacilitatorIdChanged.InvokeAsync(0);
+        }
 
+        if (SelectFirstItemOnLoad && _facilitators.Count > 0 && SelectedFacilitatorId == 0)
+        {
+            SelectedFacilitatorId = _facilitators.First().Key;
             await OnSelectedValueChanged(SelectedFacilitatorId);
         }
 
-        await base.OnInitializedAsync();
+        _loading = false;
+        await NumberOfFacilitatorsLoaded.InvokeAsync(_facilitators.Count);
     }
 
     private async Task<IEnumerable<int>> Search(string value, CancellationToken token)
