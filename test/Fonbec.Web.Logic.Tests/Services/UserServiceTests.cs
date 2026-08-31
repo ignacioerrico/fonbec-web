@@ -245,7 +245,7 @@ public class UserServiceTests
     {
         var userRepo = Substitute.For<IUserRepository>();
         userRepo.GetAllUsersInRoleForSelectionAsync(FonbecRole.Uploader, 5)
-            .Returns(new List<Fonbec.Web.DataAccess.DataModels.SelectableDataModel<int>> { new(1, "Test") });
+            .Returns([new(1, "Test")]);
         var userService = new UserService(userRepo, null!, null!, DummyPages);
 
         var result = await userService.GetAllUsersInRoleForSelectionAsync(FonbecRole.Uploader, 5);
@@ -260,7 +260,7 @@ public class UserServiceTests
     {
         var userRepo = Substitute.For<IUserRepository>();
         userRepo.GetAllUsersInRoleForSelectionAsync(FonbecRole.Uploader, null)
-            .Returns(new List<Fonbec.Web.DataAccess.DataModels.SelectableDataModel<int>>());
+            .Returns([]);
         var userService = new UserService(userRepo, null!, null!, DummyPages);
 
         var result = await userService.GetAllUsersInRoleForSelectionAsync(FonbecRole.Uploader, null);
@@ -274,7 +274,7 @@ public class UserServiceTests
     {
         var userRepo = Substitute.For<IUserRepository>();
         userRepo.GetAllUsersInRoleForSelectionAsync(FonbecRole.Uploader, null)
-            .Returns(new List<Fonbec.Web.DataAccess.DataModels.SelectableDataModel<int>>());
+            .Returns([]);
         var userService = new UserService(userRepo, null!, null!, DummyPages);
 
         var result = await userService.GetAllUsersInRoleForSelectionAsync(FonbecRole.Uploader);

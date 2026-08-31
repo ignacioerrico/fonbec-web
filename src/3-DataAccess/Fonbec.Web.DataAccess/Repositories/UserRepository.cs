@@ -125,20 +125,6 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
         return result;
     }
 
-    //public async Task<IEnumerable<SelectableDataModel<int>>> GetAllUsersInRoleForSelectionAsync(string role)
-    //{
-    //    var usersInRole = await userManager.GetUsersInRoleAsync(role);
-
-    //    var activeUsers = usersInRole
-    //        .Where(user => !user.LockoutEnabled
-    //                       || user.LockoutEnd == null
-    //                       || user.LockoutEnd <= DateTimeOffset.UtcNow)
-    //        .Select(u => new SelectableDataModel<int>(u.Id, u.FullName()))
-    //        .OrderBy(u => u.Value);
-
-    //    return activeUsers;
-    //}
-
     public async Task<IEnumerable<SelectableDataModel<int>>> GetAllUsersInRoleForSelectionAsync(string role, int? chapterId = null)
     {
         var usersInRole = await userManager.GetUsersInRoleAsync(role);
