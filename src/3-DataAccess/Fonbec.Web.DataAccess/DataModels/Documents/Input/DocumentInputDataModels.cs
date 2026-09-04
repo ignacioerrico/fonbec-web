@@ -91,7 +91,10 @@ public class ApproveReportCardInputDataModel
     public int ReviewerId { get; set; }
     public byte[] RowVersion { get; set; } = null!;
     public bool ConfirmedIsReportCardOrTranscript { get; set; }
+    public bool ConfirmedPeriodMatches { get; set; }
     public bool ConfirmedStudentNameCorrect { get; set; }
+    public ReportCardAssessment OverallAssessment { get; set; }
+    public int? Absences { get; set; }
 }
 
 public class RejectReportCardInputDataModel

@@ -99,7 +99,10 @@ public record ApproveReportCardInputModel(
     string ReviewerRole,
     byte[] RowVersion,
     bool ConfirmedIsReportCardOrTranscript,
-    bool ConfirmedStudentNameCorrect);
+    bool ConfirmedPeriodMatches,
+    bool ConfirmedStudentNameCorrect,
+    ReportCardAssessment OverallAssessment,
+    int? Absences);
 
 public record RejectReportCardInputModel(
     long DocumentId,

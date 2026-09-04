@@ -1,0 +1,191 @@
+@using Fonbec.Web.DataAccess.Constants
+@using Fonbec.Web.DataAccess.Entities.Enums
+
+@{
+    var decision = Decision;
+}
+
+<MudPaper Class="pa-4 mb-4" Outlined="true">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-2 flex-wrap">
+        <MudText Typo="Typo.h6">Revisión del boletín</MudText>
+        <MudSpacer />
+        <MudButton Variant="Variant.Outlined"
+                   Color="Color.Error"
+                   StartIcon="@Icons.Material.Filled.VisibilityOff"
+                   Disabled="ActionsDisabled"
+                   OnClick="RejectUnreadableAsync">
+            Ilegible
+        </MudButton>
+        <MudButton Variant="Variant.Outlined"
+                   Color="Color.Error"
+                   StartIcon="@Icons.Material.Filled.Block"
+                   Disabled="ActionsDisabled"
+                   OnClick="RejectNotAReportCardAsync">
+            No es un boletín
+        </MudButton>
+    </MudStack>
+
+    <div class="review-progress">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudText Typo="Typo.caption">Progreso de la revisión</MudText>
+            <MudSpacer />
+            <MudText Typo="Typo.caption">
+                @decision.CompletedSteps de @decision.TotalSteps · @decision.CompletionPercent%
+            </MudText>
+        </MudStack>
+        <MudProgressLinear Value="@decision.CompletionPercent"
+                           Color="@(decision.CompletionPercent == 100 ? Color.Success : Color.Primary)"
+                           Rounded="true"
+                           Size="Size.Medium"
+                           Class="mt-1" />
+    </div>
+
+    @if (_loading)
+    {
+        <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="mb-3" />
+    }
+    else
+    {
+        <MudStack Spacing="4">
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="mb-2">Período informado: @PeriodLabel</MudText>
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Error"
+                           Size="Size.Small"
+                           StartIcon="@Icons.Material.Filled.EventBusy"
+                           Disabled="ActionsDisabled"
+                           OnClick="RejectWrongPeriodAsync">
+                    El período no coincide
+                </MudButton>
+            </div>
+
+            @if (_studentChoices is not null)
+            {
+                <CandidateNameChoice Label="Becario:"
+                                     Names="_studentChoices.Names"
+                                     CorrectKey="@_studentChoices.CorrectKey"
+                                     Selection="_studentSelection"
+                                     SelectionChanged="OnStudentSelectionChanged"
+                                     OnNoneOfTheAbove="RejectWrongStudentNameAsync"
+                                     OnNotIndicated="RejectMissingStudentNameAsync"
+                                     Disabled="ActionsDisabled" />
+            }
+
+            <MudDivider />
+
+            @* TODO [silent-reject-notice]: delete this whole block. It reveals whether the reviewer
+               picked the right name, which defeats the challenge; it is only here so the silent
+               rejection can be verified while testing. *@
+            @if (decision.SilentRejectNotice is { } silentRejectNotice)
+            {
+                <MudAlert Severity="Severity.Warning" Dense="true">@silentRejectNotice</MudAlert>
+            }
+
+            <div>
+                <MudText Typo="Typo.subtitle2" Class="mb-1">Evaluación general</MudText>
+                <MudRadioGroup T="ReportCardAssessment?" @bind-Value="_overallAssessment" Disabled="ActionsDisabled">
+                    <MudStack Spacing="1">
+                        <MudRadio T="ReportCardAssessment?" Value="ReportCardAssessment.Green" Color="Color.Success" Dense="true">
+                            Verde — buenas notas
+                        </MudRadio>
+                        <MudRadio T="ReportCardAssessment?" Value="ReportCardAssessment.Yellow" Color="Color.Warning" Dense="true">
+                            Amarillo — algunas observaciones
+                        </MudRadio>
+                        <MudRadio T="ReportCardAssessment?" Value="ReportCardAssessment.Red" Color="Color.Error" Dense="true">
+                            Rojo — malas notas
+                        </MudRadio>
+                    </MudStack>
+                </MudRadioGroup>
+            </div>
+
+            @if (EducationLevel != EducationLevel.University)
+            {
+                <MudNumericField T="int?"
+                                 @bind-Value="_absences"
+                                 Label="Inasistencias"
+                                 HelperText="Opcional. Días de clase perdidos, si figuran en el boletín."
+                                 Min="0"
+                                 Immediate="true"
+                                 Variant="Variant.Outlined"
+                                 Disabled="ActionsDisabled"
+                                 Style="max-width: 18rem;" />
+            }
+
+            @if (_showManualRejectReason)
+            {
+                <MudTextField @bind-Value="_rejectionNotes"
+                              Label="Motivo del rechazo"
+                              HelperText="Describí por qué el boletín debe rechazarse."
+                              Lines="2"
+                              Required="true"
+                              RequiredError="El motivo del rechazo es obligatorio."
+                              MaxLength="MaxLength.Document.RejectionNotes"
+                              Counter="MaxLength.Document.RejectionNotes"
+                              Immediate="true"
+                              Variant="Variant.Outlined"
+                              Disabled="ActionsDisabled" />
+            }
+        </MudStack>
+    }
+
+    @if (_actionErrors.Count > 0)
+    {
+        <MudAlert Severity="Severity.Error"
+                  ShowCloseIcon="true"
+                  CloseIconClicked="ClearActionErrors"
+                  Dense="true"
+                  Class="mt-4">
+            <MudText Typo="Typo.body2">No se pudo completar la acción. Tus datos siguen cargados.</MudText>
+            <ul class="review-hints">
+                @foreach (var error in _actionErrors)
+                {
+                    <li>@error</li>
+                }
+            </ul>
+        </MudAlert>
+    }
+
+    @if (!_loading && decision.BlockingErrors.Count > 0)
+    {
+        <div class="mt-4">
+            <MudText Typo="Typo.caption" Class="mud-text-secondary">Falta para poder aprobar:</MudText>
+            <ul class="review-hints">
+                @foreach (var hint in decision.BlockingErrors)
+                {
+                    <li>@hint</li>
+                }
+            </ul>
+        </div>
+    }
+
+    <MudStack Row="true"
+              Justify="Justify.SpaceBetween"
+              AlignItems="AlignItems.Center"
+              Spacing="2"
+              Class="mt-4 flex-wrap">
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Default"
+                   StartIcon="@Icons.Material.Filled.LockOpen"
+                   Disabled="ActionsDisabled"
+                   OnClick="ReleaseClickedAsync">
+            Liberar
+        </MudButton>
+
+        <MudStack Row="true" Spacing="2">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Error"
+                       StartIcon="@Icons.Material.Filled.Close"
+                       Disabled="RejectDisabled"
+                       OnClick="RejectAsync">
+                Rechazar
+            </MudButton>
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Success"
+                       StartIcon="@Icons.Material.Filled.Check"
+                       Disabled="ApproveDisabled"
+                       OnClick="ApproveAsync">
+                Aprobar
+            </MudButton>
+        </MudStack>
+    </MudStack>
+</MudPaper>

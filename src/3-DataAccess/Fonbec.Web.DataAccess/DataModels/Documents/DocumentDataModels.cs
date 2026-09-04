@@ -55,8 +55,12 @@ public class ReviewWorkspaceDataModel
     /// <summary>Start of the planned delivery a letter belongs to; <c>null</c> for other document types.</summary>
     public DateTime? PlanStartsOn { get; init; }
 
+    /// <summary>Uploaded period for a report card; <c>null</c> for other document types.</summary>
+    public DateOnly? ReportCardPeriod { get; init; }
+
     public string? UploaderNotes { get; init; }
     public int StudentId { get; init; }
+    public EducationLevel StudentEducationLevel { get; init; }
     public int? SponsorId { get; init; }
     public int? CompanyId { get; init; }
     public int? ReviewLockedById { get; init; }

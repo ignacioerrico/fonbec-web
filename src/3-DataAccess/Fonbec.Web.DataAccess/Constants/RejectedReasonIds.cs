@@ -12,5 +12,6 @@ public static class RejectedReasonIds
     public const int NotReportCard = 7;
     public const int WrongStudentName = 8;
     public const int Unreadable = 9;
-    public const int Other = 10;
+    public const int WrongPeriod = 10;
+    public const int Other = 11;
 }
