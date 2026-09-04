@@ -57,7 +57,7 @@ public class FacilitatorStudentsListViewModel : AuditableViewModel, IDetectChang
     public LetterAggregateStatus LetterAggregate { get; set; }
     public List<DashboardSponsorViewModel> Sponsors { get; set; } = [];
     public List<SponsorLetterStatusViewModel> LetterStatuses { get; set; } = [];
-    public List<ReportCardChipViewModel> ReportCardChip { get; set; } = [];
+    public List<ReportCardChipViewModel> ReportCards { get; set; } = [];
 
     /// <summary>Total number of letter slots (one per active sponsorship).</summary>
     public int SponsorLetterCount => LetterStatuses.Count;

@@ -16,4 +16,3 @@ public class FacilitatorReportsDataModel
 
     public string? RejectionReason { get; set; }
 }
-

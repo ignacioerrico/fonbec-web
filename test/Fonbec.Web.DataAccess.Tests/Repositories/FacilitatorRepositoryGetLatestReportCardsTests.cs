@@ -14,7 +14,7 @@ public class FacilitatorRepositoryGetLatestReportCardsTests
     {
         var factory = CreateDbContextFactory();
 
-        await using var db = await factory.CreateDbContextAsync();
+        await using var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
 
         db.Set<ReportCard>().Add(new ReportCard
         {
@@ -26,9 +26,9 @@ public class FacilitatorRepositoryGetLatestReportCardsTests
             RowVersion = [1]
         });
 
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
-        var repository = new FacilitatorRepository(factory,TimeProvider.System);
+        var repository = new FacilitatorRepository(factory, TimeProvider.System);
         var result = await repository.GetLatestReportCardsAsync([10], 3);
 
         result.Should().ContainSingle();
@@ -40,7 +40,7 @@ public class FacilitatorRepositoryGetLatestReportCardsTests
     public async Task GetLatestReportCardsAsync_Returns_Only_Latest_Three_ReportCards_For_Student()
     {
         var factory = CreateDbContextFactory();
-        await using var db = await factory.CreateDbContextAsync();
+        await using var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
 
         db.Set<ReportCard>().AddRange(
             new ReportCard
@@ -81,7 +81,7 @@ public class FacilitatorRepositoryGetLatestReportCardsTests
             }
         );
 
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var repository = new FacilitatorRepository(
             factory,
@@ -105,7 +105,7 @@ public class FacilitatorRepositoryGetLatestReportCardsTests
         // Arrange
         var factory = CreateDbContextFactory();
 
-        await using var db = await factory.CreateDbContextAsync();
+        await using var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
 
         db.Set<ReportCard>().AddRange(
             // Student 10
@@ -185,7 +185,7 @@ public class FacilitatorRepositoryGetLatestReportCardsTests
             }
         );
 
-        await db.SaveChangesAsync();
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
 
         var repository = new FacilitatorRepository(
             factory,
@@ -199,9 +199,8 @@ public class FacilitatorRepositoryGetLatestReportCardsTests
         result.Count(r => r.StudentId == 11).Should().Be(3);
     }
 
-
     private static TestDbContextFactory CreateDbContextFactory() =>
-    new(Guid.NewGuid().ToString());
+        new(Guid.NewGuid().ToString());
 
     private sealed class TestDbContextFactory(string databaseName)
         : IDbContextFactory<FonbecWebDbContext>

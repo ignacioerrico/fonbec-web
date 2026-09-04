@@ -27,6 +27,3 @@ public class ReportCardChipViewModelMappingDefinitions : IRegister
             .Map(dest => dest.RejectionReason, src => src.RejectionReason);
     }
 }
-
-
-

@@ -78,24 +78,24 @@ else
             </TemplateColumn>
             <TemplateColumn Title="Calificaciones" Filterable="false" Sortable="false">
                 <CellTemplate>
-                    @if (context.Item.ReportCardChip.Count > 0)
+                    @if (context.Item.ReportCards.Count > 0)
                     {
-                        @foreach (var report in context.Item.ReportCardChip)
-                        {                           
-                            <MudChip T="string"
-                                     Size="Size.Small"
-                                     Class="me-1">
-                                @report.PeriodLabel
-                            </MudChip>
+                        @foreach (var report in context.Item.ReportCards)
+                        {
+                            <MudTooltip Text="@ReportChipStatusText(report)" Arrow="true">
+                                <MudChip T="string"
+                                         Size="Size.Small"
+                                         Icon="@report.Status.Icon()"
+                                         IconColor="@report.Status.Color()"
+                                         Class="me-1">
+                                    @report.PeriodLabel
+                                </MudChip>
+                            </MudTooltip>
                         }
                     }
                     else
                     {
-                        <MudText Typo="Typo.body2">
-                            @(context.Item.EducationLevel == EducationLevel.University
-                                ? "Sin libretas"
-                                : "Sin boletines")
-                        </MudText>
+                        <MudText Typo="Typo.body2">@ReportCardEmptyLabel(context.Item)</MudText>
                     }
                 </CellTemplate>
             </TemplateColumn>
@@ -146,7 +146,7 @@ else
                     {
                         <SponsorLetterStatusList Sponsors="@context.Item.LetterStatuses" />
                     }
-                    <ReportCardList Reports="@context.Item.ReportCardChip"
+                    <ReportCardList Reports="@context.Item.ReportCards"
                                     EducationLevel="@context.Item.EducationLevel" />
                 </MudStack>
 

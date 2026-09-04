@@ -231,9 +231,21 @@ public class FacilitatorRepository(
     {
         await using var db = await dbContext.CreateDbContextAsync();
 
-        var reportCards =  await db.Set<ReportCard>()
-            .AsNoTracking()
-            .Where(r => studentIds.Contains(r.StudentId))
+        var reportCards = db.Set<ReportCard>().AsNoTracking();
+
+        // Top-N-per-student expressed as a correlated "rank" filter: a report card is kept only
+        // when fewer than `count` of the same student's report cards are more recent. This
+        // translates to a single SQL statement (a correlated COUNT subquery) so the database
+        // returns at most `count` rows per student, instead of loading every report card and
+        // trimming in memory.
+        return await reportCards
+            .Where(r => studentIds.Contains(r.StudentId)
+                        && reportCards.Count(newer =>
+                            newer.StudentId == r.StudentId
+                            && (newer.Period > r.Period
+                                || (newer.Period == r.Period && newer.DocumentId > r.DocumentId))) < count)
+            .OrderByDescending(r => r.Period)
+            .ThenByDescending(r => r.DocumentId)
             .Select(r => new FacilitatorReportsDataModel
             {
                 ReportCardId = r.DocumentId,
@@ -241,15 +253,8 @@ public class FacilitatorRepository(
                 Period = r.Period,
                 Description = r.Description,
                 Status = r.Status,
-                RejectionReason = r.RejectionNotes
+                RejectionReason = r.RejectedReason != null ? r.RejectedReason.Description : r.RejectionNotes
             })
-            .OrderByDescending(r => r.Period)
-            .ThenByDescending(r => r.ReportCardId)
             .ToListAsync();
-
-        return reportCards
-        .GroupBy(r => r.StudentId)
-        .SelectMany(g => g.Take(count))
-        .ToList();
     }
 }

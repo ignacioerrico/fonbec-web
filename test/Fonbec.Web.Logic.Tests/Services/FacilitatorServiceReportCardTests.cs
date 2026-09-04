@@ -59,9 +59,9 @@ public class FacilitatorServiceReportCardTests : MappingTestBase
 
         var student = result.Students.Single();
 
-        student.ReportCardChip.Should().ContainSingle();
+        student.ReportCards.Should().ContainSingle();
 
-        var reportCard = student.ReportCardChip.Single();
+        var reportCard = student.ReportCards.Single();
 
         reportCard.Period.Should().Be(new DateOnly(2026, 6, 1));
         reportCard.Description.Should().Be("June report card");
@@ -107,11 +107,11 @@ public class FacilitatorServiceReportCardTests : MappingTestBase
         var ana = result.Students.Single(s => s.StudentId == 10);
         var beto = result.Students.Single(s => s.StudentId == 11);
 
-        ana.ReportCardChip.Should().ContainSingle();
-        ana.ReportCardChip.Single().Description.Should().Be("Ana report card");
+        ana.ReportCards.Should().ContainSingle();
+        ana.ReportCards.Single().Description.Should().Be("Ana report card");
 
-        beto.ReportCardChip.Should().ContainSingle();
-        beto.ReportCardChip.Single().Description.Should().Be("Beto report card");
+        beto.ReportCards.Should().ContainSingle();
+        beto.ReportCards.Single().Description.Should().Be("Beto report card");
     }
 
     [Fact]
@@ -133,6 +133,6 @@ public class FacilitatorServiceReportCardTests : MappingTestBase
         var result = await _facilitatorService.GetStudentsDashboardAsync(2);
 
         result.Students.Single()
-            .ReportCardChip.Should().BeEmpty();
+            .ReportCards.Should().BeEmpty();
     }
 }

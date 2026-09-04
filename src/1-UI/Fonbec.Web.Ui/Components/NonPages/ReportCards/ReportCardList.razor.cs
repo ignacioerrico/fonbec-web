@@ -1,5 +1,6 @@
 ﻿using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.Logic.Models.Students;
+using Fonbec.Web.Ui.Constants;
 using Microsoft.AspNetCore.Components;
 
 namespace Fonbec.Web.Ui.Components.NonPages.ReportCards;

@@ -16,6 +16,7 @@ public class FacilitatorService(
     ILetterExemptionService letterExemptionService) : IFacilitatorService
 {
     private const int RecentReportCardCount = 3;
+
     public async Task<StudentsDashboardViewModel> GetStudentsDashboardAsync(int facilitatorId)
     {
         var studentsDataModel = await facilitatorRepository.GetActiveSponsoredStudentsAsync(facilitatorId);
@@ -28,7 +29,7 @@ public class FacilitatorService(
 
         foreach (var student in students)
         {
-            student.ReportCardChip = reportCards
+            student.ReportCards = reportCards
                 .Where(r => r.StudentId == student.StudentId)
                 .Adapt<List<ReportCardChipViewModel>>();
         }

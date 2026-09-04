@@ -1,6 +1,4 @@
-﻿
-<MudSimpleTable Dense="true" Hover="true" ordered="false" Elevation="0" Class="mt-1">
-
+﻿<MudSimpleTable Dense="true" Hover="true" ordered="false" Elevation="0" Class="mt-1">
     <thead>
         <tr>
             <th>@ReportCardTitle</th>
@@ -24,11 +22,11 @@
             {
                 <tr>
                     <td>@report.PeriodLabel</td>
-                    <td> @report.Description</td>
+                    <td>@report.Description</td>
                     <td>
                         <div class="d-flex align-center gap-2">
                             <MudIcon Icon="@report.Status.Icon()" Color="@report.Status.Color()" Size="Size.Small" />
-                            <MudText Typo="Typo.body2">@ReportStatusText(report) </MudText>
+                            <MudText Typo="Typo.body2">@ReportStatusText(report)</MudText>
                         </div>
                     </td>
                 </tr>

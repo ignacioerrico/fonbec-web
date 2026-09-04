@@ -58,6 +58,16 @@ public partial class FacilitatorStudentsList : AuthenticationRequiredComponentBa
             ? "Subir libreta universitaria"
             : "Subir boletín";
 
+    private static string ReportCardEmptyLabel(FacilitatorStudentsListViewModel viewModel) =>
+        viewModel.EducationLevel == EducationLevel.University
+            ? "Sin libretas"
+            : "Sin boletines";
+
+    private static string ReportChipStatusText(ReportCardChipViewModel report) =>
+        report.Status == DocumentStatus.Rejected && !string.IsNullOrWhiteSpace(report.RejectionReason)
+            ? $"Rechazada: {report.RejectionReason}"
+            : report.Status.Label();
+
     private string LetterUploadUrl(FacilitatorStudentsListViewModel viewModel, SponsorLetterStatusViewModel sponsor) =>
         NavRoutes.FacilitatorUploadLetter(
             viewModel.StudentId, _dashboard.CurrentPlanId!.Value, sponsor.SponsorId, sponsor.CompanyId);
