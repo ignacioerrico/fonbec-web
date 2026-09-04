@@ -8,6 +8,7 @@ namespace Fonbec.Web.Ui.Components.NonPages.Selectors;
 public partial class FacilitatorSelector
 {
     private readonly List<SelectableModel<int>> _facilitators = [];
+
     private int _loadId;
     private bool _loading;
     private int? _lastChapterId;
@@ -40,6 +41,7 @@ public partial class FacilitatorSelector
             _lastChapterId = ChapterId;
             await LoadFacilitatorsAsync();
         }
+
         await base.OnParametersSetAsync();
     }
 
@@ -49,34 +51,43 @@ public partial class FacilitatorSelector
         _loading = true;
         _facilitators.Clear();
 
-        List<SelectableModel<int>> facilitators = [];
-        if (ChapterId is > 0)
+        try
         {
-            facilitators = await UserService.GetAllUsersInRoleForSelectionAsync(FonbecRole.Uploader, ChapterId);
-        }
+            List<SelectableModel<int>> facilitators = [];
+            if (ChapterId is > 0)
+            {
+                facilitators = await UserService.GetAllUsersInRoleForSelectionAsync(FonbecRole.Uploader, ChapterId);
+            }
 
-        if (loadId != _loadId)
+            if (loadId != _loadId)
+            {
+                return;
+            }
+
+            _facilitators.AddRange(facilitators);
+
+            // Clear selection if current facilitator is not in the new chapter's list
+            if (SelectedFacilitatorId != 0 && !_facilitators.Any(f => f.Key == SelectedFacilitatorId))
+            {
+                SelectedFacilitatorId = 0;
+                await SelectedFacilitatorIdChanged.InvokeAsync(0);
+            }
+
+            if (SelectFirstItemOnLoad && _facilitators.Count > 0 && SelectedFacilitatorId == 0)
+            {
+                SelectedFacilitatorId = _facilitators.First().Key;
+                await OnSelectedValueChanged(SelectedFacilitatorId);
+            }
+
+            await NumberOfFacilitatorsLoaded.InvokeAsync(_facilitators.Count);
+        }
+        finally
         {
-            return;
+            if (loadId == _loadId)
+            {
+                _loading = false;
+            }
         }
-
-        _facilitators.AddRange(facilitators);
-
-        // Clear selection if current facilitator is not in the new chapter's list
-        if (SelectedFacilitatorId != 0 && !_facilitators.Any(f => f.Key == SelectedFacilitatorId))
-        {
-            SelectedFacilitatorId = 0;
-            await SelectedFacilitatorIdChanged.InvokeAsync(0);
-        }
-
-        if (SelectFirstItemOnLoad && _facilitators.Count > 0 && SelectedFacilitatorId == 0)
-        {
-            SelectedFacilitatorId = _facilitators.First().Key;
-            await OnSelectedValueChanged(SelectedFacilitatorId);
-        }
-
-        _loading = false;
-        await NumberOfFacilitatorsLoaded.InvokeAsync(_facilitators.Count);
     }
 
     private async Task<IEnumerable<int>> Search(string value, CancellationToken token)

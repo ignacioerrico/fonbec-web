@@ -108,28 +108,16 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext,
     {
         await using var db = await dbContext.CreateDbContextAsync();
 
-        // Defense-in-depth: validate facilitator belongs to the student's chapter and is an Uploader
-        var facilitator = await userManager.FindByIdAsync(inputDataModel.FacilitatorId.ToString())
-    ?? throw new InvalidOperationException("El mediador seleccionado no existe.");
+        await EnsureValidFacilitatorAsync(inputDataModel.FacilitatorId, inputDataModel.ChapterId);
 
-        var isLockedOut = facilitator.LockoutEnabled
-        && facilitator.LockoutEnd.HasValue
-        && facilitator.LockoutEnd.Value > DateTimeOffset.UtcNow;
+        var creator = await userManager.FindByIdAsync(inputDataModel.CreatedById.ToString())
+                      ?? throw new InvalidOperationException("El usuario que crea el becario no existe.");
 
-        if (isLockedOut)
+        if (creator.ChapterId is { } creatorChapterId && creatorChapterId != inputDataModel.ChapterId)
         {
-            throw new InvalidOperationException("El mediador seleccionado está deshabilitado.");
+            throw new InvalidOperationException("El becario debe crearse en la filial del coordinador.");
         }
 
-        if (facilitator.ChapterId != inputDataModel.ChapterId)
-        {
-            throw new InvalidOperationException("El mediador debe pertenecer a la filial del becario.");
-        }
-        var isInRole = await userManager.IsInRoleAsync(facilitator, FonbecRole.Uploader);
-        if (!isInRole)
-        {
-            throw new InvalidOperationException("El usuario seleccionado no es un mediador.");
-        }
         var student = new Student
         {
             ChapterId = inputDataModel.ChapterId,
@@ -161,6 +149,16 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext,
             return 0;
         }
 
+        var updater = await userManager.FindByIdAsync(dataModel.UpdatedById.ToString())
+                      ?? throw new InvalidOperationException("El usuario que modifica el becario no existe.");
+
+        if (updater.ChapterId is { } updaterChapterId && updaterChapterId != studentDb.ChapterId)
+        {
+            throw new InvalidOperationException("El becario debe pertenecer a la filial del coordinador.");
+        }
+
+        await EnsureValidFacilitatorAsync(dataModel.FacilitatorId, studentDb.ChapterId);
+
         studentDb.FirstName = dataModel.StudentFirstName;
         studentDb.LastName = dataModel.StudentLastName;
         studentDb.NickName = dataModel.StudentNickName;
@@ -170,36 +168,40 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext,
         studentDb.SecondarySchoolStartYear = dataModel.StudentSecondarySchoolStartYear;
         studentDb.UniversityStartYear = dataModel.StudentUniversityStartYear;
         studentDb.LastUpdatedById = dataModel.UpdatedById;
-        if (dataModel.FacilitatorId == 0)
+        studentDb.FacilitatorId = dataModel.FacilitatorId;
+
+        db.Students.Update(studentDb);
+        return await db.SaveChangesAsync();
+    }
+
+    private async Task EnsureValidFacilitatorAsync(int facilitatorId, int chapterId)
+    {
+        if (facilitatorId == 0)
         {
             throw new InvalidOperationException("El becario debe tener un mediador asignado.");
         }
 
-        var facilitator = await userManager.FindByIdAsync(dataModel.FacilitatorId.ToString())
-          ?? throw new InvalidOperationException("El mediador seleccionado no existe.");
+        var facilitator = await userManager.FindByIdAsync(facilitatorId.ToString())
+                          ?? throw new InvalidOperationException("El mediador seleccionado no existe.");
 
         var isLockedOut = facilitator.LockoutEnabled
-        && facilitator.LockoutEnd.HasValue
-        && facilitator.LockoutEnd.Value > DateTimeOffset.UtcNow;
+                          && facilitator.LockoutEnd.HasValue
+                          && facilitator.LockoutEnd.Value > DateTimeOffset.UtcNow;
 
         if (isLockedOut)
         {
             throw new InvalidOperationException("El mediador seleccionado está deshabilitado.");
         }
 
-        if (facilitator.ChapterId != studentDb.ChapterId)
+        if (facilitator.ChapterId != chapterId)
         {
             throw new InvalidOperationException("El mediador debe pertenecer a la filial del becario.");
         }
-        var isInRole = await userManager.IsInRoleAsync(facilitator, FonbecRole.Uploader);
-        if (!isInRole)
+
+        if (!await userManager.IsInRoleAsync(facilitator, FonbecRole.Uploader))
         {
             throw new InvalidOperationException("El usuario seleccionado no es un mediador.");
         }
-        studentDb.FacilitatorId = dataModel.FacilitatorId;
-
-        db.Students.Update(studentDb);
-        return await db.SaveChangesAsync();
     }
 
     public async Task<CandidateNameDataModel?> GetStudentNameAsync(int studentId)

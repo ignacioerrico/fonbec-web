@@ -10,7 +10,7 @@
 {
     <MudAlert Severity="Severity.Error">No hay filiales. Para dar de alta usuarios se requiere <MudLink Href="@NavRoutes.ChapterCreate" Typo="Typo.body2">al menos una filial</MudLink>.</MudAlert>
 }
-else if (!_anyFacilitators)
+else if (NoFacilitatorsForCurrentChapter)
 {
     <MudAlert Severity="Severity.Error">No hay mediadores. Para dar de alta becarios se requiere <MudLink Href="@NavRoutes.UserCreate" Typo="Typo.body2">al menos un mediador</MudLink>.</MudAlert>
 }
@@ -23,7 +23,7 @@ else if (!_anyFacilitators)
         <ChapterSelector @bind-SelectedChapterId="_bindModel.ChapterId"
                          NumberOfChaptersLoaded="OnChaptersLoaded" />
     }
-   
+
     <MudTextField T="string" Label="Nombre" @bind-Value="_bindModel.StudentFirstName" Immediate="true" AutoFocus="!IsFormDisabled"
                   Required="true" RequiredError="Este es un campo obligatorio."
                   MaxLength="MaxLength.FonbecWebUser.FirstName" />
@@ -42,7 +42,7 @@ else if (!_anyFacilitators)
 
     <FacilitatorSelector @bind-SelectedFacilitatorId="_bindModel.FacilitatorId"
                          ChapterId="FonbecClaim.ChapterId ?? _bindModel.ChapterId"
-                         NumberOfFacilitatorsLoaded="NumberOfFacilitatorsLoaded" />
+                         NumberOfFacilitatorsLoaded="OnFacilitatorsLoaded" />
 
     <MudTextField T="string" Label="Correo electrónico" @bind-Value="_bindModel.StudentEmail" Immediate="true"
                   MaxLength="MaxLength.FonbecWebUser.Email" />

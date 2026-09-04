@@ -99,20 +99,29 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
 
         Loading = true;
 
-        var result = await StudentService.UpdateStudentAsync(updateStudentInputModel);
-
-        Loading = false;
-
-        if (result.AnyAffectedRows)
+        try
         {
-            // Update timestamp in UI
-            _viewModels.Single(vm => vm.StudentId == modifiedViewModel.StudentId).LastUpdatedOnUtc = DateTime.Now;
-            Snackbar.Add("Becario actualizado correctamente.", Severity.Success);
+            var result = await StudentService.UpdateStudentAsync(updateStudentInputModel);
+            if (result.AnyAffectedRows)
+            {
+                // Update timestamp in UI
+                _viewModels.Single(vm => vm.StudentId == modifiedViewModel.StudentId).LastUpdatedOnUtc = DateTime.Now;
+                Snackbar.Add("Becario actualizado correctamente.", Severity.Success);
+            }
+            else
+            {
+                Snackbar.Add("No se pudo actualizar el becario.", Severity.Error);
+                RevertItemChanges(modifiedViewModel.StudentId);
+            }
         }
-        else
+        catch (InvalidOperationException exception)
         {
-            Snackbar.Add("No se pudo actualizar el becario.", Severity.Error);
+            Snackbar.Add(exception.Message, Severity.Error);
             RevertItemChanges(modifiedViewModel.StudentId);
+        }
+        finally
+        {
+            Loading = false;
         }
     }
 

@@ -13,9 +13,20 @@ public partial class StudentCreate : AuthenticationRequiredComponentBase
 {
     private readonly StudentCreateBindModel _bindModel = new();
 
-    private bool IsFormDisabled => !_anyChapters || (FonbecClaim.ChapterId.HasValue && !_anyFacilitators);
+    private int EffectiveChapterId => FonbecClaim.ChapterId ?? _bindModel.ChapterId;
+    private bool IsChapterKnown => EffectiveChapterId > 0;
+    private bool FacilitatorsLoadedForCurrentChapter =>
+        _facilitatorsLoadedChapterId == EffectiveChapterId;
+    private bool FacilitatorsAvailableForCurrentChapter =>
+        FacilitatorsLoadedForCurrentChapter && _anyFacilitators;
+    private bool NoFacilitatorsForCurrentChapter =>
+        IsChapterKnown && FacilitatorsLoadedForCurrentChapter && !_anyFacilitators;
+    private bool IsFormDisabled => !_anyChapters
+                                   || (FonbecClaim.ChapterId.HasValue
+                                       && !FacilitatorsAvailableForCurrentChapter);
     private bool _anyChapters;
     private bool _anyFacilitators;
+    private int _facilitatorsLoadedChapterId;
 
     private bool _formValidationSucceeded;
 
@@ -24,6 +35,8 @@ public partial class StudentCreate : AuthenticationRequiredComponentBase
     private bool SaveButtonDisabled => Loading
                                        || _saving
                                        || IsFormDisabled
+                                       || !IsChapterKnown
+                                       || !FacilitatorsAvailableForCurrentChapter
                                        || !_formValidationSucceeded;
 
     [Inject]
@@ -32,12 +45,16 @@ public partial class StudentCreate : AuthenticationRequiredComponentBase
     private async Task OnChaptersLoaded(int chaptersCount) =>
         _anyChapters = chaptersCount > 0;
 
-    private async Task NumberOfFacilitatorsLoaded(int totalFacilitators) =>
+    private async Task OnFacilitatorsLoaded(int totalFacilitators)
+    {
         _anyFacilitators = totalFacilitators > 0;
+        _facilitatorsLoadedChapterId = EffectiveChapterId;
+    }
 
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
+
         // Managers have a fixed chapter — pre-set it so the form isn't disabled
         if (FonbecClaim.ChapterId.HasValue)
         {
@@ -45,6 +62,7 @@ public partial class StudentCreate : AuthenticationRequiredComponentBase
             _bindModel.ChapterId = FonbecClaim.ChapterId.Value;
         }
     }
+
     private async Task Save()
     {
         if (FonbecClaim.ChapterId is null)
@@ -82,13 +100,24 @@ public partial class StudentCreate : AuthenticationRequiredComponentBase
             _bindModel.FacilitatorId,
             FonbecClaim.UserId);
 
-        var result = await StudentService.CreateStudentAsync(createStudentInputModel);
-        if (!result.AnyAffectedRows)
+        try
         {
-            Snackbar.Add("No se pudo crear el becario.", Severity.Error);
+            var result = await StudentService.CreateStudentAsync(createStudentInputModel);
+            if (!result.AnyAffectedRows)
+            {
+                Snackbar.Add("No se pudo crear el becario.", Severity.Error);
+                return;
+            }
         }
-
-        _saving = false;
+        catch (InvalidOperationException exception)
+        {
+            Snackbar.Add(exception.Message, Severity.Error);
+            return;
+        }
+        finally
+        {
+            _saving = false;
+        }
 
         NavigationManager.NavigateTo(NavRoutes.Students);
     }
