@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.Logic.Models.Documents.Input;
@@ -420,7 +421,7 @@ public class DocumentServiceAcceptanceTests
 
         await _fixture.DocumentService.RejectOtherDocumentAsync(new RejectOtherDocumentInputModel(
             locked!.DocumentId, _fixture.ReviewerId, "Reviewer", locked.RowVersion,
-            RejectedReasonId: 9, RejectionNotes: null));
+            RejectedReasonId: RejectedReasonIds.Unreadable, RejectionNotes: null));
 
         await using var db = await _fixture.Factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
         (await db.Set<DocumentShare>().CountAsync(TestContext.Current.CancellationToken)).Should().Be(0);
@@ -936,5 +937,151 @@ public class DocumentServiceAcceptanceTests
             ConfirmedAddressee: true, ConfirmedSignerMatchesStudent: true,
             SpellingScore: 4, PenmanshipScore: 4, ContentScore: 4,
             HasRedFlags: false, HasGreenFlags: true, IssuesNotes: null, Appraisal: "Good"));
+    }
+
+    [Fact]
+    public async Task FairDequeue_RotatesChapters_EvenWhenOneChapterUploadedFirst()
+    {
+        await _fixture.InitializeAsync();
+        await _fixture.AddChapterWithStudentAsync(chapterId: 2, studentId: 20);
+        await _fixture.AddChapterWithStudentAsync(chapterId: 3, studentId: 30);
+
+        var t0 = DateTime.UtcNow.AddHours(-3);
+        var chapter1First = await _fixture.EnqueuePendingOtherDocumentAsync(_fixture.ChapterId, _fixture.StudentId, t0);
+        var chapter1Second = await _fixture.EnqueuePendingOtherDocumentAsync(
+            _fixture.ChapterId, _fixture.StudentId, t0.AddMinutes(1));
+        var chapter2 = await _fixture.EnqueuePendingOtherDocumentAsync(2, 20, t0.AddHours(1));
+        var chapter3 = await _fixture.EnqueuePendingOtherDocumentAsync(3, 30, t0.AddHours(2));
+
+        var first = await TakeAndCompleteAsync(_fixture.ReviewerId);
+        first.Should().Be(chapter1First);
+        (await _fixture.GetLastServedChapterIdAsync()).Should().Be(_fixture.ChapterId);
+
+        var second = await TakeAndCompleteAsync(_fixture.ReviewerId);
+        second.Should().Be(chapter2);
+        (await _fixture.GetLastServedChapterIdAsync()).Should().Be(2);
+
+        var third = await TakeAndCompleteAsync(_fixture.ReviewerId);
+        third.Should().Be(chapter3);
+        (await _fixture.GetLastServedChapterIdAsync()).Should().Be(3);
+
+        var fourth = await TakeAndCompleteAsync(_fixture.ReviewerId);
+        fourth.Should().Be(chapter1Second);
+        (await _fixture.GetLastServedChapterIdAsync()).Should().Be(_fixture.ChapterId);
+    }
+
+    [Fact]
+    public async Task FairDequeue_HighestPriorityWins_ThenRotatesWithinThatTier()
+    {
+        await _fixture.InitializeAsync();
+        await _fixture.AddChapterWithStudentAsync(chapterId: 2, studentId: 20);
+
+        var t0 = DateTime.UtcNow.AddHours(-2);
+        await _fixture.EnqueuePendingOtherDocumentAsync(_fixture.ChapterId, _fixture.StudentId, t0, priority: 0);
+        var urgentChapter2 = await _fixture.EnqueuePendingOtherDocumentAsync(2, 20, t0.AddHours(1), priority: -1);
+
+        var first = await TakeAndReleaseAsync(_fixture.ReviewerId);
+        first.Should().Be(urgentChapter2);
+        (await _fixture.GetLastServedChapterIdAsync()).Should().Be(2);
+    }
+
+    [Fact]
+    public async Task FairDequeue_SkipsChapterWhenItsDocumentsAreAllLocked()
+    {
+        await _fixture.InitializeAsync();
+        await _fixture.AddChapterWithStudentAsync(chapterId: 2, studentId: 20);
+        await _fixture.AddChapterWithStudentAsync(chapterId: 3, studentId: 30);
+
+        var t0 = DateTime.UtcNow.AddHours(-3);
+        await _fixture.EnqueuePendingOtherDocumentAsync(_fixture.ChapterId, _fixture.StudentId, t0);
+        var chapter2 = await _fixture.EnqueuePendingOtherDocumentAsync(2, 20, t0.AddMinutes(1));
+        var chapter3 = await _fixture.EnqueuePendingOtherDocumentAsync(3, 30, t0.AddMinutes(2));
+
+        var lockedChapter1 = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ManagerId, "Manager");
+        lockedChapter1.Should().NotBeNull();
+        var lockedDocument = await _fixture.GetDocumentAsync(lockedChapter1!.DocumentId);
+        lockedDocument.ChapterId.Should().Be(_fixture.ChapterId);
+
+        var next = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer");
+        next.Should().NotBeNull();
+        next!.DocumentId.Should().Be(chapter2);
+
+        await _fixture.DocumentService.ReleaseReviewLockAsync(next.DocumentId, _fixture.ReviewerId);
+        var afterRelease = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer");
+        afterRelease.Should().NotBeNull();
+        afterRelease!.DocumentId.Should().Be(chapter3);
+    }
+
+    [Fact]
+    public async Task FairDequeue_ResumeLock_DoesNotAdvanceCursor()
+    {
+        await _fixture.InitializeAsync();
+        await _fixture.AddChapterWithStudentAsync(chapterId: 2, studentId: 20);
+
+        var t0 = DateTime.UtcNow.AddHours(-1);
+        var chapter1 = await _fixture.EnqueuePendingOtherDocumentAsync(_fixture.ChapterId, _fixture.StudentId, t0);
+        await _fixture.EnqueuePendingOtherDocumentAsync(2, 20, t0.AddMinutes(1));
+
+        var first = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer");
+        first.Should().NotBeNull();
+        first!.DocumentId.Should().Be(chapter1);
+        var cursorAfterTake = await _fixture.GetLastServedChapterIdAsync();
+
+        var resumed = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer");
+        resumed.Should().NotBeNull();
+        resumed!.DocumentId.Should().Be(chapter1);
+        (await _fixture.GetLastServedChapterIdAsync()).Should().Be(cursorAfterTake);
+    }
+
+    [Fact]
+    public async Task FairDequeue_ConcurrentReviewers_ReceiveDistinctDocuments()
+    {
+        await _fixture.InitializeAsync();
+        await _fixture.AddChapterWithStudentAsync(chapterId: 2, studentId: 20);
+        await _fixture.AddChapterWithStudentAsync(chapterId: 3, studentId: 30);
+
+        var t0 = DateTime.UtcNow.AddHours(-1);
+        var ids = new[]
+        {
+            await _fixture.EnqueuePendingOtherDocumentAsync(_fixture.ChapterId, _fixture.StudentId, t0),
+            await _fixture.EnqueuePendingOtherDocumentAsync(2, 20, t0.AddMinutes(1)),
+            await _fixture.EnqueuePendingOtherDocumentAsync(3, 30, t0.AddMinutes(2)),
+        };
+
+        var reviewerTask = _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer");
+        var managerTask = _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ManagerId, "Manager");
+        await Task.WhenAll(reviewerTask, managerTask);
+
+        var reviewerResult = await reviewerTask;
+        var managerResult = await managerTask;
+
+        reviewerResult.Should().NotBeNull();
+        managerResult.Should().NotBeNull();
+        reviewerResult!.DocumentId.Should().NotBe(managerResult!.DocumentId);
+        ids.Should().Contain(reviewerResult.DocumentId);
+        ids.Should().Contain(managerResult.DocumentId);
+    }
+
+    private async Task<long> TakeAndCompleteAsync(int reviewerId)
+    {
+        var taken = await _fixture.DocumentService.TakeNextForReviewAsync(reviewerId, "Reviewer");
+        taken.Should().NotBeNull();
+        var result = await _fixture.DocumentService.RejectOtherDocumentAsync(new RejectOtherDocumentInputModel(
+            taken!.DocumentId,
+            reviewerId,
+            "Reviewer",
+            taken.RowVersion,
+            RejectedReasonIds.Unreadable,
+            RejectionNotes: null));
+        result.IsSuccess.Should().BeTrue();
+        return taken.DocumentId;
+    }
+
+    private async Task<long> TakeAndReleaseAsync(int reviewerId)
+    {
+        var taken = await _fixture.DocumentService.TakeNextForReviewAsync(reviewerId, "Reviewer");
+        taken.Should().NotBeNull();
+        await _fixture.DocumentService.ReleaseReviewLockAsync(taken!.DocumentId, reviewerId);
+        return taken.DocumentId;
     }
 }

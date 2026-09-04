@@ -45,6 +45,12 @@ public partial class ReviewDocument : AuthenticationRequiredComponentBase
         NavigationManager.NavigateTo(NavRoutes.ReviewQueue);
     }
 
+    private Task OnReviewCompleted()
+    {
+        NavigationManager.NavigateTo(NavRoutes.ReviewQueue);
+        return Task.CompletedTask;
+    }
+
     private async Task OnCountdownExpired()
     {
         _expired = true;

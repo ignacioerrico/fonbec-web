@@ -28,5 +28,7 @@ internal class DocumentQueueItemConfiguration : IEntityTypeConfiguration<Documen
 
         builder.Property(q => q.DequeueCount)
             .HasDefaultValue(0);
+
+        builder.HasIndex(q => new { q.Priority, q.EnqueuedAt });
     }
 }

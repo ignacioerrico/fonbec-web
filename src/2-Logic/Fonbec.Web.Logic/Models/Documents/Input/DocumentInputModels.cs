@@ -82,7 +82,8 @@ public record ApproveLetterInputModel(
     bool HasRedFlags,
     bool HasGreenFlags,
     string? IssuesNotes,
-    string? Appraisal);
+    string? Appraisal,
+    RedFlagPriority? RedFlagPriority = null);
 
 public record RejectLetterInputModel(
     long DocumentId,

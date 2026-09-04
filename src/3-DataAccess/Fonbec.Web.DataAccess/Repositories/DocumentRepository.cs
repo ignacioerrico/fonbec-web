@@ -1,6 +1,7 @@
 using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.DataModels.Documents;
 using Fonbec.Web.DataAccess.DataModels.Documents.Input;
+using Fonbec.Web.DataAccess.DataModels.Review;
 using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Options;
@@ -292,11 +293,12 @@ public class DocumentRepository(
             return existingLock;
         }
 
-        // Lock the first review-eligible document whose lock is free: either never locked
+        // Lock the next review-eligible document whose lock is free: either never locked
         // (Status Pending) or taken but abandoned past the timeout (Status Processing with a
-        // stale ReviewLockedAt). Ordering is Priority then EnqueuedAt, so an expired lock is
-        // re-taken ahead of later documents that are still validly locked. The document's
-        // RowVersion arbitrates concurrent takes; the loser retries and picks the next free one.
+        // stale ReviewLockedAt). Selection is fair across chapters: highest Priority first,
+        // then the next chapter after the last served one (wrap-around), then oldest EnqueuedAt
+        // within that chapter. The document's RowVersion (and the cursor's) arbitrates concurrent
+        // takes; the loser retries and picks the next free one.
         while (true)
         {
             await using var db = await dbContext.CreateDbContextAsync();
@@ -304,7 +306,7 @@ public class DocumentRepository(
             var utcNow = timeProvider.GetUtcNow().UtcDateTime;
             var lockExpiredBefore = utcNow - LockTimeout;
 
-            var queueItem = await db.DocumentQueueItems
+            var eligible = db.DocumentQueueItems
                 .Include(q => q.Document)
                 .Where(q => (q.Document.DigitalImprovementStatus == DigitalImprovementStatus.NotApplicable
                              || q.Document.DigitalImprovementStatus == DigitalImprovementStatus.Complete)
@@ -312,21 +314,43 @@ public class DocumentRepository(
                                 || (q.ReviewLockedById != null
                                     && q.Document.Status == DocumentStatus.Processing
                                     && q.ReviewLockedAt != null
-                                    && q.ReviewLockedAt < lockExpiredBefore)))
-                .OrderBy(q => q.Priority)
-                .ThenBy(q => q.EnqueuedAt)
-                .FirstOrDefaultAsync();
+                                    && q.ReviewLockedAt < lockExpiredBefore)));
 
-            if (queueItem is null)
+            if (!await eligible.AnyAsync())
             {
                 return null;
             }
+
+            var minPriority = await eligible.MinAsync(q => q.Priority);
+            var atPriority = eligible.Where(q => q.Priority == minPriority);
+
+            var chapterIds = await atPriority
+                .Select(q => q.Document.ChapterId)
+                .Distinct()
+                .OrderBy(id => id)
+                .ToListAsync();
+
+            var cursor = await db.ReviewQueueCursors
+                .SingleOrDefaultAsync(c => c.Id == ReviewQueueCursor.SingletonId)
+                ?? db.ReviewQueueCursors.Add(new ReviewQueueCursor
+                {
+                    Id = ReviewQueueCursor.SingletonId,
+                    RowVersion = [1, 0, 0, 0, 0, 0, 0, 0],
+                }).Entity;
+
+            var nextChapter = NextChapterAfter(chapterIds, cursor.LastServedChapterId);
+
+            var queueItem = await atPriority
+                .Where(q => q.Document.ChapterId == nextChapter)
+                .OrderBy(q => q.EnqueuedAt)
+                .FirstAsync();
 
             var isExpiredRetake = queueItem.Document.Status == DocumentStatus.Processing;
 
             queueItem.ReviewLockedById = userId;
             queueItem.ReviewLockedAt = utcNow;
             queueItem.DequeueCount++;
+            cursor.LastServedChapterId = nextChapter;
 
             if (isExpiredRetake)
             {
@@ -346,9 +370,35 @@ public class DocumentRepository(
             }
             catch (DbUpdateConcurrencyException)
             {
-                // Another reviewer took this document first; loop and pick the next free one.
+                // Another reviewer took this document (or advanced the cursor) first; loop and
+                // pick the next free one.
             }
         }
+    }
+
+    /// <summary>
+    /// First chapter id strictly greater than <paramref name="lastServedChapterId"/>, wrapping to
+    /// the smallest eligible id. A null cursor starts at the smallest eligible chapter.
+    /// </summary>
+    public static int NextChapterAfter(IReadOnlyList<int> sortedEligibleChapterIds, int? lastServedChapterId)
+    {
+        if (sortedEligibleChapterIds.Count == 0)
+        {
+            throw new ArgumentException("At least one eligible chapter is required.", nameof(sortedEligibleChapterIds));
+        }
+
+        if (lastServedChapterId is { } lastServed)
+        {
+            foreach (var chapterId in sortedEligibleChapterIds)
+            {
+                if (chapterId > lastServed)
+                {
+                    return chapterId;
+                }
+            }
+        }
+
+        return sortedEligibleChapterIds[0];
     }
 
     public async Task<long?> GetActiveReviewLockedDocumentIdAsync(int userId)
@@ -593,6 +643,7 @@ public class DocumentRepository(
             PenmanshipScore = input.PenmanshipScore,
             ContentScore = input.ContentScore,
             HasRedFlags = input.HasRedFlags,
+            RedFlagPriority = input.HasRedFlags ? input.RedFlagPriority : null,
             HasGreenFlags = input.HasGreenFlags,
             IssuesNotes = input.IssuesNotes,
             Appraisal = input.Appraisal,
@@ -803,7 +854,27 @@ public class DocumentRepository(
                 TextContent = q.Document.TextContent,
                 YouTubeVideoId = q.Document.YouTubeVideoId,
                 PageCount = q.Document.Pages.Count,
+                Pages = q.Document.Pages
+                    .OrderBy(p => p.PageNumber)
+                    .Select(p => new ReviewWorkspacePageDataModel
+                    {
+                        PageNumber = p.PageNumber,
+                        MimeType = p.ImprovedBlobPath != null
+                            ? p.ImprovedBlobPath.MimeType
+                            : p.OriginalBlobPath.MimeType,
+                    })
+                    .ToList(),
                 UploaderNotes = q.Document.UploaderNotes,
+                StudentId = q.Document.StudentId,
+                SponsorId = q.Document.SponsorId,
+                CompanyId = db.Set<Letter>()
+                    .Where(l => l.DocumentId == q.DocumentId)
+                    .Select(l => (int?)l.CompanyId)
+                    .FirstOrDefault(),
+                PlanStartsOn = db.Set<Letter>()
+                    .Where(l => l.DocumentId == q.DocumentId)
+                    .Select(l => (DateTime?)l.Plan.StartsOn)
+                    .FirstOrDefault(),
                 ReviewLockedById = q.ReviewLockedById,
                 ReviewLockedAt = q.ReviewLockedAt,
                 RowVersion = q.Document.RowVersion,

@@ -4,6 +4,7 @@ using Fonbec.Web.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Fonbec.Web.DataAccess.Migrations
 {
     [DbContext(typeof(FonbecWebDbContext))]
-    partial class FonbecWebDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260822040643_RenumberRejectedReasons")]
+    partial class RenumberRejectedReasons
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1039,6 +1042,14 @@ namespace Fonbec.Web.DataAccess.Migrations
                         new
                         {
                             Id = 7,
+                            AppliesToDocumentType = (byte)1,
+                            Code = "Illegible",
+                            Description = "Ilegible",
+                            RequiresNotes = false
+                        },
+                        new
+                        {
+                            Id = 8,
                             AppliesToDocumentType = (byte)2,
                             Code = "NotReportCard",
                             Description = "No es boletín o libreta",
@@ -1046,7 +1057,7 @@ namespace Fonbec.Web.DataAccess.Migrations
                         },
                         new
                         {
-                            Id = 8,
+                            Id = 9,
                             AppliesToDocumentType = (byte)2,
                             Code = "WrongStudentName",
                             Description = "Nombre del estudiante incorrecto",
@@ -1054,14 +1065,15 @@ namespace Fonbec.Web.DataAccess.Migrations
                         },
                         new
                         {
-                            Id = 9,
+                            Id = 10,
+                            AppliesToDocumentType = (byte)3,
                             Code = "Unreadable",
-                            Description = "Ilegible",
+                            Description = "No legible",
                             RequiresNotes = false
                         },
                         new
                         {
-                            Id = 10,
+                            Id = 11,
                             Code = "Other",
                             Description = "Otro",
                             RequiresNotes = true

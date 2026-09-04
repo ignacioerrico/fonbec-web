@@ -1,3 +1,5 @@
+using Fonbec.Web.DataAccess.Entities.Enums;
+
 namespace Fonbec.Web.DataAccess.DataModels.Documents.Input;
 
 public class CreateBlobPathInputDataModel
@@ -71,6 +73,7 @@ public class ApproveLetterInputDataModel
     public bool HasGreenFlags { get; set; }
     public string? IssuesNotes { get; set; }
     public string? Appraisal { get; set; }
+    public RedFlagPriority? RedFlagPriority { get; set; }
 }
 
 public class RejectLetterInputDataModel

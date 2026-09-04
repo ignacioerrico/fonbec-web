@@ -101,6 +101,27 @@ public class FacilitatorRepositoryGetCurrentLetterStatusesTests
     }
 
     [Fact]
+    public async Task GetCurrentLetterStatusesAsync_Appends_Notes_To_Catalogued_RejectionReason()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedBaseDataAsync(factory);
+        await SeedRejectedReasonAsync(factory, id: 10, description: "Otro");
+        await SeedLetterAsync(
+            factory,
+            id: 1,
+            sponsorId: SponsorId,
+            status: DocumentStatus.Rejected,
+            uploadedOn: BaseUploadedOn,
+            rejectedReasonId: 10,
+            rejectionNotes: "La carta corresponde a otra campaña");
+        var repository = new FacilitatorRepository(factory, TimeProvider.System);
+
+        var result = await repository.GetCurrentLetterStatusesAsync(PlanId, [StudentId]);
+
+        result.Single().RejectionReason.Should().Be("Otro: La carta corresponde a otra campaña");
+    }
+
+    [Fact]
     public async Task GetCurrentLetterStatusesAsync_Falls_Back_To_RejectionNotes_When_No_RejectedReason()
     {
         var factory = CreateDbContextFactory();

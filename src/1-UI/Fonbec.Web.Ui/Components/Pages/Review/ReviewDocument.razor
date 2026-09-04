@@ -19,81 +19,62 @@
         <ReviewLockCountdown ExpiresAtUtc="_workspace.LockExpiresAtUtc" OnExpired="OnCountdownExpired" />
     </MudStack>
 
-    <MudPaper Class="pa-4 mb-4" Elevation="1">
-        <MudText Typo="Typo.h6" Class="mb-2">Documento</MudText>
+    <MudGrid Spacing="3">
+        <MudItem xs="12" md="6">
+            <div class="review-doc-column">
+                <ReviewDocumentViewer DocumentId="_workspace.DocumentId"
+                                      FileKind="_workspace.FileKind"
+                                      TextContent="@_workspace.TextContent"
+                                      YouTubeVideoId="@_workspace.YouTubeVideoId"
+                                      Pages="_workspace.Pages"
+                                      UploaderNotes="@_workspace.UploaderNotes" />
+            </div>
+        </MudItem>
 
-        @switch (_workspace.FileKind)
-        {
-            case FileKind.Text:
-                <MudText Style="white-space: pre-wrap;">@_workspace.TextContent</MudText>
-                break;
-
-            case FileKind.YouTube when !string.IsNullOrWhiteSpace(_workspace.YouTubeVideoId):
-                <div class="mud-width-full" style="max-width: 640px;">
-                    <iframe style="width: 100%; height: 360px; border: 0;"
-                            src="@($"https://www.youtube.com/embed/{_workspace.YouTubeVideoId}")"
-                            title="Video del documento"
-                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                            allowfullscreen>
-                    </iframe>
-                </div>
-                break;
-
-            case FileKind.Blob:
-                <MudStack Row="true" Spacing="2" Class="flex-wrap">
-                    @foreach (var pageNumber in Enumerable.Range(1, Math.Max(_workspace.PageCount, 1)))
-                    {
-                        <MudButton Variant="Variant.Outlined"
-                                   Color="Color.Primary"
-                                   StartIcon="@Icons.Material.Filled.Download"
-                                   Href="@NavRoutes.ReviewDocumentPage(_workspace.DocumentId, pageNumber)"
-                                   Target="_blank">
-                            @(_workspace.PageCount > 1 ? $"Descargar / Ver (página {pageNumber})" : "Descargar / Ver")
+        <MudItem xs="12" md="6">
+            @switch (_workspace.DocumentType)
+            {
+                case DocumentType.Letter:
+                    <LetterReviewPanel DocumentId="_workspace.DocumentId"
+                                       RowVersion="_workspace.RowVersion"
+                                       StudentId="_workspace.StudentId"
+                                       SponsorId="_workspace.SponsorId"
+                                       CompanyId="_workspace.CompanyId"
+                                       PlanStartsOn="_workspace.PlanStartsOn"
+                                       ReviewerId="FonbecClaim.UserId"
+                                       ReviewerRole="@UserRole"
+                                       Disabled="_expired"
+                                       OnCompleted="OnReviewCompleted"
+                                       OnRelease="ReleaseAsync" />
+                    break;
+                case DocumentType.ReportCard:
+                    <PlaceholderReviewPanel DocumentType="DocumentType.ReportCard"
+                                            Disabled="_expired"
+                                            OnRelease="ReleaseAsync" />
+                    break;
+                case DocumentType.Other:
+                    <OtherReviewPanel DocumentId="_workspace.DocumentId"
+                                      RowVersion="_workspace.RowVersion"
+                                      ReviewerId="FonbecClaim.UserId"
+                                      ReviewerRole="@UserRole"
+                                      Expired="_expired" />
+                    @* OtherReviewPanel has no action bar of its own, so the page keeps the release button. *@
+                    <MudStack Row="true" Class="mt-2">
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Default"
+                                   StartIcon="@Icons.Material.Filled.LockOpen"
+                                   Disabled="_expired"
+                                   OnClick="ReleaseAsync">
+                            Liberar
                         </MudButton>
-                    }
-                </MudStack>
-                break;
-
-            default:
-                <MudText Color="Color.Error">Contenido no disponible.</MudText>
-                break;
-        }
-
-        @if (!string.IsNullOrWhiteSpace(_workspace.UploaderNotes))
-        {
-            <MudDivider Class="my-3" />
-            <MudText Typo="Typo.subtitle2">Notas del mediador</MudText>
-            <MudText Style="white-space: pre-wrap;">@_workspace.UploaderNotes</MudText>
-        }
-    </MudPaper>
-
-    @switch (_workspace.DocumentType)
-    {
-        case DocumentType.Letter:
-            <PlaceholderReviewPanel DocumentType="DocumentType.Letter" />
-            break;
-        case DocumentType.ReportCard:
-            <PlaceholderReviewPanel DocumentType="DocumentType.ReportCard" />
-            break;
-        case DocumentType.Other:
-            <OtherReviewPanel DocumentId="_workspace.DocumentId"
-                              RowVersion="_workspace.RowVersion"
-                              ReviewerId="FonbecClaim.UserId"
-                              ReviewerRole="UserRole"
-                              Expired="_expired" />
-            break;
-        default:
-            <PlaceholderReviewPanel DocumentType="_workspace.DocumentType" />
-            break;
-    }
-
-    <MudStack Row="true" Class="mt-2">
-        <MudButton Variant="Variant.Filled"
-                   Color="Color.Default"
-                   StartIcon="@Icons.Material.Filled.LockOpen"
-                   Disabled="_expired"
-                   OnClick="ReleaseAsync">
-            Liberar
-        </MudButton>
-    </MudStack>
+                    </MudStack>
+                    break;
+                default:
+                    <PlaceholderReviewPanel DocumentType="_workspace.DocumentType"
+                                            Disabled="_expired"
+                                            OnRelease="ReleaseAsync" />
+                    break;
+            }
+        </MudItem>
+    </MudGrid>
 }

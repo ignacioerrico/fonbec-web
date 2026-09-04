@@ -8,6 +8,7 @@ using Fonbec.Web.Logic.Constants;
 using Fonbec.Web.Logic.Models.Documents;
 using Fonbec.Web.Logic.Models.Documents.Input;
 using Fonbec.Web.Logic.Models.Results;
+using Fonbec.Web.Logic.Models.Review;
 using Fonbec.Web.Logic.Models.Users.Output;
 using Fonbec.Web.Logic.Options;
 using Mapster;
@@ -505,7 +506,12 @@ public class DocumentService(
             TextContent = workspace.TextContent,
             YouTubeVideoId = workspace.YouTubeVideoId,
             PageCount = workspace.PageCount,
+            Pages = workspace.Pages.Adapt<List<ReviewWorkspacePageViewModel>>(),
+            PlanStartsOn = workspace.PlanStartsOn,
             UploaderNotes = workspace.UploaderNotes,
+            StudentId = workspace.StudentId,
+            SponsorId = workspace.SponsorId,
+            CompanyId = workspace.CompanyId,
             LockExpiresAtUtc = expiresAt,
             RowVersion = workspace.RowVersion,
         };

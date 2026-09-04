@@ -1,3 +1,5 @@
+using Fonbec.Web.DataAccess.Entities.Enums;
+
 namespace Fonbec.Web.DataAccess.Entities;
 
 public class Assessment
@@ -11,6 +13,9 @@ public class Assessment
     public int ContentScore { get; set; }
 
     public bool HasRedFlags { get; set; }
+
+    /// <summary>Required when <see cref="HasRedFlags"/> is true.</summary>
+    public RedFlagPriority? RedFlagPriority { get; set; }
 
     public bool HasGreenFlags { get; set; }
 

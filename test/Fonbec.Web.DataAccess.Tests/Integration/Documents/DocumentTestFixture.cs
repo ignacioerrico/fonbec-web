@@ -1,6 +1,7 @@
 using System.Security.Cryptography;
 using Fonbec.Web.DataAccess.DataModels.Users.Output;
 using Fonbec.Web.DataAccess.Entities;
+using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Options;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Authorization;
@@ -222,6 +223,79 @@ internal sealed class DocumentTestFixture
         return await db.Set<DocumentQueueItem>().SingleAsync(q => q.DocumentId == documentId);
     }
 
+    public async Task<int> AddChapterWithStudentAsync(int chapterId, int studentId)
+    {
+        await using var db = await Factory.CreateDbContextAsync();
+        db.Set<Chapter>().Add(new Chapter
+        {
+            Id = chapterId,
+            Name = $"Chapter {chapterId}",
+            CreatedById = UploaderId,
+            CreatedOnUtc = DateTime.UtcNow,
+            IsActive = true,
+        });
+        db.Set<Student>().Add(new Student
+        {
+            Id = studentId,
+            FirstName = "Student",
+            LastName = $"Ch{chapterId}",
+            ChapterId = chapterId,
+            FacilitatorId = UploaderId,
+            CreatedById = UploaderId,
+            CreatedOnUtc = DateTime.UtcNow,
+            IsActive = true,
+        });
+        await db.SaveChangesAsync();
+        return studentId;
+    }
+
+    public async Task<long> EnqueuePendingOtherDocumentAsync(
+        int chapterId,
+        int studentId,
+        DateTime enqueuedAt,
+        int priority = 0)
+    {
+        await using var db = await Factory.CreateDbContextAsync();
+        var document = new OtherDocument
+        {
+            ChapterId = chapterId,
+            StudentId = studentId,
+            FileKind = FileKind.Text,
+            TextContent = "fair-dequeue",
+            Description = "fair-dequeue",
+            DigitalImprovementStatus = DigitalImprovementStatus.NotApplicable,
+            UploadedOn = enqueuedAt,
+            UploadedById = UploaderId,
+            Status = DocumentStatus.Pending,
+            RowVersion = Guid.NewGuid().ToByteArray()[..8],
+        };
+        db.Set<OtherDocument>().Add(document);
+        await db.SaveChangesAsync();
+
+        db.Set<DocumentQueueItem>().Add(new DocumentQueueItem
+        {
+            DocumentId = document.DocumentId,
+            EnqueuedAt = enqueuedAt,
+            Priority = priority,
+        });
+        await db.SaveChangesAsync();
+        return document.DocumentId;
+    }
+
+    public Task<int?> GetLastServedChapterIdAsync()
+    {
+        return GetLastServedChapterIdCoreAsync();
+    }
+
+    private async Task<int?> GetLastServedChapterIdCoreAsync()
+    {
+        await using var db = await Factory.CreateDbContextAsync();
+        var cursor = await db.Set<ReviewQueueCursor>()
+            .AsNoTracking()
+            .SingleOrDefaultAsync(c => c.Id == ReviewQueueCursor.SingletonId);
+        return cursor?.LastServedChapterId;
+    }
+
     /// <summary>Backdates the review lock so it is considered expired (older than the lock timeout).</summary>
     public async Task ExpireReviewLockAsync(long documentId, TimeSpan age)
     {
@@ -247,6 +321,16 @@ internal sealed class DocumentTestFixture
         // Applies HasData seed data (rejected reasons, global document description options)
         // for the in-memory provider, which does not seed automatically.
         await db.Database.EnsureCreatedAsync();
+
+        if (!await db.Set<ReviewQueueCursor>().AnyAsync())
+        {
+            db.Set<ReviewQueueCursor>().Add(new ReviewQueueCursor
+            {
+                Id = ReviewQueueCursor.SingletonId,
+                RowVersion = [1, 0, 0, 0, 0, 0, 0, 0],
+            });
+            await db.SaveChangesAsync();
+        }
 
         ChapterId = 1;
         UploaderId = 1;

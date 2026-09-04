@@ -43,6 +43,8 @@ public class DocumentServiceReviewTests
             FileKind = FileKind.Text,
             TextContent = "Hola",
             PageCount = 0,
+            StudentId = 7,
+            SponsorId = 11,
             ReviewLockedById = lockedById,
             LockExpiresAtUtc = expiresAtUtc,
             RowVersion = [1, 2, 3],
@@ -61,6 +63,8 @@ public class DocumentServiceReviewTests
         result.Should().NotBeNull();
         result!.DocumentId.Should().Be(DocumentId);
         result.DocumentType.Should().Be(DocumentType.Letter);
+        result.StudentId.Should().Be(7);
+        result.SponsorId.Should().Be(11);
     }
 
     [Fact]

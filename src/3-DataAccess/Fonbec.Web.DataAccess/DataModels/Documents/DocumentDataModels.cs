@@ -30,6 +30,15 @@ public class SponsorDocumentHistoryDataModel
     public List<SharedDocumentDataModel> Documents { get; init; } = [];
 }
 
+/// <summary>A single readable page of a blob-backed document under review.</summary>
+public class ReviewWorkspacePageDataModel
+{
+    public int PageNumber { get; init; }
+
+    /// <summary>MIME type of the active (improved when available) file, used to render it inline.</summary>
+    public string MimeType { get; init; } = string.Empty;
+}
+
 public class ReviewWorkspaceDataModel
 {
     public long DocumentId { get; init; }
@@ -41,7 +50,15 @@ public class ReviewWorkspaceDataModel
     /// <summary>Number of file pages (0 for Text/YouTube; 1 for a PDF/single image; N for a multi-image document).</summary>
     public int PageCount { get; init; }
 
+    public List<ReviewWorkspacePageDataModel> Pages { get; init; } = [];
+
+    /// <summary>Start of the planned delivery a letter belongs to; <c>null</c> for other document types.</summary>
+    public DateTime? PlanStartsOn { get; init; }
+
     public string? UploaderNotes { get; init; }
+    public int StudentId { get; init; }
+    public int? SponsorId { get; init; }
+    public int? CompanyId { get; init; }
     public int? ReviewLockedById { get; init; }
     public DateTime? ReviewLockedAt { get; init; }
 
