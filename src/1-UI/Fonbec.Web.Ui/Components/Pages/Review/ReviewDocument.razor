@@ -48,9 +48,16 @@
                                        OnRelease="ReleaseAsync" />
                     break;
                 case DocumentType.ReportCard:
-                    <PlaceholderReviewPanel DocumentType="DocumentType.ReportCard"
-                                            Disabled="_expired"
-                                            OnRelease="ReleaseAsync" />
+                    <ReportCardReviewPanel DocumentId="_workspace.DocumentId"
+                                           RowVersion="_workspace.RowVersion"
+                                           StudentId="_workspace.StudentId"
+                                           Period="_workspace.ReportCardPeriod!.Value"
+                                           EducationLevel="_workspace.StudentEducationLevel"
+                                           ReviewerId="FonbecClaim.UserId"
+                                           ReviewerRole="@UserRole"
+                                           Disabled="_expired"
+                                           OnCompleted="OnReviewCompleted"
+                                           OnRelease="ReleaseAsync" />
                     break;
                 case DocumentType.Other:
                     <OtherReviewPanel DocumentId="_workspace.DocumentId"

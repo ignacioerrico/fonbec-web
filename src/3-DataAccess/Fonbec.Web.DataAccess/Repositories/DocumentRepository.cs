@@ -698,7 +698,10 @@ public class DocumentRepository(
         {
             DocumentId = reportCard.DocumentId,
             ConfirmedIsReportCardOrTranscript = input.ConfirmedIsReportCardOrTranscript,
+            ConfirmedPeriodMatches = input.ConfirmedPeriodMatches,
             ConfirmedStudentNameCorrect = input.ConfirmedStudentNameCorrect,
+            OverallAssessment = input.OverallAssessment,
+            Absences = input.Absences,
             ReviewedById = input.ReviewerId,
             ReviewedOn = DateTime.UtcNow,
         };
@@ -842,6 +845,7 @@ public class DocumentRepository(
     public async Task<ReviewWorkspaceDataModel?> GetReviewWorkspaceAsync(long documentId)
     {
         await using var db = await dbContext.CreateDbContextAsync();
+        var now = DateTime.UtcNow;
 
         var workspace = await db.DocumentQueueItems
             .AsNoTracking()
@@ -875,6 +879,15 @@ public class DocumentRepository(
                     .Where(l => l.DocumentId == q.DocumentId)
                     .Select(l => (DateTime?)l.Plan.StartsOn)
                     .FirstOrDefault(),
+                ReportCardPeriod = db.Set<ReportCard>()
+                    .Where(r => r.DocumentId == q.DocumentId)
+                    .Select(r => (DateOnly?)r.Period)
+                    .FirstOrDefault(),
+                StudentEducationLevel = q.Document.Student.UniversityStartYear <= now
+                    ? EducationLevel.University
+                    : q.Document.Student.SecondarySchoolStartYear <= now
+                        ? EducationLevel.SecondarySchool
+                        : EducationLevel.PrimarySchool,
                 ReviewLockedById = q.ReviewLockedById,
                 ReviewLockedAt = q.ReviewLockedAt,
                 RowVersion = q.Document.RowVersion,
@@ -1014,6 +1027,7 @@ public class DocumentRepository(
         await using var db = await dbContext.CreateDbContextAsync();
         return await db.Documents
             .AsNoTracking()
+            .Include(d => d.Student)
             .FirstOrDefaultAsync(d => d.DocumentId == documentId);
     }
 

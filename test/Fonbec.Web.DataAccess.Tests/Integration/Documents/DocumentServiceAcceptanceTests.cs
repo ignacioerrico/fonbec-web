@@ -347,7 +347,8 @@ public class DocumentServiceAcceptanceTests
 
         var approve = await _fixture.DocumentService.ApproveReportCardAsync(new ApproveReportCardInputModel(
             locked!.DocumentId, _fixture.ReviewerId, "Reviewer", locked.RowVersion,
-            ConfirmedIsReportCardOrTranscript: true, ConfirmedStudentNameCorrect: true));
+            ConfirmedIsReportCardOrTranscript: true, ConfirmedPeriodMatches: true,
+            ConfirmedStudentNameCorrect: true, ReportCardAssessment.Green, Absences: 3));
 
         approve.IsSuccess.Should().BeTrue();
 
@@ -370,7 +371,8 @@ public class DocumentServiceAcceptanceTests
 
         var approve = await _fixture.DocumentService.ApproveReportCardAsync(new ApproveReportCardInputModel(
             locked!.DocumentId, _fixture.ReviewerId, "Reviewer", locked.RowVersion,
-            ConfirmedIsReportCardOrTranscript: true, ConfirmedStudentNameCorrect: true));
+            ConfirmedIsReportCardOrTranscript: true, ConfirmedPeriodMatches: true,
+            ConfirmedStudentNameCorrect: true, ReportCardAssessment.Green, Absences: 0));
 
         approve.IsSuccess.Should().BeTrue();
 
@@ -470,7 +472,7 @@ public class DocumentServiceAcceptanceTests
     }
 
     [Fact]
-    public async Task Scenario18_ApproveReportCard_CreatesReportCardReviewWithoutAssessment()
+    public async Task Scenario18_ApproveReportCard_PersistsReviewAssessmentAndAbsences()
     {
         await _fixture.InitializeAsync();
 
@@ -483,10 +485,14 @@ public class DocumentServiceAcceptanceTests
 
         await _fixture.DocumentService.ApproveReportCardAsync(new ApproveReportCardInputModel(
             locked!.DocumentId, _fixture.ReviewerId, "Reviewer", locked.RowVersion,
-            ConfirmedIsReportCardOrTranscript: true, ConfirmedStudentNameCorrect: true));
+            ConfirmedIsReportCardOrTranscript: true, ConfirmedPeriodMatches: true,
+            ConfirmedStudentNameCorrect: true, ReportCardAssessment.Yellow, Absences: 4));
 
         await using var db = await _fixture.Factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
-        (await db.Set<ReportCardReview>().CountAsync(TestContext.Current.CancellationToken)).Should().Be(1);
+        var review = await db.Set<ReportCardReview>().SingleAsync(TestContext.Current.CancellationToken);
+        review.ConfirmedPeriodMatches.Should().BeTrue();
+        review.OverallAssessment.Should().Be(ReportCardAssessment.Yellow);
+        review.Absences.Should().Be(4);
         (await db.Set<Assessment>().CountAsync(TestContext.Current.CancellationToken)).Should().Be(0);
     }
 
@@ -525,7 +531,8 @@ public class DocumentServiceAcceptanceTests
         var locked = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer")!;
         await _fixture.DocumentService.ApproveReportCardAsync(new ApproveReportCardInputModel(
             locked!.DocumentId, _fixture.ReviewerId, "Reviewer", locked.RowVersion,
-            ConfirmedIsReportCardOrTranscript: true, ConfirmedStudentNameCorrect: true));
+            ConfirmedIsReportCardOrTranscript: true, ConfirmedPeriodMatches: true,
+            ConfirmedStudentNameCorrect: true, ReportCardAssessment.Green, Absences: 0));
 
         await using var db = await _fixture.Factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
         var shareCountBefore = await db.Set<DocumentShare>().CountAsync(TestContext.Current.CancellationToken);
@@ -631,7 +638,8 @@ public class DocumentServiceAcceptanceTests
         var locked = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer")!;
         await _fixture.DocumentService.ApproveReportCardAsync(new ApproveReportCardInputModel(
             locked!.DocumentId, _fixture.ReviewerId, "Reviewer", locked.RowVersion,
-            ConfirmedIsReportCardOrTranscript: true, ConfirmedStudentNameCorrect: true));
+            ConfirmedIsReportCardOrTranscript: true, ConfirmedPeriodMatches: true,
+            ConfirmedStudentNameCorrect: true, ReportCardAssessment.Green, Absences: 0));
 
         var progress = await _fixture.DocumentService.GetLetterPlanProgressAsync(
             _fixture.ManagerId, "Manager", _fixture.PlanId, _fixture.ChapterId);

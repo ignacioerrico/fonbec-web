@@ -508,8 +508,10 @@ public class DocumentService(
             PageCount = workspace.PageCount,
             Pages = workspace.Pages.Adapt<List<ReviewWorkspacePageViewModel>>(),
             PlanStartsOn = workspace.PlanStartsOn,
+            ReportCardPeriod = workspace.ReportCardPeriod,
             UploaderNotes = workspace.UploaderNotes,
             StudentId = workspace.StudentId,
+            StudentEducationLevel = workspace.StudentEducationLevel,
             SponsorId = workspace.SponsorId,
             CompanyId = workspace.CompanyId,
             LockExpiresAtUtc = expiresAt,
@@ -622,17 +624,32 @@ public class DocumentService(
         }
 
         var document = await documentRepository.GetDocumentByIdAsync(input.DocumentId);
-        if (document?.DocumentType != DocumentType.ReportCard)
+        if (document is not ReportCard reportCard || document.DocumentType != DocumentType.ReportCard)
         {
             return new ReviewResult(false, [DocumentMessages.DocumentIsNotReportCard]);
         }
 
-        if (!input.ConfirmedIsReportCardOrTranscript || !input.ConfirmedStudentNameCorrect)
+        if (!input.ConfirmedIsReportCardOrTranscript
+            || !input.ConfirmedPeriodMatches
+            || !input.ConfirmedStudentNameCorrect)
         {
             return new ReviewResult(false, [DocumentMessages.ReportCardConfirmationsRequired]);
         }
 
+        if (!Enum.IsDefined(input.OverallAssessment))
+        {
+            return new ReviewResult(false, [DocumentMessages.ReportCardAssessmentRequired]);
+        }
+
+        if (input.Absences < 0)
+        {
+            return new ReviewResult(false, [DocumentMessages.ReportCardAbsencesCannotBeNegative]);
+        }
+
         var dataModel = input.Adapt<DataAccess.DataModels.Documents.Input.ApproveReportCardInputDataModel>();
+        dataModel.Absences = reportCard.Student.CurrentEducationLevel == EducationLevel.University
+            ? null
+            : input.Absences;
         var errors = await documentRepository.ApproveReportCardAsync(dataModel);
         if (errors.Count > 0)
         {
@@ -648,6 +665,29 @@ public class DocumentService(
         if (!CanReview(input.ReviewerRole))
         {
             return new ReviewResult(false, [DocumentMessages.NotAuthorizedToReview]);
+        }
+
+        var document = await documentRepository.GetDocumentByIdAsync(input.DocumentId);
+        if (document?.DocumentType != DocumentType.ReportCard)
+        {
+            return new ReviewResult(false, [DocumentMessages.DocumentIsNotReportCard]);
+        }
+
+        var applicableReasons = await documentRepository.GetApplicableRejectedReasonsAsync(DocumentType.ReportCard);
+        var reason = applicableReasons.SingleOrDefault(r => r.RejectedReasonId == input.RejectedReasonId);
+        if (reason is null)
+        {
+            return new ReviewResult(false, [DocumentMessages.RejectionReasonNotApplicable]);
+        }
+
+        if (reason.RequiresNotes && string.IsNullOrWhiteSpace(input.RejectionNotes))
+        {
+            return new ReviewResult(false, [DocumentMessages.RejectionNotesRequiredForOtherReason]);
+        }
+
+        if (input.RejectionNotes is { Length: > MaxLength.Document.RejectionNotes })
+        {
+            return new ReviewResult(false, [DocumentMessages.RejectionNotesTooLong]);
         }
 
         var dataModel = input.Adapt<DataAccess.DataModels.Documents.Input.RejectReportCardInputDataModel>();

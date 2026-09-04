@@ -37,6 +37,10 @@ public static class DocumentMessages
 
     public const string ReportCardConfirmationsRequired = "Debe completar todas las confirmaciones del boletín.";
 
+    public const string ReportCardAssessmentRequired = "Debe indicar la evaluación general del boletín.";
+
+    public const string ReportCardAbsencesCannotBeNegative = "Las inasistencias no pueden ser negativas.";
+
     public const string DocumentIsNotOther = "El documento no es de tipo 'otros'.";
 
     public const string RejectionReasonRequired = "Debe indicar un motivo de rechazo.";
