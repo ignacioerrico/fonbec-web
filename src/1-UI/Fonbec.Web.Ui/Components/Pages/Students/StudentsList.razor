@@ -95,7 +95,8 @@
 
             <PropertyColumn Property="vm => vm.FacilitatorFullName" Title="Mediador">
                 <EditTemplate>
-                    <FacilitatorSelector @bind-SelectedFacilitatorId="context.Item.FacilitatorId" />
+                    <FacilitatorSelector @bind-SelectedFacilitatorId="context.Item.FacilitatorId"
+                                         ChapterId="context.Item.ChapterId" />
                 </EditTemplate>
                 <FilterTemplate>
                     <FilterByList T="StudentsListViewModel"

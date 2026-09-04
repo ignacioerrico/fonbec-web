@@ -1,5 +1,5 @@
-using System.Security.Claims;
 using FluentAssertions;
+using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.DataModels.Users.Input;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Repositories;
@@ -8,6 +8,7 @@ using Fonbec.Web.Logic.Constants;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Logic.Util;
 using NSubstitute;
+using System.Security.Claims;
 
 namespace Fonbec.Web.Logic.Tests.Services;
 
@@ -237,5 +238,47 @@ public class UserServiceTests
         await userRepo.DidNotReceive().RemoveUserClaim(
             Arg.Any<string>(),
             FonbecAuth.ClaimType);
+    }
+
+    [Fact]
+    public async Task GetAllUsersInRoleForSelectionAsync_WithChapterId_PassesChapterIdToRepository()
+    {
+        var userRepo = Substitute.For<IUserRepository>();
+        userRepo.GetAllUsersInRoleForSelectionAsync(FonbecRole.Uploader, 5)
+            .Returns([new(1, "Test")]);
+        var userService = new UserService(userRepo, null!, null!, DummyPages);
+
+        var result = await userService.GetAllUsersInRoleForSelectionAsync(FonbecRole.Uploader, 5);
+
+        await userRepo.Received(1).GetAllUsersInRoleForSelectionAsync(FonbecRole.Uploader, 5);
+        result.Should().ContainSingle();
+        result.First().Key.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task GetAllUsersInRoleForSelectionAsync_WithNullChapterId_PassesNullToRepository()
+    {
+        var userRepo = Substitute.For<IUserRepository>();
+        userRepo.GetAllUsersInRoleForSelectionAsync(FonbecRole.Uploader, null)
+            .Returns([]);
+        var userService = new UserService(userRepo, null!, null!, DummyPages);
+
+        var result = await userService.GetAllUsersInRoleForSelectionAsync(FonbecRole.Uploader, null);
+
+        await userRepo.Received(1).GetAllUsersInRoleForSelectionAsync(FonbecRole.Uploader, null);
+        result.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetAllUsersInRoleForSelectionAsync_WithoutOptionalParameter_PassesNullToRepository()
+    {
+        var userRepo = Substitute.For<IUserRepository>();
+        userRepo.GetAllUsersInRoleForSelectionAsync(FonbecRole.Uploader, null)
+            .Returns([]);
+        var userService = new UserService(userRepo, null!, null!, DummyPages);
+
+        var result = await userService.GetAllUsersInRoleForSelectionAsync(FonbecRole.Uploader);
+
+        await userRepo.Received(1).GetAllUsersInRoleForSelectionAsync(FonbecRole.Uploader, null);
     }
 }

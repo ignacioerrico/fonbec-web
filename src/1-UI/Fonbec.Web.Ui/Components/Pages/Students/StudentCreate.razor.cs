@@ -13,7 +13,7 @@ public partial class StudentCreate : AuthenticationRequiredComponentBase
 {
     private readonly StudentCreateBindModel _bindModel = new();
 
-    private bool IsFormDisabled => !_anyChapters || !_anyFacilitators;
+    private bool IsFormDisabled => !_anyChapters || (FonbecClaim.ChapterId.HasValue && !_anyFacilitators);
     private bool _anyChapters;
     private bool _anyFacilitators;
 
@@ -35,6 +35,16 @@ public partial class StudentCreate : AuthenticationRequiredComponentBase
     private async Task NumberOfFacilitatorsLoaded(int totalFacilitators) =>
         _anyFacilitators = totalFacilitators > 0;
 
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+        // Managers have a fixed chapter — pre-set it so the form isn't disabled
+        if (FonbecClaim.ChapterId.HasValue)
+        {
+            _anyChapters = true;
+            _bindModel.ChapterId = FonbecClaim.ChapterId.Value;
+        }
+    }
     private async Task Save()
     {
         if (FonbecClaim.ChapterId is null)

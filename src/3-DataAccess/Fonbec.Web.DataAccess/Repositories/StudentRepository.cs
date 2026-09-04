@@ -1,7 +1,9 @@
-﻿using Fonbec.Web.DataAccess.DataModels.Review;
+﻿using Fonbec.Web.DataAccess.Constants;
+using Fonbec.Web.DataAccess.DataModels.Review;
 using Fonbec.Web.DataAccess.DataModels.Students;
 using Fonbec.Web.DataAccess.DataModels.Students.Input;
 using Fonbec.Web.DataAccess.Entities;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
 namespace Fonbec.Web.DataAccess.Repositories;
@@ -23,7 +25,8 @@ public interface IStudentRepository
     Task<List<CandidateNameDataModel>> GetRandomStudentNamesAsync(int excludeStudentId, int count);
 }
 
-public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : IStudentRepository
+public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext,
+    UserManager<FonbecWebUser> userManager) : IStudentRepository
 {
     public async Task<List<AllStudentsDataModel>> GetAllStudentsAsync(int? chapterId)
     {
@@ -105,6 +108,28 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
     {
         await using var db = await dbContext.CreateDbContextAsync();
 
+        // Defense-in-depth: validate facilitator belongs to the student's chapter and is an Uploader
+        var facilitator = await userManager.FindByIdAsync(inputDataModel.FacilitatorId.ToString())
+    ?? throw new InvalidOperationException("El mediador seleccionado no existe.");
+
+        var isLockedOut = facilitator.LockoutEnabled
+        && facilitator.LockoutEnd.HasValue
+        && facilitator.LockoutEnd.Value > DateTimeOffset.UtcNow;
+
+        if (isLockedOut)
+        {
+            throw new InvalidOperationException("El mediador seleccionado está deshabilitado.");
+        }
+
+        if (facilitator.ChapterId != inputDataModel.ChapterId)
+        {
+            throw new InvalidOperationException("El mediador debe pertenecer a la filial del becario.");
+        }
+        var isInRole = await userManager.IsInRoleAsync(facilitator, FonbecRole.Uploader);
+        if (!isInRole)
+        {
+            throw new InvalidOperationException("El usuario seleccionado no es un mediador.");
+        }
         var student = new Student
         {
             ChapterId = inputDataModel.ChapterId,
@@ -144,8 +169,34 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
         studentDb.Notes = dataModel.StudentNotes;
         studentDb.SecondarySchoolStartYear = dataModel.StudentSecondarySchoolStartYear;
         studentDb.UniversityStartYear = dataModel.StudentUniversityStartYear;
-        studentDb.FacilitatorId = dataModel.FacilitatorId;
         studentDb.LastUpdatedById = dataModel.UpdatedById;
+        if (dataModel.FacilitatorId == 0)
+        {
+            throw new InvalidOperationException("El becario debe tener un mediador asignado.");
+        }
+
+        var facilitator = await userManager.FindByIdAsync(dataModel.FacilitatorId.ToString())
+          ?? throw new InvalidOperationException("El mediador seleccionado no existe.");
+
+        var isLockedOut = facilitator.LockoutEnabled
+        && facilitator.LockoutEnd.HasValue
+        && facilitator.LockoutEnd.Value > DateTimeOffset.UtcNow;
+
+        if (isLockedOut)
+        {
+            throw new InvalidOperationException("El mediador seleccionado está deshabilitado.");
+        }
+
+        if (facilitator.ChapterId != studentDb.ChapterId)
+        {
+            throw new InvalidOperationException("El mediador debe pertenecer a la filial del becario.");
+        }
+        var isInRole = await userManager.IsInRoleAsync(facilitator, FonbecRole.Uploader);
+        if (!isInRole)
+        {
+            throw new InvalidOperationException("El usuario seleccionado no es un mediador.");
+        }
+        studentDb.FacilitatorId = dataModel.FacilitatorId;
 
         db.Students.Update(studentDb);
         return await db.SaveChangesAsync();

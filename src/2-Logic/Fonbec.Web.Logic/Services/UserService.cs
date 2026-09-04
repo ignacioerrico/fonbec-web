@@ -19,7 +19,7 @@ public interface IUserService
     Task<ValidateUniqueEmailOutputModel> ValidateUniqueEmailAsync(string userEmail);
     Task<ValidateUniqueFullNameOutputModel> ValidateUniqueFullNameAsync(string firstName, string lastName);
     Task<List<UsersListViewModel>> GetAllUsersAsync(int? chapterId);
-    Task<List<SelectableModel<int>>> GetAllUsersInRoleForSelectionAsync(string role);
+    Task<List<SelectableModel<int>>> GetAllUsersInRoleForSelectionAsync(string role, int? chapterId = null);
     Task<GetUserOutputModel> GetUserAsync(int userId);
     Task<(int userId, List<string> errors)> CreateUserAsync(CreateUserInputModel model);
     Task<bool> UpdateUserAsync(UpdateUserInputModel model);
@@ -77,9 +77,9 @@ public class UserService(
         return allUsers;
     }
 
-    public async Task<List<SelectableModel<int>>> GetAllUsersInRoleForSelectionAsync(string role)
+    public async Task<List<SelectableModel<int>>> GetAllUsersInRoleForSelectionAsync(string role, int? chapterId = null)
     {
-        var usersInRole = await userRepository.GetAllUsersInRoleForSelectionAsync(role);
+        var usersInRole = await userRepository.GetAllUsersInRoleForSelectionAsync(role, chapterId);
         return usersInRole.Select(u => new SelectableModel<int>(u.Key, u.Value)).ToList();
     }
 
