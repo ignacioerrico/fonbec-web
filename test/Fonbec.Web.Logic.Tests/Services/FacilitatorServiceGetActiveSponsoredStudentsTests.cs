@@ -19,6 +19,7 @@ public class FacilitatorServiceGetActiveSponsoredStudentsTests : MappingTestBase
         _letterExemptionService = Substitute.For<ILetterExemptionService>();
         _letterExemptionService.GetActiveExemptionReasonsForPlanAsync(Arg.Any<int>()).Returns(new Dictionary<int, string>());
         _facilitatorService = new FacilitatorService(_facilitatorRepository, _letterExemptionService);
+        _facilitatorRepository.GetLatestReportCardsAsync(Arg.Any<List<int>>(), Arg.Any<int>()).Returns([]);
     }
 
     [Fact]

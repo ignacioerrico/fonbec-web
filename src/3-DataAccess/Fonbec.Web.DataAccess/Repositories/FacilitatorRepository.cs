@@ -14,6 +14,8 @@ public interface IFacilitatorRepository
         int studentId, int? planId, int? sponsorId, int? companyId);
 
     Task<List<SponsorLetterStatusDataModel>> GetCurrentLetterStatusesAsync(int planId, List<int> studentIds);
+
+    Task<List<FacilitatorReportsDataModel>> GetLatestReportCardsAsync(List<int> studentIds, int count);
 }
 
 public class FacilitatorRepository(
@@ -223,5 +225,31 @@ public class FacilitatorRepository(
             .GroupBy(l => (l.StudentId, l.SponsorId, l.CompanyId))
             .Select(g => g.First())
             .ToList();
+    }
+
+    public async Task<List<FacilitatorReportsDataModel>> GetLatestReportCardsAsync(List<int> studentIds, int count)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var reportCards =  await db.Set<ReportCard>()
+            .AsNoTracking()
+            .Where(r => studentIds.Contains(r.StudentId))
+            .Select(r => new FacilitatorReportsDataModel
+            {
+                ReportCardId = r.DocumentId,
+                StudentId = r.StudentId,
+                Period = r.Period,
+                Description = r.Description,
+                Status = r.Status,
+                RejectionReason = r.RejectionNotes
+            })
+            .OrderByDescending(r => r.Period)
+            .ThenByDescending(r => r.ReportCardId)
+            .ToListAsync();
+
+        return reportCards
+        .GroupBy(r => r.StudentId)
+        .SelectMany(g => g.Take(count))
+        .ToList();
     }
 }

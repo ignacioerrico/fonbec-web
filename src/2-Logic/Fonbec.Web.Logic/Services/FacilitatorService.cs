@@ -15,12 +15,23 @@ public class FacilitatorService(
     IFacilitatorRepository facilitatorRepository,
     ILetterExemptionService letterExemptionService) : IFacilitatorService
 {
+    private const int RecentReportCardCount = 3;
     public async Task<StudentsDashboardViewModel> GetStudentsDashboardAsync(int facilitatorId)
     {
         var studentsDataModel = await facilitatorRepository.GetActiveSponsoredStudentsAsync(facilitatorId);
         var currentPlan = await facilitatorRepository.GetCurrentPlanForFacilitatorAsync(facilitatorId);
 
         var students = studentsDataModel.Adapt<List<FacilitatorStudentsListViewModel>>();
+
+        var reportCards = await facilitatorRepository.GetLatestReportCardsAsync(
+            students.Select(s => s.StudentId).ToList(), RecentReportCardCount);
+
+        foreach (var student in students)
+        {
+            student.ReportCardChip = reportCards
+                .Where(r => r.StudentId == student.StudentId)
+                .Adapt<List<ReportCardChipViewModel>>();
+        }
 
         if (currentPlan is not null)
         {

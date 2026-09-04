@@ -1,0 +1,38 @@
+﻿
+<MudSimpleTable Dense="true" Hover="true" ordered="false" Elevation="0" Class="mt-1">
+
+    <thead>
+        <tr>
+            <th>@ReportCardTitle</th>
+            <th>Descripción</th>
+            <th>Estado</th>
+        </tr>
+    </thead>
+
+    <tbody>
+        @if (Reports.Count == 0)
+        {
+            <tr>
+                <td colspan="3">
+                    <MudText Typo="Typo.body2">@EmptyLabel</MudText>
+                </td>
+            </tr>
+        }
+        else
+        {
+            @foreach (var report in Reports)
+            {
+                <tr>
+                    <td>@report.PeriodLabel</td>
+                    <td> @report.Description</td>
+                    <td>
+                        <div class="d-flex align-center gap-2">
+                            <MudIcon Icon="@report.Status.Icon()" Color="@report.Status.Color()" Size="Size.Small" />
+                            <MudText Typo="Typo.body2">@ReportStatusText(report) </MudText>
+                        </div>
+                    </td>
+                </tr>
+            }
+        }
+    </tbody>
+</MudSimpleTable>

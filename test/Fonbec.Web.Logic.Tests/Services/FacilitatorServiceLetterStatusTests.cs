@@ -30,6 +30,8 @@ public class FacilitatorServiceLetterStatusTests : MappingTestBase
 
         _facilitatorRepository.GetCurrentPlanForFacilitatorAsync(FacilitatorId)
             .Returns(new CurrentPlanDataModel { PlanId = PlanId, StartsOn = new DateTime(2026, 6, 1) });
+
+        _facilitatorRepository.GetLatestReportCardsAsync(Arg.Any<List<int>>(), Arg.Any<int>()).Returns([]);
     }
 
     [Fact]
