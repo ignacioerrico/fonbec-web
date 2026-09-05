@@ -12,6 +12,8 @@ public partial class StudentSelector
 
     [Parameter]
     public int? ChapterId { get; set; }
+    [Parameter]
+    public bool ReadOnly { get; set; }
 
     [Parameter]
     public bool SelectFirstItemOnLoad { get; set; }
