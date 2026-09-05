@@ -18,30 +18,30 @@
 
 <PageTitle>Registrarse</PageTitle>
 
-<StatusMessage Message="@_message" />
-<h1>Registrarse</h1>
-<h2>Asociá tu cuenta de @ProviderDisplayName.</h2>
-<MudDivider />
+<MudText Typo="Typo.h4" Align="Align.Center" GutterBottom="true">Registrarse</MudText>
+<MudText Typo="Typo.body2" Align="Align.Center" Class="mb-6 mud-text-secondary">
+    Asociá tu cuenta de @ProviderDisplayName.
+</MudText>
 
-<div class="alert alert-info">
+<StatusMessage Message="@_message" Class="mb-6" />
+
+<MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-6">
     Te autenticaste correctamente con <strong>@ProviderDisplayName</strong>.
     Ingresá un correo electrónico para este sitio y hacé clic en Registrarse para completar el inicio de sesión.
-</div>
+</MudAlert>
 
-<div class="row">
-    <div class="col-md-4">
-        <EditForm Model="Input" OnValidSubmit="OnValidSubmitAsync" FormName="confirmation" method="post">
-            <DataAnnotationsValidator />
-            <ValidationSummary class="text-danger" role="alert" />
-            <div class="form-floating mb-3">
-                <InputText @bind-Value="Input.Email" id="Input.Email" class="form-control" autocomplete="email" placeholder="Ingresá tu correo electrónico." />
-                <label for="Input.Email" class="form-label">Correo electrónico</label>
-                <ValidationMessage For="() => Input.Email" />
-            </div>
-            <button type="submit" class="w-100 btn btn-lg btn-primary">Registrarse</button>
-        </EditForm>
-    </div>
-</div>
+<EditForm Model="Input" OnValidSubmit="OnValidSubmitAsync" FormName="confirmation" method="post">
+    <DataAnnotationsValidator />
+
+    <MudStack Spacing="3">
+        <MudStaticTextField @bind-Value="Input.Email" For="@(() => Input.Email)"
+                            Label="Correo electrónico" Placeholder="nombre@ejemplo.com" HelperText="Ingresá tu correo electrónico."
+                            UserAttributes="@(new() { { "autocomplete", "email" }, { "aria-required", "true" } })" />
+        <MudStaticButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" FormAction="FormAction.Submit">
+            Registrarse
+        </MudStaticButton>
+    </MudStack>
+</EditForm>
 
 @code {
     public const string LoginCallbackAction = "LoginCallback";

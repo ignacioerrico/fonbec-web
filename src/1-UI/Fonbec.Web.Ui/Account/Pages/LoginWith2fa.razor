@@ -39,7 +39,12 @@
 
 <div class="auth-layout__links mt-6">
     <MudLink Href="@RecoveryCodeUrl">Iniciar sesión con un código de recuperación</MudLink>
-    <MudLink Href="Account/Login">Volver al inicio de sesión</MudLink>
+    <MudButton Href="Account/Login"
+               StartIcon="@Icons.Material.Filled.ArrowBack"
+               Variant="Variant.Text"
+               Color="Color.Default">
+        Volver al inicio de sesión
+    </MudButton>
 </div>
 
 @code {

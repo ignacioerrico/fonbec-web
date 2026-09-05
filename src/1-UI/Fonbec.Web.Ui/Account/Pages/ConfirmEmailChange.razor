@@ -11,9 +11,18 @@
 
 <PageTitle>Confirmar cambio de correo</PageTitle>
 
-<h1>Confirmar cambio de correo</h1>
+<MudText Typo="Typo.h4" Align="Align.Center" GutterBottom="true">Confirmar cambio de correo</MudText>
 
-<StatusMessage Message="@_message" />
+<StatusMessage Message="@_message" Class="mt-4" />
+
+<div class="auth-layout__links mt-6">
+    <MudButton Href="Account/Login"
+               StartIcon="@Icons.Material.Filled.ArrowBack"
+               Variant="Variant.Text"
+               Color="Color.Default">
+        Volver al inicio de sesión
+    </MudButton>
+</div>
 
 @code {
     private string? _message;

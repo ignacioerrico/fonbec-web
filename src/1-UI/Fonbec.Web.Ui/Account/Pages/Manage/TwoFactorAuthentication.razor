@@ -45,32 +45,41 @@
             </MudText>
         }
 
-        if (_isMachineRemembered)
-        {
-            <form style="display: inline-block" @formname="forget-browser" @onsubmit="OnSubmitForgetBrowserAsync" method="post">
-                <AntiforgeryToken />
-
-                <MudStaticButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" FormAction="FormAction.Submit">Olvidar este navegador</MudStaticButton>
-            </form>
-        }
-
-        <MudLink Href="Account/Manage/Disable2fa">Desactivar 2FA</MudLink>
-        <br />
-        <MudLink Href="Account/Manage/GenerateRecoveryCodes">Restablecer códigos de recuperación</MudLink>
+        <MudGrid>
+            @if (_isMachineRemembered)
+            {
+                <MudItem md="12">
+                    <form @formname="forget-browser" @onsubmit="OnSubmitForgetBrowserAsync" method="post">
+                        <AntiforgeryToken />
+                        <MudStaticButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" FormAction="FormAction.Submit">Olvidar este navegador</MudStaticButton>
+                    </form>
+                </MudItem>
+            }
+            <MudItem md="12">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Href="Account/Manage/Disable2fa">Desactivar 2FA</MudButton>
+            </MudItem>
+            <MudItem md="12">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Href="Account/Manage/GenerateRecoveryCodes">Restablecer códigos de recuperación</MudButton>
+            </MudItem>
+        </MudGrid>
     }
 
-    <MudText Typo="Typo.h6" GutterBottom="true">App de autenticación</MudText>
+    <MudText Typo="Typo.subtitle1" GutterBottom="true" Class="mt-6">App de autenticación</MudText>
 
     @if (!_hasAuthenticator)
     {
-        <MudLink Href="Account/Manage/EnableAuthenticator">Agregar app de autenticación</MudLink>
-        <br />
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Href="Account/Manage/EnableAuthenticator">Agregar app de autenticación</MudButton>
     }
     else
     {
-        <MudLink Href="Account/Manage/EnableAuthenticator">Configurar app de autenticación</MudLink>
-        <br />
-        <MudLink Href="Account/Manage/ResetAuthenticator">Restablecer app de autenticación</MudLink>
+        <MudGrid>
+            <MudItem md="12">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Href="Account/Manage/EnableAuthenticator">Configurar app de autenticación</MudButton>
+            </MudItem>
+            <MudItem md="12">
+                <MudButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" Href="Account/Manage/ResetAuthenticator">Restablecer app de autenticación</MudButton>
+            </MudItem>
+        </MudGrid>
     }
 }
 else

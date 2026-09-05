@@ -10,8 +10,18 @@
 
 <PageTitle>Confirmar correo</PageTitle>
 
-<h1>Confirmar correo</h1>
-<StatusMessage Message="@_statusMessage" />
+<MudText Typo="Typo.h4" Align="Align.Center" GutterBottom="true">Confirmar correo</MudText>
+
+<StatusMessage Message="@_statusMessage" Class="mt-4" />
+
+<div class="auth-layout__links mt-6">
+    <MudButton Href="Account/Login"
+               StartIcon="@Icons.Material.Filled.ArrowBack"
+               Variant="Variant.Text"
+               Color="Color.Default">
+        Volver al inicio de sesión
+    </MudButton>
+</div>
 
 @code {
     private string? _statusMessage;

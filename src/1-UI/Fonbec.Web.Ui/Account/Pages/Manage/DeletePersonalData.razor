@@ -38,10 +38,18 @@
             </MudItem>
         }
         <MudItem md="12">
-            <MudStaticButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" FormAction="FormAction.Submit">Eliminar datos y cerrar mi cuenta</MudStaticButton>
+            <MudStaticButton Variant="Variant.Filled" Color="Color.Error" FullWidth="true" FormAction="FormAction.Submit">Eliminar datos y cerrar mi cuenta</MudStaticButton>
         </MudItem>
     </MudGrid>
 </EditForm>
+
+<MudButton Href="Account/Manage/PersonalData"
+           StartIcon="@Icons.Material.Filled.ArrowBack"
+           Variant="Variant.Text"
+           Color="Color.Default"
+           Class="mt-4">
+    Cancelar
+</MudButton>
 
 @code {
     private string? _message;

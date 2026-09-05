@@ -16,26 +16,23 @@
 }
 else
 {
-    <h3>Generar códigos de recuperación de autenticación en dos pasos (2FA)</h3>
-    <div class="alert alert-warning" role="alert">
-        <p>
-            <span class="glyphicon glyphicon-warning-sign"></span>
-            <strong>Guardá estos códigos en un lugar seguro.</strong>
-        </p>
-        <p>
-            Si perdés tu dispositivo y no tenés los códigos de recuperación, vas a perder el acceso a tu cuenta.
-        </p>
-        <p>
-            Generar nuevos códigos de recuperación no cambia las claves usadas en las apps de autenticación. Si querés cambiar la clave
-            usada en una app de autenticación, deberías <a href="Account/Manage/ResetAuthenticator">restablecer tus claves de autenticación.</a>
-        </p>
-    </div>
-    <div>
-        <form @formname="generate-recovery-codes" @onsubmit="OnSubmitAsync" method="post">
-            <AntiforgeryToken />
-            <button class="btn btn-danger" type="submit">Generar códigos de recuperación</button>
-        </form>
-    </div>
+    <MudText Typo="Typo.h6" GutterBottom="true">Generar códigos de recuperación de autenticación en dos pasos (2FA)</MudText>
+
+    <MudAlert Severity="Severity.Warning" Variant="Variant.Text">
+        Guardá estos códigos en un lugar seguro.
+    </MudAlert>
+
+    <MudText Typo="Typo.body2" Class="my-4">
+        Si perdés tu dispositivo y no tenés los códigos de recuperación, vas a perder el acceso a tu cuenta.
+        Generar nuevos códigos de recuperación no cambia las claves usadas en las apps de autenticación. Si querés cambiar la clave
+        usada en una app de autenticación, deberías <MudLink Href="Account/Manage/ResetAuthenticator">restablecer tus claves de autenticación</MudLink>.
+    </MudText>
+
+    <form @formname="generate-recovery-codes" @onsubmit="OnSubmitAsync" method="post">
+        <AntiforgeryToken />
+
+        <MudStaticButton Variant="Variant.Filled" Color="Color.Error" FullWidth="true" FormAction="FormAction.Submit">Generar códigos de recuperación</MudStaticButton>
+    </form>
 }
 
 @code {

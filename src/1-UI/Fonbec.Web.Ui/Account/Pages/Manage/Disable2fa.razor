@@ -10,25 +10,24 @@
 
 <PageTitle>Desactivar autenticación en dos pasos (2FA)</PageTitle>
 
+<MudText Typo="Typo.h6" GutterBottom="true">Desactivar autenticación en dos pasos (2FA)</MudText>
+
 <StatusMessage />
-<h3>Desactivar autenticación en dos pasos (2FA)</h3>
 
-<div class="alert alert-warning" role="alert">
-    <p>
-        <strong>Esta acción solo desactiva la 2FA.</strong>
-    </p>
-    <p>
-        Desactivar la 2FA no cambia las claves usadas en las apps de autenticación. Si querés cambiar la clave
-        usada en una app de autenticación, deberías <a href="Account/Manage/ResetAuthenticator">restablecer tus claves de autenticación.</a>
-    </p>
-</div>
+<MudAlert Severity="Severity.Warning" Variant="Variant.Text">
+    Esta acción solo desactiva la 2FA.
+</MudAlert>
 
-<div>
-    <form @formname="disable-2fa" @onsubmit="OnSubmitAsync" method="post">
-        <AntiforgeryToken />
-        <button class="btn btn-danger" type="submit">Desactivar 2FA</button>
-    </form>
-</div>
+<MudText Typo="Typo.body2" Class="my-4">
+    Desactivar la 2FA no cambia las claves usadas en las apps de autenticación. Si querés cambiar la clave
+    usada en una app de autenticación, deberías <MudLink Href="Account/Manage/ResetAuthenticator">restablecer tus claves de autenticación</MudLink>.
+</MudText>
+
+<form @formname="disable-2fa" @onsubmit="OnSubmitAsync" method="post">
+    <AntiforgeryToken />
+
+    <MudStaticButton Variant="Variant.Filled" Color="Color.Error" FullWidth="true" FormAction="FormAction.Submit">Desactivar 2FA</MudStaticButton>
+</form>
 
 @code {
     private FonbecWebUser _user = null!;

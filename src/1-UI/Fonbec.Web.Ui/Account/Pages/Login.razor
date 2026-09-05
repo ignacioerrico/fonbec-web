@@ -42,7 +42,11 @@
 </EditForm>
 
 <div class="auth-layout__links mt-6">
-    <MudLink Href="Account/ForgotPassword">¿Olvidaste tu contraseña?</MudLink>
+    <MudButton Href="Account/ForgotPassword"
+               Variant="Variant.Text"
+               Color="Color.Default">
+        Olvidé mi contraseña
+    </MudButton>
 </div>
 
 <ExternalLoginPicker ReturnUrl="@ReturnUrl" Class="mt-6" />

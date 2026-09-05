@@ -12,11 +12,15 @@
 
 <PageTitle>Administrar inicios de sesión externos</PageTitle>
 
+<MudText Typo="Typo.h6" GutterBottom="true">Administrar inicios de sesión externos</MudText>
+
 <StatusMessage />
+
 @if (_currentLogins?.Count > 0)
 {
-    <h3>Inicios de sesión registrados</h3>
-    <table class="table">
+    <MudText Typo="Typo.subtitle1" GutterBottom="true">Inicios de sesión registrados</MudText>
+
+    <MudSimpleTable Dense="true" Hover="true" Elevation="0">
         <tbody>
             @foreach (var login in _currentLogins)
             {
@@ -27,40 +31,38 @@
                         {
                             <form @formname="@($"remove-login-{login.LoginProvider}")" @onsubmit="OnSubmitAsync" method="post">
                                 <AntiforgeryToken />
-                                <div>
-                                    <input type="hidden" name="@nameof(LoginProvider)" value="@login.LoginProvider" />
-                                    <input type="hidden" name="@nameof(ProviderKey)" value="@login.ProviderKey" />
-                                    <button type="submit" class="btn btn-primary" title="Quitar el inicio de sesión de @login.ProviderDisplayName de tu cuenta">Quitar</button>
-                                </div>
+
+                                <input type="hidden" name="@nameof(LoginProvider)" value="@login.LoginProvider" />
+                                <input type="hidden" name="@nameof(ProviderKey)" value="@login.ProviderKey" />
+
+                                <MudStaticButton Variant="Variant.Filled" Color="Color.Error" FormAction="FormAction.Submit">Quitar</MudStaticButton>
                             </form>
-                        }
-                        else
-                        {
-                            @: &nbsp;
                         }
                     </td>
                 </tr>
             }
         </tbody>
-    </table>
+    </MudSimpleTable>
 }
+
 @if (_otherLogins?.Count > 0)
 {
-    <h4>Agregá otro servicio para iniciar sesión.</h4>
-    <MudDivider />
-    <form class="form-horizontal" action="Account/Manage/LinkExternalLogin" method="post">
-        <AntiforgeryToken />
-        <div>
-            <p>
-                @foreach (var provider in _otherLogins)
-                {
-                    <button type="submit" class="btn btn-primary" name="Provider" value="@provider.Name" title="Iniciar sesión con tu cuenta de @provider.DisplayName">
-                        @provider.DisplayName
-                    </button>
-                }
-            </p>
-        </div>
-    </form>
+    <MudText Typo="Typo.subtitle1" GutterBottom="true" Class="mt-6">Agregá otro servicio para iniciar sesión</MudText>
+
+    <MudGrid>
+        @foreach (var provider in _otherLogins)
+        {
+            <MudItem md="12">
+                <form action="Account/Manage/LinkExternalLogin" method="post">
+                    <AntiforgeryToken />
+
+                    <input type="hidden" name="Provider" value="@provider.Name" />
+
+                    <MudStaticButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" FormAction="FormAction.Submit">@provider.DisplayName</MudStaticButton>
+                </form>
+            </MudItem>
+        }
+    </MudGrid>
 }
 
 @code {
