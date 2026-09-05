@@ -58,7 +58,7 @@
     private string RecoveryCodeUrl =>
         NavigationManager.GetUriWithQueryParameters("Account/LoginWithRecoveryCode", new Dictionary<string, object?> { ["ReturnUrl"] = ReturnUrl });
 
-    protected override void OnParametersSet()
+    protected override void OnInitialized()
     {
         Input ??= new();
     }

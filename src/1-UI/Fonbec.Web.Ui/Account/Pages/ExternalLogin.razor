@@ -53,7 +53,7 @@
     private HttpContext HttpContext { get; set; } = null!;
 
     [SupplyParameterFromForm]
-    private InputModel Input { get; set; } = new();
+    private InputModel Input { get; set; } = null!;
 
     [SupplyParameterFromQuery]
     private string? RemoteError { get; set; }
@@ -65,6 +65,11 @@
     private string? Action { get; set; }
 
     private string? ProviderDisplayName => _externalLoginInfo?.ProviderDisplayName;
+
+    protected override void OnInitialized()
+    {
+        Input ??= new();
+    }
 
     protected override async Task OnInitializedAsync()
     {

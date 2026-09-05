@@ -45,7 +45,7 @@
     [SupplyParameterFromQuery]
     private string? ReturnUrl { get; set; }
 
-    protected override void OnParametersSet()
+    protected override void OnInitialized()
     {
         Input ??= new();
     }
