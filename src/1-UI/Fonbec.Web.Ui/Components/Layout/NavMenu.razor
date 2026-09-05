@@ -10,7 +10,7 @@
 @using System.Security.Claims
 
 <MudNavMenu Class="d-flex flex-column" Style="height: 100%;">
-    <div class="flex-grow-1">
+    <div class="flex-grow-1" data-enhance-nav="@EnhancedNav">
         <AuthorizeView Context="outerContext">
             <Authorized>
                 <MudText Typo="Typo.h6" Class="px-4 pt-2">
@@ -80,7 +80,7 @@
 
     <AuthorizeView Context="outerContext">
         <Authorized>
-            <div>
+            <div data-enhance-nav="@EnhancedNav">
                 <MudDivider Class="my-2" />
 
                 <MudNavLink Href="Account/Manage" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Settings">
@@ -104,3 +104,9 @@
         </NotAuthorized>
     </AuthorizeView>
 </MudNavMenu>
+
+@code {
+    // The Account section renders statically, so leaving it means crossing into interactive
+    // rendering. Patching the DOM across that boundary flashes; a full load does not.
+    private string? EnhancedNav => RendererInfo.Name == "Static" ? "false" : null;
+}
