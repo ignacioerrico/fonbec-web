@@ -19,7 +19,7 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
     private bool _anyCompanies;
     private bool _formValidationSucceeded;
     private bool _isEndDateKnown;
-
+    private bool _studentNotFound;
     private bool SaveButtonDisabled => _saving
                                        || !AnySponsorsOrCompanies
                                        || !_formValidationSucceeded
@@ -41,6 +41,21 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
     [Inject]
     public ISponsorshipService SponsorshipService { get; set; } = null!;
 
+    [Inject]
+    public IStudentService StudentService { get; set; } = null!;
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+
+        var students = await StudentService.GetAllStudentsForSelectionAsync(FonbecClaim.ChapterId);
+        if (!students.Exists(s => s.Key == StudentId))
+        {
+            _studentNotFound = true;
+            return;
+        }
+
+        _studentNotFound = false;
+    }
     private async Task NumberOfSponsorsLoaded(int sponsorsCount) =>
         _anySponsors = sponsorsCount > 0;
 
