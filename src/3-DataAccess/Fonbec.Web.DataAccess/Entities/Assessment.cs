@@ -23,5 +23,19 @@ public class Assessment
 
     public string? Appraisal { get; set; }
 
+    public bool IsRedFlagResolved { get; set; }
+
+    public int? RedFlagResolvedById { get; set; }
+    public FonbecWebUser? RedFlagResolvedBy { get; set; }
+
+    public DateTime? RedFlagResolvedOn { get; set; }
+
+    public bool IsGreenFlagResolved { get; set; }
+
+    public int? GreenFlagResolvedById { get; set; }
+    public FonbecWebUser? GreenFlagResolvedBy { get; set; }
+
+    public DateTime? GreenFlagResolvedOn { get; set; }
+
     public LetterReview? LetterReview { get; set; }
 }

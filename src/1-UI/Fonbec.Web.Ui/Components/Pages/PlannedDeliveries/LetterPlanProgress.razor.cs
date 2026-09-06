@@ -1,5 +1,6 @@
 using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.Logic.ExtensionMethods;
+using Fonbec.Web.Logic.Models.LetterFollowUp;
 using Fonbec.Web.Logic.Models.LetterPlanProgress;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Ui.Components.NonPages.Dialogs;
@@ -27,6 +28,9 @@ public partial class LetterPlanProgress
 
     [Inject]
     public ILetterPlanProgressService LetterPlanProgressService { get; set; } = null!;
+
+    [Inject]
+    public ILetterFollowUpService LetterFollowUpService { get; set; } = null!;
 
     [Inject]
     public IDialogService DialogService { get; set; } = null!;
@@ -145,6 +149,76 @@ public partial class LetterPlanProgress
             row.SponsorId,
             row.CompanyId,
             NavRoutes.LetterPlanProgress(PlanId));
+
+    private async Task ShowFlagAsync(LetterFollowUpTaskViewModel? task)
+    {
+        if (task is null)
+        {
+            return;
+        }
+
+        var parameters = new DialogParameters<LetterFlagDialog>
+        {
+            { dialog => dialog.Task, task },
+        };
+        var dialog = await DialogService.ShowAsync<LetterFlagDialog>(
+            task.Kind == LetterFollowUpTaskKind.RedFlag ? "Bandera roja" : "Bandera verde",
+            parameters);
+        var dialogResult = await dialog.Result;
+
+        if (dialogResult is null
+            || dialogResult.Canceled
+            || dialogResult.Data is not LetterFlagDialogResult result)
+        {
+            return;
+        }
+
+        var priorityChanged = result.Priority.HasValue && task.Priority != result.Priority;
+        if (priorityChanged)
+        {
+            Loading = true;
+            var updated = await LetterFollowUpService.SetRedFlagPriorityAsync(
+                task.AssessmentId,
+                FonbecClaim.ChapterId!.Value,
+                result.Priority!.Value);
+
+            if (!updated)
+            {
+                Loading = false;
+                Snackbar.Add("No se pudo cambiar la prioridad.", Severity.Error);
+                await ReloadAsync();
+                return;
+            }
+        }
+
+        if (result.Resolve)
+        {
+            Loading = true;
+            var resolved = await LetterFollowUpService.MarkTaskResolvedAsync(
+                task.AssessmentId,
+                task.Kind,
+                FonbecClaim.ChapterId!.Value,
+                FonbecClaim.UserId);
+
+            if (!resolved)
+            {
+                Loading = false;
+                Snackbar.Add("No se pudo resolver la tarea.", Severity.Error);
+                await ReloadAsync();
+                return;
+            }
+
+            Snackbar.Add("Tarea resuelta.", Severity.Success);
+            await ReloadAsync();
+            return;
+        }
+
+        if (priorityChanged)
+        {
+            Snackbar.Add("Prioridad actualizada.", Severity.Success);
+            await ReloadAsync();
+        }
+    }
 
     private async Task ExemptStudentAsync(LetterPlanProgressRowViewModel row)
     {

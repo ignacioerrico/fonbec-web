@@ -83,6 +83,14 @@
     fill: var(--mud-palette-primary);
 }
 
+/* MudBlazor only shrinks a select inside a table cell when .mud-select is a direct
+   child of the cell, which MudSelect's markup does not satisfy, so the selected
+   value renders at body1 while the neighbouring cells are body2. */
+.mud-table-cell .priority-select .mud-input,
+.mud-table-cell .priority-select .mud-input-slot {
+    font-size: 0.875rem !important;
+}
+
 .fonbec-dropzone {
     position: relative;
     display: flex;

@@ -1,4 +1,5 @@
 using Fonbec.Web.DataAccess.Entities.Enums;
+using Fonbec.Web.DataAccess.DataModels.LetterFollowUp;
 
 namespace Fonbec.Web.DataAccess.DataModels.LetterPlanProgress;
 
@@ -28,4 +29,6 @@ public class LetterPlanProgressRowDataModel
     public string? RejectionReasonDescription { get; init; }
     public string? RejectionNotes { get; init; }
     public DateTime? ApprovedOn { get; init; }
+    public LetterFollowUpTaskDataModel? RedFlag { get; init; }
+    public LetterFollowUpTaskDataModel? GreenFlag { get; init; }
 }

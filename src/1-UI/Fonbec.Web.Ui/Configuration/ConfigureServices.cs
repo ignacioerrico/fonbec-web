@@ -69,6 +69,7 @@ public static class ConfigureServices
 
         services.AddScoped<IChapterService, ChapterService>();
         services.AddScoped<IUserService, UserService>();
+        services.AddScoped<ILetterFollowUpService, LetterFollowUpService>();
         services.AddScoped<ILetterPlanProgressService, LetterPlanProgressService>();
         services.AddScoped<IPlanCompletionService, PlanCompletionService>();
         services.AddScoped<IPlannedDeliveryService, PlannedDeliveryService>();
@@ -88,6 +89,7 @@ public static class ConfigureServices
 
         services.AddScoped<IChapterRepository, ChapterRepository>();
         services.AddScoped<IUserRepository, UserRepository>();
+        services.AddScoped<ILetterFollowUpRepository, LetterFollowUpRepository>();
         services.AddScoped<ILetterPlanProgressRepository, LetterPlanProgressRepository>();
         services.AddScoped<IPlannedDeliveryRepository, PlannedDeliveryRepository>();
         services.AddScoped<IStudentRepository, StudentRepository>();

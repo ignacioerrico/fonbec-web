@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Fonbec.Web.DataAccess.DataModels.LetterFollowUp;
 using Fonbec.Web.DataAccess.DataModels.LetterPlanProgress;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Repositories;
@@ -80,6 +81,41 @@ public class LetterPlanProgressServiceTests
         result!.Rows.Should().ContainSingle(r =>
             r.Status == LetterPlanDisplayStatus.PendingImprovement
             && r.StatusLabel == "Pendiente de mejora digital");
+    }
+
+    [Fact]
+    public async Task GetProgressAsync_Maps_Open_Letter_Flags()
+    {
+        var redFlag = new LetterFollowUpTaskDataModel
+        {
+            AssessmentId = 42,
+            StudentFirstName = "Juan",
+            StudentLastName = "García",
+            FacilitatorFirstName = "Ana",
+            FacilitatorLastName = "Pérez",
+            FacilitatorEmail = "ana@example.org",
+            ReviewerFirstName = "Rita",
+            ReviewerLastName = "Revisora",
+            ReviewerEmail = "rita@example.org",
+            ReportedOn = new DateTime(2026, 8, 3, 0, 0, 0, DateTimeKind.Utc),
+            Comment = "Necesita seguimiento",
+            Priority = RedFlagPriority.High,
+        };
+        var row = Row(StudentId, DocumentStatus.Approved, redFlag);
+        _progressRepository.GetProgressAsync(PlanId, ChapterId).Returns(new LetterPlanProgressQueryResultDataModel
+        {
+            PlanStartsOn = new DateTime(2026, 3, 1),
+            Rows = [row],
+        });
+
+        var result = await _service.GetProgressAsync(PlanId, ChapterId);
+
+        result!.Rows.Should().ContainSingle(mapped =>
+            mapped.RedFlag != null
+            && mapped.RedFlag.AssessmentId == 42
+            && mapped.RedFlag.Comment == "Necesita seguimiento"
+            && mapped.RedFlag.ReviewerFullName == "Rita Revisora"
+            && mapped.GreenFlag == null);
     }
 
     [Fact]
@@ -282,7 +318,10 @@ public class LetterPlanProgressServiceTests
             .EvaluateAndUpdateAsync(default, default, default);
     }
 
-    private static LetterPlanProgressRowDataModel Row(int studentId, DocumentStatus? status) =>
+    private static LetterPlanProgressRowDataModel Row(
+        int studentId,
+        DocumentStatus? status,
+        LetterFollowUpTaskDataModel? redFlag = null) =>
         new()
         {
             StudentId = studentId,
@@ -294,6 +333,7 @@ public class LetterPlanProgressServiceTests
             SponsorId = 20,
             RecipientName = "María López",
             LetterStatus = status,
+            RedFlag = redFlag,
         };
 
     private static LetterPlanProgressRowDataModel ExemptRow(int studentId) =>

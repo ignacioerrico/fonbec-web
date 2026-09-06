@@ -15,6 +15,16 @@ internal class AssessmentConfiguration : IEntityTypeConfiguration<Assessment>
 
         builder.Property(a => a.Appraisal)
             .HasMaxLength(Constants.MaxLength.Assessment.Appraisal);
+
+        builder.HasOne(a => a.RedFlagResolvedBy)
+            .WithMany()
+            .HasForeignKey(a => a.RedFlagResolvedById)
+            .OnDelete(DeleteBehavior.NoAction);
+
+        builder.HasOne(a => a.GreenFlagResolvedBy)
+            .WithMany()
+            .HasForeignKey(a => a.GreenFlagResolvedById)
+            .OnDelete(DeleteBehavior.NoAction);
     }
 }
 

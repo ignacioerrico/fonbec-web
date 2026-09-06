@@ -54,17 +54,39 @@ else if (_viewModel is not null)
             <Columns>
                 <PropertyColumn Property="@(vm => _sortByLastName ? vm.StudentLastName : vm.StudentFirstName)" Title="Becario">
                     <CellTemplate>
-                        <MudText>
-                            <MudText Color="Color.Primary" HtmlTag="span">
-                                <strong>@StudentFullName(context.Item)</strong>
-                            </MudText>
-                            @if (!string.IsNullOrWhiteSpace(context.Item.StudentNickName))
-                            {
-                                <MudText HtmlTag="span">
-                                    (<em>@context.Item.StudentNickName</em>)
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="0">
+                            <MudText>
+                                <MudText Color="Color.Primary" HtmlTag="span">
+                                    <strong>@StudentFullName(context.Item)</strong>
                                 </MudText>
+                                @if (!string.IsNullOrWhiteSpace(context.Item.StudentNickName))
+                                {
+                                    <MudText HtmlTag="span">
+                                        (<em>@context.Item.StudentNickName</em>)
+                                    </MudText>
+                                }
+                            </MudText>
+
+                            @if (context.Item.RedFlag is not null)
+                            {
+                                <MudTooltip Text="Ver bandera roja" Arrow="true" Placement="Placement.Bottom">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Flag"
+                                                   Color="Color.Error"
+                                                   Size="Size.Small"
+                                                   OnClick="@(() => ShowFlagAsync(context.Item.RedFlag))" />
+                                </MudTooltip>
                             }
-                        </MudText>
+
+                            @if (context.Item.GreenFlag is not null)
+                            {
+                                <MudTooltip Text="Ver bandera verde" Arrow="true" Placement="Placement.Bottom">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Flag"
+                                                   Color="Color.Success"
+                                                   Size="Size.Small"
+                                                   OnClick="@(() => ShowFlagAsync(context.Item.GreenFlag))" />
+                                </MudTooltip>
+                            }
+                        </MudStack>
                     </CellTemplate>
                 </PropertyColumn>
                 <PropertyColumn Property="vm => vm.FacilitatorFullName" Title="Mediador">

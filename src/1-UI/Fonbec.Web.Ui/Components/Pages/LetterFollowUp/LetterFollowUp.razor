@@ -1,0 +1,149 @@
+@attribute [Route(NavRoutes.LetterFollowUp)]
+@attribute [Authorize(Policy = nameof(LetterFollowUp))]
+@inherits AuthenticationRequiredComponentBase
+
+@using Fonbec.Web.DataAccess.Entities.Enums
+@using Fonbec.Web.Logic.Models.LetterFollowUp
+@using Fonbec.Web.Ui.Components.NonPages.Buttons
+
+<PageHeader Title="Seguimiento" />
+
+<LoadingIndicator Loading="Loading"
+                  If="_viewModel.RedFlags.Count == 0 && _viewModel.GreenFlags.Count == 0"
+                  ThenDisplay="No hay tareas pendientes de seguimiento." />
+
+@if (!Loading)
+{
+    <MudStack Spacing="4" Class="mt-4">
+        <MudPaper Elevation="1" Class="pa-4">
+            <MudText Typo="Typo.h5" Color="Color.Error" GutterBottom="true">
+                Banderas rojas
+            </MudText>
+
+            @if (_viewModel.RedFlags.Count == 0)
+            {
+                <MudText Class="mud-text-secondary">No hay banderas rojas pendientes.</MudText>
+            }
+            else
+            {
+                <MudTable T="LetterFollowUpTaskViewModel"
+                          Items="_viewModel.RedFlags"
+                          Dense="true"
+                          Hover="true"
+                          Striped="true"
+                          Bordered="true">
+                    <HeaderContent>
+                        <MudTh>Becario</MudTh>
+                        <MudTh>Comentario</MudTh>
+                        <MudTh>Prioridad</MudTh>
+                        <MudTh>Mediador</MudTh>
+                        <MudTh>Reportado por</MudTh>
+                        <MudTh>Acciones</MudTh>
+                    </HeaderContent>
+                    <RowTemplate Context="task">
+                        <MudTd DataLabel="Becario">
+                            <MudText Color="Color.Primary" HtmlTag="span">
+                                <strong>@task.StudentFullName</strong>
+                            </MudText>
+                        </MudTd>
+                        <MudTd DataLabel="Comentario">@task.Comment</MudTd>
+                        <MudTd DataLabel="Prioridad">
+                            <MudSelect T="RedFlagPriority"
+                                       Value="@task.Priority.GetValueOrDefault()"
+                                       ValueChanged="@((RedFlagPriority priority) => ChangePriorityAsync(task, priority))"
+                                       Dense="true"
+                                       Disabled="Loading"
+                                       Class="priority-select">
+                                <MudSelectItem T="RedFlagPriority" Value="RedFlagPriority.High">Alta</MudSelectItem>
+                                <MudSelectItem T="RedFlagPriority" Value="RedFlagPriority.Medium">Media</MudSelectItem>
+                                <MudSelectItem T="RedFlagPriority" Value="RedFlagPriority.Low">Baja</MudSelectItem>
+                            </MudSelect>
+                        </MudTd>
+                        <MudTd DataLabel="Mediador">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="0">
+                                @task.FacilitatorFullName
+                                <EmailIconButton EmailAddress="@task.FacilitatorEmail" />
+                            </MudStack>
+                        </MudTd>
+                        <MudTd DataLabel="Reportado por">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="0">
+                                @task.ReviewerFullName
+                                <EmailIconButton EmailAddress="@task.ReviewerEmail" />
+                                <span>el @task.ReportedOnText</span>
+                            </MudStack>
+                        </MudTd>
+                        <MudTd DataLabel="Acciones">
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Success"
+                                       Size="Size.Small"
+                                       StartIcon="@Icons.Material.Filled.Check"
+                                       Disabled="Loading"
+                                       OnClick="@(() => ResolveAsync(task))">
+                                Resolver
+                            </MudButton>
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+        </MudPaper>
+
+        <MudPaper Elevation="1" Class="pa-4">
+            <MudText Typo="Typo.h5" Color="Color.Success" GutterBottom="true">
+                Banderas verdes
+            </MudText>
+
+            @if (_viewModel.GreenFlags.Count == 0)
+            {
+                <MudText Class="mud-text-secondary">No hay banderas verdes pendientes.</MudText>
+            }
+            else
+            {
+                <MudTable T="LetterFollowUpTaskViewModel"
+                          Items="_viewModel.GreenFlags"
+                          Dense="true"
+                          Hover="true"
+                          Striped="true"
+                          Bordered="true">
+                    <HeaderContent>
+                        <MudTh>Becario</MudTh>
+                        <MudTh>Comentario</MudTh>
+                        <MudTh>Mediador</MudTh>
+                        <MudTh>Reportado por</MudTh>
+                        <MudTh>Acciones</MudTh>
+                    </HeaderContent>
+                    <RowTemplate Context="task">
+                        <MudTd DataLabel="Becario">
+                            <MudText Color="Color.Primary" HtmlTag="span">
+                                <strong>@task.StudentFullName</strong>
+                            </MudText>
+                        </MudTd>
+                        <MudTd DataLabel="Comentario">@task.Comment</MudTd>
+                        <MudTd DataLabel="Mediador">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="0">
+                                @task.FacilitatorFullName
+                                <EmailIconButton EmailAddress="@task.FacilitatorEmail" />
+                            </MudStack>
+                        </MudTd>
+                        <MudTd DataLabel="Reportado por">
+                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="0">
+                                @task.ReviewerFullName
+                                <EmailIconButton EmailAddress="@task.ReviewerEmail" />
+                                <span>el @task.ReportedOnText</span>
+                            </MudStack>
+                        </MudTd>
+                        <MudTd DataLabel="Acciones">
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Success"
+                                       Size="Size.Small"
+                                       StartIcon="@Icons.Material.Filled.Check"
+                                       Disabled="Loading"
+                                       OnClick="@(() => ResolveAsync(task))">
+                                Resolver
+                            </MudButton>
+                        </MudTd>
+                    </RowTemplate>
+                </MudTable>
+            }
+        </MudPaper>
+    </MudStack>
+}

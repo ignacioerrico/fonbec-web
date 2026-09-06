@@ -16,6 +16,8 @@ public static class NavRoutes
 
     public const string PlannedDeliveries = "/planificaciones";
 
+    public const string LetterFollowUp = "/cartas/seguimiento";
+
     public const string PlannnedDeliveryCreate = $"{PlannedDeliveries}/alta";
 
     public static string LetterPlanProgress(int planId) => $"{PlannedDeliveries}/{planId}/cartas";
