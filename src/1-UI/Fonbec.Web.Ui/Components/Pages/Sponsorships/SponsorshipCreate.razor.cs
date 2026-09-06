@@ -35,6 +35,8 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
             ? _anySponsors
             : _anyCompanies;
 
+    private bool _loading = true;
+
     [Parameter]
     public int StudentId { get; set; }
 
@@ -46,19 +48,25 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
     
     protected override async Task OnParametersSetAsync()
     {
+        _loading = true;
         await base.OnParametersSetAsync();
+        
         if (FonbecClaim is null)
         {
+            _loading = false
             return;
         }
+        
         var students = await StudentService.GetAllStudentsForSelectionAsync(FonbecClaim.ChapterId);
         if (!students.Exists(s => s.Key == StudentId))
         {
             _studentNotFound = true;
+            _loading = false;
             return;
         }
 
         _studentNotFound = false;
+        _loading = false;
     }
     private async Task NumberOfSponsorsLoaded(int sponsorsCount) =>
         _anySponsors = sponsorsCount > 0;
