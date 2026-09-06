@@ -53,7 +53,7 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
         
         if (FonbecClaim is null)
         {
-            _loading = false
+            _loading = false;
             return;
         }
         
