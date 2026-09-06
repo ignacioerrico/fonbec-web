@@ -7,8 +7,10 @@
 
 <PageHeader Title="Alta de apadrinamiento" />
 
+<LoadingIndicator Loading="Loading" />
+
 <MudPaper Class="pa-6 mt-4" Elevation="1">
-    @if (_studentNotFound)
+    @if (!_loading && _studentNotFound)
     {
         <MudAlert Severity="Severity.Error" Class="mb-4">
             El becario especificado no es válido o no existe.
@@ -20,7 +22,7 @@
             Volver a la lista de becarios
         </MudButton>
     }
-    else
+    else if (!_loading)
     {
         @if (!AnySponsorsOrCompanies)
         {
@@ -70,13 +72,13 @@
                 <MudStack>
                     <StudentSelector SelectedStudentId="StudentId"
                                      ChapterId="FonbecClaim.ChapterId"
-                                     ReadOnly="true" />
+                                      Disabled="true" />
 
                     @if (_bindModel.SponsorshipType == SponsorshipType.Sponsor)
                     {
                         <SponsorSelector @bind-SelectedSponsor="_bindModel.SelectedSponsor"
                                          IsRequired="true"
-                                         ChapterId="FonbecClaim.ChapterId"
+                                         ChapterId="FonbecClaim?.ChapterId"
                                          NumberOfSponsorsLoaded="NumberOfSponsorsLoaded" />
                     }
                     else if (_bindModel.SponsorshipType == SponsorshipType.Company)
