@@ -43,10 +43,14 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
 
     [Inject]
     public IStudentService StudentService { get; set; } = null!;
+    
     protected override async Task OnParametersSetAsync()
     {
         await base.OnParametersSetAsync();
-
+        if (FonbecClaim is null)
+        {
+            return;
+        }
         var students = await StudentService.GetAllStudentsForSelectionAsync(FonbecClaim.ChapterId);
         if (!students.Exists(s => s.Key == StudentId))
         {
