@@ -1,4 +1,5 @@
 using Fonbec.Web.DataAccess.DataModels.LetterPlanProgress;
+using Fonbec.Web.DataAccess.DataModels.LetterFollowUp;
 using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Microsoft.EntityFrameworkCore;
@@ -82,6 +83,7 @@ public class LetterPlanProgressRepository(
                     s.NickName,
                     FacilitatorFirstName = s.Facilitator!.FirstName,
                     FacilitatorLastName = s.Facilitator!.LastName,
+                    FacilitatorEmail = s.Facilitator!.Email ?? string.Empty,
                     SponsorshipId = sp.Id,
                     sp.SponsorId,
                     sp.CompanyId,
@@ -100,6 +102,10 @@ public class LetterPlanProgressRepository(
         var letters = await db.Set<Letter>()
             .AsNoTracking()
             .Include(l => l.RejectedReason)
+            .Include(l => l.Review)
+                .ThenInclude(review => review!.Assessment)
+            .Include(l => l.Review)
+                .ThenInclude(review => review!.ReviewedBy)
             .Where(l => l.PlanId == planId && l.ChapterId == chapterId)
             .ToListAsync();
 
@@ -119,6 +125,8 @@ public class LetterPlanProgressRepository(
             string? rejectionReasonDescription = null;
             string? rejectionNotes = null;
             DateTime? approvedOn = null;
+            LetterFollowUpTaskDataModel? redFlag = null;
+            LetterFollowUpTaskDataModel? greenFlag = null;
 
             if (!isExempt
                 && currentLettersBySlot.TryGetValue((slot.Id, slot.SponsorId, slot.CompanyId), out var letter))
@@ -127,6 +135,37 @@ public class LetterPlanProgressRepository(
                 rejectionReasonDescription = letter.RejectedReason?.Description;
                 rejectionNotes = letter.RejectionNotes;
                 approvedOn = letter.ApprovedOn;
+
+                if (letter.Status == DocumentStatus.Approved && letter.Review is { } review)
+                {
+                    var assessment = review.Assessment;
+                    if (assessment.HasRedFlags && !assessment.IsRedFlagResolved)
+                    {
+                        redFlag = CreateFlagTask(
+                            assessment.AssessmentId,
+                            slot.FirstName,
+                            slot.LastName,
+                            slot.FacilitatorFirstName,
+                            slot.FacilitatorLastName,
+                            slot.FacilitatorEmail,
+                            review,
+                            assessment.IssuesNotes,
+                            assessment.RedFlagPriority);
+                    }
+
+                    if (assessment.HasGreenFlags && !assessment.IsGreenFlagResolved)
+                    {
+                        greenFlag = CreateFlagTask(
+                            assessment.AssessmentId,
+                            slot.FirstName,
+                            slot.LastName,
+                            slot.FacilitatorFirstName,
+                            slot.FacilitatorLastName,
+                            slot.FacilitatorEmail,
+                            review,
+                            assessment.Appraisal);
+                    }
+                }
             }
 
             return new LetterPlanProgressRowDataModel
@@ -148,6 +187,8 @@ public class LetterPlanProgressRepository(
                 RejectionReasonDescription = rejectionReasonDescription,
                 RejectionNotes = rejectionNotes,
                 ApprovedOn = approvedOn,
+                RedFlag = redFlag,
+                GreenFlag = greenFlag,
             };
         }).ToList();
 
@@ -158,4 +199,30 @@ public class LetterPlanProgressRepository(
             Rows = rows,
         };
     }
+
+    private static LetterFollowUpTaskDataModel CreateFlagTask(
+        long assessmentId,
+        string studentFirstName,
+        string studentLastName,
+        string facilitatorFirstName,
+        string facilitatorLastName,
+        string facilitatorEmail,
+        LetterReview review,
+        string? comment,
+        RedFlagPriority? priority = null) =>
+        new()
+        {
+            AssessmentId = assessmentId,
+            StudentFirstName = studentFirstName,
+            StudentLastName = studentLastName,
+            FacilitatorFirstName = facilitatorFirstName,
+            FacilitatorLastName = facilitatorLastName,
+            FacilitatorEmail = facilitatorEmail,
+            ReviewerFirstName = review.ReviewedBy.FirstName,
+            ReviewerLastName = review.ReviewedBy.LastName,
+            ReviewerEmail = review.ReviewedBy.Email ?? string.Empty,
+            ReportedOn = review.ReviewedOn,
+            Comment = comment ?? string.Empty,
+            Priority = priority,
+        };
 }

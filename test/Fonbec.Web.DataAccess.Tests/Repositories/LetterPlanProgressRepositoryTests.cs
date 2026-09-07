@@ -95,6 +95,24 @@ public class LetterPlanProgressRepositoryTests
     }
 
     [Fact]
+    public async Task GetProgressAsync_Maps_Open_Flags_From_Approved_Letter()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedBaseAsync(factory);
+        await SeedLetterAsync(factory, DocumentStatus.Approved, approvedOn: UtcNow);
+        await SeedLetterReviewAsync(factory);
+
+        var result = await CreateRepository(factory).GetProgressAsync(PlanId, ChapterId);
+
+        result!.Rows.Should().ContainSingle(row =>
+            row.RedFlag != null
+            && row.RedFlag.Comment == "Necesita seguimiento"
+            && row.RedFlag.Priority == RedFlagPriority.High
+            && row.GreenFlag != null
+            && row.GreenFlag.Comment == "Gran progreso");
+    }
+
+    [Fact]
     public async Task GetProgressAsync_Uses_New_Letter_After_Rejection()
     {
         var factory = CreateDbContextFactory();
@@ -275,6 +293,32 @@ public class LetterPlanProgressRepositoryTests
             Reason = reason,
             CreatedByFonbecUserId = 1,
             CreatedOnUtc = UtcNow,
+        });
+
+        await db.SaveChangesAsync();
+    }
+
+    private static async Task SeedLetterReviewAsync(TestDbContextFactory factory)
+    {
+        await using var db = await factory.CreateDbContextAsync();
+
+        var assessment = new Assessment
+        {
+            AssessmentId = 1,
+            HasRedFlags = true,
+            RedFlagPriority = RedFlagPriority.High,
+            IssuesNotes = "Necesita seguimiento",
+            HasGreenFlags = true,
+            Appraisal = "Gran progreso",
+        };
+        db.Set<Assessment>().Add(assessment);
+        db.Set<LetterReview>().Add(new LetterReview
+        {
+            LetterReviewId = 1,
+            DocumentId = 1,
+            AssessmentId = assessment.AssessmentId,
+            ReviewedById = FacilitatorId,
+            ReviewedOn = UtcNow.AddHours(-1),
         });
 
         await db.SaveChangesAsync();

@@ -4,6 +4,7 @@ using Fonbec.Web.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Fonbec.Web.DataAccess.Migrations
 {
     [DbContext(typeof(FonbecWebDbContext))]
-    partial class FonbecWebDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260906031005_AddLetterFollowUpResolutionAudit")]
+    partial class AddLetterFollowUpResolutionAudit
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1084,14 +1087,6 @@ namespace Fonbec.Web.DataAccess.Migrations
                         new
                         {
                             Id = 10,
-                            AppliesToDocumentType = (byte)2,
-                            Code = "WrongPeriod",
-                            Description = "Período incorrecto",
-                            RequiresNotes = false
-                        },
-                        new
-                        {
-                            Id = 11,
                             Code = "Other",
                             Description = "Otro",
                             RequiresNotes = true
@@ -1106,13 +1101,7 @@ namespace Fonbec.Web.DataAccess.Migrations
 
                     SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<long>("ReportCardReviewId"));
 
-                    b.Property<int?>("Absences")
-                        .HasColumnType("int");
-
                     b.Property<bool>("ConfirmedIsReportCardOrTranscript")
-                        .HasColumnType("bit");
-
-                    b.Property<bool>("ConfirmedPeriodMatches")
                         .HasColumnType("bit");
 
                     b.Property<bool>("ConfirmedStudentNameCorrect")
@@ -1120,9 +1109,6 @@ namespace Fonbec.Web.DataAccess.Migrations
 
                     b.Property<long>("DocumentId")
                         .HasColumnType("bigint");
-
-                    b.Property<byte>("OverallAssessment")
-                        .HasColumnType("tinyint");
 
                     b.Property<int>("ReviewedById")
                         .HasColumnType("int");

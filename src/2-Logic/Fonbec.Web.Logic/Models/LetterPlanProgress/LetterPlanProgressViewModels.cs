@@ -1,4 +1,5 @@
 using System.Globalization;
+using Fonbec.Web.Logic.Models.LetterFollowUp;
 
 namespace Fonbec.Web.Logic.Models.LetterPlanProgress;
 
@@ -40,6 +41,8 @@ public class LetterPlanProgressRowViewModel
     public string? ExemptionReason { get; set; }
     public DateTime? ApprovedOn { get; set; }
     public bool IsStudentExempt { get; set; }
+    public LetterFollowUpTaskViewModel? RedFlag { get; set; }
+    public LetterFollowUpTaskViewModel? GreenFlag { get; set; }
 }
 
 public static class LetterPlanProgressFormatting

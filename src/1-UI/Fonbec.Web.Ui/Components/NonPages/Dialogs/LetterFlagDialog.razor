@@ -1,0 +1,58 @@
+@using Fonbec.Web.DataAccess.Entities.Enums
+@using Fonbec.Web.Logic.Models.LetterFollowUp
+@using Fonbec.Web.Ui.Components.NonPages.Buttons
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">@Title</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudStack Spacing="3">
+            <div>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Becario</MudText>
+                <MudText><strong>@Task.StudentFullName</strong></MudText>
+            </div>
+
+            <div>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Reportado</MudText>
+                <MudText Style="white-space: pre-wrap">@Task.Comment</MudText>
+            </div>
+
+            @if (Task.Kind == LetterFollowUpTaskKind.RedFlag)
+            {
+                <MudSelect T="RedFlagPriority"
+                           @bind-Value="_priority"
+                           Label="Prioridad"
+                           Variant="Variant.Outlined"
+                           Margin="Margin.Dense">
+                    <MudSelectItem T="RedFlagPriority" Value="RedFlagPriority.High">Alta</MudSelectItem>
+                    <MudSelectItem T="RedFlagPriority" Value="RedFlagPriority.Medium">Media</MudSelectItem>
+                    <MudSelectItem T="RedFlagPriority" Value="RedFlagPriority.Low">Baja</MudSelectItem>
+                </MudSelect>
+            }
+
+            <div>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Reportado por</MudText>
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="0">
+                    @Task.ReviewerFullName
+                    <EmailIconButton EmailAddress="@Task.ReviewerEmail" />
+                    <span>el @Task.ReportedOnText</span>
+                </MudStack>
+            </div>
+
+            <div>
+                <MudText Typo="Typo.caption" Class="mud-text-secondary">Mediador</MudText>
+                <MudText>@Task.FacilitatorFullName</MudText>
+            </div>
+        </MudStack>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Close">Cerrar</MudButton>
+        <MudButton Color="Color.Success"
+                   Variant="Variant.Filled"
+                   StartIcon="@Icons.Material.Filled.Check"
+                   OnClick="Resolve">
+            Resolver
+        </MudButton>
+    </DialogActions>
+</MudDialog>

@@ -1,6 +1,7 @@
 ﻿@using Fonbec.Web.DataAccess.Constants
 @using Fonbec.Web.Ui.Components.Pages.Chapters
 @using Fonbec.Web.Ui.Components.Pages.Companies
+@using Fonbec.Web.Ui.Components.Pages.LetterFollowUp
 @using Fonbec.Web.Ui.Components.Pages.PlannedDeliveries
 @using Fonbec.Web.Ui.Components.Pages.Review
 @using Fonbec.Web.Ui.Components.Pages.Sponsors
@@ -57,10 +58,19 @@
                     </MudNavLink>
                 </AuthorizeView>
 
-                <AuthorizeView Policy="@nameof(PlannedDeliveriesList)">
-                    <MudNavLink Href="@NavRoutes.PlannedDeliveries" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.MailOutline">
-                        Cartas
-                    </MudNavLink>
+                <AuthorizeView Roles="@FonbecRole.Manager" Context="managerContext">
+                    <MudNavGroup Title="Cartas" Icon="@Icons.Material.Filled.MailOutline" Expanded="true">
+                        <AuthorizeView Policy="@nameof(PlannedDeliveriesList)" Context="plannedDeliveriesContext">
+                            <MudNavLink Href="@NavRoutes.PlannedDeliveries" Match="NavLinkMatch.Prefix">
+                                Campañas
+                            </MudNavLink>
+                        </AuthorizeView>
+                        <AuthorizeView Policy="@nameof(LetterFollowUp)" Context="letterFollowUpContext">
+                            <MudNavLink Href="@NavRoutes.LetterFollowUp" Match="NavLinkMatch.Prefix">
+                                Seguimiento
+                            </MudNavLink>
+                        </AuthorizeView>
+                    </MudNavGroup>
                 </AuthorizeView>
 
                 <AuthorizeView Policy="@nameof(FacilitatorStudentsList)">

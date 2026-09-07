@@ -1,7 +1,9 @@
 using Fonbec.Web.DataAccess.DataModels.LetterPlanProgress;
+using Fonbec.Web.DataAccess.DataModels.LetterFollowUp;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Models.LetterPlanProgress;
+using Fonbec.Web.Logic.Models.LetterFollowUp;
 
 namespace Fonbec.Web.Logic.Services;
 
@@ -141,6 +143,8 @@ public class LetterPlanProgressService(
                 ExemptionReason = row.ExemptionReason,
                 ApprovedOn = row.ApprovedOn,
                 IsStudentExempt = row.IsExempt,
+                RedFlag = MapFlag(row.RedFlag, LetterFollowUpTaskKind.RedFlag),
+                GreenFlag = MapFlag(row.GreenFlag, LetterFollowUpTaskKind.GreenFlag),
             };
         }).ToList();
 
@@ -167,4 +171,23 @@ public class LetterPlanProgressService(
 
         return $"{reasonDescription}: {rejectionNotes.Trim()}";
     }
+
+    private static LetterFollowUpTaskViewModel? MapFlag(
+        LetterFollowUpTaskDataModel? task,
+        LetterFollowUpTaskKind kind) =>
+        task is null
+            ? null
+            : new LetterFollowUpTaskViewModel
+            {
+                AssessmentId = task.AssessmentId,
+                Kind = kind,
+                StudentFullName = $"{task.StudentFirstName} {task.StudentLastName}".Trim(),
+                FacilitatorFullName = $"{task.FacilitatorFirstName} {task.FacilitatorLastName}".Trim(),
+                FacilitatorEmail = task.FacilitatorEmail,
+                ReviewerFullName = $"{task.ReviewerFirstName} {task.ReviewerLastName}".Trim(),
+                ReviewerEmail = task.ReviewerEmail,
+                ReportedOn = task.ReportedOn,
+                Comment = task.Comment,
+                Priority = task.Priority,
+            };
 }
