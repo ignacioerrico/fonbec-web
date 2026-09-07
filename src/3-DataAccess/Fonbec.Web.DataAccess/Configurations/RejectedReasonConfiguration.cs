@@ -29,6 +29,7 @@ internal class RejectedReasonConfiguration : IEntityTypeConfiguration<RejectedRe
             new RejectedReason { Id = 7, Code = "NotReportCard", Description = "No es boletín o libreta", AppliesToDocumentType = DocumentType.ReportCard },
             new RejectedReason { Id = 8, Code = "WrongStudentName", Description = "Nombre del estudiante incorrecto", AppliesToDocumentType = DocumentType.ReportCard },
             new RejectedReason { Id = 9, Code = "Unreadable", Description = "Ilegible", AppliesToDocumentType = null },
-            new RejectedReason { Id = 10, Code = "Other", Description = "Otro", AppliesToDocumentType = null, RequiresNotes = true });
+            new RejectedReason { Id = 10, Code = "WrongPeriod", Description = "Período incorrecto", AppliesToDocumentType = DocumentType.ReportCard },
+            new RejectedReason { Id = 11, Code = "Other", Description = "Otro", AppliesToDocumentType = null, RequiresNotes = true });
     }
 }

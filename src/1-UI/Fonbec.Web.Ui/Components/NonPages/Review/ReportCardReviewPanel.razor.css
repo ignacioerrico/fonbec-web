@@ -1,0 +1,22 @@
+/* Offset by the fixed MudAppBar so the bar is not hidden behind it while scrolling. */
+.review-progress {
+    position: sticky;
+    top: 64px;
+    z-index: 2;
+    padding: 8px 0;
+    margin-bottom: 8px;
+    background-color: var(--mud-palette-surface);
+}
+
+.review-hints {
+    margin: 0;
+    padding-left: 20px;
+    font-size: var(--mud-typography-caption-size);
+    color: var(--mud-palette-text-secondary);
+}
+
+@media (max-width: 599.98px) {
+    .review-progress {
+        top: 56px;
+    }
+}

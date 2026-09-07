@@ -1,3 +1,5 @@
+using Fonbec.Web.DataAccess.Entities.Enums;
+
 namespace Fonbec.Web.DataAccess.Entities;
 
 public class ReportCardReview
@@ -9,7 +11,13 @@ public class ReportCardReview
 
     public bool ConfirmedIsReportCardOrTranscript { get; set; }
 
+    public bool ConfirmedPeriodMatches { get; set; }
+
     public bool ConfirmedStudentNameCorrect { get; set; }
+
+    public ReportCardAssessment OverallAssessment { get; set; }
+
+    public int? Absences { get; set; }
 
     public int ReviewedById { get; set; }
     public FonbecWebUser ReviewedBy { get; set; } = null!;

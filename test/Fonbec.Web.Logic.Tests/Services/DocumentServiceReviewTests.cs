@@ -43,7 +43,9 @@ public class DocumentServiceReviewTests
             FileKind = FileKind.Text,
             TextContent = "Hola",
             PageCount = 0,
+            ReportCardPeriod = new DateOnly(2026, 3, 1),
             StudentId = 7,
+            StudentEducationLevel = EducationLevel.SecondarySchool,
             SponsorId = 11,
             ReviewLockedById = lockedById,
             LockExpiresAtUtc = expiresAtUtc,
@@ -64,6 +66,8 @@ public class DocumentServiceReviewTests
         result!.DocumentId.Should().Be(DocumentId);
         result.DocumentType.Should().Be(DocumentType.Letter);
         result.StudentId.Should().Be(7);
+        result.ReportCardPeriod.Should().Be(new DateOnly(2026, 3, 1));
+        result.StudentEducationLevel.Should().Be(EducationLevel.SecondarySchool);
         result.SponsorId.Should().Be(11);
     }
 
@@ -348,4 +352,166 @@ public class DocumentServiceReviewTests
             },
         ]);
     }
+
+    [Fact]
+    public async Task ApproveReportCard_ValidSchoolReview_MapsNewFieldsAndNotifiesSponsors()
+    {
+        _repository.GetDocumentByIdAsync(DocumentId).Returns(ReportCard(EducationLevel.PrimarySchool));
+        _repository.ApproveReportCardAsync(
+                Arg.Any<DataAccess.DataModels.Documents.Input.ApproveReportCardInputDataModel>())
+            .Returns([]);
+
+        var service = CreateService();
+        var result = await service.ApproveReportCardAsync(ApproveReportCard(ReportCardAssessment.Yellow, 3));
+
+        result.IsSuccess.Should().BeTrue();
+        await _repository.Received(1).ApproveReportCardAsync(
+            Arg.Is<DataAccess.DataModels.Documents.Input.ApproveReportCardInputDataModel>(input =>
+                input.ConfirmedPeriodMatches
+                && input.OverallAssessment == ReportCardAssessment.Yellow
+                && input.Absences == 3));
+        await _notificationService.Received(1).NotifySponsorsAsync(DocumentId);
+    }
+
+    [Fact]
+    public async Task ApproveReportCard_UniversityStudent_OmitsAbsences()
+    {
+        _repository.GetDocumentByIdAsync(DocumentId).Returns(ReportCard(EducationLevel.University));
+        _repository.ApproveReportCardAsync(
+                Arg.Any<DataAccess.DataModels.Documents.Input.ApproveReportCardInputDataModel>())
+            .Returns([]);
+
+        var service = CreateService();
+        var result = await service.ApproveReportCardAsync(ApproveReportCard(ReportCardAssessment.Green, 9));
+
+        result.IsSuccess.Should().BeTrue();
+        await _repository.Received(1).ApproveReportCardAsync(
+            Arg.Is<DataAccess.DataModels.Documents.Input.ApproveReportCardInputDataModel>(input =>
+                input.Absences == null));
+    }
+
+    [Fact]
+    public async Task ApproveReportCard_PeriodNotConfirmed_ReturnsConfirmationError()
+    {
+        _repository.GetDocumentByIdAsync(DocumentId).Returns(ReportCard(EducationLevel.PrimarySchool));
+        var service = CreateService();
+
+        var input = ApproveReportCard(ReportCardAssessment.Green, 0) with { ConfirmedPeriodMatches = false };
+        var result = await service.ApproveReportCardAsync(input);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Errors.Should().Contain(DocumentMessages.ReportCardConfirmationsRequired);
+        await _repository.DidNotReceive().ApproveReportCardAsync(
+            Arg.Any<DataAccess.DataModels.Documents.Input.ApproveReportCardInputDataModel>());
+    }
+
+    [Fact]
+    public async Task ApproveReportCard_SchoolAbsencesMissing_PersistsNullAndNotifiesSponsors()
+    {
+        _repository.GetDocumentByIdAsync(DocumentId).Returns(ReportCard(EducationLevel.SecondarySchool));
+        _repository.ApproveReportCardAsync(
+                Arg.Any<DataAccess.DataModels.Documents.Input.ApproveReportCardInputDataModel>())
+            .Returns([]);
+        var service = CreateService();
+
+        var result = await service.ApproveReportCardAsync(ApproveReportCard(ReportCardAssessment.Red, null));
+
+        result.IsSuccess.Should().BeTrue();
+        await _repository.Received(1).ApproveReportCardAsync(
+            Arg.Is<DataAccess.DataModels.Documents.Input.ApproveReportCardInputDataModel>(input =>
+                input.Absences == null));
+        await _notificationService.Received(1).NotifySponsorsAsync(DocumentId);
+    }
+
+    [Fact]
+    public async Task RejectReportCard_WrongPeriodReason_CallsRepositoryWithoutNotifying()
+    {
+        _repository.GetDocumentByIdAsync(DocumentId).Returns(ReportCard(EducationLevel.PrimarySchool));
+        _repository.GetApplicableRejectedReasonsAsync(DocumentType.ReportCard).Returns([
+            new RejectedReasonDataModel
+            {
+                RejectedReasonId = RejectedReasonIds.WrongPeriod,
+                Code = "WrongPeriod",
+                Description = "Período incorrecto",
+            },
+        ]);
+        _repository.RejectReportCardAsync(
+                Arg.Any<DataAccess.DataModels.Documents.Input.RejectReportCardInputDataModel>())
+            .Returns([]);
+
+        var service = CreateService();
+        var result = await service.RejectReportCardAsync(new RejectReportCardInputModel(
+            DocumentId,
+            ReviewerId,
+            FonbecRole.Reviewer,
+            RowVersion,
+            RejectedReasonIds.WrongPeriod,
+            null));
+
+        result.IsSuccess.Should().BeTrue();
+        await _repository.Received(1).RejectReportCardAsync(
+            Arg.Is<DataAccess.DataModels.Documents.Input.RejectReportCardInputDataModel>(input =>
+                input.RejectedReasonId == RejectedReasonIds.WrongPeriod));
+        await _notificationService.DidNotReceive().NotifySponsorsAsync(Arg.Any<long>());
+    }
+
+    [Fact]
+    public async Task RejectReportCard_OtherReasonWithoutNotes_ReturnsRequiredError()
+    {
+        _repository.GetDocumentByIdAsync(DocumentId).Returns(ReportCard(EducationLevel.PrimarySchool));
+        _repository.GetApplicableRejectedReasonsAsync(DocumentType.ReportCard).Returns([
+            new RejectedReasonDataModel
+            {
+                RejectedReasonId = RejectedReasonIds.Other,
+                Code = "Other",
+                Description = "Otro",
+                RequiresNotes = true,
+            },
+        ]);
+
+        var service = CreateService();
+        var result = await service.RejectReportCardAsync(new RejectReportCardInputModel(
+            DocumentId,
+            ReviewerId,
+            FonbecRole.Reviewer,
+            RowVersion,
+            RejectedReasonIds.Other,
+            "  "));
+
+        result.IsSuccess.Should().BeFalse();
+        result.Errors.Should().Contain(DocumentMessages.RejectionNotesRequiredForOtherReason);
+        await _repository.DidNotReceive().RejectReportCardAsync(
+            Arg.Any<DataAccess.DataModels.Documents.Input.RejectReportCardInputDataModel>());
+    }
+
+    private static ReportCard ReportCard(EducationLevel educationLevel) =>
+        new()
+        {
+            DocumentId = DocumentId,
+            DocumentType = DocumentType.ReportCard,
+            Student = new Student
+            {
+                SecondarySchoolStartYear = educationLevel is EducationLevel.SecondarySchool
+                    or EducationLevel.University
+                    ? DateTime.UtcNow.AddYears(-5)
+                    : null,
+                UniversityStartYear = educationLevel == EducationLevel.University
+                    ? DateTime.UtcNow.AddYears(-1)
+                    : null,
+            },
+        };
+
+    private static ApproveReportCardInputModel ApproveReportCard(
+        ReportCardAssessment assessment,
+        int? absences) =>
+        new(
+            DocumentId,
+            ReviewerId,
+            FonbecRole.Reviewer,
+            RowVersion,
+            ConfirmedIsReportCardOrTranscript: true,
+            ConfirmedPeriodMatches: true,
+            ConfirmedStudentNameCorrect: true,
+            assessment,
+            absences);
 }
