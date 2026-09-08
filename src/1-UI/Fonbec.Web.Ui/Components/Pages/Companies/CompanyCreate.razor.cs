@@ -120,6 +120,35 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
         NavigationManager.NavigateTo(NavRoutes.Companies);
     }
 
+    [System.Text.RegularExpressions.GeneratedRegex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$")]
+    private static partial System.Text.RegularExpressions.Regex EmailRegex();
+
+    private static string? ValidateEmailFormat(string? email)
+    {
+        if (string.IsNullOrWhiteSpace(email))
+            return null;
+
+        return EmailRegex().IsMatch(email) ? null : "Correo inválido.";
+    }
+
+    private string? ValidatePhoneFormat(string? phone)
+    {
+        if (string.IsNullOrWhiteSpace(phone))
+            return null;
+
+        var trimmedPhone = phone.Trim();
+        if (trimmedPhone.Length < 7 || !trimmedPhone.All(c => char.IsDigit(c) || c == '+'))
+        {
+            return "Número de teléfono inválido.";
+        }
+
+        if (trimmedPhone.Contains('+') && trimmedPhone.IndexOf('+') != 0)
+        {
+            return "Número de teléfono inválido.";
+        }
+
+        return null;
+    }
     private void OnSelectedSponsorChanged(SelectableModel<int> sponsor)
     {
         if (sponsor is null || sponsor.Key == 0)

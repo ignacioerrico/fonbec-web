@@ -62,14 +62,16 @@
                 <EditTemplate>
                     <MudTextField T="string" @bind-Value="context.Item.CompanyEmail" Immediate="true"
                                   Label="Correo" Variant="Variant.Outlined" Margin="Margin.Dense"
-                                  MaxLength="MaxLength.FonbecWebUser.Email" />
+                                  MaxLength="MaxLength.FonbecWebUser.Email"
+                                  Validation="@(new Func<string, string?>(ValidateEmailFormat))" />
                 </EditTemplate>
             </PropertyColumn>
-            <PropertyColumn Property="vm => vm.CompanyPhoneNumber" Title="Teléfono" Required="false">
+  <PropertyColumn Property="vm => vm.CompanyPhoneNumber" Title="Teléfono" Required="false">
                 <EditTemplate>
                     <MudTextField T="string" @bind-Value="context.Item.CompanyPhoneNumber" Immediate="true"
                                   Label="Teléfono" Variant="Variant.Outlined" Margin="Margin.Dense"
-                                  MaxLength="MaxLength.FonbecWebUser.PhoneNumber" />
+                                  MaxLength="MaxLength.FonbecWebUser.PhoneNumber"
+                                  Validation="@(new Func<string, string?>(ValidatePhoneFormat))" />
                 </EditTemplate>
             </PropertyColumn>
             <PropertyColumn Property="vm => vm.CompanyNotes" Title="Información adicional" Required="false">
