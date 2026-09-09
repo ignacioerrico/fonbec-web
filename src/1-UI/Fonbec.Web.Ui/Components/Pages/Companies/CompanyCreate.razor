@@ -24,13 +24,17 @@
 
             <MudTextField T="string"
                           Label="Correo electrónico"
-                          @bind-Value="_bindModel.CompanyEmail"
-                          MaxLength="@MaxLength.Company.Email" />
+                          @bind-Value="_bindModel.CompanyEmail" 
+                          MaxLength="@MaxLength.Company.Email"
+                          Immediate="true"
+                          Validation="@(new Func<string, string?>(ValidateEmailFormat))" />
 
             <MudTextField T="string"
                           Label="Teléfono"
                           @bind-Value="_bindModel.CompanyPhoneNumber"
-                          MaxLength="@MaxLength.Company.PhoneNumber" />
+                          MaxLength="@MaxLength.Company.PhoneNumber"
+                          Immediate="true"
+                          Validation="@(new Func<string, string?>(ValidatePhoneFormat))" />
 
             <MudTextField T="string"
                           Label="Notas personales"
@@ -89,15 +93,19 @@
                             </MudTd>
 
                             <MudTd>
-                                <MudTextField @bind-Value="context.PocEmail"
+                                <MudTextField T="string" @bind-Value="context.PocEmail"
                                               Label="Correo electrónico"
-                                              MaxLength="@MaxLength.PointOfContact.Email" />
+                                              MaxLength="@MaxLength.PointOfContact.Email"
+                                              Immediate="true"
+                                              Validation="@(new Func<string, string?>(ValidateEmailFormat))" />
                             </MudTd>
 
                             <MudTd>
-                                <MudTextField @bind-Value="context.PocPhoneNumber"
+                                <MudTextField T="string" @bind-Value="context.PocPhoneNumber"
                                               Label="Teléfono"
-                                              MaxLength="@MaxLength.PointOfContact.PhoneNumber" />
+                                              MaxLength="@MaxLength.PointOfContact.PhoneNumber"           
+                                              Immediate="true"
+                                              Validation="@(new Func<string, string?>(ValidatePhoneFormat))" />
                             </MudTd>
 
                             <MudTd>
