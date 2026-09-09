@@ -25,7 +25,7 @@ public static class MaxLength
     {
         public const int Name = 30;
         public const int Email = 128;
-        public const int PhoneNumber = 20;
+        public const int PhoneNumber = 32;
     }
 
     public static class PointOfContact
@@ -34,7 +34,7 @@ public static class MaxLength
         public const int LastName = 40;
         public const int NickName = 20;
         public const int Email = 128;
-        public const int PhoneNumber = 20;
+        public const int PhoneNumber = 32;
     }
 
     public static class Document

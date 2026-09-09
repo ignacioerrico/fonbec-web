@@ -9,7 +9,7 @@
 
 <LoadingIndicator Loading="Loading" />
 
-<MudForm @bind-IsValid="@_formValidationSucceeded">
+<MudForm @ref="_form" @bind-IsValid="@_formValidationSucceeded">
     <MudCard>
         <MudCardContent>
             <MudText Typo="Typo.h6">Información de la empresa</MudText>
@@ -20,7 +20,8 @@
                           Immediate="true"
                           Required="true"
                           RequiredError="Este es un campo obligatorio."
-                          MaxLength="@MaxLength.Company.Name" />
+                          MaxLength="@MaxLength.Company.Name"
+                          Validation="@(new Func<string, string?>(ValidateNameFormat))" />
 
             <MudTextField T="string"
                           Label="Correo electrónico"

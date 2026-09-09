@@ -78,32 +78,11 @@ public partial class CompaniesList : AuthenticationRequiredComponentBase
         _viewModels.Single(vm => vm.CompanyId == modifiedViewModel.CompanyId).LastUpdatedOnUtc = DateTime.Now;
     }
 
-    [System.Text.RegularExpressions.GeneratedRegex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$")]
-    private static partial System.Text.RegularExpressions.Regex EmailRegex();
+    private static string? ValidateEmailFormat(string? email) =>
+        CompanyFieldValidator.IsValidEmail(email) ? null : "Correo inválido.";
 
-    private static string? ValidateEmailFormat(string? email)
-    {
-        if (string.IsNullOrWhiteSpace(email))
-            return null;
-
-        return EmailRegex().IsMatch(email) ? null : "Correo inválido.";
-    }
-
-    private static string? ValidatePhoneFormat(string? phone)
-    {
-        if (string.IsNullOrWhiteSpace(phone))
-            return null;
-
-        ReadOnlySpan<char> trimmedPhone = phone.AsSpan().Trim();
-
-        if (trimmedPhone.Length < 7 || !trimmedPhone.ContainsAnyExcept("+0123456789"))
-            return "Número de teléfono inválido.";
-     
-        if (trimmedPhone.Contains('+') && trimmedPhone[0] != '+')
-            return "Número de teléfono inválido.";
-
-        return null;
-    }
+    private static string? ValidatePhoneFormat(string? phone) =>
+        CompanyFieldValidator.IsValidPhone(phone) ? null : "Número de teléfono inválido.";
 
     private void RevertItemChanges(int companyId)
     {

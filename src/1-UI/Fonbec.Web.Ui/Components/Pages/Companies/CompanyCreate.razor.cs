@@ -1,5 +1,6 @@
 ﻿using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.Logic.Models;
+using Fonbec.Web.Logic.Models.Companies;
 using Fonbec.Web.Logic.Models.Companies.Input;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Ui.Constants;
@@ -13,6 +14,8 @@ namespace Fonbec.Web.Ui.Components.Pages.Companies;
 public partial class CompanyCreate : AuthenticationRequiredComponentBase
 {
     private readonly CompanyCreateBindModel _bindModel = new();
+
+    private MudForm _form = null!;
 
     private bool _formValidationSucceeded;
 
@@ -55,8 +58,13 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
 
     private async Task Save()
     {
-        _saving = true;
+        await _form.Validate();
+        if (!_form.IsValid)
+        {
+            return;
+        }
 
+        _saving = true;
         var companyNameExists = await CompanyService.CompanyNameExistsAsync(_bindModel.CompanyName);
         if (companyNameExists)
         {
@@ -120,35 +128,15 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
         NavigationManager.NavigateTo(NavRoutes.Companies);
     }
 
-    [System.Text.RegularExpressions.GeneratedRegex(@"^[^@\s]+@[^@\s]+\.[^@\s]+$")]
-    private static partial System.Text.RegularExpressions.Regex EmailRegex();
+    private static string? ValidateNameFormat(string? name) =>
+        CompanyFieldValidator.IsValidName(name) ? null : "Nombre inválido.";
 
-    private static string? ValidateEmailFormat(string? email)
-    {
-        if (string.IsNullOrWhiteSpace(email))
-            return null;
+    private static string? ValidateEmailFormat(string? email) =>
+        CompanyFieldValidator.IsValidEmail(email) ? null : "Correo inválido.";
 
-        return EmailRegex().IsMatch(email) ? null : "Correo inválido.";
-    }
+    private static string? ValidatePhoneFormat(string? phone) =>
+        CompanyFieldValidator.IsValidPhone(phone) ? null : "Número de teléfono inválido.";
 
-    private string? ValidatePhoneFormat(string? phone)
-    {
-        if (string.IsNullOrWhiteSpace(phone))
-            return null;
-
-        var trimmedPhone = phone.Trim();
-        if (trimmedPhone.Length < 7 || !trimmedPhone.All(c => char.IsDigit(c) || c == '+'))
-        {
-            return "Número de teléfono inválido.";
-        }
-
-        if (trimmedPhone.Contains('+') && trimmedPhone.IndexOf('+') != 0)
-        {
-            return "Número de teléfono inválido.";
-        }
-
-        return null;
-    }
     private void OnSelectedSponsorChanged(SelectableModel<int> sponsor)
     {
         if (sponsor is null || sponsor.Key == 0)
