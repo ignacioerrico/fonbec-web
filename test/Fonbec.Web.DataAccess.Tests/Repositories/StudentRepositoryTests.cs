@@ -196,6 +196,66 @@ public class StudentRepositoryTests
     }
 
     [Fact]
+    public async Task GetActiveStudentDisplayNameInChapterAsync_Returns_FullName_When_Student_Is_Active_In_Chapter()
+    {
+        await using var fixture = await CreateFixtureAsync();
+        var studentId = await fixture.CreateStudentAsync();
+
+        var result = await fixture.Repository.GetActiveStudentDisplayNameInChapterAsync(studentId, chapterId: 1);
+
+        result.Should().Be("Test Student");
+    }
+
+    [Fact]
+    public async Task GetActiveStudentDisplayNameInChapterAsync_Returns_Null_When_Student_Does_Not_Exist()
+    {
+        await using var fixture = await CreateFixtureAsync();
+
+        var result = await fixture.Repository.GetActiveStudentDisplayNameInChapterAsync(studentId: 99, chapterId: 1);
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetActiveStudentDisplayNameInChapterAsync_Returns_Null_When_Student_Is_In_Another_Chapter()
+    {
+        await using var fixture = await CreateFixtureAsync();
+        var studentId = await fixture.CreateStudentAsync(
+            fixture.CreateStudentInput(
+                fixture.OtherChapterFacilitatorId,
+                chapterId: 2,
+                createdById: fixture.AdminId));
+
+        var result = await fixture.Repository.GetActiveStudentDisplayNameInChapterAsync(studentId, chapterId: 1);
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetActiveStudentDisplayNameInChapterAsync_Returns_Null_When_Student_Is_Inactive()
+    {
+        await using var fixture = await CreateFixtureAsync();
+        var studentId = await fixture.CreateStudentAsync();
+        await fixture.DisableStudentAsync(studentId);
+
+        var result = await fixture.Repository.GetActiveStudentDisplayNameInChapterAsync(studentId, chapterId: 1);
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetActiveStudentDisplayNameInChapterAsync_Returns_Null_When_Student_Is_Deleted()
+    {
+        await using var fixture = await CreateFixtureAsync();
+        var studentId = await fixture.CreateStudentAsync();
+        await fixture.SetStudentDeletedAsync(studentId);
+
+        var result = await fixture.Repository.GetActiveStudentDisplayNameInChapterAsync(studentId, chapterId: 1);
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
     public async Task UpdateStudentAsync_FromAnotherChapter_ThrowsInvalidOperationException()
     {
         await using var fixture = await CreateFixtureAsync();
@@ -350,14 +410,39 @@ public class StudentRepositoryTests
                 CreatedById = createdById ?? ManagerId,
             };
 
-        public async Task<int> CreateStudentAsync()
+        public Task<int> CreateStudentAsync() => CreateStudentAsync(CreateStudentInput());
+
+        public async Task<int> CreateStudentAsync(CreateStudentInputDataModel input)
         {
-            await Repository.CreateStudentAsync(CreateStudentInput());
+            await Repository.CreateStudentAsync(input);
 
             await using var db = await DbContextFactory.CreateDbContextAsync(TestContext.Current.CancellationToken);
             return await db.Set<Student>()
+                .Where(student => student.FirstName == input.StudentFirstName
+                                  && student.LastName == input.StudentLastName
+                                  && student.ChapterId == input.ChapterId)
                 .Select(student => student.Id)
                 .SingleAsync(TestContext.Current.CancellationToken);
+        }
+
+        public async Task DisableStudentAsync(int studentId)
+        {
+            await using var db = await DbContextFactory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+            var student = await db.Set<Student>().SingleAsync(
+                s => s.Id == studentId,
+                TestContext.Current.CancellationToken);
+            student.DisabledById = ManagerId;
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        public async Task SetStudentDeletedAsync(int studentId)
+        {
+            await using var db = await DbContextFactory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+            var student = await db.Set<Student>().SingleAsync(
+                s => s.Id == studentId,
+                TestContext.Current.CancellationToken);
+            student.IsDeleted = true;
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
         public UpdateStudentInputDataModel CreateUpdateInput(

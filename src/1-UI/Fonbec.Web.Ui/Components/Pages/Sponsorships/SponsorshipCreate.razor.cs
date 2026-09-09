@@ -1,5 +1,7 @@
 ﻿using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.Entities.Enums;
+using Fonbec.Web.Logic.Models;
+using Fonbec.Web.Logic.Models.Sponsorships;
 using Fonbec.Web.Logic.Models.Sponsorships.Input;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Ui.Constants;
@@ -20,7 +22,16 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
     private bool _formValidationSucceeded;
     private bool _isEndDateKnown;
     private bool _studentNotFound;
-    private bool SaveButtonDisabled => _saving
+    private bool _checkingPeriod;
+    private int _periodCheckVersion;
+    private string _studentDisplayName = string.Empty;
+    private SponsorshipPeriodStatus _periodStatus;
+
+    private bool SaveButtonDisabled => Loading
+                                       || _saving
+                                       || _checkingPeriod
+                                       || _studentNotFound
+                                       || _periodStatus == SponsorshipPeriodStatus.OverlapsExisting
                                        || !AnySponsorsOrCompanies
                                        || !_formValidationSucceeded
                                        || !DateSelectionIsValid;
@@ -35,7 +46,20 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
             ? _anySponsors
             : _anyCompanies;
 
-    private bool _loading = true;
+    private string PageTitle =>
+        string.IsNullOrEmpty(_studentDisplayName)
+            ? "Asignar padrino"
+            : $"Asignar padrino a {_studentDisplayName}";
+
+    private string SponsorshipPartyLabel =>
+        _bindModel.SponsorshipType == SponsorshipType.Sponsor
+            ? "el padrino seleccionado"
+            : "la empresa seleccionada";
+
+    private string PrimaryActionLabel =>
+        _periodStatus == SponsorshipPeriodStatus.ExtendsExisting
+            ? "Extender apadrinamiento"
+            : "Asignar";
 
     [Parameter]
     public int StudentId { get; set; }
@@ -45,36 +69,44 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
 
     [Inject]
     public IStudentService StudentService { get; set; } = null!;
-    
+
     protected override async Task OnParametersSetAsync()
     {
-        _loading = true;
-        await base.OnParametersSetAsync();
-        
-        if (FonbecClaim is null)
+        Loading = true;
+        try
         {
-            _loading = false;
-            return;
+            await base.OnParametersSetAsync();
+            await LoadStudentAsync();
         }
-        
-        var students = await StudentService.GetAllStudentsForSelectionAsync(FonbecClaim.ChapterId);
-        if (!students.Exists(s => s.Key == StudentId))
+        finally
+        {
+            Loading = false;
+        }
+    }
+
+    private async Task<bool> LoadStudentAsync()
+    {
+        if (FonbecClaim is not { ChapterId: int chapterId })
         {
             _studentNotFound = true;
-            _loading = false;
-            return;
+            _studentDisplayName = string.Empty;
+            return false;
         }
 
-        _studentNotFound = false;
-        _loading = false;
+        _studentDisplayName =
+            await StudentService.GetActiveStudentDisplayNameInChapterAsync(StudentId, chapterId)
+            ?? string.Empty;
+        _studentNotFound = string.IsNullOrEmpty(_studentDisplayName);
+        return !_studentNotFound;
     }
+
     private async Task NumberOfSponsorsLoaded(int sponsorsCount) =>
         _anySponsors = sponsorsCount > 0;
 
     private async Task NumberOfCompaniesLoaded(int companiesCount) =>
         _anyCompanies = companiesCount > 0;
 
-    private void OnIsEndDateKnownCheckBoxChanged(bool isEndDateKnown)
+    private async Task OnIsEndDateKnownCheckBoxChanged(bool isEndDateKnown)
     {
         _isEndDateKnown = isEndDateKnown;
 
@@ -83,14 +115,41 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
         {
             _bindModel.SponsorshipEndDate = null;
         }
+
+        await RefreshPeriodStatusAsync();
     }
 
-    private void OnEndDateChanged(DateTime? endDate) =>
+    private async Task OnEndDateChanged(DateTime? endDate)
+    {
         _bindModel.SponsorshipEndDate = endDate is DateTime d
             ? new DateTime(d.Year, d.Month, DateTime.DaysInMonth(d.Year, d.Month))
             : null;
 
-    private void OnSponsorshipTypeChanged(SponsorshipType sponsorshipType)
+        await RefreshPeriodStatusAsync();
+    }
+
+    private async Task OnStartDateChanged(DateTime? startDate)
+    {
+        _bindModel.SponsorshipStartDate = startDate is DateTime d
+            ? new DateTime(d.Year, d.Month, 1)
+            : null;
+
+        await RefreshPeriodStatusAsync();
+    }
+
+    private async Task OnSponsorChanged(SelectableModel<int>? sponsor)
+    {
+        _bindModel.SelectedSponsor = sponsor;
+        await RefreshPeriodStatusAsync();
+    }
+
+    private async Task OnCompanyChanged(int? companyId)
+    {
+        _bindModel.SelectedCompanyId = companyId;
+        await RefreshPeriodStatusAsync();
+    }
+
+    private async Task OnSponsorshipTypeChanged(SponsorshipType sponsorshipType)
     {
         _bindModel.SponsorshipType = sponsorshipType;
 
@@ -103,11 +162,49 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
         {
             _bindModel.SelectedSponsor = null;
         }
+
+        await RefreshPeriodStatusAsync();
     }
 
-    private async Task Save()
+    private async Task RefreshPeriodStatusAsync()
     {
-        var createSponsorshipInputModel = new CreateSponsorshipInputModel(
+        var checkVersion = ++_periodCheckVersion;
+        _periodStatus = SponsorshipPeriodStatus.Available;
+
+        if (!CanEvaluatePeriod())
+        {
+            _checkingPeriod = false;
+            return;
+        }
+
+        _checkingPeriod = true;
+        try
+        {
+            var status = await SponsorshipService.GetSponsorshipPeriodStatusAsync(
+                CreateInputModel());
+            if (checkVersion == _periodCheckVersion)
+            {
+                _periodStatus = status;
+            }
+        }
+        finally
+        {
+            if (checkVersion == _periodCheckVersion)
+            {
+                _checkingPeriod = false;
+            }
+        }
+    }
+
+    private bool CanEvaluatePeriod() =>
+        _bindModel.SponsorshipStartDate.HasValue
+        && (!_isEndDateKnown || _bindModel.SponsorshipEndDate.HasValue)
+        && (_bindModel.SponsorshipType == SponsorshipType.Sponsor
+            ? _bindModel.SelectedSponsor is not null
+            : _bindModel.SelectedCompanyId.HasValue);
+
+    private CreateSponsorshipInputModel CreateInputModel() =>
+        new(
             StudentId,
             _bindModel.SelectedSponsor,
             _bindModel.SelectedCompanyId,
@@ -116,18 +213,47 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
             _bindModel.SponsorshipNotes,
             FonbecClaim.UserId);
 
+    private void ShowPeriodConflict()
+    {
+        _periodStatus = SponsorshipPeriodStatus.OverlapsExisting;
+        Snackbar.Add(
+            "No se puede asignar porque el período se superpone con un apadrinamiento existente.",
+            Severity.Error);
+    }
+
+    private async Task Save()
+    {
         _saving = true;
-
-        var result = await SponsorshipService.CreateSponsorshipAsync(createSponsorshipInputModel);
-
-        _saving = false;
-
-        if (!result.AnyAffectedRows)
+        try
         {
-            Snackbar.Add("No se pudo crear la asignación.", Severity.Error);
-            return;
-        }
+            if (!await LoadStudentAsync())
+            {
+                return;
+            }
 
-        NavigationManager.NavigateTo(NavRoutes.Students);
+            var result = await SponsorshipService.CreateSponsorshipAsync(CreateInputModel());
+            if (result.PeriodStatus == SponsorshipPeriodStatus.OverlapsExisting)
+            {
+                ShowPeriodConflict();
+                return;
+            }
+
+            if (!result.AnyAffectedRows)
+            {
+                Snackbar.Add("No se pudo crear la asignación.", Severity.Error);
+                return;
+            }
+
+            Snackbar.Add(
+                result.PeriodStatus == SponsorshipPeriodStatus.ExtendsExisting
+                    ? "El apadrinamiento existente fue extendido."
+                    : "El apadrinamiento fue asignado.",
+                Severity.Success);
+            NavigationManager.NavigateTo(NavRoutes.Sponsorships(StudentId));
+        }
+        finally
+        {
+            _saving = false;
+        }
     }
 }

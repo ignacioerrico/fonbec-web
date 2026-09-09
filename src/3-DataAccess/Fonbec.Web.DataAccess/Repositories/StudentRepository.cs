@@ -15,6 +15,12 @@ public interface IStudentRepository
     Task<int> CreateStudentAsync(CreateStudentInputDataModel inputDataModel);
     Task<int> UpdateStudentAsync(UpdateStudentInputDataModel dataModel);
 
+    /// <summary>
+    /// Returns <c>FirstName LastName</c> for an active student in the given chapter,
+    /// or <c>null</c> when the student is missing, inactive, deleted, or in another chapter.
+    /// </summary>
+    Task<string?> GetActiveStudentDisplayNameInChapterAsync(int studentId, int chapterId);
+
     /// <summary>Get a single student's name, or <c>null</c> when the student does not exist.</summary>
     Task<CandidateNameDataModel?> GetStudentNameAsync(int studentId);
 
@@ -202,6 +208,24 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext,
         {
             throw new InvalidOperationException("El usuario seleccionado no es un mediador.");
         }
+    }
+
+    public async Task<string?> GetActiveStudentDisplayNameInChapterAsync(int studentId, int chapterId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var student = await db.Students
+            .AsNoTracking()
+            .Where(s => s.Id == studentId
+                        && s.ChapterId == chapterId
+                        && s.IsActive
+                        && !s.IsDeleted)
+            .Select(s => new { s.FirstName, s.LastName })
+            .FirstOrDefaultAsync();
+
+        return student is null
+            ? null
+            : $"{student.FirstName} {student.LastName}";
     }
 
     public async Task<CandidateNameDataModel?> GetStudentNameAsync(int studentId)

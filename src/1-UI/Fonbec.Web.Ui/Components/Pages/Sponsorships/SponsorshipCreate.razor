@@ -4,13 +4,14 @@
 
 @using Fonbec.Web.DataAccess.Constants
 @using Fonbec.Web.DataAccess.Entities.Enums
+@using Fonbec.Web.Logic.Models.Sponsorships
 
-<PageHeader Title="Alta de apadrinamiento" />
+<PageHeader Title="@PageTitle" />
 
 <LoadingIndicator Loading="Loading" />
 
 <MudPaper Class="pa-6 mt-4" Elevation="1">
-    @if (!_loading && _studentNotFound)
+    @if (!Loading && _studentNotFound)
     {
         <MudAlert Severity="Severity.Error" Class="mb-4">
             El becario especificado no es válido o no existe.
@@ -22,7 +23,7 @@
             Volver a la lista de becarios
         </MudButton>
     }
-    else if (!_loading)
+    else if (!Loading)
     {
         @if (!AnySponsorsOrCompanies)
         {
@@ -65,31 +66,46 @@
                                SelectedIcon="@Icons.Material.Filled.Business" />
             </MudToggleGroup>
 
+            @if (_periodStatus == SponsorshipPeriodStatus.OverlapsExisting)
+            {
+                <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">
+                    Ya existe un apadrinamiento entre este becario y
+                    @SponsorshipPartyLabel que se superpone con el período seleccionado.
+                    Elegí otro período.
+                </MudAlert>
+            }
+            else if (_periodStatus == SponsorshipPeriodStatus.ExtendsExisting)
+            {
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                    El período seleccionado continúa un apadrinamiento existente.
+                    Al confirmar, se extenderá ese apadrinamiento en lugar de crear uno nuevo.
+                </MudAlert>
+            }
+
             <MudDivider />
 
             <MudForm @bind-IsValid="_formValidationSucceeded"
                      Disabled="!AnySponsorsOrCompanies">
                 <MudStack>
-                    <StudentSelector SelectedStudentId="StudentId"
-                                     ChapterId="FonbecClaim.ChapterId"
-                                      Disabled="true" />
-
                     @if (_bindModel.SponsorshipType == SponsorshipType.Sponsor)
                     {
-                        <SponsorSelector @bind-SelectedSponsor="_bindModel.SelectedSponsor"
+                        <SponsorSelector SelectedSponsor="_bindModel.SelectedSponsor"
+                                         SelectedSponsorChanged="OnSponsorChanged"
                                          IsRequired="true"
                                          ChapterId="FonbecClaim?.ChapterId"
                                          NumberOfSponsorsLoaded="NumberOfSponsorsLoaded" />
                     }
                     else if (_bindModel.SponsorshipType == SponsorshipType.Company)
                     {
-                        <CompanySelector @bind-SelectedCompanyId="_bindModel.SelectedCompanyId"
+                        <CompanySelector SelectedCompanyId="_bindModel.SelectedCompanyId"
+                                         SelectedCompanyIdChanged="OnCompanyChanged"
                                          IsRequired="true"
                                          NumberOfCompaniesLoaded="NumberOfCompaniesLoaded" />
                     }
 
                     <MudDatePicker Label="Fecha de inicio"
-                                   @bind-Date="_bindModel.SponsorshipStartDate"
+                                   Date="_bindModel.SponsorshipStartDate"
+                                   DateChanged="OnStartDateChanged"
                                    OpenTo="OpenTo.Month"
                                    FixDay="1"
                                    DateFormat="\P\r\i\n\c\i\p\i\o\ \d\e\ MMMM yyyy"
@@ -135,7 +151,7 @@
                            Variant="Variant.Filled"
                            StartIcon="@Icons.Material.Filled.Save"
                            Color="Color.Primary">
-                    Crear
+                    @PrimaryActionLabel
                 </MudButton>
 
                 <MudButton Href="@NavRoutes.Sponsorships(StudentId)"
