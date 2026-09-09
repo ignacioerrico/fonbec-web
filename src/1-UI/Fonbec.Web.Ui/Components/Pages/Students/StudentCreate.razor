@@ -3,6 +3,7 @@
 @inherits AuthenticationRequiredComponentBase
 
 @using Fonbec.Web.DataAccess.Constants
+@using Fonbec.Web.Logic.Util
 
 <PageHeader Title="Alta de becario" />
 
@@ -45,10 +46,12 @@ else if (NoFacilitatorsForCurrentChapter)
                          NumberOfFacilitatorsLoaded="OnFacilitatorsLoaded" />
 
     <MudTextField T="string" Label="Correo electrónico" @bind-Value="_bindModel.StudentEmail" Immediate="true"
-                  MaxLength="MaxLength.FonbecWebUser.Email" />
+                  MaxLength="MaxLength.FonbecWebUser.Email"
+                  Validation="@(new Func<string, string?>(ContactFieldValidator.ValidateEmail))" />
 
     <MudTextField T="string" Label="Teléfono" @bind-Value="_bindModel.StudentPhoneNumber" Immediate="true"
-                  MaxLength="MaxLength.FonbecWebUser.PhoneNumber" />
+                  MaxLength="MaxLength.FonbecWebUser.PhoneNumber"
+                  Validation="@(new Func<string, string?>(ContactFieldValidator.ValidatePhone))" />
 
     <MudTextField T="string" Label="Información adicional" @bind-Value="_bindModel.StudentNotes" Immediate="true"
                   MaxLength="MaxLength.Auditable.Notes" />

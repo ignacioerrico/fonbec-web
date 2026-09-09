@@ -32,6 +32,8 @@ public class SponsorshipRepository(IDbContextFactory<FonbecWebDbContext> dbConte
             .Include(s => s.DisabledBy)
             .Include(s => s.ReenabledBy)
             .Where(s => s.StudentId == studentId && s.IsActive)
+            .OrderBy(s => s.StartDate)
+            .ThenBy(s => s.EndDate)
             .ToListAsync();
 
         var allSponsorships = new AllSponsorshipsDataModel

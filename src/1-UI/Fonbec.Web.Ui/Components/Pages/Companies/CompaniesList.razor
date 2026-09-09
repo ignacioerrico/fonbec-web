@@ -4,6 +4,7 @@
 
 @using Fonbec.Web.DataAccess.Constants
 @using Fonbec.Web.Logic.Models.Companies
+@using Fonbec.Web.Logic.Util
 
 <PageHeader Title="Empresas" />
 
@@ -63,7 +64,7 @@
                     <MudTextField T="string" @bind-Value="context.Item.CompanyEmail" Immediate="true"
                                   Label="Correo" Variant="Variant.Outlined" Margin="Margin.Dense"
                                   MaxLength="MaxLength.Company.Email"
-                                  Validation="@(new Func<string, string?>(ValidateEmailFormat))" />
+                                  Validation="@(new Func<string, string?>(ContactFieldValidator.ValidateEmail))" />
                 </EditTemplate>
             </PropertyColumn>
             <PropertyColumn Property="vm => vm.CompanyPhoneNumber" Title="Teléfono" Required="false">
@@ -71,7 +72,7 @@
                     <MudTextField T="string" @bind-Value="context.Item.CompanyPhoneNumber" Immediate="true"
                                   Label="Teléfono" Variant="Variant.Outlined" Margin="Margin.Dense"
                                   MaxLength="MaxLength.Company.PhoneNumber"
-                                  Validation="@(new Func<string, string?>(ValidatePhoneFormat))" />
+                                  Validation="@(new Func<string, string?>(ContactFieldValidator.ValidatePhone))" />
                 </EditTemplate>
             </PropertyColumn>
             <PropertyColumn Property="vm => vm.CompanyNotes" Title="Información adicional" Required="false">

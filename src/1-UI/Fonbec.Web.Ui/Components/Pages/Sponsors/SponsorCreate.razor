@@ -3,6 +3,7 @@
 @inherits AuthenticationRequiredComponentBase
 
 @using Fonbec.Web.DataAccess.Constants
+@using Fonbec.Web.Logic.Util
 
 <PageHeader Title="Alta de Padrino" />
 
@@ -32,10 +33,12 @@
 
     <MudTextField T="string" Label="Correo electrónico" @bind-Value="_bindModel.SponsorEmail" Immediate="true"
                   Required="true" RequiredError="Este es un campo obligatorio."
-                  MaxLength="MaxLength.FonbecWebUser.Email" />
+                  MaxLength="MaxLength.FonbecWebUser.Email"
+                  Validation="@(new Func<string, string?>(ContactFieldValidator.ValidateEmail))" />
 
     <MudTextField T="string" Label="Teléfono" @bind-Value="_bindModel.SponsorPhoneNumber" Immediate="true"
-                  MaxLength="MaxLength.FonbecWebUser.PhoneNumber" />
+                  MaxLength="MaxLength.FonbecWebUser.PhoneNumber"
+                  Validation="@(new Func<string, string?>(ContactFieldValidator.ValidatePhone))" />
 
     <CompanySelector @bind-SelectedCompanyId="_bindModel.CompanyId" />
 

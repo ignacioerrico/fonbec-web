@@ -131,12 +131,6 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
     private static string? ValidateNameFormat(string? name) =>
         CompanyFieldValidator.IsValidName(name) ? null : "Nombre inválido.";
 
-    private static string? ValidateEmailFormat(string? email) =>
-        CompanyFieldValidator.IsValidEmail(email) ? null : "Correo inválido.";
-
-    private static string? ValidatePhoneFormat(string? phone) =>
-        CompanyFieldValidator.IsValidPhone(phone) ? null : "Número de teléfono inválido.";
-
     private void OnSelectedSponsorChanged(SelectableModel<int> sponsor)
     {
         if (sponsor is null || sponsor.Key == 0)

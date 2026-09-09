@@ -78,12 +78,6 @@ public partial class CompaniesList : AuthenticationRequiredComponentBase
         _viewModels.Single(vm => vm.CompanyId == modifiedViewModel.CompanyId).LastUpdatedOnUtc = DateTime.Now;
     }
 
-    private static string? ValidateEmailFormat(string? email) =>
-        CompanyFieldValidator.IsValidEmail(email) ? null : "Correo inválido.";
-
-    private static string? ValidatePhoneFormat(string? phone) =>
-        CompanyFieldValidator.IsValidPhone(phone) ? null : "Número de teléfono inválido.";
-
     private void RevertItemChanges(int companyId)
     {
         var index = _viewModels.FindIndex(vm => vm.CompanyId == companyId);

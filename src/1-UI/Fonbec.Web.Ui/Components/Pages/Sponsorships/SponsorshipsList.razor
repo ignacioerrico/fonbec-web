@@ -3,7 +3,6 @@
 @inherits AuthenticationRequiredComponentBase
 
 @using Fonbec.Web.Logic.Models.Sponsorships
-@using Microsoft.EntityFrameworkCore
 
 <PageHeader Title="@($"Padrinos de {_viewModel.StudentFullName}")" />
 
@@ -35,36 +34,48 @@
 {
     <MudDataGrid T="SponsorshipsSponsorshipsListViewModel"
                  Items="_viewModel.Sponsorships"
-                 Dense="true" Hover="true" Striped="true" Bordered="true">
+                 Dense="true" Hover="true" Striped="true" Bordered="true"
+                 SortMode="SortMode.Multiple">
         <Columns>
             <PropertyColumn Property="svm => svm.SponsorshipFullName" Title="Padrino">
                 <CellTemplate>
                     <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
                         @if (context.Item.IsSponsoredByCompany)
                         {
-                            <MudIcon Icon="@Icons.Material.Filled.Business" Size="Size.Small" />
+                            <MudIcon Icon="@Icons.Material.Filled.Business"
+                                     Size="Size.Small"
+                                     Color="@(context.Item.IsCurrentlyActive ? Color.Primary : Color.Default)" />
                         }
                         else
                         {
-                            <MudIcon Icon="@Icons.Material.Filled.Person" Size="Size.Small" />
+                            <MudIcon Icon="@Icons.Material.Filled.Person"
+                                     Size="Size.Small"
+                                     Color="@(context.Item.IsCurrentlyActive ? Color.Primary : Color.Default)" />
                         }
 
                         <AuditableItemDisplay Id="@context.Item.SponsorshipId"
                                               ItemName="@context.Item.SponsorshipFullName"
-                                              IsActive="true"
+                                              IsActive="@context.Item.IsCurrentlyActive"
                                               AuditableViewModel="@context.Item" />
                     </MudStack>
                 </CellTemplate>
             </PropertyColumn>
 
-            <TemplateColumn Title="Estado">
+            <PropertyColumn Property="svm => svm.SponsorshipStatusLabel" Title="Estado">
                 <CellTemplate>
-                    <!-- TODO -->
-                    &mdash;
+                    <MudChip T="string"
+                             Size="Size.Small"
+                             Variant="Variant.Filled"
+                             Color="@StatusChipColor(context.Item.TimelineStatus)">
+                        @context.Item.SponsorshipStatusLabel
+                    </MudChip>
                 </CellTemplate>
-            </TemplateColumn>
+            </PropertyColumn>
 
-            <PropertyColumn Property="svm => svm.SponsorshipStartDate" Title="Desde" Required="false">
+            <PropertyColumn Property="svm => svm.SponsorshipStartDate"
+                            Title="Desde"
+                            Required="false"
+                            InitialDirection="SortDirection.Ascending">
                 <CellTemplate>
                     <MudText Typo="Typo.body2">@(context.Item.SponsorshipStartDateString)</MudText>
                 </CellTemplate>

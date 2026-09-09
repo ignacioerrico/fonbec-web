@@ -1,4 +1,5 @@
 ﻿using Fonbec.Web.DataAccess.DataModels.Sponsorships;
+using Fonbec.Web.Logic.ExtensionMethods;
 using Mapster;
 
 namespace Fonbec.Web.Logic.Models.Sponsorships;
@@ -10,6 +11,13 @@ public class SponsorshipsListViewModel
     public List<SponsorshipsSponsorshipsListViewModel> Sponsorships { get; set; } = [];
 }
 
+public enum SponsorshipTimelineStatus
+{
+    NotStarted,
+    Active,
+    Finished,
+}
+
 public class SponsorshipsSponsorshipsListViewModel : AuditableViewModel
 {
     public int SponsorshipId { get; set; }
@@ -19,6 +27,34 @@ public class SponsorshipsSponsorshipsListViewModel : AuditableViewModel
     public string SponsorshipStartDateString { get; set; } = null!;
     public DateTime? SponsorshipEndDate { get; set; }
     public string SponsorshipEndDateString { get; set; } = null!;
+
+    public bool IsCurrentlyActive => TimelineStatus == SponsorshipTimelineStatus.Active;
+
+    public SponsorshipTimelineStatus TimelineStatus
+    {
+        get
+        {
+            var now = DateTime.UtcNow;
+            if (SponsorshipStartDate > now)
+            {
+                return SponsorshipTimelineStatus.NotStarted;
+            }
+
+            if (SponsorshipEndDate is { } endDate && endDate < now)
+            {
+                return SponsorshipTimelineStatus.Finished;
+            }
+
+            return SponsorshipTimelineStatus.Active;
+        }
+    }
+
+    public string SponsorshipStatusLabel => TimelineStatus switch
+    {
+        SponsorshipTimelineStatus.NotStarted => "No iniciado",
+        SponsorshipTimelineStatus.Finished => "Finalizado",
+        _ => "Activo",
+    };
 }
 
 public class SponsorshipsListViewModelMappingDefinitions : IRegister
@@ -27,7 +63,10 @@ public class SponsorshipsListViewModelMappingDefinitions : IRegister
     {
         config.NewConfig<AllSponsorshipsDataModel, SponsorshipsListViewModel>()
             .Map(dest => dest.StudentFullName, src => src.StudentFullName)
-            .Map(dest => dest.Sponsorships, src => src.Sponsorships);
+            .Map(dest => dest.Sponsorships,
+                src => src.Sponsorships
+                    .OrderBy(s => s.SponsorshipStartDate)
+                    .ThenBy(s => s.SponsorshipEndDate));
 
         config.NewConfig<AllSponsorshipsSponsorshipsDataModel, SponsorshipsSponsorshipsListViewModel>()
             .Map(dest => dest.SponsorshipId, src => src.SponsorshipId)
@@ -35,8 +74,11 @@ public class SponsorshipsListViewModelMappingDefinitions : IRegister
             .Map(dest => dest.SponsorshipFullName, src => src.Sponsor!.FullName(), srcCond => srcCond.Sponsor != null && srcCond.Company == null)
             .Map(dest => dest.SponsorshipFullName, src => src.Company!.Name, srcCond => srcCond.Sponsor == null && srcCond.Company != null)
             .Map(dest => dest.SponsorshipStartDate, src => src.SponsorshipStartDate)
-            .Map(dest => dest.SponsorshipStartDateString, src => src.SponsorshipStartDate.ToString("MM/yyyy"))
+            .Map(dest => dest.SponsorshipStartDateString, src => src.SponsorshipStartDate.ToSpanishMonthYear())
             .Map(dest => dest.SponsorshipEndDate, src => src.SponsorshipEndDate)
-            .Map(dest => dest.SponsorshipEndDateString, src => src.SponsorshipEndDate.HasValue ? src.SponsorshipEndDate.Value.ToString("MM/yyyy") : "—");
+            .Map(dest => dest.SponsorshipEndDateString,
+                src => src.SponsorshipEndDate.HasValue
+                    ? src.SponsorshipEndDate.Value.ToSpanishMonthYear()
+                    : "—");
     }
 }

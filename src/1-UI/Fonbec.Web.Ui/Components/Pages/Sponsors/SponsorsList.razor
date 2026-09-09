@@ -5,6 +5,7 @@
 @using Fonbec.Web.DataAccess.Constants
 @using Fonbec.Web.DataAccess.Entities.Enums
 @using Fonbec.Web.Logic.Models.Sponsors
+@using Fonbec.Web.Logic.Util
 
 <PageHeader Title="Padrinos" />
 
@@ -103,7 +104,8 @@
                     <MudTextField T="string" @bind-Value="context.Item.SponsorEmail" Immediate="true"
                                   Required="true" RequiredError="Campo obligatorio"
                                   Label="Correo electrónico" Variant="Variant.Outlined" Margin="Margin.Dense"
-                                  MaxLength="MaxLength.FonbecWebUser.Email" />
+                                  MaxLength="MaxLength.FonbecWebUser.Email"
+                                  Validation="@(new Func<string, string?>(ContactFieldValidator.ValidateEmail))" />
                 </EditTemplate>
             </PropertyColumn>
 
@@ -114,7 +116,8 @@
                 <EditTemplate>
                     <MudTextField T="string" @bind-Value="context.Item.SponsorPhoneNumber" Immediate="true"
                                   Label="Teléfono" Variant="Variant.Outlined" Margin="Margin.Dense"
-                                  MaxLength="MaxLength.FonbecWebUser.PhoneNumber" />
+                                  MaxLength="MaxLength.FonbecWebUser.PhoneNumber"
+                                  Validation="@(new Func<string, string?>(ContactFieldValidator.ValidatePhone))" />
                 </EditTemplate>
             </PropertyColumn>
 

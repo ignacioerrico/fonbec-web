@@ -4,6 +4,7 @@
 
 @using Fonbec.Web.DataAccess.Constants
 @using Fonbec.Web.Logic.Models
+@using Fonbec.Web.Logic.Util
 
 <PageHeader Title="Alta de empresa" />
 
@@ -28,14 +29,14 @@
                           @bind-Value="_bindModel.CompanyEmail" 
                           MaxLength="@MaxLength.Company.Email"
                           Immediate="true"
-                          Validation="@(new Func<string, string?>(ValidateEmailFormat))" />
+                          Validation="@(new Func<string, string?>(ContactFieldValidator.ValidateEmail))" />
 
             <MudTextField T="string"
                           Label="Teléfono"
                           @bind-Value="_bindModel.CompanyPhoneNumber"
                           MaxLength="@MaxLength.Company.PhoneNumber"
                           Immediate="true"
-                          Validation="@(new Func<string, string?>(ValidatePhoneFormat))" />
+                          Validation="@(new Func<string, string?>(ContactFieldValidator.ValidatePhone))" />
 
             <MudTextField T="string"
                           Label="Notas personales"
@@ -98,7 +99,7 @@
                                               Label="Correo electrónico"
                                               MaxLength="@MaxLength.PointOfContact.Email"
                                               Immediate="true"
-                                              Validation="@(new Func<string, string?>(ValidateEmailFormat))" />
+                                              Validation="@(new Func<string, string?>(ContactFieldValidator.ValidateEmail))" />
                             </MudTd>
 
                             <MudTd>
@@ -106,7 +107,7 @@
                                               Label="Teléfono"
                                               MaxLength="@MaxLength.PointOfContact.PhoneNumber"           
                                               Immediate="true"
-                                              Validation="@(new Func<string, string?>(ValidatePhoneFormat))" />
+                                              Validation="@(new Func<string, string?>(ContactFieldValidator.ValidatePhone))" />
                             </MudTd>
 
                             <MudTd>

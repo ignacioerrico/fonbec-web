@@ -2,6 +2,7 @@
 using Fonbec.Web.Logic.Models.Sponsorships;
 using Fonbec.Web.Logic.Services;
 using Microsoft.AspNetCore.Components;
+using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.Pages.Sponsorships;
 
@@ -27,4 +28,12 @@ public partial class SponsorshipsList : AuthenticationRequiredComponentBase
 
         Loading = false;
     }
+
+    private static Color StatusChipColor(SponsorshipTimelineStatus status) => status switch
+    {
+        SponsorshipTimelineStatus.Active => Color.Success,
+        SponsorshipTimelineStatus.NotStarted => Color.Info,
+        SponsorshipTimelineStatus.Finished => Color.Default,
+        _ => Color.Default,
+    };
 }

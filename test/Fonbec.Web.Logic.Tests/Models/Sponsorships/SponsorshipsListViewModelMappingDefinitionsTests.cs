@@ -11,22 +11,17 @@ public class SponsorshipsListViewModelMappingDefinitionsTests : MappingTestBase
     [Fact]
     public void Maps_All_Fields_Correctly_From_AllSponsorshipsDataModel_To_ViewModel()
     {
-        var now = DateTime.UtcNow;
+        var newestStart = new DateTime(2027, 1, 1);
+        var middleStart = new DateTime(2026, 6, 1);
+        var oldestStart = new DateTime(2025, 3, 1);
+        var middleEnd = new DateTime(2026, 12, 31);
+        var newestEnd = new DateTime(2027, 12, 31);
+
         var dataModel = new AllSponsorshipsDataModel
         {
             StudentFullName = "Student FullName",
-            Sponsorships = new List<AllSponsorshipsSponsorshipsDataModel>
-            {
-                new(Auditable)
-                {
-                    Sponsor = new Sponsor
-                    {
-                        FirstName = "Sponsor1 FirstName",
-                        LastName = "Sponsor1 LastName",
-                    },
-                    SponsorshipStartDate = now,
-                    SponsorshipEndDate = now.AddYears(2),
-                },
+            Sponsorships =
+            [
                 new(Auditable)
                 {
                     Sponsor = new Sponsor
@@ -34,7 +29,17 @@ public class SponsorshipsListViewModelMappingDefinitionsTests : MappingTestBase
                         FirstName = "Sponsor2 FirstName",
                         LastName = "Sponsor2 LastName",
                     },
-                    SponsorshipStartDate = now,
+                    SponsorshipStartDate = newestStart,
+                    SponsorshipEndDate = newestEnd,
+                },
+                new(Auditable)
+                {
+                    Sponsor = new Sponsor
+                    {
+                        FirstName = "Sponsor1 FirstName",
+                        LastName = "Sponsor1 LastName",
+                    },
+                    SponsorshipStartDate = oldestStart,
                 },
                 new(Auditable)
                 {
@@ -42,10 +47,10 @@ public class SponsorshipsListViewModelMappingDefinitionsTests : MappingTestBase
                     {
                         Name = "Company3 Name",
                     },
-                    SponsorshipStartDate = now,
-                    SponsorshipEndDate = now.AddYears(1),
+                    SponsorshipStartDate = middleStart,
+                    SponsorshipEndDate = middleEnd,
                 },
-            },
+            ],
         };
 
         var result = dataModel.Adapt<SponsorshipsListViewModel>(Config);
@@ -55,23 +60,23 @@ public class SponsorshipsListViewModelMappingDefinitionsTests : MappingTestBase
 
         result.Sponsorships[0].IsSponsoredByCompany.Should().BeFalse();
         result.Sponsorships[0].SponsorshipFullName.Should().Be("Sponsor1 FirstName Sponsor1 LastName");
-        result.Sponsorships[0].SponsorshipStartDate.Should().Be(now);
-        result.Sponsorships[0].SponsorshipStartDateString.Should().Be(now.ToString("MM/yyyy"));
-        result.Sponsorships[0].SponsorshipEndDate.Should().Be(now.AddYears(2));
-        result.Sponsorships[0].SponsorshipEndDateString.Should().Be(now.AddYears(2).ToString("MM/yyyy"));
+        result.Sponsorships[0].SponsorshipStartDate.Should().Be(oldestStart);
+        result.Sponsorships[0].SponsorshipStartDateString.Should().Be("Marzo de 2025");
+        result.Sponsorships[0].SponsorshipEndDate.Should().BeNull();
+        result.Sponsorships[0].SponsorshipEndDateString.Should().Be("—");
 
-        result.Sponsorships[1].IsSponsoredByCompany.Should().BeFalse();
-        result.Sponsorships[1].SponsorshipFullName.Should().Be("Sponsor2 FirstName Sponsor2 LastName");
-        result.Sponsorships[1].SponsorshipStartDate.Should().Be(now);
-        result.Sponsorships[1].SponsorshipStartDateString.Should().Be(now.ToString("MM/yyyy"));
-        result.Sponsorships[1].SponsorshipEndDate.Should().BeNull();
-        result.Sponsorships[1].SponsorshipEndDateString.Should().Be("—");
+        result.Sponsorships[1].IsSponsoredByCompany.Should().BeTrue();
+        result.Sponsorships[1].SponsorshipFullName.Should().Be("Company3 Name");
+        result.Sponsorships[1].SponsorshipStartDate.Should().Be(middleStart);
+        result.Sponsorships[1].SponsorshipStartDateString.Should().Be("Junio de 2026");
+        result.Sponsorships[1].SponsorshipEndDate.Should().Be(middleEnd);
+        result.Sponsorships[1].SponsorshipEndDateString.Should().Be("Diciembre de 2026");
 
-        result.Sponsorships[2].IsSponsoredByCompany.Should().BeTrue();
-        result.Sponsorships[2].SponsorshipFullName.Should().Be("Company3 Name");
-        result.Sponsorships[2].SponsorshipStartDate.Should().Be(now);
-        result.Sponsorships[2].SponsorshipStartDateString.Should().Be(now.ToString("MM/yyyy"));
-        result.Sponsorships[2].SponsorshipEndDate.Should().Be(now.AddYears(1));
-        result.Sponsorships[2].SponsorshipEndDateString.Should().Be(now.AddYears(1).ToString("MM/yyyy"));
+        result.Sponsorships[2].IsSponsoredByCompany.Should().BeFalse();
+        result.Sponsorships[2].SponsorshipFullName.Should().Be("Sponsor2 FirstName Sponsor2 LastName");
+        result.Sponsorships[2].SponsorshipStartDate.Should().Be(newestStart);
+        result.Sponsorships[2].SponsorshipStartDateString.Should().Be("Enero de 2027");
+        result.Sponsorships[2].SponsorshipEndDate.Should().Be(newestEnd);
+        result.Sponsorships[2].SponsorshipEndDateString.Should().Be("Diciembre de 2027");
     }
 }
