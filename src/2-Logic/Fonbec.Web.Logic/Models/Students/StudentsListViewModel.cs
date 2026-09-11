@@ -1,6 +1,7 @@
 ﻿using Fonbec.Web.DataAccess.DataModels.Students;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.Logic.ExtensionMethods;
+using Fonbec.Web.Logic.Models.Sponsorships;
 using Mapster;
 
 namespace Fonbec.Web.Logic.Models.Students;
@@ -25,7 +26,7 @@ public class StudentsListViewModel : AuditableViewModel, IDetectChanges<Students
     public string StudentChapterName { get; set; } = string.Empty;
     public List<StudentActiveSponsorViewModel> ActiveSponsors { get; set; } = [];
 
-    public bool HasActiveSponsors => ActiveSponsors.Count > 0;
+    public bool HasActiveSponsors => ActiveSponsors.Any(s => s.IsCurrentlyActive);
 
     public bool IsIdenticalTo(StudentsListViewModel other) =>
         StudentFirstName == other.StudentFirstName.NormalizeText()
@@ -44,6 +45,31 @@ public class StudentActiveSponsorViewModel
     public string Name { get; set; } = string.Empty;
 
     public bool IsCompany { get; set; }
+
+    public DateTime StartDate { get; set; }
+
+    public DateTime? EndDate { get; set; }
+
+    public SponsorshipTimelineStatus TimelineStatus =>
+        SponsorshipTimeline.FromPeriod(StartDate, EndDate);
+
+    public bool IsCurrentlyActive => TimelineStatus == SponsorshipTimelineStatus.Active;
+
+    public string PeriodTooltipLine => TimelineStatus switch
+    {
+        SponsorshipTimelineStatus.NotStarted => $"{Name} · {StartDate.ToSpanishMonthYear()}",
+        SponsorshipTimelineStatus.Finished =>
+            $"{Name} · {(EndDate ?? StartDate).ToSpanishMonthYear()}",
+        _ => Name,
+    };
+
+    /// <summary>
+    /// The full period, without the name, since the chip being hovered already shows it.
+    /// </summary>
+    public string PeriodTooltip =>
+        EndDate is { } endDate
+            ? $"{StartDate.ToSpanishMonthYear()} – {endDate.ToSpanishMonthYear()}"
+            : $"Desde {StartDate.ToSpanishMonthYear()}";
 }
 
 public class StudentsListViewModelMappingDefinitions : IRegister
@@ -71,7 +97,9 @@ public class StudentsListViewModelMappingDefinitions : IRegister
 
         config.NewConfig<StudentActiveSponsorDataModel, StudentActiveSponsorViewModel>()
             .Map(dest => dest.Name, src => src.Name)
-            .Map(dest => dest.IsCompany, src => src.IsCompany);
+            .Map(dest => dest.IsCompany, src => src.IsCompany)
+            .Map(dest => dest.StartDate, src => src.StartDate)
+            .Map(dest => dest.EndDate, src => src.EndDate);
 
         // Mapping required for the StudentSelector component
         config.NewConfig<StudentsListViewModel, SelectableModel<int>>()

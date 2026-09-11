@@ -1,0 +1,69 @@
+@using Fonbec.Web.Logic.Models.Sponsorships
+@using Fonbec.Web.Logic.Models.Students
+@using Fonbec.Web.Ui.Components.Pages.Sponsorships
+
+<div class="d-flex flex-wrap align-center gap-1">
+    @if (ShowSinPadrino)
+    {
+        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Warning"
+                 Icon="@Icons.Material.Filled.PersonOff"
+                 Href="@SponsorshipsHref">
+            Sin padrino
+        </MudChip>
+
+        <AuthorizeView Policy="@nameof(SponsorshipCreate)">
+            <MudLink Href="@NavRoutes.SponsorshipCreate(StudentId)" Typo="Typo.body2" Class="ml-1">
+                Asignar
+            </MudLink>
+        </AuthorizeView>
+    }
+
+    @foreach (var sponsor in ActiveSponsors)
+    {
+        <MudTooltip Text="@sponsor.PeriodTooltip" Arrow="true" Placement="Placement.Bottom">
+            <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Default"
+                     Icon="@(sponsor.IsCompany ? Icons.Material.Filled.Factory : Icons.Material.Filled.Person)"
+                     Href="@SponsorshipsHref">
+                @sponsor.Name
+            </MudChip>
+        </MudTooltip>
+    }
+
+    @if (UpcomingSponsors.Count > 0)
+    {
+        <MudTooltip Arrow="true" Placement="Placement.Bottom">
+            <ChildContent>
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Info"
+                         Icon="@Icons.Material.Filled.Schedule"
+                         Href="@SponsorshipsHref">
+                    +@UpcomingSponsors.Count
+                </MudChip>
+            </ChildContent>
+            <TooltipContent>
+                @foreach (var sponsor in UpcomingSponsors)
+                {
+                    <MudText Typo="Typo.body2">@sponsor.PeriodTooltipLine</MudText>
+                }
+            </TooltipContent>
+        </MudTooltip>
+    }
+
+    @if (FinishedSponsors.Count > 0)
+    {
+        <MudTooltip Arrow="true" Placement="Placement.Bottom">
+            <ChildContent>
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default"
+                         Icon="@Icons.Material.Filled.History"
+                         Href="@SponsorshipsHref">
+                    @FinishedSponsors.Count
+                </MudChip>
+            </ChildContent>
+            <TooltipContent>
+                @foreach (var sponsor in FinishedSponsors)
+                {
+                    <MudText Typo="Typo.body2">@sponsor.PeriodTooltipLine</MudText>
+                }
+            </TooltipContent>
+        </MudTooltip>
+    }
+</div>

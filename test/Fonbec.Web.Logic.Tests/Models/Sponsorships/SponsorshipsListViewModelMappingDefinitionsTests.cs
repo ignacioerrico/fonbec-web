@@ -82,4 +82,15 @@ public class SponsorshipsListViewModelMappingDefinitionsTests : MappingTestBase
         result.Sponsorships[2].SponsorshipEndDate.Should().Be(newestEnd);
         result.Sponsorships[2].SponsorshipEndDateString.Should().Be("Diciembre de 2027");
     }
+
+    [Fact]
+    public void Maps_Unknown_StudentFullName_To_Empty_String()
+    {
+        var dataModel = new AllSponsorshipsDataModel { StudentFullName = null };
+
+        var result = dataModel.Adapt<SponsorshipsListViewModel>(Config);
+
+        result.StudentFullName.Should().BeEmpty();
+        result.Sponsorships.Should().BeEmpty();
+    }
 }

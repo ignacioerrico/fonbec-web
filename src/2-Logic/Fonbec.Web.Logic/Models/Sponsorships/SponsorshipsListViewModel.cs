@@ -6,7 +6,7 @@ namespace Fonbec.Web.Logic.Models.Sponsorships;
 
 public class SponsorshipsListViewModel
 {
-    public string StudentFullName { get; set; } = null!;
+    public string StudentFullName { get; set; } = string.Empty;
 
     public List<SponsorshipsSponsorshipsListViewModel> Sponsorships { get; set; } = [];
 }
@@ -16,6 +16,25 @@ public enum SponsorshipTimelineStatus
     NotStarted,
     Active,
     Finished,
+}
+
+public static class SponsorshipTimeline
+{
+    public static SponsorshipTimelineStatus FromPeriod(DateTime startDate, DateTime? endDate)
+    {
+        var now = DateTime.UtcNow;
+        if (startDate > now)
+        {
+            return SponsorshipTimelineStatus.NotStarted;
+        }
+
+        if (endDate is { } end && end < now)
+        {
+            return SponsorshipTimelineStatus.Finished;
+        }
+
+        return SponsorshipTimelineStatus.Active;
+    }
 }
 
 public class SponsorshipsSponsorshipsListViewModel : AuditableViewModel
@@ -34,24 +53,8 @@ public class SponsorshipsSponsorshipsListViewModel : AuditableViewModel
 
     public bool IsCurrentlyActive => TimelineStatus == SponsorshipTimelineStatus.Active;
 
-    public SponsorshipTimelineStatus TimelineStatus
-    {
-        get
-        {
-            var now = DateTime.UtcNow;
-            if (SponsorshipStartDate > now)
-            {
-                return SponsorshipTimelineStatus.NotStarted;
-            }
-
-            if (SponsorshipEndDate is { } endDate && endDate < now)
-            {
-                return SponsorshipTimelineStatus.Finished;
-            }
-
-            return SponsorshipTimelineStatus.Active;
-        }
-    }
+    public SponsorshipTimelineStatus TimelineStatus =>
+        SponsorshipTimeline.FromPeriod(SponsorshipStartDate, SponsorshipEndDate);
 
     public string SponsorshipStatusLabel => TimelineStatus switch
     {
@@ -66,7 +69,7 @@ public class SponsorshipsListViewModelMappingDefinitions : IRegister
     public void Register(TypeAdapterConfig config)
     {
         config.NewConfig<AllSponsorshipsDataModel, SponsorshipsListViewModel>()
-            .Map(dest => dest.StudentFullName, src => src.StudentFullName)
+            .Map(dest => dest.StudentFullName, src => src.StudentFullName ?? string.Empty)
             .Map(dest => dest.Sponsorships,
                 src => src.Sponsorships
                     .OrderBy(s => s.SponsorshipStartDate)

@@ -27,9 +27,16 @@ public class SponsorshipRepository(IDbContextFactory<FonbecWebDbContext> dbConte
 
         var lockedPlanMonths = await GetLockedPlanMonthsAsync(db, studentId);
 
+        // Read the name from the student, not from a sponsorship, so it is also known
+        // for a student who has none yet.
+        var student = await db.Students
+            .AsNoTracking()
+            .Where(s => s.Id == studentId)
+            .Select(s => new { s.FirstName, s.LastName })
+            .FirstOrDefaultAsync();
+
         var allSponsorshipsForStudent = await db.Sponsorships
             .AsNoTracking()
-            .Include(s => s.Student)
             .Include(s => s.Sponsor!)
                 .ThenInclude(sp => sp.Company)
             .Include(s => s.Company)
@@ -44,10 +51,9 @@ public class SponsorshipRepository(IDbContextFactory<FonbecWebDbContext> dbConte
 
         var allSponsorships = new AllSponsorshipsDataModel
         {
-            StudentFullName = allSponsorshipsForStudent
-                .FirstOrDefault()?
-                .Student
-                .FullName(),
+            StudentFullName = student is null
+                ? null
+                : $"{student.FirstName} {student.LastName}",
             Sponsorships = allSponsorshipsForStudent
                 .Select(s => new AllSponsorshipsSponsorshipsDataModel(s)
                 {

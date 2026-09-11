@@ -38,8 +38,6 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext,
     {
         await using var db = await dbContext.CreateDbContextAsync();
 
-        var utcNow = DateTime.UtcNow;
-
         var allStudents = await db.Students
             .AsNoTracking()
             .Include(s => s.Facilitator)
@@ -72,8 +70,6 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext,
                 StudentChapterName = s.Chapter.Name,
                 ActiveSponsors = s.Sponsorships
                     .Where(sp => sp.IsActive
-                                 && sp.StartDate <= utcNow
-                                 && (sp.EndDate == null || sp.EndDate >= utcNow)
                                  && ((sp.SponsorId != null
                                       && sp.Sponsor != null
                                       && sp.Sponsor.IsActive
@@ -89,6 +85,8 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext,
                             : sp.Sponsor != null
                                 ? sp.Sponsor.FirstName + " " + sp.Sponsor.LastName
                                 : string.Empty,
+                        StartDate = sp.StartDate,
+                        EndDate = sp.EndDate,
                     })
                     .ToList(),
             })

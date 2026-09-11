@@ -13,6 +13,11 @@ public partial class SponsorshipsList : AuthenticationRequiredComponentBase
 {
     private SponsorshipsListViewModel _viewModel = new();
 
+    private string PageTitle =>
+        string.IsNullOrWhiteSpace(_viewModel.StudentFullName)
+            ? "Padrinos"
+            : $"Padrinos de {_viewModel.StudentFullName}";
+
     [Inject]
     public ISponsorshipService SponsorshipService { get; set; } = null!;
 

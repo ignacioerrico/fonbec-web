@@ -1,6 +1,8 @@
 using FluentAssertions;
 using Fonbec.Web.DataAccess.DataModels.Students;
 using Fonbec.Web.DataAccess.Entities.Enums;
+using Fonbec.Web.Logic.ExtensionMethods;
+using Fonbec.Web.Logic.Models.Sponsorships;
 using Fonbec.Web.Logic.Models.Students;
 using Mapster;
 
@@ -114,5 +116,119 @@ public class StudentsListViewModelMappingDefinitionsTests : MappingTestBase
         var result = studentsListViewModel1.IsIdenticalTo(studentsListViewModel2);
 
         result.Should().BeTrue();
+    }
+
+    [Fact]
+    public void Maps_Sponsor_Periods_And_Ignores_NonCurrent_When_Checking_HasActiveSponsors()
+    {
+        var finishedStart = DateTime.UtcNow.AddYears(-2);
+        var finishedEnd = DateTime.UtcNow.AddMonths(-2);
+        var activeStart = DateTime.UtcNow.AddMonths(-1);
+        var activeEnd = DateTime.UtcNow.AddMonths(1);
+        var upcomingStart = DateTime.UtcNow.AddMonths(2);
+        var upcomingEnd = DateTime.UtcNow.AddMonths(8);
+
+        var dataModel = new AllStudentsDataModel(Auditable)
+        {
+            StudentFirstName = "Ana",
+            StudentLastName = "Becaria",
+            ActiveSponsors =
+            [
+                new StudentActiveSponsorDataModel
+                {
+                    Name = "Padrino Pasado",
+                    StartDate = finishedStart,
+                    EndDate = finishedEnd,
+                },
+                new StudentActiveSponsorDataModel
+                {
+                    Name = "Padrino Actual",
+                    IsCompany = true,
+                    StartDate = activeStart,
+                    EndDate = activeEnd,
+                },
+                new StudentActiveSponsorDataModel
+                {
+                    Name = "Padrino Futuro",
+                    StartDate = upcomingStart,
+                    EndDate = upcomingEnd,
+                },
+            ],
+        };
+
+        var viewModel = dataModel.Adapt<StudentsListViewModel>(Config);
+
+        viewModel.ActiveSponsors.Should().HaveCount(3);
+        viewModel.HasActiveSponsors.Should().BeTrue();
+
+        viewModel.ActiveSponsors[0].Name.Should().Be("Padrino Pasado");
+        viewModel.ActiveSponsors[0].StartDate.Should().Be(finishedStart);
+        viewModel.ActiveSponsors[0].EndDate.Should().Be(finishedEnd);
+        viewModel.ActiveSponsors[0].TimelineStatus.Should().Be(SponsorshipTimelineStatus.Finished);
+        viewModel.ActiveSponsors[0].IsCurrentlyActive.Should().BeFalse();
+        viewModel.ActiveSponsors[0].PeriodTooltipLine.Should().Be($"Padrino Pasado · {finishedEnd.ToSpanishMonthYear()}");
+
+        viewModel.ActiveSponsors[1].Name.Should().Be("Padrino Actual");
+        viewModel.ActiveSponsors[1].IsCompany.Should().BeTrue();
+        viewModel.ActiveSponsors[1].TimelineStatus.Should().Be(SponsorshipTimelineStatus.Active);
+        viewModel.ActiveSponsors[1].IsCurrentlyActive.Should().BeTrue();
+
+        viewModel.ActiveSponsors[2].Name.Should().Be("Padrino Futuro");
+        viewModel.ActiveSponsors[2].TimelineStatus.Should().Be(SponsorshipTimelineStatus.NotStarted);
+        viewModel.ActiveSponsors[2].IsCurrentlyActive.Should().BeFalse();
+        viewModel.ActiveSponsors[2].PeriodTooltipLine.Should().Be($"Padrino Futuro · {upcomingStart.ToSpanishMonthYear()}");
+    }
+
+    [Fact]
+    public void PeriodTooltip_Shows_Both_Months_When_The_Period_Has_An_End()
+    {
+        var sponsor = new StudentActiveSponsorViewModel
+        {
+            Name = "Elena Actual",
+            StartDate = new DateTime(2025, 3, 1),
+            EndDate = new DateTime(2026, 6, 30),
+        };
+
+        sponsor.PeriodTooltip.Should().Be("Marzo de 2025 – Junio de 2026");
+    }
+
+    [Fact]
+    public void PeriodTooltip_Shows_Only_The_Start_When_The_Period_Is_OpenEnded()
+    {
+        var sponsor = new StudentActiveSponsorViewModel
+        {
+            Name = "Elena Actual",
+            StartDate = new DateTime(2025, 3, 1),
+            EndDate = null,
+        };
+
+        sponsor.PeriodTooltip.Should().Be("Desde Marzo de 2025");
+    }
+
+    [Fact]
+    public void HasActiveSponsors_Is_False_When_Only_Finished_Or_Upcoming()
+    {
+        var dataModel = new AllStudentsDataModel(Auditable)
+        {
+            ActiveSponsors =
+            [
+                new StudentActiveSponsorDataModel
+                {
+                    Name = "Pasado",
+                    StartDate = DateTime.UtcNow.AddYears(-1),
+                    EndDate = DateTime.UtcNow.AddMonths(-1),
+                },
+                new StudentActiveSponsorDataModel
+                {
+                    Name = "Futuro",
+                    StartDate = DateTime.UtcNow.AddMonths(1),
+                    EndDate = DateTime.UtcNow.AddMonths(6),
+                },
+            ],
+        };
+
+        var viewModel = dataModel.Adapt<StudentsListViewModel>(Config);
+
+        viewModel.HasActiveSponsors.Should().BeFalse();
     }
 }

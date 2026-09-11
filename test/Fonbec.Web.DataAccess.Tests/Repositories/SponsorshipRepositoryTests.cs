@@ -315,6 +315,32 @@ public class SponsorshipRepositoryTests
     }
 
     [Fact]
+    public async Task GetAllSponsorshipsAsync_Returns_Student_Name_When_Student_Has_No_Sponsorships()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedStudentAsync(factory);
+        var repository = new SponsorshipRepository(factory);
+
+        var result = await repository.GetAllSponsorshipsAsync(StudentId);
+
+        result.StudentFullName.Should().Be("Ana Becaria");
+        result.Sponsorships.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task GetAllSponsorshipsAsync_Returns_No_Student_Name_When_Student_Does_Not_Exist()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedStudentAsync(factory);
+        var repository = new SponsorshipRepository(factory);
+
+        var result = await repository.GetAllSponsorshipsAsync(studentId: 999);
+
+        result.StudentFullName.Should().BeNull();
+        result.Sponsorships.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task UpdateSponsorshipAsync_Does_Not_Lock_Person_Sponsorship_From_Company_Letter_FanOut()
     {
         var factory = CreateDbContextFactory();

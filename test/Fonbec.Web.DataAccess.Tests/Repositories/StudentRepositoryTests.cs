@@ -271,6 +271,97 @@ public class StudentRepositoryTests
         exception.WithMessage("*filial del coordinador*");
     }
 
+    [Fact]
+    public async Task GetAllStudentsAsync_Returns_Past_Current_And_Future_Sponsorships()
+    {
+        await using var fixture = await CreateFixtureAsync();
+        var studentId = await fixture.CreateStudentAsync();
+        var pastStart = DateTime.UtcNow.AddYears(-2);
+        var pastEnd = DateTime.UtcNow.AddMonths(-2);
+        var currentStart = DateTime.UtcNow.AddMonths(-1);
+        var currentEnd = DateTime.UtcNow.AddMonths(1);
+        var futureStart = DateTime.UtcNow.AddMonths(2);
+        var futureEnd = DateTime.UtcNow.AddMonths(8);
+
+        await using (var db = await fixture.DbContextFactory.CreateDbContextAsync(TestContext.Current.CancellationToken))
+        {
+            db.Set<Chapter>().Add(new Chapter
+            {
+                Id = 1,
+                Name = "Córdoba",
+                CreatedById = fixture.ManagerId,
+            });
+            db.Set<Sponsor>().AddRange(
+                new Sponsor
+                {
+                    Id = 201,
+                    FirstName = "Carlos",
+                    LastName = "Pasado",
+                    Email = "carlos@fonbec.test",
+                    ChapterId = 1,
+                    CreatedById = fixture.ManagerId,
+                },
+                new Sponsor
+                {
+                    Id = 202,
+                    FirstName = "Elena",
+                    LastName = "Actual",
+                    Email = "elena@fonbec.test",
+                    ChapterId = 1,
+                    CreatedById = fixture.ManagerId,
+                },
+                new Sponsor
+                {
+                    Id = 203,
+                    FirstName = "Mario",
+                    LastName = "Futuro",
+                    Email = "mario@fonbec.test",
+                    ChapterId = 1,
+                    CreatedById = fixture.ManagerId,
+                });
+            db.Set<Sponsorship>().AddRange(
+                new Sponsorship
+                {
+                    StudentId = studentId,
+                    SponsorId = 201,
+                    StartDate = pastStart,
+                    EndDate = pastEnd,
+                    CreatedById = fixture.ManagerId,
+                },
+                new Sponsorship
+                {
+                    StudentId = studentId,
+                    SponsorId = 202,
+                    StartDate = currentStart,
+                    EndDate = currentEnd,
+                    CreatedById = fixture.ManagerId,
+                },
+                new Sponsorship
+                {
+                    StudentId = studentId,
+                    SponsorId = 203,
+                    StartDate = futureStart,
+                    EndDate = futureEnd,
+                    CreatedById = fixture.ManagerId,
+                });
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        var result = await fixture.Repository.GetAllStudentsAsync(chapterId: 1);
+
+        var student = result.Should().ContainSingle().Which;
+        student.ActiveSponsors.Should().HaveCount(3);
+        student.ActiveSponsors.Should().ContainSingle(s => s.Name == "Carlos Pasado"
+            && s.StartDate == pastStart
+            && s.EndDate == pastEnd);
+        student.ActiveSponsors.Should().ContainSingle(s => s.Name == "Elena Actual"
+            && s.StartDate == currentStart
+            && s.EndDate == currentEnd);
+        student.ActiveSponsors.Should().ContainSingle(s => s.Name == "Mario Futuro"
+            && s.StartDate == futureStart
+            && s.EndDate == futureEnd);
+    }
+
     private static async Task<StudentRepositoryFixture> CreateFixtureAsync()
     {
         var services = new ServiceCollection();
