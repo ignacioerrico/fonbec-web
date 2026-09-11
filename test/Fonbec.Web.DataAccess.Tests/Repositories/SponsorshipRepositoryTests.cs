@@ -129,6 +129,78 @@ public class SponsorshipRepositoryTests
     }
 
     [Fact]
+    public async Task GetCreateSponsorshipPreviewAsync_Offers_To_End_Overlapping_Other_Sponsor()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedStudentAsync(factory);
+        await SeedSponsorshipAsync(factory, new DateTime(2026, 3, 1), endDate: null);
+        var repository = new SponsorshipRepository(factory);
+        var input = SponsorInput(new DateTime(2026, 9, 1), endDate: null, OtherSponsorId);
+
+        var preview = await repository.GetCreateSponsorshipPreviewAsync(input);
+
+        preview.PeriodMatch.Should().Be(SponsorshipPeriodMatch.None);
+        var overlapping = preview.OverlappingToEnd.Should().ContainSingle().Which;
+        overlapping.RecipientName.Should().Be("Carlos Padrino");
+        overlapping.ProposedEndDate.Should().Be(EndOfMonth(2026, 8));
+    }
+
+    [Fact]
+    public async Task CreateSponsorshipAsync_Ends_Overlapping_Other_Sponsor_When_Requested()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedStudentAsync(factory);
+        await SeedSponsorshipAsync(factory, new DateTime(2026, 3, 1), endDate: null);
+        var repository = new SponsorshipRepository(factory);
+        var input = SponsorInput(new DateTime(2026, 9, 1), endDate: null, OtherSponsorId);
+        input.EndOverlappingSponsorships = true;
+
+        var result = await repository.CreateSponsorshipAsync(input);
+
+        result.AffectedRows.Should().BeGreaterThan(0);
+        var sponsorships = await GetActiveSponsorshipsAsync(factory);
+        sponsorships.Should().HaveCount(2);
+        sponsorships.Single(s => s.SponsorId == SponsorId).EndDate.Should().Be(EndOfMonth(2026, 8));
+        var created = sponsorships.Single(s => s.SponsorId == OtherSponsorId);
+        created.StartDate.Should().Be(new DateTime(2026, 9, 1));
+        created.EndDate.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task CreateSponsorshipAsync_Leaves_Overlapping_Other_Sponsor_When_Not_Requested()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedSponsorshipAsync(factory, new DateTime(2026, 3, 1), endDate: null);
+        var repository = new SponsorshipRepository(factory);
+
+        var result = await repository.CreateSponsorshipAsync(
+            SponsorInput(new DateTime(2026, 9, 1), endDate: null, OtherSponsorId));
+
+        result.AffectedRows.Should().BeGreaterThan(0);
+        var previous = (await GetActiveSponsorshipsAsync(factory)).Single(s => s.SponsorId == SponsorId);
+        previous.EndDate.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task CreateSponsorshipAsync_Does_Not_End_Overlapping_When_It_Would_Uncover_Locked_Plan()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedStudentAsync(factory);
+        await SeedSponsorshipAsync(factory, new DateTime(2026, 3, 1), endDate: null);
+        await SeedUnsharedLetterAsync(factory, new DateTime(2026, 9, 1));
+        var repository = new SponsorshipRepository(factory);
+        var input = SponsorInput(new DateTime(2026, 9, 1), endDate: null, OtherSponsorId);
+        input.EndOverlappingSponsorships = true;
+
+        var result = await repository.CreateSponsorshipAsync(input);
+
+        result.AffectedRows.Should().Be(0);
+        result.UncoveredPlanStartsOn.Should().Equal(new DateTime(2026, 9, 1));
+        (await GetActiveSponsorshipsAsync(factory)).Should().ContainSingle()
+            .Which.EndDate.Should().BeNull();
+    }
+
+    [Fact]
     public async Task CreateSponsorshipAsync_Applies_Extension_Rule_To_Company()
     {
         var factory = CreateDbContextFactory();

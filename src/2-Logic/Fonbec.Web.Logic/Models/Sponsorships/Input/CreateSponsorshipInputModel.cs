@@ -11,7 +11,8 @@ public record CreateSponsorshipInputModel(
     DateTime SponsorshipStartDate,
     DateTime? SponsorshipEndDate,
     string SponsorshipNotes,
-    int CreatedById
+    int CreatedById,
+    bool EndOverlappingSponsorships = false
 );
 
 public class CreateSponsorshipInputModelMappsingDefinitions : IRegister
@@ -33,6 +34,7 @@ public class CreateSponsorshipInputModelMappsingDefinitions : IRegister
             .Map(dest => dest.SponsorshipStartDate, src => src.SponsorshipStartDate)
             .Map(dest => dest.SponsorshipEndDate, src => src.SponsorshipEndDate)
             .Map(dest => dest.SponsorshipNotes, src => src.SponsorshipNotes.NullOrTrimmed())
-            .Map(dest => dest.CreatedById, src => src.CreatedById);
+            .Map(dest => dest.CreatedById, src => src.CreatedById)
+            .Map(dest => dest.EndOverlappingSponsorships, src => src.EndOverlappingSponsorships);
     }
 }

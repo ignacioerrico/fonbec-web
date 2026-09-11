@@ -12,6 +12,8 @@ public interface ISponsorshipService
     Task<SponsorshipsListViewModel> GetAllSponsorshipsAsync(int studentId);
     Task<SponsorshipPeriodStatus> GetSponsorshipPeriodStatusAsync(
         CreateSponsorshipInputModel inputModel);
+    Task<CreateSponsorshipPreview> GetCreateSponsorshipPreviewAsync(
+        CreateSponsorshipInputModel inputModel);
     Task<SponsorshipPeriodStatus> GetSponsorshipPeriodStatusForUpdateAsync(
         UpdateSponsorshipInputModel inputModel);
     Task<CreateSponsorshipResult> CreateSponsorshipAsync(CreateSponsorshipInputModel inputModel);
@@ -30,10 +32,30 @@ public class SponsorshipService(ISponsorshipRepository sponsorshipRepository) : 
     public async Task<SponsorshipPeriodStatus> GetSponsorshipPeriodStatusAsync(
         CreateSponsorshipInputModel inputModel)
     {
+        var preview = await GetCreateSponsorshipPreviewAsync(inputModel);
+        return preview.PeriodStatus;
+    }
+
+    public async Task<CreateSponsorshipPreview> GetCreateSponsorshipPreviewAsync(
+        CreateSponsorshipInputModel inputModel)
+    {
         var createSponsorshipInputDataModel = inputModel.Adapt<CreateSponsorshipInputDataModel>();
-        var match = await sponsorshipRepository.GetSponsorshipPeriodMatchAsync(
+        var preview = await sponsorshipRepository.GetCreateSponsorshipPreviewAsync(
             createSponsorshipInputDataModel);
-        return MapPeriodStatus(match);
+        return new CreateSponsorshipPreview
+        {
+            PeriodStatus = MapPeriodStatus(preview.PeriodMatch),
+            OverlappingToEnd = preview.OverlappingToEnd
+                .Select(item => new OverlappingSponsorshipToEndViewModel
+                {
+                    SponsorshipId = item.SponsorshipId,
+                    RecipientName = item.RecipientName,
+                    StartMonthLabel = item.StartDate.ToSpanishMonthYear(),
+                    ProposedEndDate = item.ProposedEndDate,
+                    ProposedEndMonthLabel = item.ProposedEndDate.ToSpanishMonthYear(),
+                })
+                .ToList(),
+        };
     }
 
     public async Task<SponsorshipPeriodStatus> GetSponsorshipPeriodStatusForUpdateAsync(
@@ -53,10 +75,14 @@ public class SponsorshipService(ISponsorshipRepository sponsorshipRepository) : 
         var completedLabels = (result.CompletedPlanStartsOn ?? [])
             .Select(d => d.ToSpanishMonthYear())
             .ToList();
+        var lockedLabels = (result.UncoveredPlanStartsOn ?? [])
+            .Select(d => d.ToSpanishMonthYear())
+            .ToList();
         return new CreateSponsorshipResult(
             result.AffectedRows,
             MapPeriodStatus(result.PeriodMatch),
-            completedLabels);
+            completedLabels,
+            lockedLabels);
     }
 
     public async Task<UpdateSponsorshipResult> UpdateSponsorshipAsync(

@@ -9,4 +9,5 @@ public class CreateSponsorshipInputDataModel
     public DateTime? SponsorshipEndDate { get; set; }
     public string? SponsorshipNotes { get; set; }
     public int CreatedById { get; set; }
+    public bool EndOverlappingSponsorships { get; set; }
 }

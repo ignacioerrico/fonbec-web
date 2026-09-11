@@ -1,4 +1,5 @@
 using FluentAssertions;
+using Fonbec.Web.DataAccess.DataModels.Sponsorships;
 using Fonbec.Web.DataAccess.DataModels.Sponsorships.Input;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Models;
@@ -27,8 +28,8 @@ public class SponsorshipServiceTests
         SponsorshipPeriodMatch match,
         SponsorshipPeriodStatus expected)
     {
-        _repository.GetSponsorshipPeriodMatchAsync(Arg.Any<CreateSponsorshipInputDataModel>())
-            .Returns(match);
+        _repository.GetCreateSponsorshipPreviewAsync(Arg.Any<CreateSponsorshipInputDataModel>())
+            .Returns(new CreateSponsorshipPreviewDataModel { PeriodMatch = match });
 
         var result = await _service.GetSponsorshipPeriodStatusAsync(CreateInput());
 
@@ -119,6 +120,47 @@ public class SponsorshipServiceTests
 
         result.AnyAffectedRows.Should().BeFalse();
         result.CompletedPlanMonthLabels.Should().Equal("Septiembre de 2026");
+    }
+
+    [Fact]
+    public async Task GetCreateSponsorshipPreviewAsync_Maps_Overlapping_Sponsorships_To_End()
+    {
+        _repository.GetCreateSponsorshipPreviewAsync(Arg.Any<CreateSponsorshipInputDataModel>())
+            .Returns(new CreateSponsorshipPreviewDataModel
+            {
+                PeriodMatch = SponsorshipPeriodMatch.None,
+                OverlappingToEnd =
+                [
+                    new OverlappingSponsorshipToEndDataModel
+                    {
+                        SponsorshipId = 7,
+                        RecipientName = "Carlos Padrino",
+                        StartDate = new DateTime(2026, 3, 1),
+                        ProposedEndDate = new DateTime(2026, 8, 31),
+                    },
+                ],
+            });
+
+        var result = await _service.GetCreateSponsorshipPreviewAsync(CreateInput());
+
+        result.PeriodStatus.Should().Be(SponsorshipPeriodStatus.Available);
+        var item = result.OverlappingToEnd.Should().ContainSingle().Which;
+        item.RecipientName.Should().Be("Carlos Padrino");
+        item.StartMonthLabel.Should().Be("Marzo de 2026");
+        item.ProposedEndMonthLabel.Should().Be("Agosto de 2026");
+    }
+
+    [Fact]
+    public async Task CreateSponsorshipAsync_Maps_Locked_Plan_Months_When_Ending_Overlapping()
+    {
+        _repository.CreateSponsorshipAsync(Arg.Any<CreateSponsorshipInputDataModel>())
+            .Returns(new CreateSponsorshipRepositoryResult(
+                UncoveredPlanStartsOn: [new DateTime(2026, 9, 1)]));
+
+        var result = await _service.CreateSponsorshipAsync(CreateInput());
+
+        result.AnyAffectedRows.Should().BeFalse();
+        result.LockedPlanMonthLabels.Should().Equal("Septiembre de 2026");
     }
 
     [Fact]

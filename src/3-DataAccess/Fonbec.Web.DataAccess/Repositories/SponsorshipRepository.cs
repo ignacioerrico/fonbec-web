@@ -11,6 +11,8 @@ public interface ISponsorshipRepository
     Task<AllSponsorshipsDataModel> GetAllSponsorshipsAsync(int studentId);
     Task<SponsorshipPeriodMatch> GetSponsorshipPeriodMatchAsync(
         CreateSponsorshipInputDataModel inputDataModel);
+    Task<CreateSponsorshipPreviewDataModel> GetCreateSponsorshipPreviewAsync(
+        CreateSponsorshipInputDataModel inputDataModel);
     Task<SponsorshipPeriodMatch> GetSponsorshipPeriodMatchForUpdateAsync(
         UpdateSponsorshipInputDataModel inputDataModel);
     Task<CreateSponsorshipRepositoryResult> CreateSponsorshipAsync(
@@ -82,6 +84,28 @@ public class SponsorshipRepository(IDbContextFactory<FonbecWebDbContext> dbConte
         return GetPeriodMatch(existingSponsorships, startDate, endDate);
     }
 
+    public async Task<CreateSponsorshipPreviewDataModel> GetCreateSponsorshipPreviewAsync(
+        CreateSponsorshipInputDataModel inputDataModel)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var (startDate, endDate) = NormalizePeriod(inputDataModel);
+        var existingSponsorships = await GetMatchingSponsorshipsAsync(db, inputDataModel);
+        var overlappingToEnd = await GetOverlappingSponsorshipsToEndAsync(
+            db,
+            inputDataModel.StudentId,
+            inputDataModel.SponsorId,
+            inputDataModel.CompanyId,
+            startDate,
+            endDate);
+
+        return new CreateSponsorshipPreviewDataModel
+        {
+            PeriodMatch = GetPeriodMatch(existingSponsorships, startDate, endDate),
+            OverlappingToEnd = overlappingToEnd,
+        };
+    }
+
     public async Task<SponsorshipPeriodMatch> GetSponsorshipPeriodMatchForUpdateAsync(
         UpdateSponsorshipInputDataModel inputDataModel)
     {
@@ -124,6 +148,22 @@ public class SponsorshipRepository(IDbContextFactory<FonbecWebDbContext> dbConte
         if (periodMatch == SponsorshipPeriodMatch.Overlap)
         {
             return new CreateSponsorshipRepositoryResult(PeriodMatch: periodMatch);
+        }
+
+        if (inputDataModel.EndOverlappingSponsorships)
+        {
+            var uncovered = await EndOverlappingSponsorshipsAsync(
+                db,
+                inputDataModel.StudentId,
+                inputDataModel.SponsorId,
+                inputDataModel.CompanyId,
+                startDate,
+                endDate,
+                inputDataModel.CreatedById);
+            if (uncovered.Count > 0)
+            {
+                return new CreateSponsorshipRepositoryResult(UncoveredPlanStartsOn: uncovered);
+            }
         }
 
         var periodsBefore = existingSponsorships
@@ -444,6 +484,106 @@ public class SponsorshipRepository(IDbContextFactory<FonbecWebDbContext> dbConte
             .OrderBy(startsOn => startsOn)
             .ToList();
     }
+
+    private static async Task<List<OverlappingSponsorshipToEndDataModel>> GetOverlappingSponsorshipsToEndAsync(
+        FonbecWebDbContext db,
+        int studentId,
+        int? sponsorId,
+        int? companyId,
+        DateTime startDate,
+        DateTime? endDate)
+    {
+        var proposedEnd = EndOfMonthBefore(startDate);
+        var others = await db.Sponsorships
+            .AsNoTracking()
+            .Include(s => s.Sponsor)
+            .Include(s => s.Company)
+            .Where(s => s.IsActive
+                        && s.StudentId == studentId
+                        && (s.SponsorId != sponsorId || s.CompanyId != companyId))
+            .ToListAsync();
+
+        return others
+            .Where(s => Overlaps(s, startDate, endDate) && s.StartDate < startDate)
+            .OrderBy(s => s.StartDate)
+            .Select(s => new OverlappingSponsorshipToEndDataModel
+            {
+                SponsorshipId = s.Id,
+                RecipientName = RecipientName(s),
+                StartDate = s.StartDate,
+                ProposedEndDate = proposedEnd,
+            })
+            .ToList();
+    }
+
+    private static async Task<List<DateTime>> EndOverlappingSponsorshipsAsync(
+        FonbecWebDbContext db,
+        int studentId,
+        int? sponsorId,
+        int? companyId,
+        DateTime startDate,
+        DateTime? endDate,
+        int updatedById)
+    {
+        var proposedEnd = EndOfMonthBefore(startDate);
+        var toEnd = await db.Sponsorships
+            .Where(s => s.IsActive
+                        && s.StudentId == studentId
+                        && (s.SponsorId != sponsorId || s.CompanyId != companyId))
+            .ToListAsync();
+        toEnd = toEnd
+            .Where(s => Overlaps(s, startDate, endDate) && s.StartDate < startDate)
+            .ToList();
+        if (toEnd.Count == 0)
+        {
+            return [];
+        }
+
+        var allForStudent = await db.Sponsorships
+            .Where(s => s.IsActive && s.StudentId == studentId)
+            .ToListAsync();
+        var lockedPlanMonths = await GetLockedPlanMonthsAsync(db, studentId);
+        var uncovered = new List<DateTime>();
+        foreach (var sponsorship in toEnd)
+        {
+            var remainingPeriods = allForStudent
+                .Where(s => s.Id != sponsorship.Id
+                            && s.SponsorId == sponsorship.SponsorId
+                            && s.CompanyId == sponsorship.CompanyId)
+                .Select(s => (StartDate: s.StartDate, EndDate: s.EndDate))
+                .Append((StartDate: sponsorship.StartDate, EndDate: (DateTime?)proposedEnd))
+                .ToList();
+            uncovered.AddRange(
+                lockedPlanMonths
+                    .Where(m => m.SponsorId == sponsorship.SponsorId && m.CompanyId == sponsorship.CompanyId)
+                    .Select(m => m.StartsOn)
+                    .Where(startsOn => !remainingPeriods.Any(period =>
+                        Covers(period.StartDate, period.EndDate, startsOn))));
+        }
+
+        if (uncovered.Count > 0)
+        {
+            return uncovered.Distinct().OrderBy(d => d).ToList();
+        }
+
+        foreach (var sponsorship in toEnd)
+        {
+            sponsorship.EndDate = proposedEnd;
+            sponsorship.LastUpdatedById = updatedById;
+        }
+
+        return [];
+    }
+
+    private static string RecipientName(Sponsorship sponsorship) =>
+        sponsorship.CompanyId != null && sponsorship.Company != null
+            ? sponsorship.Company.Name
+            : sponsorship.Sponsor != null
+                ? $"{sponsorship.Sponsor.FirstName} {sponsorship.Sponsor.LastName}".Trim()
+                : string.Empty;
+
+    private static DateTime EndOfMonthBefore(DateTime startDate) =>
+        new DateTime(startDate.Year, startDate.Month, 1).AddDays(-1);
 
     private static Task<List<Sponsorship>> GetMatchingSponsorshipsAsync(
         FonbecWebDbContext db,

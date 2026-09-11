@@ -26,6 +26,8 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
     private int _periodCheckVersion;
     private string _studentDisplayName = string.Empty;
     private SponsorshipPeriodStatus _periodStatus;
+    private bool _endOverlappingSponsorships;
+    private IReadOnlyList<OverlappingSponsorshipToEndViewModel> _overlappingToEnd = [];
 
     private bool SaveButtonDisabled => Loading
                                        || _saving
@@ -57,9 +59,11 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
             : "la empresa seleccionada";
 
     private string PrimaryActionLabel =>
-        _periodStatus == SponsorshipPeriodStatus.ExtendsExisting
-            ? "Extender apadrinamiento"
-            : "Asignar";
+        _endOverlappingSponsorships && _overlappingToEnd.Count > 0
+            ? "Finalizar anteriores y asignar"
+            : _periodStatus == SponsorshipPeriodStatus.ExtendsExisting
+                ? "Extender apadrinamiento"
+                : "Asignar";
 
     [Parameter]
     public int StudentId { get; set; }
@@ -170,6 +174,8 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
     {
         var checkVersion = ++_periodCheckVersion;
         _periodStatus = SponsorshipPeriodStatus.Available;
+        _overlappingToEnd = [];
+        _endOverlappingSponsorships = false;
 
         if (!CanEvaluatePeriod())
         {
@@ -180,11 +186,12 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
         _checkingPeriod = true;
         try
         {
-            var status = await SponsorshipService.GetSponsorshipPeriodStatusAsync(
+            var preview = await SponsorshipService.GetCreateSponsorshipPreviewAsync(
                 CreateInputModel());
             if (checkVersion == _periodCheckVersion)
             {
-                _periodStatus = status;
+                _periodStatus = preview.PeriodStatus;
+                _overlappingToEnd = preview.OverlappingToEnd;
             }
         }
         finally
@@ -211,7 +218,8 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
             _bindModel.SponsorshipStartDate!.Value,
             _bindModel.SponsorshipEndDate,
             _bindModel.SponsorshipNotes,
-            FonbecClaim.UserId);
+            FonbecClaim.UserId,
+            _endOverlappingSponsorships);
 
     private void ShowPeriodConflict()
     {
@@ -238,6 +246,15 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
                 return;
             }
 
+            if (result.LockedPlanMonthLabels is { Count: > 0 })
+            {
+                var months = string.Join(", ", result.LockedPlanMonthLabels);
+                Snackbar.Add(
+                    $"No se puede finalizar el apadrinamiento anterior en {months} porque ya se subió una carta para ese padrino en esa campaña.",
+                    Severity.Error);
+                return;
+            }
+
             if (result.CompletedPlanMonthLabels is { Count: > 0 })
             {
                 var months = string.Join(", ", result.CompletedPlanMonthLabels);
@@ -256,7 +273,9 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
             Snackbar.Add(
                 result.PeriodStatus == SponsorshipPeriodStatus.ExtendsExisting
                     ? "El apadrinamiento existente fue extendido."
-                    : "El apadrinamiento fue asignado.",
+                    : _endOverlappingSponsorships && _overlappingToEnd.Count > 0
+                        ? "El apadrinamiento fue asignado y se finalizaron los anteriores."
+                        : "El apadrinamiento fue asignado.",
                 Severity.Success);
             NavigationManager.NavigateTo(NavRoutes.Sponsorships(StudentId));
         }

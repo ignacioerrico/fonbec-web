@@ -81,6 +81,31 @@
                     Al confirmar, se extenderá ese apadrinamiento en lugar de crear uno nuevo.
                 </MudAlert>
             }
+            else if (_overlappingToEnd.Count > 0)
+            {
+                var proposedEndLabel = _overlappingToEnd[0].ProposedEndMonthLabel;
+                <MudAlert Severity="Severity.Info" Variant="Variant.Outlined">
+                    <MudText>
+                        Hay apadrinamientos vigentes que se superponen con este período:
+                    </MudText>
+                    <MudList T="string" Dense="true" Class="mt-1 mb-2">
+                        @foreach (var item in _overlappingToEnd)
+                        {
+                            <MudListItem T="string" Icon="@Icons.Material.Filled.Person">
+                                @item.RecipientName (desde @item.StartMonthLabel)
+                            </MudListItem>
+                        }
+                    </MudList>
+                    <MudCheckBox T="bool"
+                                 @bind-Value="_endOverlappingSponsorships"
+                                 Label="@($"Finalizar esos apadrinamientos en {proposedEndLabel}")"
+                                 Color="Color.Primary"
+                                 Dense="true" />
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                        Así el nuevo empieza cuando terminen los actuales. Si no lo marcás, quedan en paralelo.
+                    </MudText>
+                </MudAlert>
+            }
 
             <MudDivider />
 

@@ -30,6 +30,7 @@ public class CreateSponsorshipInputModelMappingDefinitionsTests : MappingTestBas
         result.SponsorshipEndDate.Should().BeSameDateAs(new DateTime(1996, 7, 3));
         result.SponsorshipNotes.Should().Be("A nut for a jar of tuna");
         result.CreatedById.Should().Be(99);
+        result.EndOverlappingSponsorships.Should().BeFalse();
     }
 
     [Fact]
