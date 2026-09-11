@@ -1,4 +1,5 @@
 using Fonbec.Web.DataAccess.DataModels.Documents;
+using Fonbec.Web.DataAccess.DataModels.Users;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Services;
@@ -13,6 +14,7 @@ namespace Fonbec.Web.Logic.Tests.Services;
 public class DocumentNotificationServiceTests
 {
     private readonly IDocumentRepository _documentRepository = Substitute.For<IDocumentRepository>();
+    private readonly IUserRepository _userRepository = Substitute.For<IUserRepository>();
     private readonly IEmailMessageSender _emailMessageSender = Substitute.For<IEmailMessageSender>();
     private readonly IConfiguration _configuration = Substitute.For<IConfiguration>();
 
@@ -22,7 +24,7 @@ public class DocumentNotificationServiceTests
     }
 
     private DocumentNotificationService CreateService() =>
-        new(_documentRepository, _emailMessageSender, _configuration, NullLogger<DocumentNotificationService>.Instance);
+        new(_documentRepository, _userRepository, _emailMessageSender, _configuration, NullLogger<DocumentNotificationService>.Instance);
 
     [Fact]
     public async Task NotifySponsorsAsync_Sends_Email_With_Personalized_Content()
@@ -218,5 +220,35 @@ public class DocumentNotificationServiceTests
             "ok@test.com", Arg.Any<string>(), Arg.Any<string>());
         await _documentRepository.DidNotReceive().MarkShareNotifiedAsync(10, Arg.Any<DateTime>());
         await _documentRepository.Received(1).MarkShareNotifiedAsync(11, Arg.Any<DateTime>());
+    }
+
+    [Fact]
+    public async Task NotifyChapterManagersPlanReadyAsync_Emails_Managers_With_Progress_Link()
+    {
+        _userRepository.GetChapterManagerContactsAsync(3).Returns(
+        [
+            new ChapterManagerContactDataModel("coord@test.com", "Ana Coordinadora"),
+        ]);
+
+        await CreateService().NotifyChapterManagersPlanReadyAsync(3, 88, new DateTime(2026, 9, 1));
+
+        await _emailMessageSender.Received(1).SendEmailAsync(
+            "coord@test.com",
+            "Campaña lista para completar",
+            Arg.Is<string>(html =>
+                html.Contains("Septiembre de 2026")
+                && html.Contains("https://fonbec.test/planificaciones/88/cartas")));
+    }
+
+    [Fact]
+    public async Task NotifyChapterManagersPlanReadyAsync_Does_Nothing_When_No_Managers()
+    {
+        _userRepository.GetChapterManagerContactsAsync(3)
+            .Returns(Array.Empty<ChapterManagerContactDataModel>());
+
+        await CreateService().NotifyChapterManagersPlanReadyAsync(3, 88, new DateTime(2026, 9, 1));
+
+        await _emailMessageSender.DidNotReceiveWithAnyArgs()
+            .SendEmailAsync(default!, default!, default!);
     }
 }

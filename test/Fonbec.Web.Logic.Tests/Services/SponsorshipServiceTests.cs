@@ -108,6 +108,39 @@ public class SponsorshipServiceTests
         result.ExemptPlanMonthLabels.Should().Equal("Septiembre de 2026");
     }
 
+    [Fact]
+    public async Task CreateSponsorshipAsync_Maps_Completed_Plan_Months()
+    {
+        _repository.CreateSponsorshipAsync(Arg.Any<CreateSponsorshipInputDataModel>())
+            .Returns(new CreateSponsorshipRepositoryResult(
+                CompletedPlanStartsOn: [new DateTime(2026, 9, 1)]));
+
+        var result = await _service.CreateSponsorshipAsync(CreateInput());
+
+        result.AnyAffectedRows.Should().BeFalse();
+        result.CompletedPlanMonthLabels.Should().Equal("Septiembre de 2026");
+    }
+
+    [Fact]
+    public async Task UpdateSponsorshipAsync_Maps_Completed_Plan_Months()
+    {
+        _repository.UpdateSponsorshipAsync(Arg.Any<UpdateSponsorshipInputDataModel>())
+            .Returns(new UpdateSponsorshipRepositoryResult(
+                Outcome: UpdateSponsorshipOutcome.AddsSlotToCompletedPlan,
+                CompletedPlanStartsOn: [new DateTime(2026, 9, 1)]));
+
+        var result = await _service.UpdateSponsorshipAsync(
+            new UpdateSponsorshipInputModel(
+                SponsorshipId: 1,
+                SponsorshipStartDate: new DateTime(2026, 1, 1),
+                SponsorshipEndDate: new DateTime(2026, 9, 30),
+                SponsorshipNotes: string.Empty,
+                UpdatedById: 30));
+
+        result.Status.Should().Be(UpdateSponsorshipStatus.AddsSlotToCompletedPlan);
+        result.CompletedPlanMonthLabels.Should().Equal("Septiembre de 2026");
+    }
+
     private static CreateSponsorshipInputModel CreateInput() =>
         new(
             StudentId: 10,

@@ -420,6 +420,68 @@ public class SponsorshipRepositoryTests
         (await GetExemptionAsync(factory, planId)).IsRevoked.Should().BeFalse();
     }
 
+    [Fact]
+    public async Task CreateSponsorshipAsync_Rejects_Newly_Covered_Completed_Plan()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedStudentAsync(factory);
+        await SeedCompletedPlanAsync(factory, new DateTime(2026, 9, 1));
+        var repository = new SponsorshipRepository(factory);
+
+        var result = await repository.CreateSponsorshipAsync(
+            SponsorInput(January(2026), EndOfMonth(2026, 9)));
+
+        result.AffectedRows.Should().Be(0);
+        result.CompletedPlanStartsOn.Should().Equal(new DateTime(2026, 9, 1));
+        (await GetActiveSponsorshipsAsync(factory)).Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task CreateSponsorshipAsync_Allows_Covering_Incomplete_Plan()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedStudentAsync(factory);
+        await SeedPlanAsync(factory, new DateTime(2026, 9, 1), completed: false);
+        var repository = new SponsorshipRepository(factory);
+
+        var result = await repository.CreateSponsorshipAsync(
+            SponsorInput(January(2026), EndOfMonth(2026, 9)));
+
+        result.AffectedRows.Should().BeGreaterThan(0);
+        result.CompletedPlanStartsOn.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task UpdateSponsorshipAsync_Rejects_Newly_Covered_Completed_Plan()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedStudentAsync(factory);
+        await SeedCompletedPlanAsync(factory, new DateTime(2026, 9, 1));
+        var sponsorshipId = await SeedSponsorshipAsync(factory, January(2026), EndOfMonth(2026, 6));
+        var repository = new SponsorshipRepository(factory);
+
+        var result = await repository.UpdateSponsorshipAsync(
+            UpdateInput(sponsorshipId, January(2026), EndOfMonth(2026, 9)));
+
+        result.Outcome.Should().Be(UpdateSponsorshipOutcome.AddsSlotToCompletedPlan);
+        result.CompletedPlanStartsOn.Should().Equal(new DateTime(2026, 9, 1));
+    }
+
+    [Fact]
+    public async Task UpdateSponsorshipAsync_Allows_Period_That_Already_Covered_Completed_Plan()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedStudentAsync(factory);
+        await SeedCompletedPlanAsync(factory, new DateTime(2026, 3, 1));
+        var sponsorshipId = await SeedSponsorshipAsync(factory, January(2026), EndOfMonth(2026, 6));
+        var repository = new SponsorshipRepository(factory);
+
+        var result = await repository.UpdateSponsorshipAsync(
+            UpdateInput(sponsorshipId, January(2026), EndOfMonth(2026, 8)));
+
+        result.Outcome.Should().Be(UpdateSponsorshipOutcome.Saved);
+    }
+
     private static TestDbContextFactory CreateDbContextFactory() =>
         new(Guid.NewGuid().ToString());
 
@@ -493,6 +555,27 @@ public class SponsorshipRepositoryTests
         });
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);
         return plan.Id;
+    }
+
+    private static Task SeedCompletedPlanAsync(
+        IDbContextFactory<FonbecWebDbContext> factory,
+        DateTime planStartsOn) =>
+        SeedPlanAsync(factory, planStartsOn, completed: true);
+
+    private static async Task SeedPlanAsync(
+        IDbContextFactory<FonbecWebDbContext> factory,
+        DateTime planStartsOn,
+        bool completed)
+    {
+        await using var db = await factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        db.Set<PlannedDelivery>().Add(new PlannedDelivery
+        {
+            ChapterId = 1,
+            StartsOn = planStartsOn,
+            Completed = completed,
+            CreatedById = UserId,
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
     }
 
     private static async Task<LetterExemption> GetExemptionAsync(

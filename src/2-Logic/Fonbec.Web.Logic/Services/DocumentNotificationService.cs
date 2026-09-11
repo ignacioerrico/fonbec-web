@@ -1,5 +1,6 @@
 using Fonbec.Web.DataAccess.DataModels.Documents;
 using Fonbec.Web.DataAccess.Repositories;
+using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Util;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -9,10 +10,16 @@ namespace Fonbec.Web.Logic.Services;
 public interface IDocumentNotificationService
 {
     Task NotifySponsorsAsync(long documentId);
+
+    Task NotifyChapterManagersPlanReadyAsync(
+        int chapterId,
+        int planId,
+        DateTime planStartsOn);
 }
 
 public class DocumentNotificationService(
     IDocumentRepository documentRepository,
+    IUserRepository userRepository,
     IEmailMessageSender emailMessageSender,
     IConfiguration configuration,
     ILogger<DocumentNotificationService> logger) : IDocumentNotificationService
@@ -30,6 +37,31 @@ public class DocumentNotificationService(
         foreach (var share in shares)
         {
             await NotifyShareAsync(documentId, share, baseUrl, subject);
+        }
+    }
+
+    public async Task NotifyChapterManagersPlanReadyAsync(
+        int chapterId,
+        int planId,
+        DateTime planStartsOn)
+    {
+        var managers = await userRepository.GetChapterManagerContactsAsync(chapterId);
+        if (managers.Count == 0)
+        {
+            return;
+        }
+
+        var baseUrl = configuration["App:BaseUrl"]?.TrimEnd('/')
+                      ?? throw new InvalidOperationException("App:BaseUrl is not configured.");
+
+        var planLabel = planStartsOn.ToSpanishMonthYear();
+        var progressUrl = $"{baseUrl}/planificaciones/{planId}/cartas";
+        var subject = "Campaña lista para completar";
+        var html = DocumentNotificationMessageFormatter.BuildPlanReadyHtml(planLabel, progressUrl);
+
+        foreach (var manager in managers)
+        {
+            await SendWithRetryAsync(manager.Email, subject, html, planId);
         }
     }
 
@@ -77,6 +109,39 @@ public class DocumentNotificationService(
                     "Document {DocumentId} share {DocumentShareId} notification failed after {MaxAttempts} attempts; leaving unmarked for retry",
                     documentId,
                     share.DocumentShareId,
+                    MaxSendAttempts);
+            }
+        }
+    }
+
+    private async Task SendWithRetryAsync(string email, string subject, string html, int planId)
+    {
+        for (var attempt = 1; attempt <= MaxSendAttempts; attempt++)
+        {
+            try
+            {
+                await emailMessageSender.SendEmailAsync(email, subject, html);
+                return;
+            }
+            catch (Exception ex) when (attempt < MaxSendAttempts)
+            {
+                logger.LogWarning(
+                    ex,
+                    "Plan-ready notification to {Email} for plan {PlanId} attempt {Attempt}/{MaxAttempts} failed",
+                    email,
+                    planId,
+                    attempt,
+                    MaxSendAttempts);
+
+                await Task.Delay(TimeSpan.FromMilliseconds(500 * attempt));
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(
+                    ex,
+                    "Plan-ready notification to {Email} for plan {PlanId} failed after {MaxAttempts} attempts",
+                    email,
+                    planId,
                     MaxSendAttempts);
             }
         }

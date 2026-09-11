@@ -36,9 +36,6 @@ public partial class PlannedDeliveriesList : AuthenticationRequiredComponentBase
     [Inject]
     public ILetterPlanProgressService LetterPlanProgressService { get; set; } = null!;
 
-    [Inject]
-    public IPlanCompletionService PlanCompletionService { get; set; } = null!;
-
     private int LatestCompletedExemptStudents =>
         _latestCompletedProgress?.Rows
             .Where(r => r.IsStudentExempt)
@@ -86,16 +83,6 @@ public partial class PlannedDeliveriesList : AuthenticationRequiredComponentBase
         var chapterId = FonbecClaim.ChapterId.Value;
         _currentPlan = await PlannedDeliveryService.GetCurrentPlanAsync(chapterId);
 
-        if (_currentPlan is not null)
-        {
-            await PlanCompletionService.EvaluateAndUpdateAsync(
-                _currentPlan.PlannedDeliveryId, chapterId, FonbecClaim.UserId);
-
-            // Reload in case auto-complete removed the current plan.
-            _currentPlan = await PlannedDeliveryService.GetCurrentPlanAsync(chapterId);
-        }
-
-        // The current plan may have been auto-completed, so we need to check again.
         if (_currentPlan is not null)
         {
             _currentProgress = await LetterPlanProgressService.GetProgressAsync(
@@ -201,6 +188,16 @@ public partial class PlannedDeliveriesList : AuthenticationRequiredComponentBase
         var result = await PlannedDeliveryService.UpdatePlannedDeliveryAsync(updatePlannedDeliveryInputModel);
 
         Loading = false;
+
+        if (!result.IsSuccess)
+        {
+            var message = result.Errors is { Count: > 0 }
+                ? result.Errors[0]
+                : "No se pudo actualizar la planificación de envíos.";
+            Snackbar.Add(message, Severity.Error);
+            RevertItemChanges(modifiedViewModel.PlannedDeliveryId);
+            return;
+        }
 
         if (!result.AnyAffectedRows)
         {

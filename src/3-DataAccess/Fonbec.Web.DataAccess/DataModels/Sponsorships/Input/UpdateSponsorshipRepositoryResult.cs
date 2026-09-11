@@ -6,6 +6,7 @@ public enum UpdateSponsorshipOutcome
     Overlap,
     UncoversLockedPlan,
     RequiresExemptionRevocation,
+    AddsSlotToCompletedPlan,
     NotFound,
 }
 
@@ -14,4 +15,5 @@ public record UpdateSponsorshipRepositoryResult(
     UpdateSponsorshipOutcome Outcome = UpdateSponsorshipOutcome.Saved,
     IReadOnlyList<DateTime>? UncoveredPlanStartsOn = null,
     IReadOnlyList<DateTime>? ExemptPlanStartsOn = null,
+    IReadOnlyList<DateTime>? CompletedPlanStartsOn = null,
     SponsorshipPeriodMatch PeriodMatch = SponsorshipPeriodMatch.None);

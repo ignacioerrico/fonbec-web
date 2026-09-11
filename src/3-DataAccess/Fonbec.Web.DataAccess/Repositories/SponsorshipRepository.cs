@@ -126,6 +126,48 @@ public class SponsorshipRepository(IDbContextFactory<FonbecWebDbContext> dbConte
             return new CreateSponsorshipRepositoryResult(PeriodMatch: periodMatch);
         }
 
+        var periodsBefore = existingSponsorships
+            .Select(s => (s.StartDate, s.EndDate))
+            .ToList();
+        var periodsAfter = new List<(DateTime StartDate, DateTime? EndDate)>(periodsBefore);
+        if (periodMatch == SponsorshipPeriodMatch.Adjacent)
+        {
+            var adjacentSponsorships = existingSponsorships
+                .Where(s => IsAdjacent(s, startDate, endDate))
+                .ToList();
+            foreach (var adjacent in adjacentSponsorships)
+            {
+                periodsAfter.RemoveAll(p => p.StartDate == adjacent.StartDate && p.EndDate == adjacent.EndDate);
+            }
+
+            var mergedStart = adjacentSponsorships
+                .Select(s => s.StartDate)
+                .Append(startDate)
+                .Min();
+            DateTime? mergedEnd =
+                adjacentSponsorships.Any(s => s.EndDate is null) || endDate is null
+                    ? null
+                    : adjacentSponsorships
+                        .Select(s => s.EndDate!.Value)
+                        .Append(endDate.Value)
+                        .Max();
+            periodsAfter.Add((mergedStart, mergedEnd));
+        }
+        else
+        {
+            periodsAfter.Add((startDate, endDate));
+        }
+
+        var completedPlanStartsOn = await GetNewlyCoveredCompletedPlanStartsOnAsync(
+            db,
+            inputDataModel.StudentId,
+            periodsBefore,
+            periodsAfter);
+        if (completedPlanStartsOn.Count > 0)
+        {
+            return new CreateSponsorshipRepositoryResult(CompletedPlanStartsOn: completedPlanStartsOn);
+        }
+
         if (periodMatch == SponsorshipPeriodMatch.Adjacent)
         {
             var adjacentSponsorships = existingSponsorships
@@ -233,13 +275,36 @@ public class SponsorshipRepository(IDbContextFactory<FonbecWebDbContext> dbConte
                         .Append(endDate.Value)
                         .Max();
 
-            foreach (var duplicate in adjacentSponsorships)
+            mergedSponsorshipIds = adjacentSponsorships.Select(s => s.Id).ToList();
+            remainingOthers = others.Except(adjacentSponsorships).ToList();
+        }
+
+        var periodsBefore = others
+            .Select(s => (s.StartDate, s.EndDate))
+            .Append((sponsorship.StartDate, sponsorship.EndDate))
+            .ToList();
+        var periodsAfter = remainingOthers
+            .Select(s => (s.StartDate, s.EndDate))
+            .Append((startDate, endDate))
+            .ToList();
+        var completedPlanStartsOn = await GetNewlyCoveredCompletedPlanStartsOnAsync(
+            db,
+            sponsorship.StudentId,
+            periodsBefore,
+            periodsAfter);
+        if (completedPlanStartsOn.Count > 0)
+        {
+            return new UpdateSponsorshipRepositoryResult(
+                Outcome: UpdateSponsorshipOutcome.AddsSlotToCompletedPlan,
+                CompletedPlanStartsOn: completedPlanStartsOn);
+        }
+
+        if (periodMatch == SponsorshipPeriodMatch.Adjacent)
+        {
+            foreach (var duplicate in others.Where(s => mergedSponsorshipIds.Contains(s.Id)))
             {
                 duplicate.DisabledById = inputDataModel.UpdatedById;
             }
-
-            mergedSponsorshipIds = adjacentSponsorships.Select(s => s.Id).ToList();
-            remainingOthers = others.Except(adjacentSponsorships).ToList();
         }
 
         var remainingPeriods = remainingOthers
@@ -347,6 +412,36 @@ public class SponsorshipRepository(IDbContextFactory<FonbecWebDbContext> dbConte
         return activeExemptions
             .Where(e => !resultingPeriods.Any(period =>
                 Covers(period.StartDate, period.EndDate, e.PlannedDelivery.StartsOn)))
+            .ToList();
+    }
+
+    private static async Task<List<DateTime>> GetNewlyCoveredCompletedPlanStartsOnAsync(
+        FonbecWebDbContext db,
+        int studentId,
+        IReadOnlyCollection<(DateTime StartDate, DateTime? EndDate)> periodsBefore,
+        IReadOnlyCollection<(DateTime StartDate, DateTime? EndDate)> periodsAfter)
+    {
+        var chapterId = await db.Students
+            .AsNoTracking()
+            .Where(s => s.Id == studentId)
+            .Select(s => (int?)s.ChapterId)
+            .FirstOrDefaultAsync();
+        if (chapterId is null or 0)
+        {
+            return [];
+        }
+
+        var completedStartsOn = await db.PlannedDeliveries
+            .AsNoTracking()
+            .Where(p => p.IsActive && p.ChapterId == chapterId && p.Completed)
+            .Select(p => p.StartsOn)
+            .ToListAsync();
+
+        return completedStartsOn
+            .Where(startsOn =>
+                periodsAfter.Any(period => Covers(period.StartDate, period.EndDate, startsOn))
+                && !periodsBefore.Any(period => Covers(period.StartDate, period.EndDate, startsOn)))
+            .OrderBy(startsOn => startsOn)
             .ToList();
     }
 

@@ -9,6 +9,12 @@ namespace Fonbec.Web.DataAccess.Repositories;
 public interface ILetterPlanProgressRepository
 {
     Task<LetterPlanProgressQueryResultDataModel?> GetProgressAsync(int planId, int chapterId);
+
+    /// <summary>
+    /// Counts computed letter slots for a chapter as of <paramref name="startsOn"/>
+    /// (active students whose sponsorships cover that date).
+    /// </summary>
+    Task<int> CountRequiredSlotsAsync(int chapterId, DateTime startsOn);
 }
 
 public class LetterPlanProgressRepository(
@@ -198,6 +204,31 @@ public class LetterPlanProgressRepository(
             IsPlanCompleted = plan.Completed,
             Rows = rows,
         };
+    }
+
+    public async Task<int> CountRequiredSlotsAsync(int chapterId, DateTime startsOn)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        return await db.Students
+            .AsNoTracking()
+            .Where(s => s.ChapterId == chapterId
+                        && s.IsActive
+                        && !s.IsDeleted)
+            .SelectMany(s => s.Sponsorships
+                .Where(sp =>
+                    sp.IsActive
+                    && sp.StartDate <= startsOn
+                    && (sp.EndDate == null || sp.EndDate >= startsOn)
+                    && (
+                        (sp.SponsorId != null
+                         && sp.Sponsor != null
+                         && sp.Sponsor.IsActive
+                         && !sp.Sponsor.IsDeleted)
+                        || (sp.CompanyId != null
+                            && sp.Company != null
+                            && sp.Company.IsActive))))
+            .CountAsync();
     }
 
     private static LetterFollowUpTaskDataModel CreateFlagTask(

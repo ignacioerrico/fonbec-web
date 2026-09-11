@@ -50,7 +50,13 @@ public class SponsorshipService(ISponsorshipRepository sponsorshipRepository) : 
     {
         var createSponsorshipInputDataModel = inputModel.Adapt<CreateSponsorshipInputDataModel>();
         var result = await sponsorshipRepository.CreateSponsorshipAsync(createSponsorshipInputDataModel);
-        return new CreateSponsorshipResult(result.AffectedRows, MapPeriodStatus(result.PeriodMatch));
+        var completedLabels = (result.CompletedPlanStartsOn ?? [])
+            .Select(d => d.ToSpanishMonthYear())
+            .ToList();
+        return new CreateSponsorshipResult(
+            result.AffectedRows,
+            MapPeriodStatus(result.PeriodMatch),
+            completedLabels);
     }
 
     public async Task<UpdateSponsorshipResult> UpdateSponsorshipAsync(
@@ -64,11 +70,15 @@ public class SponsorshipService(ISponsorshipRepository sponsorshipRepository) : 
         var exemptionLabels = (result.ExemptPlanStartsOn ?? [])
             .Select(d => d.ToSpanishMonthYear())
             .ToList();
+        var completedLabels = (result.CompletedPlanStartsOn ?? [])
+            .Select(d => d.ToSpanishMonthYear())
+            .ToList();
         return new UpdateSponsorshipResult(
             result.AffectedRows,
             MapUpdateStatus(result.Outcome),
             labels,
-            exemptionLabels);
+            exemptionLabels,
+            completedLabels);
     }
 
     private static SponsorshipPeriodStatus MapPeriodStatus(SponsorshipPeriodMatch match) =>
@@ -86,6 +96,8 @@ public class SponsorshipService(ISponsorshipRepository sponsorshipRepository) : 
             UpdateSponsorshipOutcome.UncoversLockedPlan => UpdateSponsorshipStatus.UncoversLockedPlan,
             UpdateSponsorshipOutcome.RequiresExemptionRevocation =>
                 UpdateSponsorshipStatus.RequiresExemptionRevocation,
+            UpdateSponsorshipOutcome.AddsSlotToCompletedPlan =>
+                UpdateSponsorshipStatus.AddsSlotToCompletedPlan,
             UpdateSponsorshipOutcome.NotFound => UpdateSponsorshipStatus.NotFound,
             _ => UpdateSponsorshipStatus.Saved,
         };

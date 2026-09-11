@@ -192,6 +192,17 @@ public partial class SponsorshipEditDialog
                 return;
             }
 
+            if (result.Status == UpdateSponsorshipStatus.AddsSlotToCompletedPlan)
+            {
+                var months = result.CompletedPlanMonthLabels is { Count: > 0 }
+                    ? string.Join(", ", result.CompletedPlanMonthLabels)
+                    : "una campaña completada";
+                Snackbar.Add(
+                    $"No se puede agregar este apadrinamiento a {months} porque esa campaña ya fue completada.",
+                    Severity.Error);
+                return;
+            }
+
             if (result.Status == UpdateSponsorshipStatus.NotFound || !result.AnyAffectedRows)
             {
                 Snackbar.Add("No se pudo actualizar el apadrinamiento.", Severity.Error);

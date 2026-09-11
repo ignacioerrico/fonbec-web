@@ -17,10 +17,18 @@ public interface IPlannedDeliveryService
     Task<CrudResult> UpdatePlannedDeliveryAsync(UpdatePlannedDeliveryInputModel inputModel);
 }
 
-public class PlannedDeliveryService(IPlannedDeliveryRepository plannedDeliveryRepository) : IPlannedDeliveryService
+public class PlannedDeliveryService(
+    IPlannedDeliveryRepository plannedDeliveryRepository,
+    ILetterPlanProgressRepository letterPlanProgressRepository) : IPlannedDeliveryService
 {
     public const string IncompletePlanAlreadyExists =
         "Ya existe una planificación en curso. Debe completarse antes de crear una nueva.";
+
+    public const string NoSlotsForMonth =
+        "No hay apadrinamientos vigentes para ese mes.";
+
+    public const string CannotChangeCompletedPlanDate =
+        "No se puede cambiar el mes de una campaña completada.";
 
     public async Task<CurrentPlannedDeliveryViewModel?> GetCurrentPlanAsync(int chapterId)
     {
@@ -58,6 +66,14 @@ public class PlannedDeliveryService(IPlannedDeliveryRepository plannedDeliveryRe
             return new CrudResult(Errors: [IncompletePlanAlreadyExists]);
         }
 
+        var slotCount = await letterPlanProgressRepository.CountRequiredSlotsAsync(
+            inputModel.ChapterId,
+            inputModel.PlanStartsOn);
+        if (slotCount == 0)
+        {
+            return new CrudResult(Errors: [NoSlotsForMonth]);
+        }
+
         var inputDataModel = inputModel.Adapt<CreatePlannedDeliveryInputDataModel>();
         var affectedRows = await plannedDeliveryRepository.CreatePlannedDeliveryAsync(inputDataModel);
         return new CrudResult(affectedRows);
@@ -65,7 +81,37 @@ public class PlannedDeliveryService(IPlannedDeliveryRepository plannedDeliveryRe
 
     public async Task<CrudResult> UpdatePlannedDeliveryAsync(UpdatePlannedDeliveryInputModel inputModel)
     {
+        var existing = await plannedDeliveryRepository.GetPlanMetadataAsync(inputModel.PlannedDeliveryId);
+        if (existing is null)
+        {
+            return new CrudResult();
+        }
+
+        var dateChanged = existing.StartsOn.Year != inputModel.PlannedDeliveryStartsOn.Year
+                          || existing.StartsOn.Month != inputModel.PlannedDeliveryStartsOn.Month;
+
+        if (dateChanged && existing.Completed)
+        {
+            return new CrudResult(Errors: [CannotChangeCompletedPlanDate]);
+        }
+
+        if (dateChanged && existing.ChapterId is int chapterId)
+        {
+            var slotCount = await letterPlanProgressRepository.CountRequiredSlotsAsync(
+                chapterId,
+                inputModel.PlannedDeliveryStartsOn);
+            if (slotCount == 0)
+            {
+                return new CrudResult(Errors: [NoSlotsForMonth]);
+            }
+        }
+
         var updatePlannedDeliveryInputDataModel = inputModel.Adapt<UpdatePlannedDeliveryInputDataModel>();
+        if (existing.Completed)
+        {
+            updatePlannedDeliveryInputDataModel.PlannedDeliveryStartsOn = existing.StartsOn;
+        }
+
         var affectedRows = await plannedDeliveryRepository.UpdatePlannedDeliveryAsync(updatePlannedDeliveryInputDataModel);
         return new CrudResult(affectedRows);
     }

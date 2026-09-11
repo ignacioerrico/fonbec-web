@@ -21,7 +21,6 @@ public interface ILetterPlanProgressService
 public class LetterPlanProgressService(
     ILetterPlanProgressRepository letterPlanProgressRepository,
     ILetterExemptionRepository letterExemptionRepository,
-    IPlanCompletionService planCompletionService,
     IStudentRepository studentRepository,
     TimeProvider timeProvider) : ILetterPlanProgressService
 {
@@ -81,11 +80,6 @@ public class LetterPlanProgressService(
             managerUserId,
             timeProvider.GetUtcNow().UtcDateTime);
 
-        if (created)
-        {
-            await planCompletionService.EvaluateAndUpdateAsync(planId, managerChapterId, managerUserId);
-        }
-
         return created;
     }
 
@@ -99,9 +93,8 @@ public class LetterPlanProgressService(
         }
 
         // Plan chapter scoping: progress is null when the plan is outside the manager's chapter.
-        // Revoke remains allowed on completed plans so an unapproved reintroduced slot can reopen them.
         var progress = await letterPlanProgressRepository.GetProgressAsync(planId, managerChapterId);
-        if (progress is null)
+        if (progress is null || progress.IsPlanCompleted)
         {
             return false;
         }
@@ -111,11 +104,6 @@ public class LetterPlanProgressService(
             planId,
             managerUserId,
             timeProvider.GetUtcNow().UtcDateTime);
-
-        if (revoked)
-        {
-            await planCompletionService.EvaluateAndUpdateAsync(planId, managerChapterId, managerUserId);
-        }
 
         return revoked;
     }

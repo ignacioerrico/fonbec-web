@@ -43,4 +43,10 @@ public static class DocumentNotificationMessageFormatter
 
         return BuildBodyHtml(salutation, godchildTerm, studentName, historyUrl);
     }
+
+    public static string BuildPlanReadyHtml(string planLabel, string progressUrl) =>
+        $"""
+         <p>La campaña de {planLabel} está lista para marcarse como completada.</p>
+         <p><a href="{progressUrl}">Ver avance de la campaña</a></p>
+         """;
 }

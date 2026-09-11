@@ -9,6 +9,9 @@ public class LetterPlanProgressViewModel
     public bool IsPlanCompleted { get; set; }
     public LetterPlanProgressSummaryViewModel Summary { get; set; } = null!;
     public List<LetterPlanProgressRowViewModel> Rows { get; set; } = [];
+
+    public bool IsReadyToComplete =>
+        !IsPlanCompleted && Rows.Select(row => row.Status).IsReadyToComplete();
 }
 
 public class LetterPlanProgressSummaryViewModel

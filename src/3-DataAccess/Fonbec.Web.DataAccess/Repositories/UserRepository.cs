@@ -17,6 +17,7 @@ public interface IUserRepository
     Task<(bool isPasswordValid, List<string> errors)> ValidatePasswordAsync(string password);
     Task<AllUsersDataModel> GetAllUsersAsync(int? chapterId);
     Task<IEnumerable<SelectableDataModel<int>>> GetAllUsersInRoleForSelectionAsync(string role, int? chapterId = null);
+    Task<IReadOnlyList<ChapterManagerContactDataModel>> GetChapterManagerContactsAsync(int chapterId);
     Task<GetUserOutputDataModel?> GetUserAsync(int userId);
     Task<(int userId, List<string> errors)> CreateUserAsync(CreateUserInputDataModel model);
     Task<bool> UpdateUserAsync(UpdateUserInputDataModel model);
@@ -138,6 +139,20 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
             .OrderBy(u => u.Value);
 
         return activeUsers;
+    }
+
+    public async Task<IReadOnlyList<ChapterManagerContactDataModel>> GetChapterManagerContactsAsync(int chapterId)
+    {
+        var usersInRole = await userManager.GetUsersInRoleAsync(FonbecRole.Manager);
+
+        return usersInRole
+            .Where(user => user.ChapterId == chapterId)
+            .Where(user => !user.LockoutEnabled
+                           || user.LockoutEnd == null
+                           || user.LockoutEnd <= DateTimeOffset.UtcNow)
+            .Where(user => !string.IsNullOrWhiteSpace(user.Email))
+            .Select(user => new ChapterManagerContactDataModel(user.Email!, user.FullName()))
+            .ToList();
     }
 
     public async Task<GetUserOutputDataModel?> GetUserAsync(int userId)

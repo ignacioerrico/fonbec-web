@@ -77,17 +77,18 @@ internal sealed class DocumentTestFixture
             })
             .Build();
 
-        var notificationService = new DocumentNotificationService(
-            DocumentRepository,
-            EmailSender,
-            configuration,
-            NullLogger<DocumentNotificationService>.Instance);
         var pages = new List<PageAccessInfo>
         {
             new(DocumentPermission.DigitalImprovement, "Digital improvement", ["Reviewer", "Manager"]),
         };
 
         var userRepository = CreateUserRepositorySubstitute();
+        var notificationService = new DocumentNotificationService(
+            DocumentRepository,
+            userRepository,
+            EmailSender,
+            configuration,
+            NullLogger<DocumentNotificationService>.Instance);
         var userService = new UserService(
             userRepository,
             Substitute.For<IPasswordGeneratorWrapper>(),

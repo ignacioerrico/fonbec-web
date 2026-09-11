@@ -18,7 +18,6 @@ public class LetterPlanProgressServiceTests
 
     private readonly ILetterPlanProgressRepository _progressRepository = Substitute.For<ILetterPlanProgressRepository>();
     private readonly ILetterExemptionRepository _exemptionRepository = Substitute.For<ILetterExemptionRepository>();
-    private readonly IPlanCompletionService _planCompletionService = Substitute.For<IPlanCompletionService>();
     private readonly IStudentRepository _studentRepository = Substitute.For<IStudentRepository>();
     private readonly LetterPlanProgressService _service;
 
@@ -27,7 +26,6 @@ public class LetterPlanProgressServiceTests
         _service = new LetterPlanProgressService(
             _progressRepository,
             _exemptionRepository,
-            _planCompletionService,
             _studentRepository,
             TimeProvider.System);
     }
@@ -232,8 +230,6 @@ public class LetterPlanProgressServiceTests
         var result = await _service.ExemptStudentAsync(PlanId, StudentId, ChapterId, ManagerId, "Motivo");
 
         result.Should().BeFalse();
-        await _planCompletionService.DidNotReceiveWithAnyArgs()
-            .EvaluateAndUpdateAsync(default, default, default);
     }
 
     [Fact]
@@ -252,8 +248,8 @@ public class LetterPlanProgressServiceTests
         var result = await _service.ExemptStudentAsync(PlanId, StudentId, ChapterId, ManagerId, "Motivo");
 
         result.Should().BeTrue();
-        await _planCompletionService.Received(1)
-            .EvaluateAndUpdateAsync(PlanId, ChapterId, ManagerId);
+        await _exemptionRepository.Received(1)
+            .CreateExemptionAsync(StudentId, PlanId, ChapterId, "Motivo", ManagerId, Arg.Any<DateTime>());
     }
 
     [Fact]
@@ -280,7 +276,7 @@ public class LetterPlanProgressServiceTests
     }
 
     [Fact]
-    public async Task RevokeExemptionAsync_Revokes_And_Reevaluates_Even_When_Plan_Completed()
+    public async Task RevokeExemptionAsync_Returns_False_When_Plan_Completed()
     {
         _studentRepository.GetStudentChapterIdAsync(StudentId).Returns(ChapterId);
         _progressRepository.GetProgressAsync(PlanId, ChapterId).Returns(new LetterPlanProgressQueryResultDataModel
@@ -289,14 +285,12 @@ public class LetterPlanProgressServiceTests
             IsPlanCompleted = true,
             Rows = [ExemptRow(StudentId)],
         });
-        _exemptionRepository.RevokeExemptionAsync(StudentId, PlanId, ManagerId, Arg.Any<DateTime>())
-            .Returns(true);
 
         var result = await _service.RevokeExemptionAsync(PlanId, StudentId, ChapterId, ManagerId);
 
-        result.Should().BeTrue();
-        await _planCompletionService.Received(1)
-            .EvaluateAndUpdateAsync(PlanId, ChapterId, ManagerId);
+        result.Should().BeFalse();
+        await _exemptionRepository.DidNotReceiveWithAnyArgs()
+            .RevokeExemptionAsync(default, default, default, default);
     }
 
     [Fact]
@@ -314,8 +308,6 @@ public class LetterPlanProgressServiceTests
         var result = await _service.RevokeExemptionAsync(PlanId, StudentId, ChapterId, ManagerId);
 
         result.Should().BeFalse();
-        await _planCompletionService.DidNotReceiveWithAnyArgs()
-            .EvaluateAndUpdateAsync(default, default, default);
     }
 
     private static LetterPlanProgressRowDataModel Row(

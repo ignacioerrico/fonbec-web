@@ -238,6 +238,15 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
                 return;
             }
 
+            if (result.CompletedPlanMonthLabels is { Count: > 0 })
+            {
+                var months = string.Join(", ", result.CompletedPlanMonthLabels);
+                Snackbar.Add(
+                    $"No se puede agregar este apadrinamiento a {months} porque esa campaña ya fue completada.",
+                    Severity.Error);
+                return;
+            }
+
             if (!result.AnyAffectedRows)
             {
                 Snackbar.Add("No se pudo crear la asignación.", Severity.Error);

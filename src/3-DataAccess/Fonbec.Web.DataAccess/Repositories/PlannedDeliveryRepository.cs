@@ -15,6 +15,7 @@ public interface IPlannedDeliveryRepository
     Task<List<DateTime>> GetPlannedDeliveryDatesAsync(int chapterId, DateTime? from);
     Task<int> CreatePlannedDeliveryAsync(CreatePlannedDeliveryInputDataModel dataModel);
     Task<int> UpdatePlannedDeliveryAsync(UpdatePlannedDeliveryInputDataModel dataModel);
+    Task<PlannedDeliveryMetadataDataModel?> GetPlanMetadataAsync(int planId);
 
     /// <summary>
     /// Sets the plan's <c>Completed</c> flag to <paramref name="completed"/>. When completing, records the
@@ -149,6 +150,23 @@ public class PlannedDeliveryRepository(
 
         db.PlannedDeliveries.Add(plannedDelivery);
         return await db.SaveChangesAsync();
+    }
+
+    public async Task<PlannedDeliveryMetadataDataModel?> GetPlanMetadataAsync(int planId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        return await db.PlannedDeliveries
+            .AsNoTracking()
+            .Where(pd => pd.Id == planId && pd.IsActive)
+            .Select(pd => new PlannedDeliveryMetadataDataModel
+            {
+                PlannedDeliveryId = pd.Id,
+                ChapterId = pd.ChapterId,
+                StartsOn = pd.StartsOn,
+                Completed = pd.Completed,
+            })
+            .FirstOrDefaultAsync();
     }
 
     public async Task<int> UpdatePlannedDeliveryAsync(UpdatePlannedDeliveryInputDataModel dataModel)

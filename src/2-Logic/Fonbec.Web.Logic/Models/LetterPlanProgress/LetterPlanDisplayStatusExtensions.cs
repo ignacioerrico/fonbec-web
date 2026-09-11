@@ -78,4 +78,16 @@ public static class LetterPlanDisplayStatusExtensions
                 : Math.Round(100m * approved / totalRequired, 0),
         };
     }
+
+    /// <summary>
+    /// A plan is ready to complete when it has at least one computed slot and every slot
+    /// is approved or exempt (including all-exempt plans).
+    /// </summary>
+    public static bool IsReadyToComplete(this IEnumerable<LetterPlanDisplayStatus> statuses)
+    {
+        var list = statuses as IList<LetterPlanDisplayStatus> ?? statuses.ToList();
+        return list.Count > 0
+               && list.All(status => status is LetterPlanDisplayStatus.Approved
+                   or LetterPlanDisplayStatus.Exempt);
+    }
 }

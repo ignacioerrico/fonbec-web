@@ -108,18 +108,9 @@
                                                   AuditableViewModel="@context.Item" />
                         </CellTemplate>
                         <EditTemplate>
-                            <MudDatePicker Label="Mes y Año"
-                                           @bind-Date="@_plannedDeliveryStartsOn"
-                                           MinDate="@_minDate"
-                                           OpenTo="OpenTo.Month"
-                                           FixDay="1"
-                                           DateFormat="MMMM \d\e yyyy"
-                                           TitleDateFormat="MMM yyyy"
-                                           Culture="@System.Globalization.CultureInfo.GetCultureInfo("es-AR")"
-                                           Required="true" RequiredError="Se debe especificar el mes y el año de recolección de cartas."
-                                           Validation="@((Func<DateTime?, string>)ValidatePlanIsNotDuplicate)"
-                                           Variant="Variant.Outlined"
-                                           Margin="Margin.Dense" />
+                            <MudText Typo="Typo.body1">
+                                @context.Item.PlannedDeliveryStartsOnText
+                            </MudText>
                         </EditTemplate>
                     </PropertyColumn>
 

@@ -24,6 +24,17 @@ else if (_viewModel is not null)
 
         <MudSpacer />
 
+        @if (_viewModel is { IsReadyToComplete: true })
+        {
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Success"
+                       StartIcon="@Icons.Material.Filled.CheckCircle"
+                       OnClick="HandleCompletePlanClicked"
+                       Disabled="Loading">
+                Completar campaña
+            </MudButton>
+        }
+
         <MudSwitch @bind-Value="_sortByLastName" LabelPlacement="Placement.Left">
             @(_sortByLastName ? "Apellido, Nombre" : "Nombre Apellido")
         </MudSwitch>
@@ -127,7 +138,7 @@ else if (_viewModel is not null)
                 <TemplateColumn Title="Acciones" Filterable="false" Sortable="false">
                     <CellTemplate>
                         <div class="letter-actions">
-                            @if (context.Item.IsStudentExempt)
+                            @if (context.Item.IsStudentExempt && !_viewModel.IsPlanCompleted)
                             {
                                 <MudTooltip Text="Quitar exención" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
                                     <MudIconButton Icon="@Icons.Material.Filled.LockOpen"

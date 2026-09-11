@@ -7,6 +7,7 @@ using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Constants;
 using Fonbec.Web.Logic.Models.Documents;
 using Fonbec.Web.Logic.Models.Documents.Input;
+using Fonbec.Web.Logic.Models.PlannedDeliveries;
 using Fonbec.Web.Logic.Models.Results;
 using Fonbec.Web.Logic.Models.Review;
 using Fonbec.Web.Logic.Models.Users.Output;
@@ -571,6 +572,14 @@ public class DocumentService(
             return new ReviewResult(false, [DocumentMessages.LetterConfirmationsRequired]);
         }
 
+        PlanReadinessResult? readinessBefore = null;
+        if (document is Letter letterBefore)
+        {
+            readinessBefore = await planCompletionService.GetReadinessAsync(
+                letterBefore.PlanId,
+                letterBefore.ChapterId);
+        }
+
         var dataModel = input.Adapt<DataAccess.DataModels.Documents.Input.ApproveLetterInputDataModel>();
         var errors = await documentRepository.ApproveLetterAsync(dataModel);
         if (errors.Count > 0)
@@ -582,19 +591,27 @@ public class DocumentService(
 
         if (document is Letter letter)
         {
-            // Eventual consistency: a failure to re-evaluate plan completion must not roll back the
-            // already-committed letter approval. The plan can be reconciled later.
+            // Eventual consistency: a failure to notify managers must not roll back the
+            // already-committed letter approval.
             try
             {
-                await planCompletionService.EvaluateAndUpdateAsync(
+                var readinessAfter = await planCompletionService.GetReadinessAsync(
                     letter.PlanId,
-                    letter.ChapterId,
-                    input.ReviewerId);
+                    letter.ChapterId);
+
+                if (readinessBefore is { IsCompleted: false, IsReadyToComplete: false }
+                    && readinessAfter.IsReadyToComplete)
+                {
+                    await documentNotificationService.NotifyChapterManagersPlanReadyAsync(
+                        letter.ChapterId,
+                        letter.PlanId,
+                        readinessAfter.PlanStartsOn);
+                }
             }
             catch (Exception ex)
             {
                 logger.LogError(ex,
-                    "Failed to evaluate plan completion for plan {PlanId} in chapter {ChapterId} after approving letter {DocumentId}.",
+                    "Failed to notify managers that plan {PlanId} in chapter {ChapterId} is ready after approving letter {DocumentId}.",
                     letter.PlanId, letter.ChapterId, input.DocumentId);
             }
         }

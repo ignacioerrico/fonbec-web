@@ -9,4 +9,5 @@ public enum SponsorshipPeriodMatch
 
 public record CreateSponsorshipRepositoryResult(
     int AffectedRows = 0,
-    SponsorshipPeriodMatch PeriodMatch = SponsorshipPeriodMatch.None);
+    SponsorshipPeriodMatch PeriodMatch = SponsorshipPeriodMatch.None,
+    IReadOnlyList<DateTime>? CompletedPlanStartsOn = null);

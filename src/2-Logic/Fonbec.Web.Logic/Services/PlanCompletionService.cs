@@ -6,17 +6,19 @@ namespace Fonbec.Web.Logic.Services;
 
 public interface IPlanCompletionService
 {
-    /// <summary>
-    /// Re-evaluates plan completion for <paramref name="planId"/> in <paramref name="chapterId"/> and
-    /// automatically completes or reopens the plan when the stored state no longer matches the letter
-    /// approval reality. Auto-complete requires at least one required letter slot (empty plans are never
-    /// auto-completed). When the flag changes, <c>LastUpdatedById</c> is set to
-    /// <paramref name="triggeredByUserId"/>.
-    /// </summary>
-    Task<EvaluatePlanCompletionResult> EvaluateAndUpdateAsync(
+    Task<PlanReadinessResult> GetReadinessAsync(
         int planId,
         int chapterId,
-        int triggeredByUserId,
+        CancellationToken cancellationToken = default);
+
+    /// <summary>
+    /// Marks the plan complete when it is ready. Idempotent if already complete.
+    /// Never reopens a completed plan.
+    /// </summary>
+    Task<CompletePlanResult> CompletePlanAsync(
+        int planId,
+        int chapterId,
+        int completedByUserId,
         CancellationToken cancellationToken = default);
 }
 
@@ -24,65 +26,73 @@ public class PlanCompletionService(
     ILetterPlanProgressRepository letterPlanProgressRepository,
     IPlannedDeliveryRepository plannedDeliveryRepository) : IPlanCompletionService
 {
-    public async Task<EvaluatePlanCompletionResult> EvaluateAndUpdateAsync(
+    public const string PlanNotFound = "No se encontró la planificación.";
+    public const string PlanNotReady = "La campaña aún no está lista para completar.";
+
+    public async Task<PlanReadinessResult> GetReadinessAsync(
         int planId,
         int chapterId,
-        int triggeredByUserId,
         CancellationToken cancellationToken = default)
     {
         var progress = await letterPlanProgressRepository.GetProgressAsync(planId, chapterId);
         if (progress is null)
         {
-            return new EvaluatePlanCompletionResult();
+            return new PlanReadinessResult();
         }
 
-        var wasComplete = progress.IsPlanCompleted;
+        return BuildReadiness(progress);
+    }
 
-        // Reuse the shared required-slot / current-letter / exemption rules: exempt slots are
-        // excluded from the required set and treated as satisfied for completion purposes. Using the
-        // same summary builder as the progress UI guarantees the counts cannot drift.
-        var summary = progress.Rows
+    public async Task<CompletePlanResult> CompletePlanAsync(
+        int planId,
+        int chapterId,
+        int completedByUserId,
+        CancellationToken cancellationToken = default)
+    {
+        var progress = await letterPlanProgressRepository.GetProgressAsync(planId, chapterId);
+        if (progress is null)
+        {
+            return new CompletePlanResult { Errors = [PlanNotFound] };
+        }
+
+        if (progress.IsPlanCompleted)
+        {
+            return new CompletePlanResult { Success = true, AlreadyCompleted = true };
+        }
+
+        var readiness = BuildReadiness(progress);
+        if (!readiness.IsReadyToComplete)
+        {
+            return new CompletePlanResult { Errors = [PlanNotReady] };
+        }
+
+        var changed = await plannedDeliveryRepository
+            .SetPlanCompletedAsync(planId, completed: true, completedByUserId);
+
+        return new CompletePlanResult
+        {
+            Success = true,
+            StatusChanged = changed,
+        };
+    }
+
+    private static PlanReadinessResult BuildReadiness(
+        DataAccess.DataModels.LetterPlanProgress.LetterPlanProgressQueryResultDataModel progress)
+    {
+        var statuses = progress.Rows
             .Select(row => LetterPlanDisplayStatusExtensions.FromRow(row.IsExempt, row.LetterStatus))
-            .ToSummary();
+            .ToList();
+        var summary = statuses.ToSummary();
 
-        var totalRequired = summary.TotalRequired;
-        var approvedCount = summary.Approved;
-
-        // Empty-plan rule: never auto-complete a plan with no required letter slots, and leave the
-        // stored flag untouched.
-        if (totalRequired == 0)
+        return new PlanReadinessResult
         {
-            return new EvaluatePlanCompletionResult
-            {
-                WasComplete = wasComplete,
-                IsComplete = false,
-                TotalRequired = 0,
-                ApprovedCount = 0,
-                StatusChanged = false,
-            };
-        }
-
-        var isComplete = summary.AllApproved;
-
-        var statusChanged = false;
-        if (isComplete && !wasComplete)
-        {
-            statusChanged = await plannedDeliveryRepository
-                .SetPlanCompletedAsync(planId, completed: true, triggeredByUserId);
-        }
-        else if (!isComplete && wasComplete)
-        {
-            statusChanged = await plannedDeliveryRepository
-                .SetPlanCompletedAsync(planId, completed: false, triggeredByUserId);
-        }
-
-        return new EvaluatePlanCompletionResult
-        {
-            WasComplete = wasComplete,
-            IsComplete = isComplete,
-            TotalRequired = totalRequired,
-            ApprovedCount = approvedCount,
-            StatusChanged = statusChanged,
+            PlanFound = true,
+            IsCompleted = progress.IsPlanCompleted,
+            IsReadyToComplete = statuses.IsReadyToComplete(),
+            PlanStartsOn = progress.PlanStartsOn,
+            SlotCount = statuses.Count,
+            TotalRequired = summary.TotalRequired,
+            ApprovedCount = summary.Approved,
         };
     }
 }

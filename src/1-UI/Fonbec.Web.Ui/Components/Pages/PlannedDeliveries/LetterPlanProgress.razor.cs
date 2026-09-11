@@ -30,6 +30,9 @@ public partial class LetterPlanProgress
     public ILetterPlanProgressService LetterPlanProgressService { get; set; } = null!;
 
     [Inject]
+    public IPlanCompletionService PlanCompletionService { get; set; } = null!;
+
+    [Inject]
     public ILetterFollowUpService LetterFollowUpService { get; set; } = null!;
 
     [Inject]
@@ -139,6 +142,7 @@ public partial class LetterPlanProgress
             .ToList();
 
         return studentRows.Count > 0
+               && !_viewModel.IsPlanCompleted
                && studentRows.All(LetterPendingUpload);
     }
 
@@ -261,6 +265,11 @@ public partial class LetterPlanProgress
 
         Snackbar.Add("Exención registrada.", Severity.Success);
         await ReloadAsync();
+
+        if (_viewModel is { IsReadyToComplete: true })
+        {
+            await PromptCompletePlanAsync();
+        }
     }
 
     private async Task RevokeExemptionAsync(int studentId)
@@ -316,5 +325,64 @@ public partial class LetterPlanProgress
         }
 
         RefreshFilterOptions();
+    }
+
+    private async Task PromptCompletePlanAsync()
+    {
+        var dialogResult = await DialogService.ShowMessageBox(
+            "Completar campaña",
+            "Todas las cartas de esta campaña están cubiertas. ¿Querés marcarla como completada?",
+            yesText: "Completar campaña",
+            cancelText: "Ahora no");
+
+        if (dialogResult == true)
+        {
+            await CompletePlanAsync(confirmed: true);
+        }
+    }
+
+    private Task HandleCompletePlanClicked() => CompletePlanAsync(confirmed: false);
+
+    private async Task CompletePlanAsync(bool confirmed)
+    {
+        if (!confirmed)
+        {
+            var dialogResult = await DialogService.ShowMessageBox(
+                "Completar campaña",
+                "¿Confirmás que querés marcar esta campaña como completada?",
+                yesText: "Completar campaña",
+                cancelText: "Cancelar");
+
+            if (dialogResult != true)
+            {
+                return;
+            }
+        }
+
+        if (FonbecClaim.ChapterId is null)
+        {
+            return;
+        }
+
+        Loading = true;
+
+        var result = await PlanCompletionService.CompletePlanAsync(
+            PlanId,
+            FonbecClaim.ChapterId.Value,
+            FonbecClaim.UserId);
+
+        Loading = false;
+
+        if (!result.Success)
+        {
+            var message = result.Errors.Count > 0
+                ? result.Errors[0]
+                : "No se pudo completar la campaña.";
+            Snackbar.Add(message, Severity.Error);
+            return;
+        }
+
+        Snackbar.Add("La campaña fue marcada como completada.", Severity.Success);
+        await ReloadAsync();
     }
 }
