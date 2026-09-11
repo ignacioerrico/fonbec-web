@@ -47,6 +47,67 @@ public class SponsorshipServiceTests
         result.PeriodStatus.Should().Be(SponsorshipPeriodStatus.ExtendsExisting);
     }
 
+    [Fact]
+    public async Task UpdateSponsorshipAsync_Maps_Locked_Plan_Months()
+    {
+        _repository.UpdateSponsorshipAsync(Arg.Any<UpdateSponsorshipInputDataModel>())
+            .Returns(new UpdateSponsorshipRepositoryResult(
+                0,
+                UpdateSponsorshipOutcome.UncoversLockedPlan,
+                [new DateTime(2026, 9, 1)]));
+
+        var result = await _service.UpdateSponsorshipAsync(
+            new UpdateSponsorshipInputModel(
+                SponsorshipId: 1,
+                SponsorshipStartDate: new DateTime(2026, 1, 1),
+                SponsorshipEndDate: new DateTime(2026, 8, 31),
+                SponsorshipNotes: string.Empty,
+                UpdatedById: 30));
+
+        result.Status.Should().Be(UpdateSponsorshipStatus.UncoversLockedPlan);
+        result.LockedPlanMonthLabels.Should().Equal("Septiembre de 2026");
+        result.AnyAffectedRows.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task UpdateSponsorshipAsync_Maps_Overlap()
+    {
+        _repository.UpdateSponsorshipAsync(Arg.Any<UpdateSponsorshipInputDataModel>())
+            .Returns(new UpdateSponsorshipRepositoryResult(
+                Outcome: UpdateSponsorshipOutcome.Overlap,
+                PeriodMatch: SponsorshipPeriodMatch.Overlap));
+
+        var result = await _service.UpdateSponsorshipAsync(
+            new UpdateSponsorshipInputModel(
+                SponsorshipId: 1,
+                SponsorshipStartDate: new DateTime(2026, 1, 1),
+                SponsorshipEndDate: new DateTime(2026, 6, 30),
+                SponsorshipNotes: string.Empty,
+                UpdatedById: 30));
+
+        result.Status.Should().Be(UpdateSponsorshipStatus.OverlapsExisting);
+    }
+
+    [Fact]
+    public async Task UpdateSponsorshipAsync_Maps_Exemptions_Requiring_Confirmation()
+    {
+        _repository.UpdateSponsorshipAsync(Arg.Any<UpdateSponsorshipInputDataModel>())
+            .Returns(new UpdateSponsorshipRepositoryResult(
+                Outcome: UpdateSponsorshipOutcome.RequiresExemptionRevocation,
+                ExemptPlanStartsOn: [new DateTime(2026, 9, 1)]));
+
+        var result = await _service.UpdateSponsorshipAsync(
+            new UpdateSponsorshipInputModel(
+                SponsorshipId: 1,
+                SponsorshipStartDate: new DateTime(2026, 1, 1),
+                SponsorshipEndDate: new DateTime(2026, 8, 31),
+                SponsorshipNotes: string.Empty,
+                UpdatedById: 30));
+
+        result.Status.Should().Be(UpdateSponsorshipStatus.RequiresExemptionRevocation);
+        result.ExemptPlanMonthLabels.Should().Equal("Septiembre de 2026");
+    }
+
     private static CreateSponsorshipInputModel CreateInput() =>
         new(
             StudentId: 10,

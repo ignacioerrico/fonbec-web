@@ -1,5 +1,6 @@
 ﻿using Fonbec.Web.DataAccess.DataModels.Sponsorships.Input;
 using Fonbec.Web.DataAccess.Repositories;
+using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models.Sponsorships;
 using Fonbec.Web.Logic.Models.Sponsorships.Input;
 using Mapster;
@@ -11,7 +12,10 @@ public interface ISponsorshipService
     Task<SponsorshipsListViewModel> GetAllSponsorshipsAsync(int studentId);
     Task<SponsorshipPeriodStatus> GetSponsorshipPeriodStatusAsync(
         CreateSponsorshipInputModel inputModel);
+    Task<SponsorshipPeriodStatus> GetSponsorshipPeriodStatusForUpdateAsync(
+        UpdateSponsorshipInputModel inputModel);
     Task<CreateSponsorshipResult> CreateSponsorshipAsync(CreateSponsorshipInputModel inputModel);
+    Task<UpdateSponsorshipResult> UpdateSponsorshipAsync(UpdateSponsorshipInputModel inputModel);
 }
 
 public class SponsorshipService(ISponsorshipRepository sponsorshipRepository) : ISponsorshipService
@@ -32,6 +36,15 @@ public class SponsorshipService(ISponsorshipRepository sponsorshipRepository) : 
         return MapPeriodStatus(match);
     }
 
+    public async Task<SponsorshipPeriodStatus> GetSponsorshipPeriodStatusForUpdateAsync(
+        UpdateSponsorshipInputModel inputModel)
+    {
+        var updateInputDataModel = inputModel.Adapt<UpdateSponsorshipInputDataModel>();
+        var match = await sponsorshipRepository.GetSponsorshipPeriodMatchForUpdateAsync(
+            updateInputDataModel);
+        return MapPeriodStatus(match);
+    }
+
     public async Task<CreateSponsorshipResult> CreateSponsorshipAsync(
         CreateSponsorshipInputModel inputModel)
     {
@@ -40,11 +53,40 @@ public class SponsorshipService(ISponsorshipRepository sponsorshipRepository) : 
         return new CreateSponsorshipResult(result.AffectedRows, MapPeriodStatus(result.PeriodMatch));
     }
 
+    public async Task<UpdateSponsorshipResult> UpdateSponsorshipAsync(
+        UpdateSponsorshipInputModel inputModel)
+    {
+        var updateInputDataModel = inputModel.Adapt<UpdateSponsorshipInputDataModel>();
+        var result = await sponsorshipRepository.UpdateSponsorshipAsync(updateInputDataModel);
+        var labels = (result.UncoveredPlanStartsOn ?? [])
+            .Select(d => d.ToSpanishMonthYear())
+            .ToList();
+        var exemptionLabels = (result.ExemptPlanStartsOn ?? [])
+            .Select(d => d.ToSpanishMonthYear())
+            .ToList();
+        return new UpdateSponsorshipResult(
+            result.AffectedRows,
+            MapUpdateStatus(result.Outcome),
+            labels,
+            exemptionLabels);
+    }
+
     private static SponsorshipPeriodStatus MapPeriodStatus(SponsorshipPeriodMatch match) =>
         match switch
         {
             SponsorshipPeriodMatch.Overlap => SponsorshipPeriodStatus.OverlapsExisting,
             SponsorshipPeriodMatch.Adjacent => SponsorshipPeriodStatus.ExtendsExisting,
             _ => SponsorshipPeriodStatus.Available,
+        };
+
+    private static UpdateSponsorshipStatus MapUpdateStatus(UpdateSponsorshipOutcome outcome) =>
+        outcome switch
+        {
+            UpdateSponsorshipOutcome.Overlap => UpdateSponsorshipStatus.OverlapsExisting,
+            UpdateSponsorshipOutcome.UncoversLockedPlan => UpdateSponsorshipStatus.UncoversLockedPlan,
+            UpdateSponsorshipOutcome.RequiresExemptionRevocation =>
+                UpdateSponsorshipStatus.RequiresExemptionRevocation,
+            UpdateSponsorshipOutcome.NotFound => UpdateSponsorshipStatus.NotFound,
+            _ => UpdateSponsorshipStatus.Saved,
         };
 }

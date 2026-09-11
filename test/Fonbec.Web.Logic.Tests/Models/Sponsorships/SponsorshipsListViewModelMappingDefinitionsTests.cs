@@ -40,6 +40,7 @@ public class SponsorshipsListViewModelMappingDefinitionsTests : MappingTestBase
                         LastName = "Sponsor1 LastName",
                     },
                     SponsorshipStartDate = oldestStart,
+                    LockedPlanStartsOn = [new DateTime(2025, 3, 1)],
                 },
                 new(Auditable)
                 {
@@ -64,6 +65,8 @@ public class SponsorshipsListViewModelMappingDefinitionsTests : MappingTestBase
         result.Sponsorships[0].SponsorshipStartDateString.Should().Be("Marzo de 2025");
         result.Sponsorships[0].SponsorshipEndDate.Should().BeNull();
         result.Sponsorships[0].SponsorshipEndDateString.Should().Be("—");
+        result.Sponsorships[0].LockedPlanStartsOn.Should().Equal(new DateTime(2025, 3, 1));
+        result.Sponsorships[0].LockedPlanMonthLabels.Should().Equal("Marzo de 2025");
 
         result.Sponsorships[1].IsSponsoredByCompany.Should().BeTrue();
         result.Sponsorships[1].SponsorshipFullName.Should().Be("Company3 Name");

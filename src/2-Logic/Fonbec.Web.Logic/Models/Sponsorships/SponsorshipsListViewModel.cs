@@ -27,6 +27,10 @@ public class SponsorshipsSponsorshipsListViewModel : AuditableViewModel
     public string SponsorshipStartDateString { get; set; } = null!;
     public DateTime? SponsorshipEndDate { get; set; }
     public string SponsorshipEndDateString { get; set; } = null!;
+    public List<DateTime> LockedPlanStartsOn { get; set; } = [];
+
+    public List<string> LockedPlanMonthLabels =>
+        LockedPlanStartsOn.Select(d => d.ToSpanishMonthYear()).ToList();
 
     public bool IsCurrentlyActive => TimelineStatus == SponsorshipTimelineStatus.Active;
 
@@ -79,6 +83,7 @@ public class SponsorshipsListViewModelMappingDefinitions : IRegister
             .Map(dest => dest.SponsorshipEndDateString,
                 src => src.SponsorshipEndDate.HasValue
                     ? src.SponsorshipEndDate.Value.ToSpanishMonthYear()
-                    : "—");
+                    : "—")
+            .Map(dest => dest.LockedPlanStartsOn, src => src.LockedPlanStartsOn);
     }
 }

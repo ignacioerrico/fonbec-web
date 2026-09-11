@@ -17,4 +17,10 @@ public class AllSponsorshipsSponsorshipsDataModel(Auditable auditable) : Auditab
     public Company? Company { get; set; }
     public DateTime SponsorshipStartDate { get; set; }
     public DateTime? SponsorshipEndDate { get; set; }
+
+    /// <summary>
+    /// Plan <c>StartsOn</c> dates with an uploaded letter for this student + recipient that
+    /// this row uniquely covers. The edit UI must keep these months inside the period.
+    /// </summary>
+    public List<DateTime> LockedPlanStartsOn { get; set; } = [];
 }

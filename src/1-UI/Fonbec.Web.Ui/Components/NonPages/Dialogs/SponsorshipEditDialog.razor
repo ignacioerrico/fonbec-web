@@ -1,0 +1,92 @@
+@using Fonbec.Web.DataAccess.Constants
+@using Fonbec.Web.Logic.Models.Sponsorships
+
+<MudDialog>
+    <TitleContent>
+        <MudText Typo="Typo.h6">Editar apadrinamiento</MudText>
+    </TitleContent>
+    <DialogContent>
+        <MudText Typo="Typo.subtitle2" Class="mb-3">@_recipientName</MudText>
+
+        @if (_lockedPlanMonthLabels.Count > 0)
+        {
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-3">
+                Ya se subió una carta en: @string.Join(", ", _lockedPlanMonthLabels).
+                El período debe seguir cubriendo @(_lockedPlanMonthLabels.Count == 1 ? "esa campaña" : "esas campañas").
+            </MudAlert>
+        }
+
+        @if (_confirmExemptionRevocation)
+        {
+            <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mb-3">
+                Este cambio dejará al becario sin apadrinamientos en
+                @string.Join(", ", _exemptPlanMonthLabels), por lo que
+                @(_exemptPlanMonthLabels.Count == 1 ? "se revocará la exención de esa campaña" : "se revocarán las exenciones de esas campañas").
+                Volvé a confirmar para guardar.
+            </MudAlert>
+        }
+
+        @if (_periodStatus == SponsorshipPeriodStatus.OverlapsExisting)
+        {
+            <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mb-3">
+                El período se superpone con otro apadrinamiento del mismo padrino o empresa. Elegí otro período.
+            </MudAlert>
+        }
+        else if (_periodStatus == SponsorshipPeriodStatus.ExtendsExisting)
+        {
+            <MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-3">
+                El período seleccionado continúa otro apadrinamiento existente. Al confirmar, se unificarán.
+            </MudAlert>
+        }
+
+        <MudForm @bind-IsValid="_formValidationSucceeded">
+            <MudStack>
+                <MudDatePicker Label="Fecha de inicio"
+                               Date="_startDate"
+                               DateChanged="OnStartDateChanged"
+                               OpenTo="OpenTo.Month"
+                               FixDay="1"
+                               DateFormat="\P\r\i\n\c\i\p\i\o\ \d\e\ MMMM yyyy"
+                               TitleDateFormat="MMM yyyy"
+                               Culture="@System.Globalization.CultureInfo.GetCultureInfo("es-AR")"
+                               Required="true"
+                               MaxDate="@StartMaxDate" />
+
+                <MudCheckBox T="bool"
+                             Value="_isEndDateKnown"
+                             ValueChanged="OnIsEndDateKnownCheckBoxChanged"
+                             Label="Conozco la fecha de fin"
+                             Color="Color.Primary" />
+
+                @if (_isEndDateKnown)
+                {
+                    <MudDatePicker Label="Fecha de fin"
+                                   Date="_endDate"
+                                   DateChanged="OnEndDateChanged"
+                                   OpenTo="OpenTo.Month"
+                                   FixDay="1"
+                                   DateFormat="\F\i\n\ \d\e\ MMMM yyyy"
+                                   TitleDateFormat="MMM yyyy"
+                                   Culture="@System.Globalization.CultureInfo.GetCultureInfo("es-AR")"
+                                   Required="true"
+                                   MinDate="@EndMinDate" />
+                }
+
+                <MudTextField T="string"
+                              Label="Información adicional"
+                              @bind-Value="_notes"
+                              Immediate="true"
+                              MaxLength="MaxLength.Auditable.Notes" />
+            </MudStack>
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Disabled="_saving">Cancelar</MudButton>
+        <MudButton Color="Color.Primary"
+                   Variant="Variant.Filled"
+                   OnClick="Save"
+                   Disabled="@SaveButtonDisabled">
+            @PrimaryActionLabel
+        </MudButton>
+    </DialogActions>
+</MudDialog>

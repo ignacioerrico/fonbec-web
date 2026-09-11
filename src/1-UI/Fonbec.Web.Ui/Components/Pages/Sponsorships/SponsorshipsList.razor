@@ -91,7 +91,7 @@
                 <CellTemplate>
                     <AuthorizeView Policy="@nameof(SponsorshipCreate)" Context="innerContext">
                         <MudTooltip Text="Editar" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
-                            <MudIconButton OnClick="@context.Actions.StartEditingItemAsync"
+                            <MudIconButton OnClick="@(() => OpenEditDialogAsync(context.Item))"
                                            Icon="@Icons.Material.Outlined.Edit"
                                            Size="@Size.Small"
                                            Color="Color.Primary" />
