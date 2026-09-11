@@ -40,22 +40,26 @@
                     </MudNavLink>
                 </AuthorizeView>
 
-                <AuthorizeView Policy="@nameof(StudentsList)">
-                    <MudNavLink Href="@NavRoutes.Students" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Face">
-                        Becarios
-                    </MudNavLink>
-                </AuthorizeView>
+                <AuthorizeView Roles="@($"{FonbecRole.Admin},{FonbecRole.Manager}")" Context="sponsorshipsContext">
+                    <MudNavGroup Title="Apadrinamientos" Icon="@Icons.Material.Filled.Handshake" Expanded="true">
+                        <AuthorizeView Policy="@nameof(StudentsList)" Context="studentsContext">
+                            <MudNavLink Href="@NavRoutes.Students" Match="NavLinkMatch.Prefix">
+                                Becarios
+                            </MudNavLink>
+                        </AuthorizeView>
 
-                <AuthorizeView Policy="@nameof(SponsorsList)">
-                    <MudNavLink Href="@NavRoutes.Sponsors" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.SupervisorAccount">
-                        Padrinos
-                    </MudNavLink>
-                </AuthorizeView>
+                        <AuthorizeView Policy="@nameof(SponsorsList)" Context="sponsorsContext">
+                            <MudNavLink Href="@NavRoutes.Sponsors" Match="NavLinkMatch.Prefix">
+                                Padrinos
+                            </MudNavLink>
+                        </AuthorizeView>
 
-                <AuthorizeView Policy="@nameof(CompaniesList)">
-                    <MudNavLink Href="@NavRoutes.Companies" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Factory">
-                        Empresas
-                    </MudNavLink>
+                        <AuthorizeView Policy="@nameof(CompaniesList)" Context="companiesContext">
+                            <MudNavLink Href="@NavRoutes.Companies" Match="NavLinkMatch.Prefix">
+                                Empresas
+                            </MudNavLink>
+                        </AuthorizeView>
+                    </MudNavGroup>
                 </AuthorizeView>
 
                 <AuthorizeView Roles="@FonbecRole.Manager" Context="managerContext">
