@@ -11,6 +11,7 @@ namespace Fonbec.Web.DataAccess.Tests.Repositories;
 public class UserRepositoryClaimTests
 {
     private const string FonbecAuthClaimType = "FonbecAuth";
+    private const string FonbecGrantsClaimType = "FonbecGrants";
 
     [Fact]
     public async Task GetUserClaim_ReturnsNull_WhenUserDoesNotExist()
@@ -94,6 +95,31 @@ public class UserRepositoryClaimTests
         result.Should().BeNull();
     }
 
+    [Fact]
+    public async Task GetUserClaimsOfTypeAsync_ReturnsOnlyClaimsOfRequestedType()
+    {
+        await using var fixture = await CreateFixtureAsync();
+
+        await fixture.Repository.SetUserClaim(fixture.UserId, FonbecGrantsClaimType, "DigitalImprovement");
+        await fixture.Repository.SetUserClaim(fixture.UserId, FonbecAuthClaimType, "PageA");
+
+        var result = await fixture.Repository.GetUserClaimsOfTypeAsync(FonbecGrantsClaimType);
+
+        result.Should().ContainSingle()
+            .Which.Should().BeEquivalentTo(
+                new KeyValuePair<int, string>(int.Parse(fixture.UserId), "DigitalImprovement"));
+    }
+
+    [Fact]
+    public async Task GetUserClaimsOfTypeAsync_ReturnsEmpty_WhenNoUserHasTheClaim()
+    {
+        await using var fixture = await CreateFixtureAsync();
+
+        var result = await fixture.Repository.GetUserClaimsOfTypeAsync(FonbecGrantsClaimType);
+
+        result.Should().BeEmpty();
+    }
+
     private static async Task<UserRepositoryFixture> CreateFixtureAsync()
     {
         var services = new ServiceCollection();
@@ -111,7 +137,7 @@ public class UserRepositoryClaimTests
 
         var userManager = provider.GetRequiredService<UserManager<FonbecWebUser>>();
         var userStore = provider.GetRequiredService<IUserStore<FonbecWebUser>>();
-        var repository = new UserRepository(userManager, userStore);
+        var repository = new UserRepository(userManager, userStore, new TestDbContextFactory(databaseName));
 
         var user = new FonbecWebUser
         {
@@ -126,6 +152,18 @@ public class UserRepositoryClaimTests
         createResult.Succeeded.Should().BeTrue();
 
         return new UserRepositoryFixture(provider, repository, user.Id.ToString());
+    }
+
+    private sealed class TestDbContextFactory(string databaseName) : IDbContextFactory<FonbecWebDbContext>
+    {
+        public FonbecWebDbContext CreateDbContext() =>
+            new(new DbContextOptionsBuilder<FonbecWebDbContext>()
+                .UseInMemoryDatabase(databaseName)
+                .ConfigureWarnings(w => w.Ignore(InMemoryEventId.TransactionIgnoredWarning))
+                .Options);
+
+        public Task<FonbecWebDbContext> CreateDbContextAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult(CreateDbContext());
     }
 
     private sealed class UserRepositoryFixture(ServiceProvider provider, UserRepository repository, string userId)

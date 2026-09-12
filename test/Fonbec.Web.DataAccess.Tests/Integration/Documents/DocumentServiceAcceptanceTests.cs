@@ -178,7 +178,7 @@ public class DocumentServiceAcceptanceTests
             FileKind.Blob, Blob: new CreateBlobPathInputModel("a.jpg", "image/jpeg")));
 
         var next = await _fixture.DocumentService.TakeNextForDigitalImprovementAsync(
-            _fixture.ReviewerId, "Reviewer", fonbecAuthClaim: null);
+            _fixture.ReviewerId, "Reviewer");
 
         next.Should().NotBeNull();
         next!.DocumentType.Should().Be(DocumentType.Letter);
@@ -191,14 +191,14 @@ public class DocumentServiceAcceptanceTests
     [Fact]
     public async Task Scenario09_ReviewerWithoutDigitalImprovementPermission_CannotTakeImprovementQueue()
     {
-        await _fixture.InitializeAsync();
+        await _fixture.InitializeAsync(grantDigitalImprovement: false);
 
         await _fixture.DocumentService.CreateLetterAsync(new CreateLetterInputModel(
             _fixture.StudentId, _fixture.PlanId, _fixture.SponsorAId, _fixture.UploaderContext,
             FileKind.Blob, Blob: new CreateBlobPathInputModel("a.jpg", "image/jpeg")));
 
         var act = () => _fixture.DocumentService.TakeNextForDigitalImprovementAsync(
-            _fixture.ReviewerId, "Reviewer", fonbecAuthClaim: "DigitalImprovement");
+            _fixture.ReviewerId, "Reviewer");
 
         await act.Should().ThrowAsync<UnauthorizedAccessException>();
     }
@@ -213,7 +213,7 @@ public class DocumentServiceAcceptanceTests
             FileKind.Blob, Blob: new CreateBlobPathInputModel("orig.jpg", "image/jpeg")));
 
         var locked = await _fixture.DocumentService.TakeNextForDigitalImprovementAsync(
-            _fixture.ReviewerId, "Reviewer", null)!;
+            _fixture.ReviewerId, "Reviewer")!;
 
         var submit = await _fixture.DocumentService.SubmitDigitalImprovementAsync(
             new SubmitDigitalImprovementInputModel(
@@ -246,7 +246,7 @@ public class DocumentServiceAcceptanceTests
             FileKind.Blob, Blob: new CreateBlobPathInputModel("orig.jpg", "image/jpeg")));
 
         var locked = await _fixture.DocumentService.TakeNextForDigitalImprovementAsync(
-            _fixture.ReviewerId, "Reviewer", null)!;
+            _fixture.ReviewerId, "Reviewer")!;
 
         await _fixture.DocumentService.SubmitDigitalImprovementAsync(new SubmitDigitalImprovementInputModel(
             locked!.DocumentId, _fixture.ReviewerId, "Reviewer", null,
@@ -906,19 +906,19 @@ public class DocumentServiceAcceptanceTests
             FileKind.Blob, Blob: new CreateBlobPathInputModel("a.jpg", "image/jpeg")));
 
         var first = await _fixture.DocumentService.TakeNextForDigitalImprovementAsync(
-            _fixture.ReviewerId, "Reviewer", fonbecAuthClaim: null);
+            _fixture.ReviewerId, "Reviewer");
         first.Should().NotBeNull();
 
         // Still validly locked: another taker gets nothing.
         var blockedWhileLocked = await _fixture.DocumentService.TakeNextForDigitalImprovementAsync(
-            _fixture.ManagerId, "Manager", fonbecAuthClaim: null);
+            _fixture.ManagerId, "Manager");
         blockedWhileLocked.Should().BeNull();
 
         // Lock goes stale after the timeout.
         await _fixture.ExpireImprovementLockAsync(first!.DocumentId, TimeSpan.FromMinutes(41));
 
         var reTaken = await _fixture.DocumentService.TakeNextForDigitalImprovementAsync(
-            _fixture.ManagerId, "Manager", fonbecAuthClaim: null);
+            _fixture.ManagerId, "Manager");
         reTaken.Should().NotBeNull();
         reTaken!.DocumentId.Should().Be(first.DocumentId);
 
