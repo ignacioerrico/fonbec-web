@@ -258,4 +258,37 @@ public partial class UsersList : AuthenticationRequiredComponentBase
             }
         }
     }
+
+    private async Task SetDigitalImprovementGrantAsync(UsersListViewModel viewModel, bool granted)
+    {
+        viewModel.HasDigitalImprovementGrant = granted;
+
+        Loading = true;
+
+        var result = await UserService.SetDigitalImprovementGrantAsync(
+            viewModel.UserId,
+            granted,
+            UserRole,
+            FonbecClaim.ChapterId);
+
+        Loading = false;
+
+        if (!result.IsSuccess)
+        {
+            viewModel.HasDigitalImprovementGrant = !granted;
+
+            foreach (var error in result.Errors ?? [])
+            {
+                Snackbar.Add(error, Severity.Error);
+            }
+
+            return;
+        }
+
+        Snackbar.Add(
+            granted
+                ? "Se le dio el permiso para mejorar imágenes."
+                : "Se le sacó el permiso para mejorar imágenes.",
+            Severity.Success);
+    }
 }

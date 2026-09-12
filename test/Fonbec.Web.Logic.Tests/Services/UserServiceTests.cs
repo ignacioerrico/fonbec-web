@@ -2,6 +2,7 @@ using FluentAssertions;
 using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.DataModels.Users.Input;
 using Fonbec.Web.DataAccess.Entities.Enums;
+using Fonbec.Web.DataAccess.DataModels.Users.Output;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Authorization;
 using Fonbec.Web.Logic.Constants;
@@ -281,4 +282,159 @@ public class UserServiceTests
 
         await userRepo.Received(1).GetAllUsersInRoleForSelectionAsync(FonbecRole.Uploader, null);
     }
+
+    [Fact]
+    public void HasPermission_DigitalImprovement_IsOffByDefault()
+    {
+        var userService = new UserService(null!, null!, null!, DummyPages);
+
+        userService.HasPermission(null, FonbecRole.Reviewer, DocumentPermission.DigitalImprovement)
+            .Should().BeFalse();
+        userService.HasPermission(null, FonbecRole.Manager, DocumentPermission.DigitalImprovement)
+            .Should().BeFalse();
+    }
+
+    [Fact]
+    public void HasPermission_DigitalImprovement_RequiresGrantAndEligibleRole()
+    {
+        var userService = new UserService(null!, null!, null!, DummyPages);
+
+        userService.HasPermission(
+                null, FonbecRole.Reviewer, DocumentPermission.DigitalImprovement,
+                DocumentPermission.DigitalImprovement)
+            .Should().BeTrue();
+        userService.HasPermission(
+                null, FonbecRole.Uploader, DocumentPermission.DigitalImprovement,
+                DocumentPermission.DigitalImprovement)
+            .Should().BeFalse();
+        userService.HasPermission(
+                DocumentPermission.DigitalImprovement, FonbecRole.Reviewer,
+                DocumentPermission.DigitalImprovement)
+            .Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task SetFonbecAuthClaim_StripsOptInCodenames()
+    {
+        const int userId = 42;
+        var userRepo = Substitute.For<IUserRepository>();
+        var userService = new UserService(userRepo, null!, null!, DummyPages);
+
+        await userService.SetFonbecAuthClaim(userId, ["PageA", DocumentPermission.DigitalImprovement]);
+
+        await userRepo.Received(1).SetUserClaim(userId.ToString(), FonbecAuth.ClaimType, "PageA");
+    }
+
+    [Fact]
+    public async Task HasDigitalImprovementGrantAsync_ReturnsFalse_WhenNotGranted()
+    {
+        var userRepo = Substitute.For<IUserRepository>();
+        userRepo.GetUserAsync(7).Returns(Reviewer(chapterId: 5));
+        userRepo.GetUserClaim("7", FonbecGrants.ClaimType).Returns((string?)null);
+        var userService = new UserService(userRepo, null!, null!, DummyPages);
+
+        var result = await userService.HasDigitalImprovementGrantAsync(7);
+
+        result.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task SetDigitalImprovementGrantAsync_GrantsAndRevokes()
+    {
+        var userRepo = Substitute.For<IUserRepository>();
+        userRepo.GetUserAsync(7).Returns(Reviewer(chapterId: 5));
+        userRepo.GetUserClaim("7", FonbecGrants.ClaimType).Returns((string?)null);
+        userRepo.GetUserClaim("7", FonbecAuth.ClaimType).Returns((string?)null);
+        var userService = new UserService(userRepo, null!, null!, DummyPages);
+
+        var granted = await userService.SetDigitalImprovementGrantAsync(
+            7, granted: true, FonbecRole.Manager, actorChapterId: 5);
+
+        granted.IsSuccess.Should().BeTrue();
+        await userRepo.Received(1).SetUserClaim(
+            "7", FonbecGrants.ClaimType, DocumentPermission.DigitalImprovement);
+
+        userRepo.GetUserClaim("7", FonbecGrants.ClaimType).Returns(DocumentPermission.DigitalImprovement);
+
+        var revoked = await userService.SetDigitalImprovementGrantAsync(
+            7, granted: false, FonbecRole.Manager, actorChapterId: 5);
+
+        revoked.IsSuccess.Should().BeTrue();
+        await userRepo.Received(1).RemoveUserClaim("7", FonbecGrants.ClaimType);
+    }
+
+    [Fact]
+    public async Task SetDigitalImprovementGrantAsync_DeniesCrossChapterManager()
+    {
+        var userRepo = Substitute.For<IUserRepository>();
+        userRepo.GetUserAsync(7).Returns(Reviewer(chapterId: 7));
+        var userService = new UserService(userRepo, null!, null!, DummyPages);
+
+        var result = await userService.SetDigitalImprovementGrantAsync(
+            7, granted: true, FonbecRole.Manager, actorChapterId: 5);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Errors.Should().Contain(UserMessages.CannotGrantDigitalImprovementOutsideChapter);
+        await userRepo.DidNotReceive().SetUserClaim(Arg.Any<string>(), FonbecGrants.ClaimType, Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task SetDigitalImprovementGrantAsync_AllowsAdminCrossChapter()
+    {
+        var userRepo = Substitute.For<IUserRepository>();
+        userRepo.GetUserAsync(7).Returns(Reviewer(chapterId: 7));
+        userRepo.GetUserClaim("7", Arg.Any<string>()).Returns((string?)null);
+        var userService = new UserService(userRepo, null!, null!, DummyPages);
+
+        var result = await userService.SetDigitalImprovementGrantAsync(
+            7, granted: true, FonbecRole.Admin, actorChapterId: null);
+
+        result.IsSuccess.Should().BeTrue();
+        await userRepo.Received(1).SetUserClaim(
+            "7", FonbecGrants.ClaimType, DocumentPermission.DigitalImprovement);
+    }
+
+    [Fact]
+    public async Task SetDigitalImprovementGrantAsync_RejectsUploaderTarget()
+    {
+        var userRepo = Substitute.For<IUserRepository>();
+        userRepo.GetUserAsync(7).Returns(new GetUserOutputDataModel
+        {
+            ChapterId = 5,
+            UserFullName = "Uploader",
+            UserRole = FonbecRole.Uploader,
+        });
+        var userService = new UserService(userRepo, null!, null!, DummyPages);
+
+        var result = await userService.SetDigitalImprovementGrantAsync(
+            7, granted: true, FonbecRole.Manager, actorChapterId: 5);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Errors.Should().Contain(UserMessages.CannotGrantDigitalImprovementToRole);
+    }
+
+    [Fact]
+    public async Task SetDigitalImprovementGrantAsync_StripsLegacyDenialFromFonbecAuth()
+    {
+        var userRepo = Substitute.For<IUserRepository>();
+        userRepo.GetUserAsync(7).Returns(Reviewer(chapterId: 5));
+        userRepo.GetUserClaim("7", FonbecGrants.ClaimType).Returns((string?)null);
+        userRepo.GetUserClaim("7", FonbecAuth.ClaimType)
+            .Returns($"{DocumentPermission.DigitalImprovement},PageA");
+        var userService = new UserService(userRepo, null!, null!, DummyPages);
+
+        var result = await userService.SetDigitalImprovementGrantAsync(
+            7, granted: true, FonbecRole.Admin, actorChapterId: null);
+
+        result.IsSuccess.Should().BeTrue();
+        await userRepo.Received().SetUserClaim("7", FonbecAuth.ClaimType, "PageA");
+    }
+
+    private static GetUserOutputDataModel Reviewer(int chapterId) =>
+        new()
+        {
+            ChapterId = chapterId,
+            UserFullName = "Carla Ruiz",
+            UserRole = FonbecRole.Reviewer,
+        };
 }

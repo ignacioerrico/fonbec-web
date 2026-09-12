@@ -58,7 +58,7 @@ internal sealed class DocumentTestFixture
 
     public bool BlobExists(string blobName) => _blobs.ContainsKey(blobName);
 
-    public async Task InitializeAsync(bool includeActivePlan = true)
+    public async Task InitializeAsync(bool includeActivePlan = true, bool grantDigitalImprovement = true)
     {
         Factory = CreateDbContextFactory();
         await SeedAsync(includeActivePlan);
@@ -79,10 +79,10 @@ internal sealed class DocumentTestFixture
 
         var pages = new List<PageAccessInfo>
         {
-            new(DocumentPermission.DigitalImprovement, "Digital improvement", ["Reviewer", "Manager"]),
+            new("ReviewQueue", "Review queue", ["Reviewer", "Manager"]),
         };
 
-        var userRepository = CreateUserRepositorySubstitute();
+        var userRepository = CreateUserRepositorySubstitute(grantDigitalImprovement);
         var notificationService = new DocumentNotificationService(
             DocumentRepository,
             userRepository,
@@ -118,7 +118,7 @@ internal sealed class DocumentTestFixture
             NullLogger<DocumentService>.Instance);
     }
 
-    private IUserRepository CreateUserRepositorySubstitute()
+    private IUserRepository CreateUserRepositorySubstitute(bool grantDigitalImprovement)
     {
         var userRepository = Substitute.For<IUserRepository>();
 
@@ -127,9 +127,17 @@ internal sealed class DocumentTestFixture
         ConfigureUser(ManagerId, "Manager", ChapterId);
         ConfigureUser(OtherUploaderId, "Uploader", ChapterId);
 
-        // No page denials by default, so Reviewer/Manager have the DigitalImprovement permission.
         userRepository.GetUserClaim(Arg.Any<string>(), Arg.Any<string>())
-            .Returns((string?)null);
+            .Returns(callInfo =>
+            {
+                var claimType = callInfo.ArgAt<string>(1);
+                if (claimType == FonbecGrants.ClaimType && grantDigitalImprovement)
+                {
+                    return DocumentPermission.DigitalImprovement;
+                }
+
+                return (string?)null;
+            });
 
         return userRepository;
 

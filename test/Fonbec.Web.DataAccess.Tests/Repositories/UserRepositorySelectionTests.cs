@@ -13,9 +13,11 @@ public class UserRepositorySelectionTests
     [Fact]
     public async Task GetAllUsersInRoleForSelectionAsync_WithChapter_ReturnsOnlyUsersFromThatChapter()
     {
+        var databaseName = Guid.NewGuid().ToString();
+
         var services = new ServiceCollection();
         services.AddDbContext<FonbecWebDbContext>(options =>
-            options.UseInMemoryDatabase(Guid.NewGuid().ToString()));
+            options.UseInMemoryDatabase(databaseName));
         services.AddIdentityCore<FonbecWebUser>()
             .AddRoles<FonbecWebRole>()
             .AddEntityFrameworkStores<FonbecWebDbContext>();
@@ -24,7 +26,7 @@ public class UserRepositorySelectionTests
         var userManager = provider.GetRequiredService<UserManager<FonbecWebUser>>();
         var roleManager = provider.GetRequiredService<RoleManager<FonbecWebRole>>();
         var userStore = provider.GetRequiredService<IUserStore<FonbecWebUser>>();
-        var repository = new UserRepository(userManager, userStore);
+        var repository = new UserRepository(userManager, userStore, new TestDbContextFactory(databaseName));
 
         (await roleManager.CreateAsync(new FonbecWebRole { Name = FonbecRole.Uploader }))
             .Succeeded.Should().BeTrue();
@@ -56,5 +58,16 @@ public class UserRepositorySelectionTests
         (await userManager.CreateAsync(user)).Succeeded.Should().BeTrue();
         (await userManager.AddToRoleAsync(user, FonbecRole.Uploader)).Succeeded.Should().BeTrue();
         return user;
+    }
+
+    private sealed class TestDbContextFactory(string databaseName) : IDbContextFactory<FonbecWebDbContext>
+    {
+        public FonbecWebDbContext CreateDbContext() =>
+            new(new DbContextOptionsBuilder<FonbecWebDbContext>()
+                .UseInMemoryDatabase(databaseName)
+                .Options);
+
+        public Task<FonbecWebDbContext> CreateDbContextAsync(CancellationToken cancellationToken = default) =>
+            Task.FromResult(CreateDbContext());
     }
 }

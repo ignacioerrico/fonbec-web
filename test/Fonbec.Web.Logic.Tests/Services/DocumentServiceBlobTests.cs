@@ -5,6 +5,7 @@ using Fonbec.Web.DataAccess.DataModels.Documents;
 using Fonbec.Web.DataAccess.DataModels.Documents.Input;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Repositories;
+using Fonbec.Web.Logic.Constants;
 using Fonbec.Web.Logic.Models.Documents;
 using Fonbec.Web.Logic.Models.Documents.Input;
 using Fonbec.Web.Logic.Options;
@@ -225,7 +226,8 @@ public class DocumentServiceBlobTests
         const long documentId = 42;
         const int reviewerId = 20;
 
-        _userService.HasPermission(Arg.Any<string?>(), Arg.Any<string>(), Arg.Any<string>()).Returns(true);
+        _userService.GetFonbecGrantsClaim(Arg.Any<int>()).Returns(DocumentPermission.DigitalImprovement);
+        _userService.HasPermission(Arg.Any<string?>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string?>()).Returns(true);
         _repository.GetDocumentBlobContextAsync(documentId).Returns(new DocumentBlobContextDataModel
         {
             DocumentId = documentId,
@@ -275,7 +277,8 @@ public class DocumentServiceBlobTests
         const long documentId = 42;
         const int reviewerId = 20;
 
-        _userService.HasPermission(Arg.Any<string?>(), Arg.Any<string>(), Arg.Any<string>()).Returns(true);
+        _userService.GetFonbecGrantsClaim(Arg.Any<int>()).Returns(DocumentPermission.DigitalImprovement);
+        _userService.HasPermission(Arg.Any<string?>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string?>()).Returns(true);
         _repository.GetDocumentBlobContextAsync(documentId).Returns(new DocumentBlobContextDataModel
         {
             DocumentId = documentId,
