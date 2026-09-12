@@ -37,7 +37,7 @@ public class DocumentServiceApproveLetterNotificationTests
         SetupLetter();
         _repository.ApproveLetterAsync(Arg.Any<ApproveLetterInputDataModel>())
             .Returns([]);
-        _planCompletionService.GetReadinessAsync(PlanId, ChapterId, TestContext.Current.CancellationToken)
+        _planCompletionService.GetReadinessAsync(PlanId, ChapterId, Arg.Any<CancellationToken>())
             .Returns(
                 new PlanReadinessResult { PlanFound = true, PlanStartsOn = PlanStartsOn },
                 new PlanReadinessResult
@@ -62,7 +62,7 @@ public class DocumentServiceApproveLetterNotificationTests
         SetupLetter();
         _repository.ApproveLetterAsync(Arg.Any<ApproveLetterInputDataModel>())
             .Returns([]);
-        _planCompletionService.GetReadinessAsync(PlanId, ChapterId, TestContext.Current.CancellationToken)
+        _planCompletionService.GetReadinessAsync(PlanId, ChapterId, Arg.Any<CancellationToken>())
             .Returns(new PlanReadinessResult
             {
                 PlanFound = true,
