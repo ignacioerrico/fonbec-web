@@ -67,7 +67,6 @@ public class DocumentService(
     IDocumentNotificationService documentNotificationService,
     IUserService userService,
     IBlobStorageService blobStorageService,
-    ILetterPlanProgressService letterPlanProgressService,
     IPlanCompletionService planCompletionService,
     IOptions<BlobStorageOptions> blobStorageOptions,
     ILogger<DocumentService> logger) : IDocumentService

@@ -100,7 +100,6 @@ internal sealed class DocumentTestFixture
         var blobOptions = Microsoft.Extensions.Options.Options.Create(new BlobStorageOptions());
 
         TypeAdapterConfig.GlobalSettings.Scan(typeof(DocumentService).Assembly);
-        var letterPlanProgressService = Substitute.For<ILetterPlanProgressService>();
 
         PlannedDeliveryRepository = new PlannedDeliveryRepository(Factory, TimeProvider.System);
         var planCompletionService = new PlanCompletionService(
@@ -112,7 +111,6 @@ internal sealed class DocumentTestFixture
             notificationService,
             userService,
             BlobStorageService,
-            letterPlanProgressService,
             planCompletionService,
             blobOptions,
             NullLogger<DocumentService>.Instance);

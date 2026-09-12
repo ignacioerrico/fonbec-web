@@ -81,7 +81,6 @@ public class DocumentServiceApproveLetterNotificationTests
             _notificationService,
             Substitute.For<IUserService>(),
             Substitute.For<IBlobStorageService>(),
-            Substitute.For<ILetterPlanProgressService>(),
             _planCompletionService,
             Microsoft.Extensions.Options.Options.Create(new BlobStorageOptions()),
             NullLogger<DocumentService>.Instance);
