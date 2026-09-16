@@ -31,6 +31,8 @@ public class UsersListViewModel : IDetectChanges<UsersListViewModel>
     
     public bool IsUserActive { get; set; }
 
+    public bool HasDigitalImprovementGrant { get; set; }
+
     public string? CreatedByFullName { get; set; }
     public DateTime CreatedOnUtc { get; set; }
 

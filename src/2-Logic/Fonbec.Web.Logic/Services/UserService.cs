@@ -1,10 +1,12 @@
 ﻿using System.Security.Claims;
+using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.DataModels.Users.Input;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Authorization;
 using Fonbec.Web.Logic.Constants;
 using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models;
+using Fonbec.Web.Logic.Models.Results;
 using Fonbec.Web.Logic.Models.Users;
 using Fonbec.Web.Logic.Models.Users.Input;
 using Fonbec.Web.Logic.Models.Users.Output;
@@ -31,7 +33,19 @@ public interface IUserService
     Task<string> GetUserClaim(int userId, string claimType);
     Task SetFonbecAuthClaim(int userId, IEnumerable<string> deniedPages);
     Task SetUserClaim(int userId, string claimType, string claimValue);
-    bool HasPermission(string? fonbecAuthClaimValue, string userRole, string page);
+    string? GetFonbecGrantsClaim(ClaimsPrincipal principal);
+    Task<string> GetFonbecGrantsClaim(int userId);
+    bool HasPermission(
+        string? fonbecAuthClaimValue,
+        string userRole,
+        string page,
+        string? fonbecGrantsClaimValue = null);
+    Task<bool> HasDigitalImprovementGrantAsync(int userId);
+    Task<CrudResult> SetDigitalImprovementGrantAsync(
+        int targetUserId,
+        bool granted,
+        string actorRole,
+        int? actorChapterId);
 }
 
 public class UserService(
@@ -67,11 +81,19 @@ public class UserService(
         var allUsersDataModel = await userRepository.GetAllUsersAsync(chapterId);
         var allUsers = allUsersDataModel.Users.Adapt<List<UsersListViewModel>>();
 
+        var grantsByUserId = await userRepository.GetUserClaimsOfTypeAsync(FonbecGrants.ClaimType);
+
         foreach (var user in allUsers)
         {
             user.UserRole = allUsersDataModel.UsersInRoles
                 .First(u => u.UserIdsInRole.Contains(user.UserId))
                 .Role;
+
+            user.HasDigitalImprovementGrant = HasPermission(
+                null,
+                user.UserRole,
+                DocumentPermission.DigitalImprovement,
+                grantsByUserId.GetValueOrDefault(user.UserId));
         }
 
         return allUsers;
@@ -169,7 +191,10 @@ public class UserService(
 
     public async Task SetFonbecAuthClaim(int userId, IEnumerable<string> deniedCodenames)
     {
-        var orderedDenials = deniedCodenames.OrderBy(cn => cn).ToList();
+        var orderedDenials = deniedCodenames
+            .Where(cn => !OptInPermissions.IsOptIn(cn))
+            .OrderBy(cn => cn)
+            .ToList();
         if (orderedDenials.Count == 0)
         {
             await userRepository.RemoveUserClaim(userId.Adapt<string>(), FonbecAuth.ClaimType);
@@ -186,24 +211,126 @@ public class UserService(
         await userRepository.SetUserClaim(userIdString, claimType, claimValue);
     }
 
-    /// <summary>
-    /// Page permissions are stored in a single claim, "FonbecAuth".
-    /// It contains a comma-separated list of page codenames the user is denied access to.
-    /// Users have access by default to all pages allowed for their role.
-    /// </summary>
-    public bool HasPermission(string? fonbecAuthClaimValue, string userRole, string page)
+    public string? GetFonbecGrantsClaim(ClaimsPrincipal principal)
     {
+        return principal.FindFirstValue(FonbecGrants.ClaimType);
+    }
+
+    public async Task<string> GetFonbecGrantsClaim(int userId)
+    {
+        return await GetUserClaim(userId, FonbecGrants.ClaimType);
+    }
+
+    /// <summary>
+    /// Page permissions are stored in "FonbecAuth" as a comma-separated deny-list of page codenames.
+    /// Users have access by default to all pages allowed for their role.
+    /// Opt-in feature permissions (see <see cref="OptInPermissions"/>) are stored in "FonbecGrants"
+    /// as a comma-separated allow-list and are off by default.
+    /// </summary>
+    public bool HasPermission(
+        string? fonbecAuthClaimValue,
+        string userRole,
+        string page,
+        string? fonbecGrantsClaimValue = null)
+    {
+        var optIn = OptInPermissions.All.FirstOrDefault(p => p.Codename == page);
+        if (optIn is not null)
+        {
+            return optIn.Roles.Contains(userRole)
+                   && ParseCodenames(fonbecGrantsClaimValue).Contains(page);
+        }
+
         var pageInfo = allPages.FirstOrDefault(p => p.Codename == page);
         if (pageInfo is null || !pageInfo.Roles.Contains(userRole))
         {
             return false;
         }
 
-        var deniedPages = ParseDeniedPages(fonbecAuthClaimValue);
+        var deniedPages = ParseCodenames(fonbecAuthClaimValue);
         return !deniedPages.Contains(page);
     }
 
-    private static HashSet<string> ParseDeniedPages(string? claimValue)
+    public async Task<bool> HasDigitalImprovementGrantAsync(int userId)
+    {
+        var user = await GetUserAsync(userId);
+        if (user is null || string.IsNullOrEmpty(user.UserRole))
+        {
+            return false;
+        }
+
+        var grants = await GetFonbecGrantsClaim(userId);
+        return HasPermission(null, user.UserRole, DocumentPermission.DigitalImprovement, grants);
+    }
+
+    public async Task<CrudResult> SetDigitalImprovementGrantAsync(
+        int targetUserId,
+        bool granted,
+        string actorRole,
+        int? actorChapterId)
+    {
+        var target = await GetUserAsync(targetUserId);
+        if (target is null || string.IsNullOrEmpty(target.UserRole))
+        {
+            return new CrudResult(Errors: [UserMessages.UserNotFound]);
+        }
+
+        if (target.UserRole is not (FonbecRole.Reviewer or FonbecRole.Manager))
+        {
+            return new CrudResult(Errors: [UserMessages.CannotGrantDigitalImprovementToRole]);
+        }
+
+        var actorIsAdmin = actorRole == FonbecRole.Admin;
+        var actorIsSameChapterManager = actorRole == FonbecRole.Manager
+                                        && actorChapterId is not null
+                                        && actorChapterId == target.ChapterId;
+
+        if (!actorIsAdmin && !actorIsSameChapterManager)
+        {
+            return actorRole == FonbecRole.Manager
+                ? new CrudResult(Errors: [UserMessages.CannotGrantDigitalImprovementOutsideChapter])
+                : new CrudResult(Errors: [UserMessages.NotAuthorizedToManageDigitalImprovement]);
+        }
+
+        await SetOptInGrantAsync(targetUserId, DocumentPermission.DigitalImprovement, granted);
+        await StripLegacyDigitalImprovementDenialAsync(targetUserId);
+
+        return new CrudResult(1);
+    }
+
+    private async Task SetOptInGrantAsync(int userId, string codename, bool granted)
+    {
+        var grants = ParseCodenames(await GetFonbecGrantsClaim(userId));
+        if (granted)
+        {
+            grants.Add(codename);
+        }
+        else
+        {
+            grants.Remove(codename);
+        }
+
+        var ordered = grants.OrderBy(cn => cn).ToList();
+        if (ordered.Count == 0)
+        {
+            await userRepository.RemoveUserClaim(userId.Adapt<string>(), FonbecGrants.ClaimType);
+            return;
+        }
+
+        await SetUserClaim(userId, FonbecGrants.ClaimType, string.Join(",", ordered));
+    }
+
+    private async Task StripLegacyDigitalImprovementDenialAsync(int userId)
+    {
+        var denied = ParseCodenames(await GetFonbecAuthClaim(userId));
+        if (!denied.Remove(DocumentPermission.DigitalImprovement))
+        {
+            return;
+        }
+
+        await SetFonbecAuthClaim(userId, denied);
+    }
+
+    private static HashSet<string> ParseCodenames(string? claimValue)
     {
         if (string.IsNullOrWhiteSpace(claimValue))
         {

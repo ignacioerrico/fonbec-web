@@ -37,7 +37,7 @@ public class DocumentServiceApproveLetterNotificationTests
         SetupLetter();
         _repository.ApproveLetterAsync(Arg.Any<ApproveLetterInputDataModel>())
             .Returns([]);
-        _planCompletionService.GetReadinessAsync(PlanId, ChapterId, TestContext.Current.CancellationToken)
+        _planCompletionService.GetReadinessAsync(PlanId, ChapterId, Arg.Any<CancellationToken>())
             .Returns(
                 new PlanReadinessResult { PlanFound = true, PlanStartsOn = PlanStartsOn },
                 new PlanReadinessResult
@@ -62,7 +62,7 @@ public class DocumentServiceApproveLetterNotificationTests
         SetupLetter();
         _repository.ApproveLetterAsync(Arg.Any<ApproveLetterInputDataModel>())
             .Returns([]);
-        _planCompletionService.GetReadinessAsync(PlanId, ChapterId, TestContext.Current.CancellationToken)
+        _planCompletionService.GetReadinessAsync(PlanId, ChapterId, Arg.Any<CancellationToken>())
             .Returns(new PlanReadinessResult
             {
                 PlanFound = true,
@@ -81,7 +81,6 @@ public class DocumentServiceApproveLetterNotificationTests
             _notificationService,
             Substitute.For<IUserService>(),
             Substitute.For<IBlobStorageService>(),
-            Substitute.For<ILetterPlanProgressService>(),
             _planCompletionService,
             Microsoft.Extensions.Options.Options.Create(new BlobStorageOptions()),
             NullLogger<DocumentService>.Instance);

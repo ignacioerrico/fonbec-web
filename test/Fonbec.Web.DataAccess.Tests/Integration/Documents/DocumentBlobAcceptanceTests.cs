@@ -203,7 +203,7 @@ public class DocumentBlobAcceptanceTests
             Files("image/jpeg", "original-bytes")));
 
         var locked = await _fixture.DocumentService.TakeNextForDigitalImprovementAsync(
-            _fixture.ReviewerId, "Reviewer", null);
+            _fixture.ReviewerId, "Reviewer");
 
         var download = await _fixture.DocumentService.DownloadOriginalDocumentBlobAsync(
             create.Value!, pageNumber: 1, _fixture.ReviewerId);
@@ -243,7 +243,7 @@ public class DocumentBlobAcceptanceTests
         var originalBlobName = _fixture.UploadedBlobNames.Single();
 
         var locked = await _fixture.DocumentService.TakeNextForDigitalImprovementAsync(
-            _fixture.ReviewerId, "Reviewer", null);
+            _fixture.ReviewerId, "Reviewer");
 
         var submit = await _fixture.DocumentService.SubmitDigitalImprovementWithBlobAsync(
             new SubmitDigitalImprovementWithBlobInputModel(
@@ -281,7 +281,7 @@ public class DocumentBlobAcceptanceTests
             Files("image/jpeg", "original-bytes")));
 
         var locked = await _fixture.DocumentService.TakeNextForDigitalImprovementAsync(
-            _fixture.ReviewerId, "Reviewer", null);
+            _fixture.ReviewerId, "Reviewer");
         await _fixture.DocumentService.SubmitDigitalImprovementWithBlobAsync(
             new SubmitDigitalImprovementWithBlobInputModel(
                 locked!.DocumentId, _fixture.ReviewerId, "Reviewer", null,
@@ -454,7 +454,7 @@ public class DocumentBlobAcceptanceTests
             Files("image/jpeg", "page-1", "page-2")));
 
         var locked = await _fixture.DocumentService.TakeNextForDigitalImprovementAsync(
-            _fixture.ReviewerId, "Reviewer", null);
+            _fixture.ReviewerId, "Reviewer");
 
         var submit = await _fixture.DocumentService.SubmitDigitalImprovementWithBlobAsync(
             new SubmitDigitalImprovementWithBlobInputModel(
@@ -483,7 +483,7 @@ public class DocumentBlobAcceptanceTests
             Files("image/jpeg", "page-1", "page-2")));
 
         var locked = await _fixture.DocumentService.TakeNextForDigitalImprovementAsync(
-            _fixture.ReviewerId, "Reviewer", null);
+            _fixture.ReviewerId, "Reviewer");
 
         // Only one improved file for a two-page document.
         var submit = await _fixture.DocumentService.SubmitDigitalImprovementWithBlobAsync(

@@ -45,7 +45,7 @@ public interface IDocumentService
     Task<ReviewWorkspaceViewModel?> GetReviewWorkspaceAsync(long documentId, int userId, string userRole);
 
     Task ReleaseReviewLockAsync(long documentId, int userId);
-    Task<DocumentQueueItemViewModel?> TakeNextForDigitalImprovementAsync(int userId, string userRole, string? fonbecAuthClaim);
+    Task<DocumentQueueItemViewModel?> TakeNextForDigitalImprovementAsync(int userId, string userRole);
     Task<CrudResult> SubmitDigitalImprovementAsync(SubmitDigitalImprovementInputModel input);
     Task ReleaseImprovementLockAsync(long documentId, int userId);
     Task<ReviewResult> ApproveLetterAsync(ApproveLetterInputModel input);
@@ -67,7 +67,6 @@ public class DocumentService(
     IDocumentNotificationService documentNotificationService,
     IUserService userService,
     IBlobStorageService blobStorageService,
-    ILetterPlanProgressService letterPlanProgressService,
     IPlanCompletionService planCompletionService,
     IOptions<BlobStorageOptions> blobStorageOptions,
     ILogger<DocumentService> logger) : IDocumentService
@@ -338,7 +337,7 @@ public class DocumentService(
         // The original blob is only available to a user who holds the improvement lock
         // and has the DigitalImprovement permission.
         if (context.ImprovementLockedById != requestingUserId
-            || !CanImproveDigitally(user.Value.Role, user.Value.FonbecAuthClaim))
+            || !await CanImproveDigitallyAsync(requestingUserId, user.Value.Role))
         {
             return null;
         }
@@ -349,7 +348,7 @@ public class DocumentService(
 
     public async Task<CrudResult> SubmitDigitalImprovementWithBlobAsync(SubmitDigitalImprovementWithBlobInputModel input)
     {
-        if (!CanImproveDigitally(input.UserRole, input.FonbecAuthClaim))
+        if (!await CanImproveDigitallyAsync(input.UserId, input.UserRole))
         {
             return new CrudResult(Errors: [DocumentMessages.NotAuthorizedDigitalImprovement]);
         }
@@ -524,9 +523,9 @@ public class DocumentService(
         documentRepository.ReleaseReviewLockAsync(documentId, userId);
 
     public async Task<DocumentQueueItemViewModel?> TakeNextForDigitalImprovementAsync(
-        int userId, string userRole, string? fonbecAuthClaim)
+        int userId, string userRole)
     {
-        if (!CanImproveDigitally(userRole, fonbecAuthClaim))
+        if (!await CanImproveDigitallyAsync(userId, userRole))
         {
             throw new UnauthorizedAccessException(DocumentMessages.NotAuthorizedDigitalImprovement);
         }
@@ -537,7 +536,7 @@ public class DocumentService(
 
     public async Task<CrudResult> SubmitDigitalImprovementAsync(SubmitDigitalImprovementInputModel input)
     {
-        if (!CanImproveDigitally(input.UserRole, input.FonbecAuthClaim))
+        if (!await CanImproveDigitallyAsync(input.UserId, input.UserRole))
         {
             return new CrudResult(Errors: [DocumentMessages.NotAuthorizedDigitalImprovement]);
         }
@@ -926,9 +925,16 @@ public class DocumentService(
     private static bool CanReview(string userRole) =>
         userRole is FonbecRole.Reviewer or FonbecRole.Manager;
 
-    private bool CanImproveDigitally(string userRole, string? fonbecAuthClaim) =>
-        CanReview(userRole)
-        && userService.HasPermission(fonbecAuthClaim, userRole, DocumentPermission.DigitalImprovement);
+    private async Task<bool> CanImproveDigitallyAsync(int userId, string userRole)
+    {
+        if (!CanReview(userRole))
+        {
+            return false;
+        }
+
+        var grants = await userService.GetFonbecGrantsClaim(userId);
+        return userService.HasPermission(null, userRole, DocumentPermission.DigitalImprovement, grants);
+    }
 
     /// <summary>
     /// Uploads one or more files (pages) and creates the document. A document may consist of several

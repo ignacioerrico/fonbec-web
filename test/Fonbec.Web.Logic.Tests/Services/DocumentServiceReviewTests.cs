@@ -19,7 +19,6 @@ public class DocumentServiceReviewTests
     private readonly IDocumentNotificationService _notificationService = Substitute.For<IDocumentNotificationService>();
     private readonly IUserService _userService = Substitute.For<IUserService>();
     private readonly IBlobStorageService _blobStorageService = Substitute.For<IBlobStorageService>();
-    private readonly ILetterPlanProgressService _letterPlanProgressService = Substitute.For<ILetterPlanProgressService>();
     private readonly IPlanCompletionService _planCompletionService = Substitute.For<IPlanCompletionService>();
 
     private const int ReviewerId = 20;
@@ -30,7 +29,6 @@ public class DocumentServiceReviewTests
             _notificationService,
             _userService,
             _blobStorageService,
-            _letterPlanProgressService,
             _planCompletionService,
             Microsoft.Extensions.Options.Options.Create(new BlobStorageOptions()),
             NullLogger<DocumentService>.Instance);

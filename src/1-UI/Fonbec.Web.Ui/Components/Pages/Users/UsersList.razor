@@ -176,6 +176,21 @@
                                            Disabled="@(context.Item.UserId == FonbecClaim.UserId)" />
                         </MudTooltip>
                     </AuthorizeView>
+                    <AuthorizeView Policy="@CustomAccess.ManageDigitalImprovement" Context="innerContext">
+                        @if (context.Item.UserRole is FonbecRole.Reviewer or FonbecRole.Manager)
+                        {
+                            <MudTooltip Text="@(context.Item.HasDigitalImprovementGrant
+                                                  ? "Sacar permiso para mejorar imágenes"
+                                                  : "Dar permiso para mejorar imágenes")"
+                                        Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
+                                <MudToggleIconButton Toggled="context.Item.HasDigitalImprovementGrant"
+                                                     ToggledChanged="@(async granted => await SetDigitalImprovementGrantAsync(context.Item, granted))"
+                                                     Icon="@Icons.Material.Outlined.AutoFixHigh" Color="Color.Default"
+                                                     ToggledIcon="@Icons.Material.Filled.AutoFixHigh" ToggledColor="Color.Primary"
+                                                     Size="@Size.Small" ToggledSize="@Size.Small" />
+                            </MudTooltip>
+                        }
+                    </AuthorizeView>
                 </CellTemplate>
             </TemplateColumn>
         </Columns>

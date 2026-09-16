@@ -25,11 +25,15 @@ public interface IUserRepository
     Task<IdentityResult> DeleteForeverAsync(string userId);
     Task<IdentityResult> ResetPasswordAsync(ResetPasswordInputDataModel inputDataModel);
     Task<string?> GetUserClaim(string userId, string claimType);
+    Task<Dictionary<int, string>> GetUserClaimsOfTypeAsync(string claimType);
     Task SetUserClaim(string userId, string claimType, string claimValue);
     Task RemoveUserClaim(string userId, string claimType);
 }
 
-public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<FonbecWebUser> userStore) : IUserRepository
+public class UserRepository(
+    UserManager<FonbecWebUser> userManager,
+    IUserStore<FonbecWebUser> userStore,
+    IDbContextFactory<FonbecWebDbContext> dbContext) : IUserRepository
 {
     public async Task<FonbecWebUser?> ValidateUniqueEmailAsync(string userEmail)
     {
@@ -382,6 +386,25 @@ public class UserRepository(UserManager<FonbecWebUser> userManager, IUserStore<F
                          ?? null;
 
         return claimValue;
+    }
+
+    /// <summary>
+    /// Claim values of the given type for every user that has one, keyed by user id.
+    /// A single query, so callers can resolve claims for a whole list without a round trip per user.
+    /// </summary>
+    public async Task<Dictionary<int, string>> GetUserClaimsOfTypeAsync(string claimType)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var claims = await db.UserClaims
+            .AsNoTracking()
+            .Where(uc => uc.ClaimType == claimType && uc.ClaimValue != null)
+            .Select(uc => new { uc.UserId, uc.ClaimValue })
+            .ToListAsync();
+
+        return claims
+            .GroupBy(uc => uc.UserId)
+            .ToDictionary(g => g.Key, g => g.First().ClaimValue!);
     }
 
     public async Task SetUserClaim(string userId, string claimType, string claimValue)
