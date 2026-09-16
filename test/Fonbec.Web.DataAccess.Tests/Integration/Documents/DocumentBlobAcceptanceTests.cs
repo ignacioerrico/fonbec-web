@@ -496,6 +496,100 @@ public class DocumentBlobAcceptanceTests
         _fixture.UploadedBlobNames.Count(n => n.Contains("/improved/")).Should().Be(0);
     }
 
+    [Fact]
+    public async Task SubmitImprovement_SkipAllPages_CompletesWithoutImprovedBlobs()
+    {
+        await _fixture.InitializeAsync();
+
+        var create = await _fixture.DocumentService.CreateLetterWithBlobAsync(new CreateLetterWithBlobInputModel(
+            _fixture.StudentId, _fixture.PlanId, _fixture.SponsorAId, _fixture.UploaderContext,
+            Files("image/jpeg", "original-bytes")));
+
+        var locked = await _fixture.DocumentService.TakeNextForDigitalImprovementAsync(
+            _fixture.ReviewerId, "Reviewer");
+
+        var submit = await _fixture.DocumentService.SubmitDigitalImprovementWithBlobAsync(
+            new SubmitDigitalImprovementWithBlobInputModel(
+                locked!.DocumentId, _fixture.ReviewerId, "Reviewer", null,
+                [null], locked.RowVersion));
+
+        submit.IsSuccess.Should().BeTrue();
+        _fixture.UploadedBlobNames.Count(n => n.Contains("/improved/")).Should().Be(0);
+
+        var doc = await _fixture.GetDocumentAsync(locked.DocumentId);
+        doc.DigitalImprovementStatus.Should().Be(DigitalImprovementStatus.Complete);
+        doc.Status.Should().Be(DocumentStatus.Pending);
+
+        var pages = await _fixture.GetPagesAsync(locked.DocumentId);
+        pages.Should().ContainSingle();
+        pages[0].ImprovedBlobPathId.Should().BeNull();
+
+        var download = await _fixture.DocumentService.DownloadDocumentBlobAsync(
+            create.Value!, pageNumber: 1, _fixture.ReviewerId);
+        (await ReadAsync(download!.Content)).Should().Be("original-bytes");
+    }
+
+    [Fact]
+    public async Task SubmitImprovement_SkipSomePages_ImprovesOnlyUploadedPages()
+    {
+        await _fixture.InitializeAsync();
+
+        var create = await _fixture.DocumentService.CreateLetterWithBlobAsync(new CreateLetterWithBlobInputModel(
+            _fixture.StudentId, _fixture.PlanId, _fixture.SponsorAId, _fixture.UploaderContext,
+            Files("image/jpeg", "page-1", "page-2")));
+
+        var locked = await _fixture.DocumentService.TakeNextForDigitalImprovementAsync(
+            _fixture.ReviewerId, "Reviewer");
+
+        var submit = await _fixture.DocumentService.SubmitDigitalImprovementWithBlobAsync(
+            new SubmitDigitalImprovementWithBlobInputModel(
+                locked!.DocumentId, _fixture.ReviewerId, "Reviewer", null,
+                [new UploadFileInputModel(Content("improved-1"), "image/jpeg"), null],
+                locked.RowVersion));
+
+        submit.IsSuccess.Should().BeTrue();
+        _fixture.UploadedBlobNames.Count(n => n.Contains("/improved/")).Should().Be(1);
+
+        var pages = await _fixture.GetPagesAsync(locked.DocumentId);
+        pages.Should().HaveCount(2);
+        pages[0].ImprovedBlobPathId.Should().NotBeNull();
+        pages[1].ImprovedBlobPathId.Should().BeNull();
+
+        var page1 = await _fixture.DocumentService.DownloadDocumentBlobAsync(
+            create.Value!, pageNumber: 1, _fixture.ReviewerId);
+        (await ReadAsync(page1!.Content)).Should().Be("improved-1");
+
+        var page2 = await _fixture.DocumentService.DownloadDocumentBlobAsync(
+            create.Value!, pageNumber: 2, _fixture.ReviewerId);
+        (await ReadAsync(page2!.Content)).Should().Be("page-2");
+    }
+
+    [Fact]
+    public async Task SubmitImprovement_SkipPngOriginal_ReviewerSeesPng()
+    {
+        await _fixture.InitializeAsync();
+
+        var create = await _fixture.DocumentService.CreateLetterWithBlobAsync(new CreateLetterWithBlobInputModel(
+            _fixture.StudentId, _fixture.PlanId, _fixture.SponsorAId, _fixture.UploaderContext,
+            Files("image/png", "png-original")));
+
+        var locked = await _fixture.DocumentService.TakeNextForDigitalImprovementAsync(
+            _fixture.ReviewerId, "Reviewer");
+
+        var submit = await _fixture.DocumentService.SubmitDigitalImprovementWithBlobAsync(
+            new SubmitDigitalImprovementWithBlobInputModel(
+                locked!.DocumentId, _fixture.ReviewerId, "Reviewer", null,
+                [null], locked.RowVersion));
+
+        submit.IsSuccess.Should().BeTrue();
+
+        var download = await _fixture.DocumentService.DownloadDocumentBlobAsync(
+            create.Value!, pageNumber: 1, _fixture.ReviewerId);
+        download.Should().NotBeNull();
+        download!.MimeType.Should().Be("image/png");
+        (await ReadAsync(download.Content)).Should().Be("png-original");
+    }
+
     private static async Task<string> ReadAsync(Stream stream)
     {
         using var reader = new StreamReader(stream, Encoding.UTF8);

@@ -35,5 +35,5 @@ public record SubmitDigitalImprovementWithBlobInputModel(
     int UserId,
     string UserRole,
     string? FonbecAuthClaim,
-    IReadOnlyList<UploadFileInputModel> Files,
+    IReadOnlyList<UploadFileInputModel?> Files,
     byte[] RowVersion);

@@ -45,6 +45,9 @@ public partial class ImproveDocumentPanel : ComponentBase
     [Parameter]
     public EventCallback OnRelease { get; set; }
 
+    [Parameter]
+    public EventCallback<int> OnPageFocused { get; set; }
+
     [Inject]
     public IDocumentService DocumentService { get; set; } = null!;
 
@@ -52,9 +55,14 @@ public partial class ImproveDocumentPanel : ComponentBase
     public ISnackbar Snackbar { get; set; } = null!;
 
     [Inject]
+    public IDialogService DialogService { get; set; } = null!;
+
+    [Inject]
     public IOptions<BlobStorageOptions> BlobStorageOptions { get; set; } = null!;
 
     private bool ActionsDisabled => Disabled || _saving;
+
+    private bool HasAnyUpload => _files.Any(f => f is not null);
 
     private bool SubmitDisabled => ActionsDisabled || FirstValidationError() is not null;
 
@@ -72,6 +80,8 @@ public partial class ImproveDocumentPanel : ComponentBase
             }
         }
     }
+
+    private Task FocusPageAsync(int pageNumber) => OnPageFocused.InvokeAsync(pageNumber);
 
     private void OnPageFileSelected(int pageIndex, IBrowserFile? file)
     {
@@ -97,12 +107,6 @@ public partial class ImproveDocumentPanel : ComponentBase
         if (PageCount <= 0)
         {
             return "El documento no tiene páginas para mejorar.";
-        }
-
-        var selected = _files.Count(f => f is not null);
-        if (selected != PageCount)
-        {
-            return $"Debés subir {PageCount} imágenes JPG (una por página).";
         }
 
         long totalSize = 0;
@@ -141,10 +145,21 @@ public partial class ImproveDocumentPanel : ComponentBase
             return;
         }
 
+        var originalPages = Enumerable.Range(1, PageCount)
+            .Where(n => _files[n - 1] is null)
+            .ToList();
+
+        if (originalPages.Count > 0 && !await ConfirmKeepOriginalsAsync(originalPages))
+        {
+            return;
+        }
+
         _saving = true;
 
         var uploads = _files
-            .Select(f => new UploadFileInputModel(f!.OpenReadStream(_maxFileSizeBytes), DocumentMimeTypes.Jpeg))
+            .Select(f => f is null
+                ? null
+                : new UploadFileInputModel(f.OpenReadStream(_maxFileSizeBytes), DocumentMimeTypes.Jpeg))
             .ToList();
 
         try
@@ -168,18 +183,56 @@ public partial class ImproveDocumentPanel : ComponentBase
                 return;
             }
 
-            Snackbar.Add("Imágenes mejoradas subidas.", Severity.Success);
+            Snackbar.Add(
+                HasAnyUpload
+                    ? "Imágenes mejoradas subidas."
+                    : "El documento pasó a revisión con las fotos originales.",
+                Severity.Success);
             await OnCompleted.InvokeAsync();
         }
         finally
         {
             foreach (var upload in uploads)
             {
-                await upload.Content.DisposeAsync();
+                if (upload is not null)
+                {
+                    await upload.Content.DisposeAsync();
+                }
             }
 
             _saving = false;
         }
+    }
+
+    private async Task<bool> ConfirmKeepOriginalsAsync(IReadOnlyList<int> originalPages)
+    {
+        var allOriginal = originalPages.Count == PageCount;
+        var message = allOriginal
+            ? "Ninguna página se va a mejorar. El documento pasa a revisión con las fotos originales."
+            : $"{FormatOriginalPages(originalPages)} se van a revisar con la foto original. ¿Confirmás que se ven bien?";
+
+        var confirmed = await DialogService.ShowMessageBox(
+            allOriginal ? "¿Usar las fotos originales?" : "¿Confirmar páginas sin mejora?",
+            message,
+            yesText: allOriginal ? "Está bien así" : "Confirmar",
+            cancelText: "Cancelar");
+
+        return confirmed == true;
+    }
+
+    private static string FormatOriginalPages(IReadOnlyList<int> pages)
+    {
+        if (pages.Count == 1)
+        {
+            return $"La página {pages[0]}";
+        }
+
+        if (pages.Count == 2)
+        {
+            return $"Las páginas {pages[0]} y {pages[1]}";
+        }
+
+        return $"Las páginas {string.Join(", ", pages.Take(pages.Count - 1))} y {pages[^1]}";
     }
 
     private static string FormatBytes(long bytes)

@@ -1,7 +1,7 @@
 <MudPaper Class="pa-4 mb-4" Outlined="true">
-    <MudText Typo="Typo.h6" Class="mb-2">Versiones mejoradas</MudText>
+    <MudText Typo="Typo.h6" Class="mb-2">Versión mejorada</MudText>
     <MudText Typo="Typo.body2" Class="mud-text-secondary mb-4">
-        Debés subir @PageCount @(PageCount == 1 ? "imagen JPG" : "imágenes JPG"), una por cada página.
+        Por cada página, presioná «Usar original» si la imagen ya se ve bien, o subí una versión mejorada como JPG.
     </MudText>
 
     <MudStack Spacing="3">
@@ -10,34 +10,44 @@
             var pageIndex = i;
             var pageNumber = i + 1;
             var file = _files[pageIndex];
-            <MudPaper Class="pa-3" Outlined="true">
+            <MudPaper Class="pa-3" Outlined="true" Style="cursor: pointer;"
+                      @onclick="@(() => FocusPageAsync(pageNumber))">
                 <MudStack Row="true" AlignItems="AlignItems.Center" Class="flex-wrap" Spacing="2">
                     <MudText Typo="Typo.subtitle2">Pág. @pageNumber</MudText>
                     <MudSpacer />
                     @if (file is not null)
                     {
                         <MudText Typo="Typo.body2">@file.Name (@FormatBytes(file.Size))</MudText>
-                        <MudIconButton Icon="@Icons.Material.Filled.Close"
+                        <div @onclick:stopPropagation="true">
+                            <MudButton Variant="Variant.Text"
                                        Size="Size.Small"
                                        Disabled="ActionsDisabled"
-                                       OnClick="@(() => ClearPage(pageIndex))" />
+                                       OnClick="@(() => ClearPage(pageIndex))">
+                                Usar original
+                            </MudButton>
+                        </div>
                     }
                     else
                     {
-                        <MudFileUpload T="IBrowserFile"
-                                       Accept=".jpg,.jpeg"
-                                       Disabled="ActionsDisabled"
-                                       FilesChanged="selected => OnPageFileSelected(pageIndex, selected)">
-                            <ActivatorContent>
-                                <MudButton Variant="Variant.Outlined"
-                                           Color="Color.Primary"
-                                           Size="Size.Small"
-                                           StartIcon="@Icons.Material.Filled.UploadFile"
-                                           Disabled="ActionsDisabled">
-                                    Subir JPG
-                                </MudButton>
-                            </ActivatorContent>
-                        </MudFileUpload>
+                        <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled">
+                            Usar original
+                        </MudChip>
+                        <div @onclick:stopPropagation="true">
+                            <MudFileUpload T="IBrowserFile"
+                                           Accept=".jpg,.jpeg"
+                                           Disabled="ActionsDisabled"
+                                           FilesChanged="selected => OnPageFileSelected(pageIndex, selected)">
+                                <ActivatorContent>
+                                    <MudButton Variant="Variant.Outlined"
+                                               Color="Color.Primary"
+                                               Size="Size.Small"
+                                               StartIcon="@Icons.Material.Filled.UploadFile"
+                                               Disabled="ActionsDisabled">
+                                        Subir JPG
+                                    </MudButton>
+                                </ActivatorContent>
+                            </MudFileUpload>
+                        </div>
                     }
                 </MudStack>
             </MudPaper>
@@ -65,12 +75,12 @@
         </MudButton>
         <MudButton Variant="Variant.Filled"
                    Color="Color.Primary"
-                   StartIcon="@Icons.Material.Filled.CloudUpload"
+                   StartIcon="@(HasAnyUpload ? Icons.Material.Filled.CloudUpload : Icons.Material.Filled.Check)"
                    Disabled="SubmitDisabled"
                    OnClick="SubmitAsync">
-            Subir
+            @(HasAnyUpload ? "Subir" : "Está bien así")
         </MudButton>
     </MudStack>
 </MudPaper>
 
-<LoadingIndicator Loading="_saving" LoadingText="Subiendo las imágenes mejoradas" />
+<LoadingIndicator Loading="_saving" LoadingText="@(HasAnyUpload ? "Subiendo las imágenes mejoradas" : "Guardando")" />

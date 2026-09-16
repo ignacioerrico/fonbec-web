@@ -639,8 +639,7 @@ public class DocumentRepository(
             return [DocumentMessages.DocumentNotFoundOrImprovementLockNotHeld];
         }
 
-        // Improvement is submitted for the whole document: exactly one improved file per page,
-        // provided in page order.
+        // One slot per page, in page order. A null entry keeps the original for that page.
         var pages = document.Pages.OrderBy(p => p.PageNumber).ToList();
         if (input.ImprovedBlobs.Count != pages.Count)
         {
@@ -652,6 +651,11 @@ public class DocumentRepository(
         for (var i = 0; i < pages.Count; i++)
         {
             var source = input.ImprovedBlobs[i];
+            if (source is null)
+            {
+                continue;
+            }
+
             var improvedBlob = new BlobPath
             {
                 StoragePath = source.StoragePath,

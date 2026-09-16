@@ -26,7 +26,8 @@
                                       Pages="_workspace.Pages"
                                       UploaderNotes="@_workspace.UploaderNotes"
                                       PageUrlFactory="PageUrl"
-                                      ShowPixelDimensions="true" />
+                                      ShowPixelDimensions="true"
+                                      @bind-SelectedPageNumber="_focusedPageNumber" />
             </div>
         </MudItem>
 
@@ -38,7 +39,8 @@
                                   ReviewerRole="@UserRole"
                                   Disabled="_expired"
                                   OnCompleted="OnImprovementCompleted"
-                                  OnRelease="ReleaseAsync" />
+                                  OnRelease="ReleaseAsync"
+                                  OnPageFocused="OnPageFocused" />
         </MudItem>
     </MudGrid>
 }

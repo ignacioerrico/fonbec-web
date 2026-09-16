@@ -46,6 +46,13 @@ public partial class ReviewDocumentViewer
     [Parameter]
     public bool ShowPixelDimensions { get; set; }
 
+    /// <summary>1-based page shown in the viewer. When set by the parent, the viewer follows it.</summary>
+    [Parameter]
+    public int SelectedPageNumber { get; set; }
+
+    [Parameter]
+    public EventCallback<int> SelectedPageNumberChanged { get; set; }
+
     [Inject]
     public IJSRuntime JsRuntime { get; set; } = null!;
 
@@ -79,6 +86,14 @@ public partial class ReviewDocumentViewer
             _selectedPageNumber = Pages.Min(p => p.PageNumber);
             ClearPixelDimensions();
         }
+
+        if (SelectedPageNumber > 0
+            && SelectedPageNumber != _selectedPageNumber
+            && Pages.Any(p => p.PageNumber == SelectedPageNumber))
+        {
+            _selectedPageNumber = SelectedPageNumber;
+            ClearPixelDimensions();
+        }
     }
 
     protected override async Task OnAfterRenderAsync(bool firstRender)
@@ -89,7 +104,7 @@ public partial class ReviewDocumentViewer
         }
     }
 
-    private void SelectPage(int pageNumber)
+    private async Task SelectPage(int pageNumber)
     {
         if (_selectedPageNumber == pageNumber)
         {
@@ -98,6 +113,7 @@ public partial class ReviewDocumentViewer
 
         _selectedPageNumber = pageNumber;
         ClearPixelDimensions();
+        await SelectedPageNumberChanged.InvokeAsync(pageNumber);
     }
 
     private Task OnImageLoadedAsync() => ReadNaturalSizeAsync();

@@ -51,8 +51,10 @@ public class SubmitDigitalImprovementInputDataModel
     public long DocumentId { get; set; }
     public int UserId { get; set; }
 
-    /// <summary>Improved replacement for each page, in page order (one entry per existing page).</summary>
-    public List<CreateBlobPathInputDataModel> ImprovedBlobs { get; set; } = [];
+    /// <summary>
+    /// Improved replacement per page, in page order. A null entry keeps the original for that page.
+    /// </summary>
+    public List<CreateBlobPathInputDataModel?> ImprovedBlobs { get; set; } = [];
 
     public byte[] RowVersion { get; set; } = null!;
 }

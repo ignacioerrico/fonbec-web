@@ -380,26 +380,32 @@ public class DocumentService(
             return new CrudResult(Errors: [DocumentMessages.DocumentNotEligibleForImprovement]);
         }
 
-        // Improvement is submitted for the whole document: one improved image per existing page,
-        // provided in page order.
+        // One slot per page, in page order. A null file means keep the original for that page.
         if (input.Files.Count != context.Pages.Count)
         {
             return new CrudResult(Errors: [DocumentMessages.ImprovedPageCountMismatch]);
         }
 
         if (input.Files.Any(f =>
-                !string.Equals(f.MimeType, DocumentMimeTypes.Jpeg, StringComparison.OrdinalIgnoreCase)))
+                f is not null
+                && !string.Equals(f.MimeType, DocumentMimeTypes.Jpeg, StringComparison.OrdinalIgnoreCase)))
         {
             return new CrudResult(Errors: [DocumentMessages.ImprovedBlobMustBeImage]);
         }
 
-        var buffers = new List<MemoryStream>();
+        var buffers = new List<MemoryStream?>();
         var uploadedBlobNames = new List<string>();
         try
         {
             long totalSize = 0;
             foreach (var file in input.Files)
             {
+                if (file is null)
+                {
+                    buffers.Add(null);
+                    continue;
+                }
+
                 var buffer = await BufferAsync(file.Content);
                 buffers.Add(buffer);
                 totalSize += buffer.Length;
@@ -412,10 +418,17 @@ public class DocumentService(
 
             var uploadedOn = DateOnly.FromDateTime(DateTime.UtcNow);
             var pageCount = input.Files.Count;
-            var improvedBlobs = new List<CreateBlobPathInputDataModel>();
+            var improvedBlobs = new List<CreateBlobPathInputDataModel?>();
             for (var i = 0; i < input.Files.Count; i++)
             {
-                var mimeType = input.Files[i].MimeType;
+                var file = input.Files[i];
+                if (file is null || buffers[i] is null)
+                {
+                    improvedBlobs.Add(null);
+                    continue;
+                }
+
+                var mimeType = file.MimeType;
                 var extension = DocumentMimeTypes.GetExtension(mimeType)!;
                 var pageNumber = i + 1;
                 var blobName = context.DocumentType switch
@@ -432,7 +445,7 @@ public class DocumentService(
                         context.ChapterId, context.StudentId, extension, isImproved: true, uploadedOn, pageNumber, pageCount),
                 };
 
-                var upload = await blobStorageService.UploadAsync(buffers[i], blobName, mimeType);
+                var upload = await blobStorageService.UploadAsync(buffers[i]!, blobName, mimeType);
                 uploadedBlobNames.Add(blobName);
                 improvedBlobs.Add(ToBlobDataModel(upload));
             }
@@ -469,7 +482,10 @@ public class DocumentService(
         {
             foreach (var buffer in buffers)
             {
-                await buffer.DisposeAsync();
+                if (buffer is not null)
+                {
+                    await buffer.DisposeAsync();
+                }
             }
         }
     }

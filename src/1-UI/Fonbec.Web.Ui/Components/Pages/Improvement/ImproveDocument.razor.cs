@@ -11,6 +11,7 @@ public partial class ImproveDocument : AuthenticationRequiredComponentBase
 {
     private ImprovementWorkspaceViewModel? _workspace;
     private bool _expired;
+    private int _focusedPageNumber = 1;
 
     [Parameter]
     public long DocumentId { get; set; }
@@ -37,6 +38,8 @@ public partial class ImproveDocument : AuthenticationRequiredComponentBase
     }
 
     private string PageUrl(int pageNumber) => NavRoutes.ImproveDocumentPage(DocumentId, pageNumber);
+
+    private void OnPageFocused(int pageNumber) => _focusedPageNumber = pageNumber;
 
     private async Task ReleaseAsync()
     {

@@ -64,7 +64,7 @@ public record SubmitDigitalImprovementInputModel(
     int UserId,
     string UserRole,
     string? FonbecAuthClaim,
-    IReadOnlyList<CreateBlobPathInputModel> ImprovedBlobs,
+    IReadOnlyList<CreateBlobPathInputModel?> ImprovedBlobs,
     byte[] RowVersion);
 
 public record ApproveLetterInputModel(
