@@ -8,6 +8,24 @@
 
 @if (!Loading)
 {
+    @if (_canImprove && ImprovementBacklog > 0)
+    {
+        <MudAlert Severity="Severity.Warning" Variant="Variant.Outlined" Class="mb-4">
+            <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="flex-wrap" Spacing="2">
+                <MudText>
+                    @(ImprovementBacklog == 1
+                        ? "Hay un documento con imágenes pendientes de mejora."
+                        : $"Hay {ImprovementBacklog} documentos con imágenes pendientes de mejora.")
+                </MudText>
+                <MudButton Variant="Variant.Filled"
+                           Color="Color.Warning"
+                           Href="@NavRoutes.ImprovementQueue">
+                    Ir a mejorar
+                </MudButton>
+            </MudStack>
+        </MudAlert>
+    }
+
     <MudPaper Class="pa-6" Elevation="2">
         <MudStack Spacing="6" AlignItems="AlignItems.Center">
             <MudStack Row="true" Spacing="8" Justify="Justify.Center" AlignItems="AlignItems.Center" Class="flex-wrap">

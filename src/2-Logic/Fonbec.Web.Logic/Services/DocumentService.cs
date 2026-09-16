@@ -46,6 +46,20 @@ public interface IDocumentService
 
     Task ReleaseReviewLockAsync(long documentId, int userId);
     Task<DocumentQueueItemViewModel?> TakeNextForDigitalImprovementAsync(int userId, string userRole);
+
+    /// <summary>
+    /// Returns the id of the document the reviewer currently holds a valid improvement lock on, or <c>null</c>.
+    /// Used to resume an in-progress improvement.
+    /// </summary>
+    Task<long?> GetActiveImprovementLockAsync(int userId, string userRole);
+
+    /// <summary>
+    /// Loads the improvement workspace for a document that must be currently locked to <paramref name="userId"/>.
+    /// Returns <c>null</c> when the caller cannot improve, the document does not exist, the lock is held by
+    /// another user, or the lock has expired — in which case the UI redirects back to the queue.
+    /// </summary>
+    Task<ImprovementWorkspaceViewModel?> GetImprovementWorkspaceAsync(long documentId, int userId, string userRole);
+
     Task<CrudResult> SubmitDigitalImprovementAsync(SubmitDigitalImprovementInputModel input);
     Task ReleaseImprovementLockAsync(long documentId, int userId);
     Task<ReviewResult> ApproveLetterAsync(ApproveLetterInputModel input);
@@ -373,7 +387,8 @@ public class DocumentService(
             return new CrudResult(Errors: [DocumentMessages.ImprovedPageCountMismatch]);
         }
 
-        if (input.Files.Any(f => !DocumentMimeTypes.IsImage(f.MimeType)))
+        if (input.Files.Any(f =>
+                !string.Equals(f.MimeType, DocumentMimeTypes.Jpeg, StringComparison.OrdinalIgnoreCase)))
         {
             return new CrudResult(Errors: [DocumentMessages.ImprovedBlobMustBeImage]);
         }
@@ -532,6 +547,46 @@ public class DocumentService(
 
         var item = await documentRepository.TakeNextForDigitalImprovementAsync(userId);
         return item?.Adapt<DocumentQueueItemViewModel>();
+    }
+
+    public async Task<long?> GetActiveImprovementLockAsync(int userId, string userRole)
+    {
+        if (!await CanImproveDigitallyAsync(userId, userRole))
+        {
+            return null;
+        }
+
+        return await documentRepository.GetActiveImprovementLockedDocumentIdAsync(userId);
+    }
+
+    public async Task<ImprovementWorkspaceViewModel?> GetImprovementWorkspaceAsync(
+        long documentId, int userId, string userRole)
+    {
+        if (!await CanImproveDigitallyAsync(userId, userRole))
+        {
+            return null;
+        }
+
+        var workspace = await documentRepository.GetImprovementWorkspaceAsync(documentId);
+
+        if (workspace?.ImprovementLockedById != userId
+            || workspace.LockExpiresAtUtc is not { } expiresAt
+            || expiresAt <= DateTime.UtcNow)
+        {
+            return null;
+        }
+
+        return new ImprovementWorkspaceViewModel
+        {
+            DocumentId = workspace.DocumentId,
+            DocumentType = workspace.DocumentType,
+            FileKind = workspace.FileKind,
+            PageCount = workspace.PageCount,
+            Pages = workspace.Pages.Adapt<List<ReviewWorkspacePageViewModel>>(),
+            UploaderNotes = workspace.UploaderNotes,
+            LockExpiresAtUtc = expiresAt,
+            RowVersion = workspace.RowVersion,
+        };
     }
 
     public async Task<CrudResult> SubmitDigitalImprovementAsync(SubmitDigitalImprovementInputModel input)

@@ -109,7 +109,7 @@ public static class ConfigureServices
 
         services.AddAuthorization(options =>
         {
-            foreach (var claim in allPages)
+            foreach (var claim in allPages.Concat(OptInPermissions.All))
             {
                 options.AddPolicy(claim.Codename,
                     policy => policy.Requirements.Add(new FonbecPermissionRequirement(claim.Codename)));

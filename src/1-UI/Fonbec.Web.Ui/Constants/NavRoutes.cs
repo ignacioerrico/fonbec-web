@@ -119,4 +119,16 @@ public static class NavRoutes
 
     public const string ReviewDocumentPageRouteTemplate =
         $"{ReviewQueue}/documento/{{documentId:long}}/pagina/{{pageNumber:int}}";
+
+    public const string ImprovementQueue = "/mejorar";
+
+    public static string ImproveDocument(long documentId) => $"{ImprovementQueue}/{documentId}";
+
+    public const string ImproveDocumentRouteTemplate = $"{ImprovementQueue}/{{DocumentId:long}}";
+
+    public static string ImproveDocumentPage(long documentId, int pageNumber) =>
+        $"{ImprovementQueue}/documento/{documentId}/pagina/{pageNumber}";
+
+    public const string ImproveDocumentPageRouteTemplate =
+        $"{ImprovementQueue}/documento/{{documentId:long}}/pagina/{{pageNumber:int}}";
 }

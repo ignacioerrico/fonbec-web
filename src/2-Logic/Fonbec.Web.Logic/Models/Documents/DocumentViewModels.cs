@@ -68,12 +68,25 @@ public class ReviewWorkspaceViewModel
     public byte[] RowVersion { get; init; } = null!;
 }
 
+public class ImprovementWorkspaceViewModel
+{
+    public long DocumentId { get; init; }
+    public DocumentType DocumentType { get; init; }
+    public FileKind FileKind { get; init; }
+    public int PageCount { get; init; }
+    public List<ReviewWorkspacePageViewModel> Pages { get; init; } = [];
+    public string? UploaderNotes { get; init; }
+    public DateTime LockExpiresAtUtc { get; init; }
+    public byte[] RowVersion { get; init; } = null!;
+}
+
 public class ReviewProgressViewModel
 {
     public int PendingLetters { get; init; }
     public int PendingReportCards { get; init; }
     public int PendingOther { get; init; }
     public int PendingImprovement { get; init; }
+    public int ProcessingImprovement { get; init; }
     public int Processing { get; init; }
 }
 

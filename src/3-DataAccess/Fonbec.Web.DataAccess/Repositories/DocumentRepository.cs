@@ -31,6 +31,11 @@ public interface IDocumentRepository
 
     Task ReleaseReviewLockAsync(long documentId, int userId);
     Task<DocumentQueueItemDataModel?> TakeNextForDigitalImprovementAsync(int userId);
+
+    /// <summary>Document id the user currently holds a valid (non-expired) improvement lock on, or <c>null</c>.</summary>
+    Task<long?> GetActiveImprovementLockedDocumentIdAsync(int userId);
+
+    Task<ImprovementWorkspaceDataModel?> GetImprovementWorkspaceAsync(long documentId);
     Task<List<string>> SubmitDigitalImprovementAsync(SubmitDigitalImprovementInputDataModel input);
     Task ReleaseImprovementLockAsync(long documentId, int userId);
     Task<List<string>> ApproveLetterAsync(ApproveLetterInputDataModel input);
@@ -500,6 +505,14 @@ public class DocumentRepository(
 
     public async Task<DocumentQueueItemDataModel?> TakeNextForDigitalImprovementAsync(int userId)
     {
+        // A reviewer may hold only one improvement lock at a time. Resume that document rather
+        // than locking a new one — the original ImprovementLockedAt is preserved.
+        var existingLock = await GetActiveImprovementLockedQueueItemAsync(userId);
+        if (existingLock is not null)
+        {
+            return existingLock;
+        }
+
         // Same free-lock rule as review, applied to the improvement lock: oldest image document
         // that is either awaiting improvement (Required, unlocked) or was taken but abandoned
         // past the timeout (InProgress with a stale ImprovementLockedAt). The improvement lock
@@ -542,6 +555,74 @@ public class DocumentRepository(
                 // Another user took this document first; loop and pick the next free one.
             }
         }
+    }
+
+    public async Task<long?> GetActiveImprovementLockedDocumentIdAsync(int userId)
+    {
+        var queueItem = await GetActiveImprovementLockedQueueItemAsync(userId);
+        return queueItem?.DocumentId;
+    }
+
+    /// <summary>
+    /// Returns the queue item the user currently holds a valid (non-expired) improvement lock on, or
+    /// <c>null</c>. Read-only: the existing <c>ImprovementLockedAt</c> is not touched, so a resumed lock
+    /// keeps its original expiry.
+    /// </summary>
+    private async Task<DocumentQueueItemDataModel?> GetActiveImprovementLockedQueueItemAsync(int userId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var utcNow = timeProvider.GetUtcNow().UtcDateTime;
+        var lockValidFrom = utcNow - LockTimeout;
+
+        var document = await db.Documents
+            .AsNoTracking()
+            .Include(d => d.QueueItem)
+            .Where(d => d.ImprovementLockedById == userId
+                        && d.DigitalImprovementStatus == DigitalImprovementStatus.InProgress
+                        && d.ImprovementLockedAt != null
+                        && d.ImprovementLockedAt >= lockValidFrom
+                        && d.QueueItem != null)
+            .OrderByDescending(d => d.ImprovementLockedAt)
+            .FirstOrDefaultAsync();
+
+        return document?.QueueItem is null ? null : MapQueueItem(document.QueueItem, document);
+    }
+
+    public async Task<ImprovementWorkspaceDataModel?> GetImprovementWorkspaceAsync(long documentId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var workspace = await db.Documents
+            .AsNoTracking()
+            .Where(d => d.DocumentId == documentId)
+            .Select(d => new ImprovementWorkspaceDataModel
+            {
+                DocumentId = d.DocumentId,
+                DocumentType = d.DocumentType,
+                FileKind = d.FileKind,
+                PageCount = d.Pages.Count,
+                Pages = d.Pages
+                    .OrderBy(p => p.PageNumber)
+                    .Select(p => new ReviewWorkspacePageDataModel
+                    {
+                        PageNumber = p.PageNumber,
+                        MimeType = p.OriginalBlobPath.MimeType,
+                    })
+                    .ToList(),
+                UploaderNotes = d.UploaderNotes,
+                ImprovementLockedById = d.ImprovementLockedById,
+                ImprovementLockedAt = d.ImprovementLockedAt,
+                RowVersion = d.RowVersion,
+            })
+            .FirstOrDefaultAsync();
+
+        if (workspace is not null && workspace.ImprovementLockedAt is { } lockedAt)
+        {
+            workspace.LockExpiresAtUtc = lockedAt + LockTimeout;
+        }
+
+        return workspace;
     }
 
     public async Task<List<string>> SubmitDigitalImprovementAsync(SubmitDigitalImprovementInputDataModel input)
@@ -939,7 +1020,10 @@ public class DocumentRepository(
                 .Where(c => c.DocumentType == DocumentType.Other && c.Status == DocumentStatus.Pending)
                 .Sum(c => c.Count),
             PendingImprovement = counts
-                .Where(c => c.Status is DocumentStatus.PendingImprovement or DocumentStatus.ProcessingImprovement)
+                .Where(c => c.Status == DocumentStatus.PendingImprovement)
+                .Sum(c => c.Count),
+            ProcessingImprovement = counts
+                .Where(c => c.Status == DocumentStatus.ProcessingImprovement)
                 .Sum(c => c.Count),
             Processing = counts
                 .Where(c => c.Status == DocumentStatus.Processing)

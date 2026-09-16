@@ -307,4 +307,43 @@ public class DocumentServiceBlobTests
         await _blobStorageService.DidNotReceive().UploadAsync(
             Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
+
+    [Fact]
+    public async Task SubmitImprovement_WithPngImproved_ReturnsError()
+    {
+        const long documentId = 42;
+        const int reviewerId = 20;
+
+        _userService.GetFonbecGrantsClaim(Arg.Any<int>()).Returns(DocumentPermission.DigitalImprovement);
+        _userService.HasPermission(Arg.Any<string?>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string?>()).Returns(true);
+        _repository.GetDocumentBlobContextAsync(documentId).Returns(new DocumentBlobContextDataModel
+        {
+            DocumentId = documentId,
+            DocumentType = DocumentType.Letter,
+            DigitalImprovementStatus = DigitalImprovementStatus.InProgress,
+            ImprovementLockedById = reviewerId,
+            PlanId = PlanId,
+            SponsorId = SponsorId,
+            Pages =
+            [
+                new DocumentPageBlobDataModel
+                {
+                    PageNumber = 1,
+                    Original = new BlobPathDataModel { StoragePath = "orig.jpg", MimeType = "image/jpeg" },
+                    Active = new BlobPathDataModel { StoragePath = "orig.jpg", MimeType = "image/jpeg" },
+                },
+            ],
+        });
+
+        var service = CreateService();
+
+        var result = await service.SubmitDigitalImprovementWithBlobAsync(new SubmitDigitalImprovementWithBlobInputModel(
+            documentId, reviewerId, "Reviewer", null,
+            [new UploadFileInputModel(new MemoryStream(new byte[10]), "image/png")], new byte[8]));
+
+        result.IsSuccess.Should().BeFalse();
+        result.Errors.Should().Contain(DocumentMessages.ImprovedBlobMustBeImage);
+        await _blobStorageService.DidNotReceive().UploadAsync(
+            Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+    }
 }

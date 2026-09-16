@@ -22,7 +22,8 @@ internal class FonbecPermissionHandler(IUserService userService) : Authorization
         }
 
         var denyListClaim = userService.GetFonbecAuthClaim(context.User);
-        var hasPermission = userService.HasPermission(denyListClaim, userRole, requirement.PageName);
+        var grantsClaim = userService.GetFonbecGrantsClaim(context.User);
+        var hasPermission = userService.HasPermission(denyListClaim, userRole, requirement.PageName, grantsClaim);
 
         if (hasPermission)
         {

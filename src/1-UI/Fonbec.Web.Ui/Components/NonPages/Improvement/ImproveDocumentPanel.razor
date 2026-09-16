@@ -1,0 +1,76 @@
+<MudPaper Class="pa-4 mb-4" Outlined="true">
+    <MudText Typo="Typo.h6" Class="mb-2">Versiones mejoradas</MudText>
+    <MudText Typo="Typo.body2" Class="mud-text-secondary mb-4">
+        Debés subir @PageCount @(PageCount == 1 ? "imagen JPG" : "imágenes JPG"), una por cada página.
+    </MudText>
+
+    <MudStack Spacing="3">
+        @for (var i = 0; i < PageCount; i++)
+        {
+            var pageIndex = i;
+            var pageNumber = i + 1;
+            var file = _files[pageIndex];
+            <MudPaper Class="pa-3" Outlined="true">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Class="flex-wrap" Spacing="2">
+                    <MudText Typo="Typo.subtitle2">Pág. @pageNumber</MudText>
+                    <MudSpacer />
+                    @if (file is not null)
+                    {
+                        <MudText Typo="Typo.body2">@file.Name (@FormatBytes(file.Size))</MudText>
+                        <MudIconButton Icon="@Icons.Material.Filled.Close"
+                                       Size="Size.Small"
+                                       Disabled="ActionsDisabled"
+                                       OnClick="@(() => ClearPage(pageIndex))" />
+                    }
+                    else
+                    {
+                        <MudFileUpload T="IBrowserFile"
+                                       Accept=".jpg,.jpeg"
+                                       Disabled="ActionsDisabled"
+                                       FilesChanged="selected => OnPageFileSelected(pageIndex, selected)">
+                            <ActivatorContent>
+                                <MudButton Variant="Variant.Outlined"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           StartIcon="@Icons.Material.Filled.UploadFile"
+                                           Disabled="ActionsDisabled">
+                                    Subir JPG
+                                </MudButton>
+                            </ActivatorContent>
+                        </MudFileUpload>
+                    }
+                </MudStack>
+            </MudPaper>
+        }
+    </MudStack>
+
+    @if (FirstValidationError() is { } validationError)
+    {
+        <MudAlert Severity="Severity.Info" Dense="true" Class="mt-4" Variant="Variant.Text">
+            @validationError
+        </MudAlert>
+    }
+
+    <MudStack Row="true"
+              Justify="Justify.SpaceBetween"
+              AlignItems="AlignItems.Center"
+              Spacing="2"
+              Class="mt-4 flex-wrap">
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Default"
+                   StartIcon="@Icons.Material.Filled.LockOpen"
+                   Disabled="ActionsDisabled"
+                   OnClick="ReleaseClickedAsync">
+            Liberar
+        </MudButton>
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   StartIcon="@Icons.Material.Filled.CloudUpload"
+                   Disabled="SubmitDisabled"
+                   OnClick="SubmitAsync">
+            Subir
+        </MudButton>
+    </MudStack>
+</MudPaper>
+
+<LoadingIndicator Loading="_saving" LoadingText="Subiendo las imágenes mejoradas" />

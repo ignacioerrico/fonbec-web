@@ -173,6 +173,7 @@ public class DocumentServiceReviewTests
             PendingReportCards = 3,
             PendingOther = 2,
             PendingImprovement = 1,
+            ProcessingImprovement = 7,
             Processing = 5,
         });
 
@@ -184,6 +185,7 @@ public class DocumentServiceReviewTests
         result.PendingReportCards.Should().Be(3);
         result.PendingOther.Should().Be(2);
         result.PendingImprovement.Should().Be(1);
+        result.ProcessingImprovement.Should().Be(7);
         result.Processing.Should().Be(5);
     }
 

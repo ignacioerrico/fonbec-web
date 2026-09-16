@@ -98,7 +98,7 @@ public static class DocumentMessages
         "Solo los documentos con imágenes (JPG o PNG) pueden tener varios archivos.";
 
     public const string ImprovedBlobMustBeImage =
-        "La versión mejorada debe ser una imagen (JPG o PNG).";
+        "La versión mejorada debe ser una imagen JPG.";
 
     public const string ImprovedPageCountMismatch =
         "Debe enviar una versión mejorada por cada página del documento.";

@@ -28,6 +28,12 @@ public partial class ReviewDocumentViewer
     [Parameter]
     public string? UploaderNotes { get; set; }
 
+    /// <summary>
+    /// Optional page-blob URL factory. Defaults to the review (active blob) route.
+    /// </summary>
+    [Parameter]
+    public Func<int, string>? PageUrlFactory { get; set; }
+
     private IReadOnlyList<ReviewWorkspacePageViewModel> OrderedPages =>
         Pages.OrderBy(p => p.PageNumber).ToList();
 
@@ -56,7 +62,8 @@ public partial class ReviewDocumentViewer
 
     private void SelectPage(int pageNumber) => _selectedPageNumber = pageNumber;
 
-    private string PageUrl(int pageNumber) => NavRoutes.ReviewDocumentPage(DocumentId, pageNumber);
+    private string PageUrl(int pageNumber) =>
+        PageUrlFactory?.Invoke(pageNumber) ?? NavRoutes.ReviewDocumentPage(DocumentId, pageNumber);
 
     private static bool IsImage(string? mimeType) =>
         !string.IsNullOrWhiteSpace(mimeType) && DocumentMimeTypes.IsImage(mimeType);

@@ -1,0 +1,8 @@
+/* Keep the document in view while the reviewer scrolls the form on wide screens.
+   Offset by the fixed MudAppBar height plus the page padding. */
+@media (min-width: 960px) {
+    .review-doc-column {
+        position: sticky;
+        top: 5rem;
+    }
+}
