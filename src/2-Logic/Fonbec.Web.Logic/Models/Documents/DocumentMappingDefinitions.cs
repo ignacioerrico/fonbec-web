@@ -49,6 +49,8 @@ public class DocumentMappingDefinitions : IRegister
 
         config.NewConfig<SharedDocumentDataModel, SharedDocumentViewModel>();
 
+        config.NewConfig<ReviewWorkspacePageDataModel, ReviewWorkspacePageViewModel>();
+
         config.NewConfig<ReviewProgressDataModel, ReviewProgressViewModel>();
 
         config.NewConfig<LetterPlanProgressDataModel, LetterPlanProgressViewModel>();

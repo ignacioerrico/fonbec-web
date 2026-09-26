@@ -98,10 +98,10 @@ public static class DocumentMessages
         "Solo los documentos con imágenes (JPG o PNG) pueden tener varios archivos.";
 
     public const string ImprovedBlobMustBeImage =
-        "La versión mejorada debe ser una imagen (JPG o PNG).";
+        "La versión mejorada debe ser una imagen JPG.";
 
     public const string ImprovedPageCountMismatch =
-        "Debe enviar una versión mejorada por cada página del documento.";
+        "La lista de archivos debe coincidir con la cantidad de páginas del documento.";
 
     public const string DocumentNotEligibleForImprovement =
         "El documento no está en un estado válido para enviar una mejora digital.";

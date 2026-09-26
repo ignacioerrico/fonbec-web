@@ -1,0 +1,35 @@
+@using Fonbec.Web.Logic.Constants
+@attribute [Route(NavRoutes.ImprovementQueue)]
+@attribute [Authorize(Policy = DocumentPermission.DigitalImprovement)]
+@inherits AuthenticationRequiredComponentBase
+
+<PageHeader Title="Mejora de imágenes" />
+
+<LoadingIndicator Loading="Loading" />
+
+@if (!Loading)
+{
+    <MudPaper Class="pa-6" Elevation="2">
+        <MudStack Spacing="6" AlignItems="AlignItems.Center">
+            <MudStack Row="true" Spacing="8" Justify="Justify.Center" AlignItems="AlignItems.Center" Class="flex-wrap">
+                <MudStack Spacing="0" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.h3" Color="Color.Primary">@_progress.PendingImprovement</MudText>
+                    <MudText Typo="Typo.subtitle1">Pendientes</MudText>
+                </MudStack>
+                <MudStack Spacing="0" AlignItems="AlignItems.Center">
+                    <MudText Typo="Typo.h3" Color="Color.Warning">@_progress.ProcessingImprovement</MudText>
+                    <MudText Typo="Typo.subtitle1">En mejora</MudText>
+                </MudStack>
+            </MudStack>
+
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       Size="Size.Large"
+                       StartIcon="@Icons.Material.Filled.PlayArrow"
+                       Disabled="_takingNext"
+                       OnClick="ImproveNextAsync">
+                Mejorar siguiente
+            </MudButton>
+        </MudStack>
+    </MudPaper>
+}

@@ -1,0 +1,8 @@
+/* MudAlert pins its icon to the first text line; this banner is as tall as its button, so center the icon. */
+.improvement-banner ::deep .mud-alert-position {
+    align-items: center;
+}
+
+.improvement-banner ::deep .mud-alert-icon {
+    align-self: center;
+}

@@ -12,9 +12,13 @@ public partial class ReviewQueue : AuthenticationRequiredComponentBase
 {
     private ReviewProgressViewModel _progress = new();
     private bool _takingNext;
+    private bool _canImprove;
 
     [Inject]
     public IDocumentService DocumentService { get; set; } = null!;
+
+    [Inject]
+    public IUserService UserService { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
@@ -33,11 +37,14 @@ public partial class ReviewQueue : AuthenticationRequiredComponentBase
         }
 
         _progress = await DocumentService.GetGlobalReviewProgressAsync(FonbecClaim.UserId, UserRole, null);
+        _canImprove = await UserService.HasDigitalImprovementGrantAsync(FonbecClaim.UserId);
 
         Loading = false;
     }
 
     private int Pending => _progress.PendingLetters + _progress.PendingReportCards + _progress.PendingOther;
+
+    private int ImprovementBacklog => _progress.PendingImprovement + _progress.ProcessingImprovement;
 
     private async Task ReviewNextAsync()
     {

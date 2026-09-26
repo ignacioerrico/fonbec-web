@@ -927,6 +927,60 @@ public class DocumentServiceAcceptanceTests
         doc.Status.Should().Be(DocumentStatus.ProcessingImprovement);
     }
 
+    [Fact]
+    public async Task TakeNextForDigitalImprovement_SameUser_ResumesActiveLock()
+    {
+        await _fixture.InitializeAsync();
+
+        await _fixture.DocumentService.CreateLetterAsync(new CreateLetterInputModel(
+            _fixture.StudentId, _fixture.PlanId, _fixture.SponsorAId, _fixture.UploaderContext,
+            FileKind.Blob, Blob: new CreateBlobPathInputModel("a.jpg", "image/jpeg")));
+
+        await _fixture.DocumentService.CreateReportCardAsync(new CreateReportCardInputModel(
+            _fixture.StudentId, _fixture.UploaderContext,
+            FileKind.Blob, Period: new DateOnly(2026, 6, 1), Description: "Boletín 2º trimestre",
+            Blob: new CreateBlobPathInputModel("b.jpg", "image/jpeg")));
+
+        var first = await _fixture.DocumentService.TakeNextForDigitalImprovementAsync(
+            _fixture.ReviewerId, "Reviewer");
+        first.Should().NotBeNull();
+
+        var second = await _fixture.DocumentService.TakeNextForDigitalImprovementAsync(
+            _fixture.ReviewerId, "Reviewer");
+
+        second.Should().NotBeNull();
+        second!.DocumentId.Should().Be(first!.DocumentId);
+
+        var progress = await _fixture.DocumentService.GetGlobalReviewProgressAsync(
+            _fixture.ReviewerId, "Reviewer", planId: null);
+        progress.PendingImprovement.Should().Be(1);
+        progress.ProcessingImprovement.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task GetImprovementWorkspace_LockHolder_ReturnsOriginalPages()
+    {
+        await _fixture.InitializeAsync();
+
+        await _fixture.DocumentService.CreateLetterAsync(new CreateLetterInputModel(
+            _fixture.StudentId, _fixture.PlanId, _fixture.SponsorAId, _fixture.UploaderContext,
+            FileKind.Blob, Blob: new CreateBlobPathInputModel("a.jpg", "image/jpeg")));
+
+        var locked = await _fixture.DocumentService.TakeNextForDigitalImprovementAsync(
+            _fixture.ReviewerId, "Reviewer");
+
+        var workspace = await _fixture.DocumentService.GetImprovementWorkspaceAsync(
+            locked!.DocumentId, _fixture.ReviewerId, "Reviewer");
+
+        workspace.Should().NotBeNull();
+        workspace!.DocumentId.Should().Be(locked.DocumentId);
+        workspace.Pages.Should().ContainSingle(p => p.PageNumber == 1 && p.MimeType == "image/jpeg");
+
+        var otherUser = await _fixture.DocumentService.GetImprovementWorkspaceAsync(
+            locked.DocumentId, _fixture.ManagerId, "Manager");
+        otherUser.Should().BeNull();
+    }
+
     private async Task<long> CreatePendingLetterAsync()
     {
         var result = await _fixture.DocumentService.CreateLetterAsync(new CreateLetterInputModel(

@@ -307,4 +307,106 @@ public class DocumentServiceBlobTests
         await _blobStorageService.DidNotReceive().UploadAsync(
             Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
     }
+
+    [Fact]
+    public async Task SubmitImprovement_WithPngImproved_ReturnsError()
+    {
+        const long documentId = 42;
+        const int reviewerId = 20;
+
+        _userService.GetFonbecGrantsClaim(Arg.Any<int>()).Returns(DocumentPermission.DigitalImprovement);
+        _userService.HasPermission(Arg.Any<string?>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string?>()).Returns(true);
+        _repository.GetDocumentBlobContextAsync(documentId).Returns(new DocumentBlobContextDataModel
+        {
+            DocumentId = documentId,
+            DocumentType = DocumentType.Letter,
+            DigitalImprovementStatus = DigitalImprovementStatus.InProgress,
+            ImprovementLockedById = reviewerId,
+            PlanId = PlanId,
+            SponsorId = SponsorId,
+            Pages =
+            [
+                new DocumentPageBlobDataModel
+                {
+                    PageNumber = 1,
+                    Original = new BlobPathDataModel { StoragePath = "orig.jpg", MimeType = "image/jpeg" },
+                    Active = new BlobPathDataModel { StoragePath = "orig.jpg", MimeType = "image/jpeg" },
+                },
+            ],
+        });
+
+        var service = CreateService();
+
+        var result = await service.SubmitDigitalImprovementWithBlobAsync(new SubmitDigitalImprovementWithBlobInputModel(
+            documentId, reviewerId, "Reviewer", null,
+            [new UploadFileInputModel(new MemoryStream(new byte[10]), "image/png")], new byte[8]));
+
+        result.IsSuccess.Should().BeFalse();
+        result.Errors.Should().Contain(DocumentMessages.ImprovedBlobMustBeImage);
+        await _blobStorageService.DidNotReceive().UploadAsync(
+            Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task SubmitImprovement_WithNullPage_DoesNotUploadThatPage()
+    {
+        const long documentId = 42;
+        const int reviewerId = 20;
+
+        _userService.GetFonbecGrantsClaim(Arg.Any<int>()).Returns(DocumentPermission.DigitalImprovement);
+        _userService.HasPermission(Arg.Any<string?>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string?>()).Returns(true);
+        _repository.GetDocumentBlobContextAsync(documentId).Returns(new DocumentBlobContextDataModel
+        {
+            DocumentId = documentId,
+            DocumentType = DocumentType.Letter,
+            ChapterId = ChapterId,
+            StudentId = StudentId,
+            SponsorId = SponsorId,
+            PlanId = PlanId,
+            DigitalImprovementStatus = DigitalImprovementStatus.InProgress,
+            ImprovementLockedById = reviewerId,
+            Pages =
+            [
+                new DocumentPageBlobDataModel
+                {
+                    PageNumber = 1,
+                    Original = new BlobPathDataModel { StoragePath = "orig-1.jpg", MimeType = "image/jpeg" },
+                    Active = new BlobPathDataModel { StoragePath = "orig-1.jpg", MimeType = "image/jpeg" },
+                },
+                new DocumentPageBlobDataModel
+                {
+                    PageNumber = 2,
+                    Original = new BlobPathDataModel { StoragePath = "orig-2.jpg", MimeType = "image/jpeg" },
+                    Active = new BlobPathDataModel { StoragePath = "orig-2.jpg", MimeType = "image/jpeg" },
+                },
+            ],
+        });
+        _blobStorageService
+            .UploadAsync(Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>())
+            .Returns(callInfo => new UploadBlobResult
+            {
+                BlobName = callInfo.ArgAt<string>(1),
+                MimeType = callInfo.ArgAt<string>(2),
+                FileSizeBytes = 10,
+                Sha256 = [1, 2, 3],
+            });
+        _repository.SubmitDigitalImprovementAsync(Arg.Any<SubmitDigitalImprovementInputDataModel>())
+            .Returns([]);
+
+        var service = CreateService();
+
+        var result = await service.SubmitDigitalImprovementWithBlobAsync(new SubmitDigitalImprovementWithBlobInputModel(
+            documentId, reviewerId, "Reviewer", null,
+            [new UploadFileInputModel(new MemoryStream(Encoding.UTF8.GetBytes("improved")), "image/jpeg"), null],
+            new byte[8]));
+
+        result.IsSuccess.Should().BeTrue();
+        await _blobStorageService.Received(1).UploadAsync(
+            Arg.Any<Stream>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<CancellationToken>());
+        await _repository.Received(1).SubmitDigitalImprovementAsync(
+            Arg.Is<SubmitDigitalImprovementInputDataModel>(m =>
+                m.ImprovedBlobs.Count == 2
+                && m.ImprovedBlobs[0] != null
+                && m.ImprovedBlobs[1] == null));
+    }
 }

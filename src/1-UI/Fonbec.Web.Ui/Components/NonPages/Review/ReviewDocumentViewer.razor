@@ -9,6 +9,12 @@
                 @($"Página {_selectedPageNumber} de {TotalPages}")
             </MudChip>
         }
+        @if (ShowPixelDimensions && PixelDimensionsLabel is not null)
+        {
+            <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Info">
+                @PixelDimensionsLabel
+            </MudChip>
+        }
         <MudSpacer />
         @if (FileKind == FileKind.Blob)
         {
@@ -41,7 +47,11 @@
                 break;
 
             case FileKind.Blob when SelectedPageIsImage:
-                <img class="doc-image" src="@PageUrl(_selectedPageNumber)" alt="@($"Página {_selectedPageNumber}")" />
+                <img @ref="_imageElement"
+                     class="doc-image"
+                     src="@PageUrl(_selectedPageNumber)"
+                     alt="@($"Página {_selectedPageNumber}")"
+                     @onload="OnImageLoadedAsync" />
                 break;
 
             case FileKind.Blob when SelectedPageIsPdf:

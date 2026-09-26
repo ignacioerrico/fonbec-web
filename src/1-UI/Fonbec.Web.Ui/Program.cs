@@ -129,4 +129,20 @@ app.MapGet(NavRoutes.ReviewDocumentPageRouteTemplate,
     })
     .RequireAuthorization();
 
+app.MapGet(NavRoutes.ImproveDocumentPageRouteTemplate,
+    async (long documentId, int pageNumber, ClaimsPrincipal user, IDocumentService documentService) =>
+    {
+        var userIdString = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdString, out var userId))
+        {
+            return Results.Unauthorized();
+        }
+
+        var blob = await documentService.DownloadOriginalDocumentBlobAsync(documentId, pageNumber, userId);
+        return blob is null
+            ? Results.NotFound()
+            : Results.File(blob.Content, blob.MimeType);
+    })
+    .RequireAuthorization();
+
 app.Run();
