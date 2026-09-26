@@ -69,7 +69,18 @@ public interface IDocumentService
     Task<ReviewResult> ApproveOtherDocumentAsync(ApproveOtherDocumentInputModel input);
     Task<ReviewResult> RejectOtherDocumentAsync(RejectOtherDocumentInputModel input);
     Task<SponsorDocumentHistoryViewModel> GetSharedDocumentsAsync(Guid sponsorPublicAccessToken, int studentId);
+    Task<SponsorDocumentHistoryViewModel> GetSharedDocumentsAsync(
+        Guid sponsorPublicAccessToken, int studentId, int skip, int take);
     Task<SponsorDocumentHistoryViewModel> GetSharedDocumentsForCompanyAsync(Guid companyPublicAccessToken, int studentId);
+    Task<SponsorDocumentHistoryViewModel> GetSharedDocumentsForCompanyAsync(
+        Guid companyPublicAccessToken, int studentId, int skip, int take);
+
+    /// <summary>
+    /// Streams the active page blob for a document shared with the token recipient.
+    /// Returns <c>null</c> on any authorization failure (same as not found).
+    /// </summary>
+    Task<DownloadBlobResult?> DownloadSharedDocumentBlobAsync(
+        Guid publicAccessToken, int studentId, long documentId, int pageNumber, bool isCompany);
     Task<ReviewProgressViewModel> GetGlobalReviewProgressAsync(int userId, string userRole, int? planId);
     Task<LetterPlanProgressViewModel> GetLetterPlanProgressAsync(int userId, string userRole, int planId, int? chapterId);
     Task<List<DocumentDescriptionOptionViewModel>> GetDescriptionOptionsAsync(int chapterId, DocumentType documentType);
@@ -851,27 +862,56 @@ public class DocumentService(
             : new ReviewResult(false, errors);
     }
 
+    public const int SharedDocumentHistoryPageSize = 10;
+
+    public Task<SponsorDocumentHistoryViewModel> GetSharedDocumentsAsync(
+        Guid sponsorPublicAccessToken, int studentId) =>
+        GetSharedDocumentsAsync(sponsorPublicAccessToken, studentId, skip: 0, take: SharedDocumentHistoryPageSize);
+
     public async Task<SponsorDocumentHistoryViewModel> GetSharedDocumentsAsync(
-        Guid sponsorPublicAccessToken, int studentId)
+        Guid sponsorPublicAccessToken, int studentId, int skip, int take)
     {
-        var result = await documentRepository.GetSharedDocumentsAsync(sponsorPublicAccessToken, studentId);
-        return new SponsorDocumentHistoryViewModel
-        {
-            IsAuthorized = result.IsAuthorized,
-            Documents = result.Documents.Adapt<List<SharedDocumentViewModel>>(),
-        };
+        var result = await documentRepository.GetSharedDocumentsAsync(
+            sponsorPublicAccessToken, studentId, skip, take);
+        return MapSharedHistory(result);
     }
 
+    public Task<SponsorDocumentHistoryViewModel> GetSharedDocumentsForCompanyAsync(
+        Guid companyPublicAccessToken, int studentId) =>
+        GetSharedDocumentsForCompanyAsync(
+            companyPublicAccessToken, studentId, skip: 0, take: SharedDocumentHistoryPageSize);
+
     public async Task<SponsorDocumentHistoryViewModel> GetSharedDocumentsForCompanyAsync(
-        Guid companyPublicAccessToken, int studentId)
+        Guid companyPublicAccessToken, int studentId, int skip, int take)
     {
-        var result = await documentRepository.GetSharedDocumentsForCompanyAsync(companyPublicAccessToken, studentId);
-        return new SponsorDocumentHistoryViewModel
+        var result = await documentRepository.GetSharedDocumentsForCompanyAsync(
+            companyPublicAccessToken, studentId, skip, take);
+        return MapSharedHistory(result);
+    }
+
+    public async Task<DownloadBlobResult?> DownloadSharedDocumentBlobAsync(
+        Guid publicAccessToken, int studentId, long documentId, int pageNumber, bool isCompany)
+    {
+        var context = await documentRepository.TryGetSharedDocumentBlobContextAsync(
+            publicAccessToken, studentId, documentId, isCompany);
+        if (context is null)
+        {
+            return null;
+        }
+
+        var page = context.Pages.FirstOrDefault(p => p.PageNumber == pageNumber);
+        return await DownloadBlobAsync(page?.Active, documentId);
+    }
+
+    private static SponsorDocumentHistoryViewModel MapSharedHistory(SponsorDocumentHistoryDataModel result) =>
+        new()
         {
             IsAuthorized = result.IsAuthorized,
+            StudentDisplayName = result.StudentDisplayName,
+            RecipientDisplayName = result.RecipientDisplayName,
+            HasMore = result.HasMore,
             Documents = result.Documents.Adapt<List<SharedDocumentViewModel>>(),
         };
-    }
 
     public async Task<ReviewProgressViewModel> GetGlobalReviewProgressAsync(
         int userId, string userRole, int? planId)
@@ -1135,6 +1175,7 @@ public class DocumentService(
             MimeType = blob.MimeType,
             FileSizeBytes = blob.FileSizeBytes,
             Sha256 = blob.Sha256,
+            FileName = Path.GetFileName(blob.StoragePath),
         };
     }
 

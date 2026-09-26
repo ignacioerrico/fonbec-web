@@ -236,7 +236,7 @@ public class DocumentNotificationServiceTests
             "coord@test.com",
             "Campaña lista para completar",
             Arg.Is<string>(html =>
-                html.Contains("Septiembre de 2026")
+                html.Contains("septiembre de 2026")
                 && html.Contains("https://fonbec.test/planificaciones/88/cartas")));
     }
 

@@ -22,11 +22,36 @@ public class SharedDocumentDataModel
 
     /// <summary>Number of file pages (0 for Text/YouTube; 1 for a PDF/single image; N for a multi-image document).</summary>
     public int PageCount { get; init; }
+
+    /// <summary>Start of the planned delivery a letter belongs to; <c>null</c> for other document types.</summary>
+    public DateTime? PlanStartsOn { get; init; }
+
+    /// <summary>Uploaded period for a report card; <c>null</c> for other document types.</summary>
+    public DateOnly? ReportCardPeriod { get; init; }
+
+    /// <summary>Description for report cards and other documents; <c>null</c> for letters.</summary>
+    public string? Description { get; init; }
+
+    /// <summary>Plain-text body when <see cref="FileKind"/> is Text; otherwise <c>null</c>.</summary>
+    public string? TextContent { get; init; }
+
+    /// <summary>YouTube video id when <see cref="FileKind"/> is YouTube; otherwise <c>null</c>.</summary>
+    public string? YouTubeVideoId { get; init; }
 }
 
 public class SponsorDocumentHistoryDataModel
 {
     public bool IsAuthorized { get; init; }
+
+    /// <summary>Student display name when authorized; otherwise <c>null</c>.</summary>
+    public string? StudentDisplayName { get; init; }
+
+    /// <summary>Sponsor or company display name when authorized; otherwise <c>null</c>.</summary>
+    public string? RecipientDisplayName { get; init; }
+
+    /// <summary>True when more shared documents exist beyond the returned page.</summary>
+    public bool HasMore { get; init; }
+
     public List<SharedDocumentDataModel> Documents { get; init; } = [];
 }
 

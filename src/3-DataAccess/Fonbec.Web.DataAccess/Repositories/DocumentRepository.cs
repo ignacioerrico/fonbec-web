@@ -44,8 +44,17 @@ public interface IDocumentRepository
     Task<List<string>> RejectReportCardAsync(RejectReportCardInputDataModel input);
     Task<List<string>> ApproveOtherDocumentAsync(ApproveOtherDocumentInputDataModel input);
     Task<List<string>> RejectOtherDocumentAsync(RejectOtherDocumentInputDataModel input);
-    Task<SponsorDocumentHistoryDataModel> GetSharedDocumentsAsync(Guid sponsorPublicAccessToken, int studentId);
-    Task<SponsorDocumentHistoryDataModel> GetSharedDocumentsForCompanyAsync(Guid companyPublicAccessToken, int studentId);
+    Task<SponsorDocumentHistoryDataModel> GetSharedDocumentsAsync(
+        Guid sponsorPublicAccessToken, int studentId, int skip, int take);
+    Task<SponsorDocumentHistoryDataModel> GetSharedDocumentsForCompanyAsync(
+        Guid companyPublicAccessToken, int studentId, int skip, int take);
+
+    /// <summary>
+    /// Returns the blob context for a document only when the token recipient still sponsors
+    /// the student and a matching <c>DocumentShare</c> exists. Null on any authorization failure.
+    /// </summary>
+    Task<DocumentBlobContextDataModel?> TryGetSharedDocumentBlobContextAsync(
+        Guid publicAccessToken, int studentId, long documentId, bool isCompany);
     Task<ReviewWorkspaceDataModel?> GetReviewWorkspaceAsync(long documentId);
     Task<ReviewProgressDataModel> GetGlobalReviewProgressAsync(int? planId);
     Task<LetterPlanProgressDataModel> GetLetterPlanProgressAsync(int planId, int? chapterId);
@@ -825,7 +834,8 @@ public class DocumentRepository(
         await RejectDocumentAsync(input.DocumentId, input.ReviewerId, input.RowVersion, input.RejectedReasonId,
             input.RejectionNotes, DocumentType.Other);
 
-    public async Task<SponsorDocumentHistoryDataModel> GetSharedDocumentsAsync(Guid sponsorPublicAccessToken, int studentId)
+    public async Task<SponsorDocumentHistoryDataModel> GetSharedDocumentsAsync(
+        Guid sponsorPublicAccessToken, int studentId, int skip, int take)
     {
         await using var db = await dbContext.CreateDbContextAsync();
 
@@ -857,29 +867,17 @@ public class DocumentRepository(
             return new SponsorDocumentHistoryDataModel { IsAuthorized = false };
         }
 
-        var documents = await db.DocumentShares
-            .AsNoTracking()
-            .Where(s => s.SponsorId == sponsor.Id && s.StudentId == studentId)
-            .OrderByDescending(s => s.SharedOn)
-            .Select(s => new SharedDocumentDataModel
-            {
-                DocumentId = s.DocumentId,
-                DocumentType = s.Document.DocumentType,
-                SharedOn = s.SharedOn,
-                FileKind = s.Document.FileKind,
-                PageCount = s.Document.Pages.Count,
-            })
-            .ToListAsync();
-
-        return new SponsorDocumentHistoryDataModel
-        {
-            IsAuthorized = true,
-            Documents = documents,
-        };
+        return await BuildSharedHistoryAsync(
+            db,
+            studentId,
+            $"{sponsor.FirstName} {sponsor.LastName}",
+            skip,
+            take,
+            s => s.SponsorId == sponsor.Id && s.StudentId == studentId);
     }
 
     public async Task<SponsorDocumentHistoryDataModel> GetSharedDocumentsForCompanyAsync(
-        Guid companyPublicAccessToken, int studentId)
+        Guid companyPublicAccessToken, int studentId, int skip, int take)
     {
         await using var db = await dbContext.CreateDbContextAsync();
 
@@ -906,10 +904,124 @@ public class DocumentRepository(
             return new SponsorDocumentHistoryDataModel { IsAuthorized = false };
         }
 
-        var documents = await db.DocumentShares
+        return await BuildSharedHistoryAsync(
+            db,
+            studentId,
+            company.Name,
+            skip,
+            take,
+            s => s.CompanyId == company.Id && s.StudentId == studentId);
+    }
+
+    public async Task<DocumentBlobContextDataModel?> TryGetSharedDocumentBlobContextAsync(
+        Guid publicAccessToken, int studentId, long documentId, bool isCompany)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        if (isCompany)
+        {
+            var company = await db.Companies
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.PublicAccessToken == publicAccessToken && c.IsActive);
+
+            if (company is null)
+            {
+                return null;
+            }
+
+            var utcNow = DateTime.UtcNow;
+            var hasSponsorship = await db.Sponsorships
+                .AsNoTracking()
+                .AnyAsync(sp => sp.StudentId == studentId
+                                && sp.CompanyId == company.Id
+                                && sp.IsActive
+                                && sp.StartDate <= utcNow
+                                && (sp.EndDate == null || sp.EndDate >= utcNow));
+
+            if (!hasSponsorship)
+            {
+                return null;
+            }
+
+            var hasShare = await db.DocumentShares
+                .AsNoTracking()
+                .AnyAsync(s => s.CompanyId == company.Id
+                               && s.StudentId == studentId
+                               && s.DocumentId == documentId);
+
+            if (!hasShare)
+            {
+                return null;
+            }
+        }
+        else
+        {
+            var sponsor = await db.Sponsors
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.PublicAccessToken == publicAccessToken
+                                          && s.IsActive
+                                          && !s.IsDeleted);
+
+            if (sponsor is null)
+            {
+                return null;
+            }
+
+            var utcNow = DateTime.UtcNow;
+            var hasSponsorship = await db.Sponsorships
+                .AsNoTracking()
+                .AnyAsync(sp => sp.StudentId == studentId
+                                && sp.IsActive
+                                && sp.StartDate <= utcNow
+                                && (sp.EndDate == null || sp.EndDate >= utcNow)
+                                && (sp.SponsorId == sponsor.Id
+                                    || (sponsor.CompanyId != null && sp.CompanyId == sponsor.CompanyId)));
+
+            if (!hasSponsorship)
+            {
+                return null;
+            }
+
+            var hasShare = await db.DocumentShares
+                .AsNoTracking()
+                .AnyAsync(s => s.SponsorId == sponsor.Id
+                               && s.StudentId == studentId
+                               && s.DocumentId == documentId);
+
+            if (!hasShare)
+            {
+                return null;
+            }
+        }
+
+        return await GetDocumentBlobContextAsync(documentId);
+    }
+
+    private async Task<SponsorDocumentHistoryDataModel> BuildSharedHistoryAsync(
+        FonbecWebDbContext db,
+        int studentId,
+        string recipientDisplayName,
+        int skip,
+        int take,
+        System.Linq.Expressions.Expression<Func<DocumentShare, bool>> shareFilter)
+    {
+        var studentName = await db.Students
             .AsNoTracking()
-            .Where(s => s.CompanyId == company.Id && s.StudentId == studentId)
+            .Where(s => s.Id == studentId && !s.IsDeleted)
+            .Select(s => s.FirstName + " " + s.LastName)
+            .FirstOrDefaultAsync();
+
+        if (studentName is null)
+        {
+            return new SponsorDocumentHistoryDataModel { IsAuthorized = false };
+        }
+
+        var page = await db.DocumentShares
+            .AsNoTracking()
+            .Where(shareFilter)
             .OrderByDescending(s => s.SharedOn)
+            .Skip(skip)
+            .Take(take + 1)
             .Select(s => new SharedDocumentDataModel
             {
                 DocumentId = s.DocumentId,
@@ -917,13 +1029,43 @@ public class DocumentRepository(
                 SharedOn = s.SharedOn,
                 FileKind = s.Document.FileKind,
                 PageCount = s.Document.Pages.Count,
+                PlanStartsOn = db.Set<Letter>()
+                    .Where(l => l.DocumentId == s.DocumentId)
+                    .Select(l => (DateTime?)l.Plan.StartsOn)
+                    .FirstOrDefault(),
+                ReportCardPeriod = db.Set<ReportCard>()
+                    .Where(r => r.DocumentId == s.DocumentId)
+                    .Select(r => (DateOnly?)r.Period)
+                    .FirstOrDefault(),
+                Description = s.Document.DocumentType == DocumentType.ReportCard
+                    ? db.Set<ReportCard>()
+                        .Where(r => r.DocumentId == s.DocumentId)
+                        .Select(r => r.Description)
+                        .FirstOrDefault()
+                    : s.Document.DocumentType == DocumentType.Other
+                        ? db.Set<OtherDocument>()
+                            .Where(o => o.DocumentId == s.DocumentId)
+                            .Select(o => o.Description)
+                            .FirstOrDefault()
+                        : null,
+                TextContent = s.Document.FileKind == FileKind.Text ? s.Document.TextContent : null,
+                YouTubeVideoId = s.Document.FileKind == FileKind.YouTube ? s.Document.YouTubeVideoId : null,
             })
             .ToListAsync();
+
+        var hasMore = page.Count > take;
+        if (hasMore)
+        {
+            page = page.Take(take).ToList();
+        }
 
         return new SponsorDocumentHistoryDataModel
         {
             IsAuthorized = true,
-            Documents = documents,
+            StudentDisplayName = studentName,
+            RecipientDisplayName = recipientDisplayName,
+            HasMore = hasMore,
+            Documents = page,
         };
     }
 

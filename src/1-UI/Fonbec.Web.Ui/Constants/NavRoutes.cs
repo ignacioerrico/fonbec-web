@@ -32,6 +32,18 @@ public static class NavRoutes
 
     public const string SponsorCreate = $"{Sponsors}/alta";
 
+    public static string SponsorHistory(Guid token, int studentId) =>
+        $"{Sponsors}/{token}/{studentId}";
+
+    public const string SponsorHistoryRouteTemplate =
+        $"{Sponsors}/{{Token:guid}}/{{StudentId:int}}";
+
+    public static string SponsorHistoryDownload(Guid token, int studentId, long documentId, int pageNumber) =>
+        $"{SponsorHistory(token, studentId)}/documentos/{documentId}/paginas/{pageNumber}";
+
+    public const string SponsorHistoryDownloadRouteTemplate =
+        $"{Sponsors}/{{token:guid}}/{{studentId:int}}/documentos/{{documentId:long}}/paginas/{{pageNumber:int}}";
+
     public const string FacilitatorStudents = "/mediadores/mis-becarios";
 
     public const string FacilitatorUploadDocumentTemplate =
@@ -107,6 +119,18 @@ public static class NavRoutes
     public const string Companies = "/empresas";
 
     public const string CompanyCreate = $"{Companies}/alta";
+
+    public static string CompanyHistory(Guid token, int studentId) =>
+        $"{Companies}/{token}/{studentId}";
+
+    public const string CompanyHistoryRouteTemplate =
+        $"{Companies}/{{Token:guid}}/{{StudentId:int}}";
+
+    public static string CompanyHistoryDownload(Guid token, int studentId, long documentId, int pageNumber) =>
+        $"{CompanyHistory(token, studentId)}/documentos/{documentId}/paginas/{pageNumber}";
+
+    public const string CompanyHistoryDownloadRouteTemplate =
+        $"{Companies}/{{token:guid}}/{{studentId:int}}/documentos/{{documentId:long}}/paginas/{{pageNumber:int}}";
 
     public const string ReviewQueue = "/revisar";
 

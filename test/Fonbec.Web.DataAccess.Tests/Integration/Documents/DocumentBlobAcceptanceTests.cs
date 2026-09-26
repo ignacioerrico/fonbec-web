@@ -590,6 +590,120 @@ public class DocumentBlobAcceptanceTests
         (await ReadAsync(download.Content)).Should().Be("png-original");
     }
 
+    [Fact]
+    public async Task Scenario26_DownloadSharedDocument_AllowedWithShare()
+    {
+        await _fixture.InitializeAsync();
+
+        var create = await _fixture.DocumentService.CreateReportCardWithBlobAsync(new CreateReportCardWithBlobInputModel(
+            _fixture.StudentId, _fixture.UploaderContext,
+            Files("application/pdf", "shared-pdf-bytes"),
+            Period: new DateOnly(2026, 4, 1),
+            Description: "Boletín 1º trimestre"));
+        create.IsSuccess.Should().BeTrue();
+
+        var locked = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer")!;
+        await _fixture.DocumentService.ApproveReportCardAsync(new ApproveReportCardInputModel(
+            locked!.DocumentId, _fixture.ReviewerId, "Reviewer", locked.RowVersion,
+            ConfirmedIsReportCardOrTranscript: true, ConfirmedPeriodMatches: true,
+            ConfirmedStudentNameCorrect: true, ReportCardAssessment.Green, Absences: 0));
+
+        var download = await _fixture.DocumentService.DownloadSharedDocumentBlobAsync(
+            _fixture.SponsorAToken, _fixture.StudentId, create.Value!, pageNumber: 1, isCompany: false);
+
+        download.Should().NotBeNull();
+        download!.MimeType.Should().Be("application/pdf");
+        download.FileName.Should().NotBeNullOrEmpty();
+        (await ReadAsync(download.Content)).Should().Be("shared-pdf-bytes");
+    }
+
+    [Fact]
+    public async Task Scenario27_DownloadSharedDocument_DeniedWithoutShare()
+    {
+        await _fixture.InitializeAsync();
+
+        var create = await _fixture.DocumentService.CreateReportCardWithBlobAsync(new CreateReportCardWithBlobInputModel(
+            _fixture.StudentId, _fixture.UploaderContext,
+            Files("application/pdf", "unshared-bytes"),
+            Period: new DateOnly(2026, 4, 1),
+            Description: "Boletín pendiente"));
+        create.IsSuccess.Should().BeTrue();
+
+        // Not approved — no DocumentShare exists.
+        var download = await _fixture.DocumentService.DownloadSharedDocumentBlobAsync(
+            _fixture.SponsorAToken, _fixture.StudentId, create.Value!, pageNumber: 1, isCompany: false);
+
+        download.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task Scenario28_DownloadSharedDocument_PersonCannotUseCompanyShare()
+    {
+        await _fixture.InitializeAsync();
+
+        var create = await _fixture.DocumentService.CreateLetterWithBlobAsync(new CreateLetterWithBlobInputModel(
+            _fixture.CompanyStudentId, _fixture.PlanId, SponsorId: null, _fixture.UploaderContext,
+            Files("application/pdf", "company-letter"),
+            CompanyId: _fixture.CompanyId));
+        create.IsSuccess.Should().BeTrue();
+
+        var locked = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer")!;
+        await _fixture.DocumentService.ApproveLetterAsync(new ApproveLetterInputModel(
+            locked!.DocumentId, _fixture.ReviewerId, "Reviewer", locked.RowVersion,
+            ConfirmedIsLetter: true, ConfirmedWrittenDate: DateTime.UtcNow.Date,
+            ConfirmedAddressee: true, ConfirmedSignerMatchesStudent: true,
+            SpellingScore: 4, PenmanshipScore: 4, ContentScore: 4,
+            HasRedFlags: false, HasGreenFlags: true, IssuesNotes: null, Appraisal: "Good"));
+
+        // Company download works.
+        var companyDownload = await _fixture.DocumentService.DownloadSharedDocumentBlobAsync(
+            _fixture.CompanyToken, _fixture.CompanyStudentId, create.Value!, pageNumber: 1, isCompany: true);
+        companyDownload.Should().NotBeNull();
+
+        // Person-sponsor token cannot download via the company path.
+        var viaCompanyFlag = await _fixture.DocumentService.DownloadSharedDocumentBlobAsync(
+            _fixture.CompanyLinkedSponsorToken, _fixture.CompanyStudentId, create.Value!,
+            pageNumber: 1, isCompany: true);
+        viaCompanyFlag.Should().BeNull();
+
+        // Linked sponsor can download via the person path (they have their own share).
+        var viaPersonFlag = await _fixture.DocumentService.DownloadSharedDocumentBlobAsync(
+            _fixture.CompanyLinkedSponsorToken, _fixture.CompanyStudentId, create.Value!,
+            pageNumber: 1, isCompany: false);
+        viaPersonFlag.Should().NotBeNull();
+    }
+
+    [Fact]
+    public async Task Scenario29_DownloadSharedDocument_ReturnsImprovedActiveBlob()
+    {
+        await _fixture.InitializeAsync();
+
+        var create = await _fixture.DocumentService.CreateLetterWithBlobAsync(new CreateLetterWithBlobInputModel(
+            _fixture.StudentId, _fixture.PlanId, _fixture.SponsorAId, _fixture.UploaderContext,
+            Files("image/jpeg", "original-bytes")));
+
+        var improveLocked = await _fixture.DocumentService.TakeNextForDigitalImprovementAsync(
+            _fixture.ReviewerId, "Reviewer");
+        await _fixture.DocumentService.SubmitDigitalImprovementWithBlobAsync(
+            new SubmitDigitalImprovementWithBlobInputModel(
+                improveLocked!.DocumentId, _fixture.ReviewerId, "Reviewer", null,
+                Files("image/jpeg", "improved-bytes"), improveLocked.RowVersion));
+
+        var reviewLocked = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer")!;
+        await _fixture.DocumentService.ApproveLetterAsync(new ApproveLetterInputModel(
+            reviewLocked!.DocumentId, _fixture.ReviewerId, "Reviewer", reviewLocked.RowVersion,
+            ConfirmedIsLetter: true, ConfirmedWrittenDate: DateTime.UtcNow.Date,
+            ConfirmedAddressee: true, ConfirmedSignerMatchesStudent: true,
+            SpellingScore: 4, PenmanshipScore: 4, ContentScore: 4,
+            HasRedFlags: false, HasGreenFlags: true, IssuesNotes: null, Appraisal: "Good"));
+
+        var download = await _fixture.DocumentService.DownloadSharedDocumentBlobAsync(
+            _fixture.SponsorAToken, _fixture.StudentId, create.Value!, pageNumber: 1, isCompany: false);
+
+        download.Should().NotBeNull();
+        (await ReadAsync(download!.Content)).Should().Be("improved-bytes");
+    }
+
     private static async Task<string> ReadAsync(Stream stream)
     {
         using var reader = new StreamReader(stream, Encoding.UTF8);

@@ -20,4 +20,7 @@ public class DownloadBlobResult
     public long? FileSizeBytes { get; init; }
 
     public byte[]? Sha256 { get; init; }
+
+    /// <summary>Suggested download file name (from storage path); may be null.</summary>
+    public string? FileName { get; init; }
 }

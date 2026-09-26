@@ -66,7 +66,7 @@ public class SponsorshipServiceTests
                 UpdatedById: 30));
 
         result.Status.Should().Be(UpdateSponsorshipStatus.UncoversLockedPlan);
-        result.LockedPlanMonthLabels.Should().Equal("Septiembre de 2026");
+        result.LockedPlanMonthLabels.Should().Equal("septiembre de 2026");
         result.AnyAffectedRows.Should().BeFalse();
     }
 
@@ -106,7 +106,7 @@ public class SponsorshipServiceTests
                 UpdatedById: 30));
 
         result.Status.Should().Be(UpdateSponsorshipStatus.RequiresExemptionRevocation);
-        result.ExemptPlanMonthLabels.Should().Equal("Septiembre de 2026");
+        result.ExemptPlanMonthLabels.Should().Equal("septiembre de 2026");
     }
 
     [Fact]
@@ -119,7 +119,7 @@ public class SponsorshipServiceTests
         var result = await _service.CreateSponsorshipAsync(CreateInput());
 
         result.AnyAffectedRows.Should().BeFalse();
-        result.CompletedPlanMonthLabels.Should().Equal("Septiembre de 2026");
+        result.CompletedPlanMonthLabels.Should().Equal("septiembre de 2026");
     }
 
     [Fact]
@@ -146,8 +146,8 @@ public class SponsorshipServiceTests
         result.PeriodStatus.Should().Be(SponsorshipPeriodStatus.Available);
         var item = result.OverlappingToEnd.Should().ContainSingle().Which;
         item.RecipientName.Should().Be("Carlos Padrino");
-        item.StartMonthLabel.Should().Be("Marzo de 2026");
-        item.ProposedEndMonthLabel.Should().Be("Agosto de 2026");
+        item.StartMonthLabel.Should().Be("marzo de 2026");
+        item.ProposedEndMonthLabel.Should().Be("agosto de 2026");
     }
 
     [Fact]
@@ -160,7 +160,7 @@ public class SponsorshipServiceTests
         var result = await _service.CreateSponsorshipAsync(CreateInput());
 
         result.AnyAffectedRows.Should().BeFalse();
-        result.LockedPlanMonthLabels.Should().Equal("Septiembre de 2026");
+        result.LockedPlanMonthLabels.Should().Equal("septiembre de 2026");
     }
 
     [Fact]
@@ -180,7 +180,7 @@ public class SponsorshipServiceTests
                 UpdatedById: 30));
 
         result.Status.Should().Be(UpdateSponsorshipStatus.AddsSlotToCompletedPlan);
-        result.CompletedPlanMonthLabels.Should().Equal("Septiembre de 2026");
+        result.CompletedPlanMonthLabels.Should().Equal("septiembre de 2026");
     }
 
     private static CreateSponsorshipInputModel CreateInput() =>
