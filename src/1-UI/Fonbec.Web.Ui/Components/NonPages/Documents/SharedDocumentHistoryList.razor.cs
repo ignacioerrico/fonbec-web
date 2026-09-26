@@ -16,6 +16,10 @@ public partial class SharedDocumentHistoryList
     private bool _loaded;
     private bool _hasMore;
     private bool _loadingMore;
+    private bool _visitRecorded;
+
+    /// <summary>Watermark from the first authorized load; kept for the whole session across paging.</summary>
+    private DateTime? _previousLastVisitedOnUtc;
 
     [Parameter, EditorRequired]
     public Guid Token { get; set; }
@@ -44,10 +48,24 @@ public partial class SharedDocumentHistoryList
         _hasMore = history.HasMore;
         if (history.IsAuthorized)
         {
+            _previousLastVisitedOnUtc = history.PreviousLastVisitedOnUtc;
             _documents.AddRange(history.Documents);
         }
 
         _loaded = true;
+    }
+
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        // firstRender is the loading spinner, before authorization finishes.
+        // Record once the list is on screen so a later refresh treats these as seen.
+        if (_visitRecorded || !_loaded || !IsAuthorized)
+        {
+            return;
+        }
+
+        _visitRecorded = true;
+        await DocumentService.RecordSharedDocumentHistoryVisitAsync(Token, StudentId, IsCompany);
     }
 
     private async Task LoadMoreAsync()
@@ -95,6 +113,46 @@ public partial class SharedDocumentHistoryList
         {
             _expandedDocumentIds.Remove(documentId);
         }
+    }
+
+    /// <summary>
+    /// Divider before the first document shared at or before the previous visit,
+    /// and only when at least one newer document sits above it.
+    /// </summary>
+    private bool ShouldShowDividerBefore(SharedDocumentViewModel document)
+    {
+        if (_previousLastVisitedOnUtc is not { } watermark)
+        {
+            return false;
+        }
+
+        if (document.SharedOn > watermark)
+        {
+            return false;
+        }
+
+        var index = _documents.IndexOf(document);
+        if (index <= 0)
+        {
+            return false;
+        }
+
+        return _documents.Take(index).All(d => d.SharedOn > watermark);
+    }
+
+    private bool IsNewSinceLastVisit(SharedDocumentViewModel document) =>
+        _previousLastVisitedOnUtc is { } watermark && document.SharedOn > watermark;
+
+    private bool IsLastNewDocument(SharedDocumentViewModel document)
+    {
+        if (!IsNewSinceLastVisit(document))
+        {
+            return false;
+        }
+
+        var index = _documents.IndexOf(document);
+        return index >= 0
+               && (index == _documents.Count - 1 || !IsNewSinceLastVisit(_documents[index + 1]));
     }
 
     /// <summary>Year headings only earn their space once the history spans more than one year.</summary>

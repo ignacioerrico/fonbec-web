@@ -76,6 +76,12 @@ public interface IDocumentService
         Guid companyPublicAccessToken, int studentId, int skip, int take);
 
     /// <summary>
+    /// Records that the token recipient opened the history page. No-op when unauthorized.
+    /// Call after the page has rendered so prerender does not consume the unread watermark.
+    /// </summary>
+    Task RecordSharedDocumentHistoryVisitAsync(Guid publicAccessToken, int studentId, bool isCompany);
+
+    /// <summary>
     /// Streams the active page blob for a document shared with the token recipient.
     /// Returns <c>null</c> on any authorization failure (same as not found).
     /// </summary>
@@ -889,6 +895,11 @@ public class DocumentService(
         return MapSharedHistory(result);
     }
 
+    public async Task RecordSharedDocumentHistoryVisitAsync(
+        Guid publicAccessToken, int studentId, bool isCompany) =>
+        await documentRepository.RecordSharedDocumentHistoryVisitAsync(
+            publicAccessToken, studentId, isCompany);
+
     public async Task<DownloadBlobResult?> DownloadSharedDocumentBlobAsync(
         Guid publicAccessToken, int studentId, long documentId, int pageNumber, bool isCompany)
     {
@@ -910,6 +921,7 @@ public class DocumentService(
             StudentDisplayName = result.StudentDisplayName,
             RecipientDisplayName = result.RecipientDisplayName,
             HasMore = result.HasMore,
+            PreviousLastVisitedOnUtc = result.PreviousLastVisitedOnUtc,
             Documents = result.Documents.Adapt<List<SharedDocumentViewModel>>(),
         };
 

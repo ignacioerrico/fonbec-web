@@ -37,9 +37,18 @@ else
 
             @foreach (var doc in year)
             {
+                @if (ShouldShowDividerBefore(doc))
+                {
+                    <div class="public-history-divider" role="separator" aria-label="Documentos ya vistos">
+                        <MudText Typo="Typo.caption" Class="public-history-divider__label">Documentos ya vistos</MudText>
+                        <MudDivider />
+                    </div>
+                }
+
                 var expanded = _expandedDocumentIds.Contains(doc.DocumentId);
 
-                <div class="public-history-row" @key="doc.DocumentId">
+                <div class="public-history-row @(IsLastNewDocument(doc) ? "public-history-row--before-seen" : null)"
+                     @key="doc.DocumentId">
                     <div class="public-history-row__main">
                         <div class="public-history-row__heading">
                             <MudChip T="string"
@@ -62,6 +71,16 @@ else
                                          OnClick="@(() => ToggleExpanded(doc.DocumentId))">
                                     @doc.Title
                                 </MudLink>
+                            }
+                            @if (IsNewSinceLastVisit(doc))
+                            {
+                                <MudChip T="string"
+                                         Size="Size.Small"
+                                         Variant="Variant.Filled"
+                                         Color="Color.Primary"
+                                         Class="public-history-chip">
+                                    Nuevo
+                                </MudChip>
                             }
                         </div>
 

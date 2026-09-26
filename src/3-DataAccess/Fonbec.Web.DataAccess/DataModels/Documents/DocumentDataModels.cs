@@ -52,6 +52,12 @@ public class SponsorDocumentHistoryDataModel
     /// <summary>True when more shared documents exist beyond the returned page.</summary>
     public bool HasMore { get; init; }
 
+    /// <summary>
+    /// Previous visit watermark for the unread divider; <c>null</c> on the first visit.
+    /// Updated to UtcNow after this response is built.
+    /// </summary>
+    public DateTime? PreviousLastVisitedOnUtc { get; init; }
+
     public List<SharedDocumentDataModel> Documents { get; init; } = [];
 }
 

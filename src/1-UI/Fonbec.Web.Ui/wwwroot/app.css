@@ -112,7 +112,8 @@ body {
     border-bottom: 1px solid var(--mud-palette-lines-default);
 }
 
-.public-history-row:last-child {
+.public-history-row:last-child,
+.public-history-row--before-seen {
     border-bottom: none;
 }
 
@@ -144,6 +145,24 @@ body {
     text-transform: uppercase;
     letter-spacing: 0.08em;
     color: var(--mud-palette-text-secondary);
+}
+
+.public-history-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+
+.public-history-divider .mud-divider {
+    flex: 1;
+}
+
+.public-history-divider__label {
+    flex-shrink: 0;
+    color: var(--mud-palette-text-secondary);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
 }
 
 .public-history-pages {

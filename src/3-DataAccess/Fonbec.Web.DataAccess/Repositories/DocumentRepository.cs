@@ -50,6 +50,13 @@ public interface IDocumentRepository
         Guid companyPublicAccessToken, int studentId, int skip, int take);
 
     /// <summary>
+    /// Records an authorized history-page visit. Returns <c>false</c> without writing
+    /// when the token or sponsorship is invalid.
+    /// </summary>
+    Task<bool> RecordSharedDocumentHistoryVisitAsync(
+        Guid publicAccessToken, int studentId, bool isCompany);
+
+    /// <summary>
     /// Returns the blob context for a document only when the token recipient still sponsors
     /// the student and a matching <c>DocumentShare</c> exists. Null on any authorization failure.
     /// </summary>
@@ -871,6 +878,8 @@ public class DocumentRepository(
             db,
             studentId,
             $"{sponsor.FirstName} {sponsor.LastName}",
+            sponsorId: sponsor.Id,
+            companyId: null,
             skip,
             take,
             s => s.SponsorId == sponsor.Id && s.StudentId == studentId);
@@ -908,9 +917,75 @@ public class DocumentRepository(
             db,
             studentId,
             company.Name,
+            sponsorId: null,
+            companyId: company.Id,
             skip,
             take,
             s => s.CompanyId == company.Id && s.StudentId == studentId);
+    }
+
+    public async Task<bool> RecordSharedDocumentHistoryVisitAsync(
+        Guid publicAccessToken, int studentId, bool isCompany)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        if (isCompany)
+        {
+            var company = await db.Companies
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.PublicAccessToken == publicAccessToken && c.IsActive);
+
+            if (company is null)
+            {
+                return false;
+            }
+
+            var utcNow = DateTime.UtcNow;
+            var hasSponsorship = await db.Sponsorships
+                .AsNoTracking()
+                .AnyAsync(sp => sp.StudentId == studentId
+                                && sp.CompanyId == company.Id
+                                && sp.IsActive
+                                && sp.StartDate <= utcNow
+                                && (sp.EndDate == null || sp.EndDate >= utcNow));
+
+            if (!hasSponsorship)
+            {
+                return false;
+            }
+
+            await UpsertHistoryVisitAsync(db, studentId, sponsorId: null, companyId: company.Id);
+            return true;
+        }
+
+        var sponsor = await db.Sponsors
+            .AsNoTracking()
+            .FirstOrDefaultAsync(s => s.PublicAccessToken == publicAccessToken
+                                      && s.IsActive
+                                      && !s.IsDeleted);
+
+        if (sponsor is null)
+        {
+            return false;
+        }
+
+        var sponsorUtcNow = DateTime.UtcNow;
+        var sponsorHasSponsorship = await db.Sponsorships
+            .AsNoTracking()
+            .AnyAsync(sp => sp.StudentId == studentId
+                            && sp.IsActive
+                            && sp.StartDate <= sponsorUtcNow
+                            && (sp.EndDate == null || sp.EndDate >= sponsorUtcNow)
+                            && (sp.SponsorId == sponsor.Id
+                                || (sponsor.CompanyId != null && sp.CompanyId == sponsor.CompanyId)));
+
+        if (!sponsorHasSponsorship)
+        {
+            return false;
+        }
+
+        await UpsertHistoryVisitAsync(db, studentId, sponsor.Id, companyId: null);
+        return true;
     }
 
     public async Task<DocumentBlobContextDataModel?> TryGetSharedDocumentBlobContextAsync(
@@ -1001,6 +1076,8 @@ public class DocumentRepository(
         FonbecWebDbContext db,
         int studentId,
         string recipientDisplayName,
+        int? sponsorId,
+        int? companyId,
         int skip,
         int take,
         System.Linq.Expressions.Expression<Func<DocumentShare, bool>> shareFilter)
@@ -1015,6 +1092,8 @@ public class DocumentRepository(
         {
             return new SponsorDocumentHistoryDataModel { IsAuthorized = false };
         }
+
+        var previousLastVisitedOnUtc = await GetPreviousLastVisitedOnUtcAsync(db, studentId, sponsorId, companyId);
 
         var page = await db.DocumentShares
             .AsNoTracking()
@@ -1065,8 +1144,69 @@ public class DocumentRepository(
             StudentDisplayName = studentName,
             RecipientDisplayName = recipientDisplayName,
             HasMore = hasMore,
+            PreviousLastVisitedOnUtc = previousLastVisitedOnUtc,
             Documents = page,
         };
+    }
+
+    private static async Task<DateTime?> GetPreviousLastVisitedOnUtcAsync(
+        FonbecWebDbContext db,
+        int studentId,
+        int? sponsorId,
+        int? companyId)
+    {
+        if (sponsorId is not null)
+        {
+            return await db.DocumentHistoryVisits
+                .AsNoTracking()
+                .Where(v => v.SponsorId == sponsorId && v.StudentId == studentId)
+                .Select(v => (DateTime?)v.LastVisitedOnUtc)
+                .FirstOrDefaultAsync();
+        }
+
+        return await db.DocumentHistoryVisits
+            .AsNoTracking()
+            .Where(v => v.CompanyId == companyId && v.StudentId == studentId)
+            .Select(v => (DateTime?)v.LastVisitedOnUtc)
+            .FirstOrDefaultAsync();
+    }
+
+    private async Task UpsertHistoryVisitAsync(
+        FonbecWebDbContext db,
+        int studentId,
+        int? sponsorId,
+        int? companyId)
+    {
+        var now = timeProvider.GetUtcNow().UtcDateTime;
+
+        DocumentHistoryVisit? visit;
+        if (sponsorId is not null)
+        {
+            visit = await db.DocumentHistoryVisits
+                .FirstOrDefaultAsync(v => v.SponsorId == sponsorId && v.StudentId == studentId);
+        }
+        else
+        {
+            visit = await db.DocumentHistoryVisits
+                .FirstOrDefaultAsync(v => v.CompanyId == companyId && v.StudentId == studentId);
+        }
+
+        if (visit is null)
+        {
+            db.DocumentHistoryVisits.Add(new DocumentHistoryVisit
+            {
+                SponsorId = sponsorId,
+                CompanyId = companyId,
+                StudentId = studentId,
+                LastVisitedOnUtc = now,
+            });
+        }
+        else
+        {
+            visit.LastVisitedOnUtc = now;
+        }
+
+        await db.SaveChangesAsync();
     }
 
     public async Task<ReviewWorkspaceDataModel?> GetReviewWorkspaceAsync(long documentId)
