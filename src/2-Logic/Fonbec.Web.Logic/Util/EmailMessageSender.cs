@@ -28,21 +28,13 @@ public class EmailMessageSender(
 
         try
         {
+            // Started returns once Azure has accepted the message. Waiting until Completed
+            // polls until delivery processing finishes and blocks the caller for seconds.
             var emailSendOperation = await emailClient.SendAsync(
-                WaitUntil.Completed,
+                WaitUntil.Started,
                 emailMessage);
 
-            if (emailSendOperation.HasValue)
-            {
-                logger.LogDebug("Email queued for delivery. Status = {Status}", emailSendOperation.Value.Status);
-            }
-            else
-            {
-                logger.LogWarning("Email send operation completed but no value was returned. OperationId = {OperationId}", emailSendOperation.Id);
-            }
-
-            // The OperationId can be used for tracking the message for troubleshooting
-            logger.LogDebug("Email operation id = {OperationId}", emailSendOperation.Id);
+            logger.LogDebug("Email accepted for delivery. OperationId = {OperationId}", emailSendOperation.Id);
         }
         catch (RequestFailedException ex)
         {

@@ -23,7 +23,7 @@ public class DocumentServiceApproveLetterNotificationTests
     private static readonly DateTime PlanStartsOn = new(2026, 9, 1);
 
     private readonly IDocumentRepository _repository = Substitute.For<IDocumentRepository>();
-    private readonly IDocumentNotificationService _notificationService = Substitute.For<IDocumentNotificationService>();
+    private readonly IDocumentNotificationQueue _notificationQueue = Substitute.For<IDocumentNotificationQueue>();
     private readonly IPlanCompletionService _planCompletionService = Substitute.For<IPlanCompletionService>();
 
     public DocumentServiceApproveLetterNotificationTests()
@@ -50,7 +50,8 @@ public class DocumentServiceApproveLetterNotificationTests
         var result = await CreateService().ApproveLetterAsync(ApproveInput());
 
         result.IsSuccess.Should().BeTrue();
-        await _notificationService.Received(1).NotifyChapterManagersPlanReadyAsync(
+        await _notificationQueue.Received(1).EnqueueSponsorNotificationAsync(DocumentId);
+        await _notificationQueue.Received(1).EnqueuePlanReadyNotificationAsync(
             ChapterId, PlanId, PlanStartsOn);
         await _planCompletionService.DidNotReceive()
             .CompletePlanAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<int>(), Arg.Any<CancellationToken>());
@@ -72,13 +73,14 @@ public class DocumentServiceApproveLetterNotificationTests
 
         await CreateService().ApproveLetterAsync(ApproveInput());
 
-        await _notificationService.DidNotReceiveWithAnyArgs()
-            .NotifyChapterManagersPlanReadyAsync(default, default, default);
+        await _notificationQueue.Received(1).EnqueueSponsorNotificationAsync(DocumentId);
+        await _notificationQueue.DidNotReceiveWithAnyArgs()
+            .EnqueuePlanReadyNotificationAsync(default, default, default);
     }
 
     private DocumentService CreateService() =>
         new(_repository,
-            _notificationService,
+            _notificationQueue,
             Substitute.For<IUserService>(),
             Substitute.For<IBlobStorageService>(),
             _planCompletionService,

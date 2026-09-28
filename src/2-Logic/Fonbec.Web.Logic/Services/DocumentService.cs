@@ -95,7 +95,7 @@ public interface IDocumentService
 
 public class DocumentService(
     IDocumentRepository documentRepository,
-    IDocumentNotificationService documentNotificationService,
+    IDocumentNotificationQueue documentNotificationQueue,
     IUserService userService,
     IBlobStorageService blobStorageService,
     IPlanCompletionService planCompletionService,
@@ -674,12 +674,14 @@ public class DocumentService(
             return new ReviewResult(false, errors);
         }
 
-        await documentNotificationService.NotifySponsorsAsync(input.DocumentId);
+        // Approval is already committed. Mail goes out afterward so the reviewer is not
+        // blocked on the email provider.
+        await documentNotificationQueue.EnqueueSponsorNotificationAsync(input.DocumentId);
 
         if (document is Letter letter)
         {
-            // Eventual consistency: a failure to notify managers must not roll back the
-            // already-committed letter approval.
+            // Eventual consistency: a failure to evaluate readiness must not roll back the
+            // already-committed letter approval. The manager email itself is queued.
             try
             {
                 var readinessAfter = await planCompletionService.GetReadinessAsync(
@@ -689,7 +691,7 @@ public class DocumentService(
                 if (readinessBefore is { IsCompleted: false, IsReadyToComplete: false }
                     && readinessAfter.IsReadyToComplete)
                 {
-                    await documentNotificationService.NotifyChapterManagersPlanReadyAsync(
+                    await documentNotificationQueue.EnqueuePlanReadyNotificationAsync(
                         letter.ChapterId,
                         letter.PlanId,
                         readinessAfter.PlanStartsOn);
@@ -698,7 +700,7 @@ public class DocumentService(
             catch (Exception ex)
             {
                 logger.LogError(ex,
-                    "Failed to notify managers that plan {PlanId} in chapter {ChapterId} is ready after approving letter {DocumentId}.",
+                    "Failed to queue the plan-ready notification for plan {PlanId} in chapter {ChapterId} after approving letter {DocumentId}.",
                     letter.PlanId, letter.ChapterId, input.DocumentId);
             }
         }
@@ -760,7 +762,7 @@ public class DocumentService(
             return new ReviewResult(false, errors);
         }
 
-        await documentNotificationService.NotifySponsorsAsync(input.DocumentId);
+        await documentNotificationQueue.EnqueueSponsorNotificationAsync(input.DocumentId);
         return new ReviewResult(true);
     }
 
@@ -821,7 +823,7 @@ public class DocumentService(
             return new ReviewResult(false, errors);
         }
 
-        await documentNotificationService.NotifySponsorsAsync(input.DocumentId);
+        await documentNotificationQueue.EnqueueSponsorNotificationAsync(input.DocumentId);
         return new ReviewResult(true);
     }
 

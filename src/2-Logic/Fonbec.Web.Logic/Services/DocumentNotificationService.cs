@@ -9,12 +9,13 @@ namespace Fonbec.Web.Logic.Services;
 
 public interface IDocumentNotificationService
 {
-    Task NotifySponsorsAsync(long documentId);
+    Task NotifySponsorsAsync(long documentId, CancellationToken cancellationToken = default);
 
     Task NotifyChapterManagersPlanReadyAsync(
         int chapterId,
         int planId,
-        DateTime planStartsOn);
+        DateTime planStartsOn,
+        CancellationToken cancellationToken = default);
 }
 
 public class DocumentNotificationService(
@@ -25,8 +26,9 @@ public class DocumentNotificationService(
     ILogger<DocumentNotificationService> logger) : IDocumentNotificationService
 {
     private const int MaxSendAttempts = 3;
+    private const int MaxConcurrentSends = 4;
 
-    public async Task NotifySponsorsAsync(long documentId)
+    public async Task NotifySponsorsAsync(long documentId, CancellationToken cancellationToken = default)
     {
         var shares = await documentRepository.GetUnnotifiedSharesAsync(documentId);
         var baseUrl = configuration["App:BaseUrl"]?.TrimEnd('/')
@@ -34,16 +36,17 @@ public class DocumentNotificationService(
 
         const string subject = "Nuevo documento disponible";
 
-        foreach (var share in shares)
-        {
-            await NotifyShareAsync(documentId, share, baseUrl, subject);
-        }
+        await ForEachWithConcurrencyAsync(
+            shares,
+            share => NotifyShareAsync(documentId, share, baseUrl, subject, cancellationToken),
+            cancellationToken);
     }
 
     public async Task NotifyChapterManagersPlanReadyAsync(
         int chapterId,
         int planId,
-        DateTime planStartsOn)
+        DateTime planStartsOn,
+        CancellationToken cancellationToken = default)
     {
         var managers = await userRepository.GetChapterManagerContactsAsync(chapterId);
         if (managers.Count == 0)
@@ -59,17 +62,40 @@ public class DocumentNotificationService(
         var subject = "Campaña lista para completar";
         var html = DocumentNotificationMessageFormatter.BuildPlanReadyHtml(planLabel, progressUrl);
 
-        foreach (var manager in managers)
+        await ForEachWithConcurrencyAsync(
+            managers,
+            manager => SendWithRetryAsync(manager.Email, subject, html, planId, cancellationToken),
+            cancellationToken);
+    }
+
+    private static async Task ForEachWithConcurrencyAsync<T>(
+        IEnumerable<T> items,
+        Func<T, Task> action,
+        CancellationToken cancellationToken)
+    {
+        using var gate = new SemaphoreSlim(MaxConcurrentSends);
+        var tasks = items.Select(async item =>
         {
-            await SendWithRetryAsync(manager.Email, subject, html, planId);
-        }
+            await gate.WaitAsync(cancellationToken);
+            try
+            {
+                await action(item);
+            }
+            finally
+            {
+                gate.Release();
+            }
+        });
+
+        await Task.WhenAll(tasks);
     }
 
     private async Task NotifyShareAsync(
         long documentId,
         DocumentShareNotificationDataModel share,
         string baseUrl,
-        string subject)
+        string subject,
+        CancellationToken cancellationToken)
     {
         for (var attempt = 1; attempt <= MaxSendAttempts; attempt++)
         {
@@ -90,6 +116,10 @@ public class DocumentNotificationService(
                 await documentRepository.MarkShareNotifiedAsync(share.DocumentShareId, DateTime.UtcNow);
                 return;
             }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
             catch (Exception ex) when (attempt < MaxSendAttempts)
             {
                 logger.LogWarning(
@@ -100,7 +130,7 @@ public class DocumentNotificationService(
                     attempt,
                     MaxSendAttempts);
 
-                await Task.Delay(TimeSpan.FromMilliseconds(500 * attempt));
+                await Task.Delay(TimeSpan.FromMilliseconds(500 * attempt), cancellationToken);
             }
             catch (Exception ex)
             {
@@ -114,7 +144,12 @@ public class DocumentNotificationService(
         }
     }
 
-    private async Task SendWithRetryAsync(string email, string subject, string html, int planId)
+    private async Task SendWithRetryAsync(
+        string email,
+        string subject,
+        string html,
+        int planId,
+        CancellationToken cancellationToken)
     {
         for (var attempt = 1; attempt <= MaxSendAttempts; attempt++)
         {
@@ -122,6 +157,10 @@ public class DocumentNotificationService(
             {
                 await emailMessageSender.SendEmailAsync(email, subject, html);
                 return;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
             }
             catch (Exception ex) when (attempt < MaxSendAttempts)
             {
@@ -133,7 +172,7 @@ public class DocumentNotificationService(
                     attempt,
                     MaxSendAttempts);
 
-                await Task.Delay(TimeSpan.FromMilliseconds(500 * attempt));
+                await Task.Delay(TimeSpan.FromMilliseconds(500 * attempt), cancellationToken);
             }
             catch (Exception ex)
             {

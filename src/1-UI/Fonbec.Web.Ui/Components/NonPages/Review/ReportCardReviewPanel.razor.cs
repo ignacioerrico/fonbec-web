@@ -278,6 +278,7 @@ public partial class ReportCardReviewPanel
     {
         _actionErrors = [];
         _saving = true;
+        StateHasChanged();
 
         try
         {

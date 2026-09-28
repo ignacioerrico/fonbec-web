@@ -16,7 +16,7 @@ namespace Fonbec.Web.Logic.Tests.Services;
 public class DocumentServiceReviewTests
 {
     private readonly IDocumentRepository _repository = Substitute.For<IDocumentRepository>();
-    private readonly IDocumentNotificationService _notificationService = Substitute.For<IDocumentNotificationService>();
+    private readonly IDocumentNotificationQueue _notificationQueue = Substitute.For<IDocumentNotificationQueue>();
     private readonly IUserService _userService = Substitute.For<IUserService>();
     private readonly IBlobStorageService _blobStorageService = Substitute.For<IBlobStorageService>();
     private readonly IPlanCompletionService _planCompletionService = Substitute.For<IPlanCompletionService>();
@@ -26,7 +26,7 @@ public class DocumentServiceReviewTests
 
     private DocumentService CreateService() =>
         new(_repository,
-            _notificationService,
+            _notificationQueue,
             _userService,
             _blobStorageService,
             _planCompletionService,
@@ -223,7 +223,7 @@ public class DocumentServiceReviewTests
             new ApproveOtherDocumentInputModel(DocumentId, ReviewerId, FonbecRole.Reviewer, RowVersion));
 
         result.IsSuccess.Should().BeTrue();
-        await _notificationService.Received(1).NotifySponsorsAsync(DocumentId);
+        await _notificationQueue.Received(1).EnqueueSponsorNotificationAsync(DocumentId);
     }
 
     [Fact]
@@ -323,7 +323,7 @@ public class DocumentServiceReviewTests
         await _repository.Received(1).RejectOtherDocumentAsync(
             Arg.Is<DataAccess.DataModels.Documents.Input.RejectOtherDocumentInputDataModel>(m =>
                 m.DocumentId == DocumentId && m.ReviewerId == ReviewerId && m.RejectedReasonId == 9));
-        await _notificationService.DidNotReceive().NotifySponsorsAsync(Arg.Any<long>());
+        await _notificationQueue.DidNotReceive().EnqueueSponsorNotificationAsync(Arg.Any<long>());
     }
 
     [Fact]
@@ -370,7 +370,7 @@ public class DocumentServiceReviewTests
                 input.ConfirmedPeriodMatches
                 && input.OverallAssessment == ReportCardAssessment.Yellow
                 && input.Absences == 3));
-        await _notificationService.Received(1).NotifySponsorsAsync(DocumentId);
+        await _notificationQueue.Received(1).EnqueueSponsorNotificationAsync(DocumentId);
     }
 
     [Fact]
@@ -420,7 +420,7 @@ public class DocumentServiceReviewTests
         await _repository.Received(1).ApproveReportCardAsync(
             Arg.Is<DataAccess.DataModels.Documents.Input.ApproveReportCardInputDataModel>(input =>
                 input.Absences == null));
-        await _notificationService.Received(1).NotifySponsorsAsync(DocumentId);
+        await _notificationQueue.Received(1).EnqueueSponsorNotificationAsync(DocumentId);
     }
 
     [Fact]
@@ -452,7 +452,7 @@ public class DocumentServiceReviewTests
         await _repository.Received(1).RejectReportCardAsync(
             Arg.Is<DataAccess.DataModels.Documents.Input.RejectReportCardInputDataModel>(input =>
                 input.RejectedReasonId == RejectedReasonIds.WrongPeriod));
-        await _notificationService.DidNotReceive().NotifySponsorsAsync(Arg.Any<long>());
+        await _notificationQueue.DidNotReceive().EnqueueSponsorNotificationAsync(Arg.Any<long>());
     }
 
     [Fact]

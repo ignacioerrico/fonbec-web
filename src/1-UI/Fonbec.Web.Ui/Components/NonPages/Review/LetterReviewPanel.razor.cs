@@ -510,6 +510,7 @@ public partial class LetterReviewPanel : IAsyncDisposable
     {
         _actionErrors = [];
         _saving = true;
+        StateHasChanged();
 
         try
         {

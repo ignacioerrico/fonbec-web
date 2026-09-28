@@ -83,6 +83,9 @@ public static class ConfigureServices
         services.AddScoped<ICompanyService, CompanyService>();
         services.AddScoped<IDocumentService, DocumentService>();
         services.AddScoped<IDocumentNotificationService, DocumentNotificationService>();
+        services.AddSingleton<DocumentNotificationQueue>();
+        services.AddSingleton<IDocumentNotificationQueue>(sp => sp.GetRequiredService<DocumentNotificationQueue>());
+        services.AddHostedService(sp => sp.GetRequiredService<DocumentNotificationQueue>());
         services.AddScoped<ICandidateNamePickerService, CandidateNamePickerService>();
 
         services.AddSingleton(TimeProvider.System);
