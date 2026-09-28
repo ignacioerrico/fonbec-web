@@ -1,0 +1,17 @@
+@inherits LayoutComponentBase
+
+<MudThemeProvider />
+<MudPopoverProvider />
+<MudDialogProvider />
+<MudSnackbarProvider />
+
+<div class="public-layout">
+    <header class="public-layout__header">
+        <div class="fonbec-brand fonbec-brand--hero" aria-hidden="true">
+            FONBEC <span class="fonbec-brand-accent">Web</span>
+        </div>
+    </header>
+    <main class="public-layout__main">
+        @Body
+    </main>
+</div>

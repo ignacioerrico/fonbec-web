@@ -1,0 +1,167 @@
+@using Fonbec.Web.DataAccess.Entities.Enums
+
+@if (!_loaded)
+{
+    <MudProgressLinear Color="Color.Primary" Indeterminate="true" Class="my-8" />
+}
+else if (!IsAuthorized)
+{
+    <PageTitle>Enlace no válido</PageTitle>
+    <MudText Typo="Typo.h5" Class="mb-4">Este enlace no es válido.</MudText>
+    <MudAlert Severity="Severity.Error" Variant="Variant.Outlined">
+        No se pudo abrir el historial de documentos. Si creés que esto es un error, contactá a FONBEC.
+    </MudAlert>
+}
+else
+{
+    <PageTitle>Documentos de @StudentDisplayName</PageTitle>
+    <MudText Typo="Typo.h5">
+        Documentos enviados por <strong>@StudentDisplayName</strong> para @RecipientDisplayName
+    </MudText>
+    <MudText Typo="Typo.body2" Class="mud-text-secondary mt-2 mb-6">
+        Este enlace es personal: no lo compartas. Guardalo en favoritos para volver cuando quieras.
+    </MudText>
+
+    @if (_documents.Count == 0)
+    {
+        <MudText Typo="Typo.body1">Aún no hay documentos</MudText>
+    }
+    else
+    {
+        @foreach (var year in DocumentsByYear())
+        {
+            @if (ShowYearHeadings)
+            {
+                <MudText Typo="Typo.subtitle2" Class="public-history-year">@year.Key</MudText>
+            }
+
+            @foreach (var doc in year)
+            {
+                @if (ShouldShowDividerBefore(doc))
+                {
+                    <div class="public-history-divider" role="separator" aria-label="Documentos ya vistos">
+                        <MudText Typo="Typo.caption" Class="public-history-divider__label">Documentos ya vistos</MudText>
+                        <MudDivider />
+                    </div>
+                }
+
+                var expanded = _expandedDocumentIds.Contains(doc.DocumentId);
+
+                <div class="public-history-row @(IsLastNewDocument(doc) ? "public-history-row--before-seen" : null)"
+                     @key="doc.DocumentId">
+                    <div class="public-history-row__main">
+                        <div class="public-history-row__heading">
+                            <MudChip T="string"
+                                     Size="Size.Small"
+                                     Variant="Variant.Outlined"
+                                     Color="Color.Default"
+                                     Class="public-history-chip">
+                                @TypeLabel(doc.DocumentType)
+                            </MudChip>
+                            @if (IsDirectDownload(doc))
+                            {
+                                <MudLink Href="@DownloadUrl(doc.DocumentId, 1)" Typo="Typo.body1" Underline="Underline.Hover">
+                                    @doc.Title
+                                </MudLink>
+                            }
+                            else
+                            {
+                                <MudLink Typo="Typo.body1"
+                                         Underline="Underline.Hover"
+                                         OnClick="@(() => ToggleExpanded(doc.DocumentId))">
+                                    @doc.Title
+                                </MudLink>
+                            }
+                            @if (IsNewSinceLastVisit(doc))
+                            {
+                                <MudChip T="string"
+                                         Size="Size.Small"
+                                         Variant="Variant.Filled"
+                                         Color="Color.Primary"
+                                         Class="public-history-chip">
+                                    Nuevo
+                                </MudChip>
+                            }
+                        </div>
+
+                        @if (expanded && doc.FileKind == FileKind.Blob)
+                        {
+                            <div class="public-history-pages">
+                                @for (var page = 1; page <= doc.PageCount; page++)
+                                {
+                                    var pageNumber = page;
+                                    <div class="public-history-page-row">
+                                        <MudLink Href="@DownloadUrl(doc.DocumentId, pageNumber)" Typo="Typo.body2">
+                                            Página @pageNumber
+                                        </MudLink>
+                                        <MudIconButton Icon="@Icons.Material.Filled.Download"
+                                                       Size="Size.Small"
+                                                       Color="Color.Primary"
+                                                       Href="@DownloadUrl(doc.DocumentId, pageNumber)"
+                                                       aria-label="@($"Descargar página {pageNumber}")" />
+                                    </div>
+                                }
+                            </div>
+                        }
+
+                        @if (expanded && doc.FileKind == FileKind.Text)
+                        {
+                            <div class="public-history-viewer">
+                                <div class="mud-typography mud-typography-body1 public-history-text">@doc.TextContent</div>
+                            </div>
+                        }
+
+                        @if (expanded && doc.FileKind == FileKind.YouTube && !string.IsNullOrWhiteSpace(doc.YouTubeVideoId))
+                        {
+                            <div class="public-history-viewer">
+                                <iframe src="@($"https://www.youtube.com/embed/{doc.YouTubeVideoId}")"
+                                        title="@doc.Title"
+                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                        allowfullscreen>
+                                </iframe>
+                                <MudLink Href="@($"https://www.youtube.com/watch?v={doc.YouTubeVideoId}")"
+                                         Target="_blank"
+                                         Typo="Typo.caption"
+                                         Class="mt-2 d-inline-block">
+                                    Abrir en YouTube
+                                </MudLink>
+                            </div>
+                        }
+                    </div>
+
+                    <div class="public-history-row__meta">
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">@FormatSharedOn(doc.SharedOn)</MudText>
+                        @if (IsDirectDownload(doc))
+                        {
+                            <MudIconButton Icon="@Icons.Material.Filled.Download"
+                                           Size="Size.Small"
+                                           Color="Color.Primary"
+                                           Href="@DownloadUrl(doc.DocumentId, 1)"
+                                           aria-label="Descargar" />
+                        }
+                        else
+                        {
+                            <MudIconButton Icon="@ExpandIcon(doc, expanded)"
+                                           Size="Size.Small"
+                                           Color="Color.Primary"
+                                           OnClick="@(() => ToggleExpanded(doc.DocumentId))"
+                                           aria-label="@(expanded ? "Ocultar" : "Ver")" />
+                        }
+                    </div>
+                </div>
+            }
+        }
+
+        @if (_hasMore)
+        {
+            <div class="d-flex justify-center mt-6">
+                <MudButton Variant="Variant.Outlined"
+                           Color="Color.Primary"
+                           Disabled="_loadingMore"
+                           OnClick="LoadMoreAsync">
+                    @(_loadingMore ? "Cargando…" : "Cargar más")
+                </MudButton>
+            </div>
+        }
+    }
+}

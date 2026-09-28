@@ -10,5 +10,9 @@ public static class DateTimeExtensionMethods
         dateTime.ToString(@"d/MM/yyyy \a \l\a\s HH:mm", EsAr);
 
     public static string ToSpanishMonthYear(this DateTime dateTime) =>
-        dateTime.ToString(@"MMMM \d\e yyyy", EsAr).CapitalizeFirstLetter();
+        dateTime.ToString(@"MMMM \d\e yyyy", EsAr);
+
+    /// <summary>Short date from es-AR, for example <c>6-sept.-2026</c>.</summary>
+    public static string ToSpanishShortDate(this DateTime dateTime) =>
+        dateTime.ToString("d-MMM-yyyy", EsAr);
 }

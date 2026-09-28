@@ -19,11 +19,38 @@ public class SharedDocumentViewModel
     public DocumentType DocumentType { get; init; }
     public DateTime SharedOn { get; init; }
     public FileKind FileKind { get; init; }
+
+    /// <summary>Number of file pages (0 for Text/YouTube; 1 for a PDF/single image; N for a multi-image document).</summary>
+    public int PageCount { get; init; }
+
+    /// <summary>Display title built from document type and period/description fields.</summary>
+    public string Title { get; init; } = string.Empty;
+
+    /// <summary>Plain-text body when <see cref="FileKind"/> is Text; otherwise <c>null</c>.</summary>
+    public string? TextContent { get; init; }
+
+    /// <summary>YouTube video id when <see cref="FileKind"/> is YouTube; otherwise <c>null</c>.</summary>
+    public string? YouTubeVideoId { get; init; }
 }
 
 public class SponsorDocumentHistoryViewModel
 {
     public bool IsAuthorized { get; init; }
+
+    /// <summary>Student display name when authorized; otherwise <c>null</c>.</summary>
+    public string? StudentDisplayName { get; init; }
+
+    /// <summary>Sponsor or company display name when authorized; otherwise <c>null</c>.</summary>
+    public string? RecipientDisplayName { get; init; }
+
+    /// <summary>True when more shared documents exist beyond the returned page.</summary>
+    public bool HasMore { get; init; }
+
+    /// <summary>
+    /// Previous visit watermark for the unread divider; <c>null</c> on the first visit.
+    /// </summary>
+    public DateTime? PreviousLastVisitedOnUtc { get; init; }
+
     public List<SharedDocumentViewModel> Documents { get; init; } = [];
 }
 

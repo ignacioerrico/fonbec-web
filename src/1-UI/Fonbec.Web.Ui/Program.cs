@@ -145,4 +145,27 @@ app.MapGet(NavRoutes.ImproveDocumentPageRouteTemplate,
     })
     .RequireAuthorization();
 
+// Anonymous recipient history downloads: token + DocumentShare authorize the stream (no SAS URLs).
+app.MapGet(NavRoutes.SponsorHistoryDownloadRouteTemplate,
+    async (Guid token, int studentId, long documentId, int pageNumber, IDocumentService documentService) =>
+    {
+        var blob = await documentService.DownloadSharedDocumentBlobAsync(
+            token, studentId, documentId, pageNumber, isCompany: false);
+        return blob is null
+            ? Results.NotFound()
+            : Results.File(blob.Content, blob.MimeType, fileDownloadName: blob.FileName);
+    })
+    .AllowAnonymous();
+
+app.MapGet(NavRoutes.CompanyHistoryDownloadRouteTemplate,
+    async (Guid token, int studentId, long documentId, int pageNumber, IDocumentService documentService) =>
+    {
+        var blob = await documentService.DownloadSharedDocumentBlobAsync(
+            token, studentId, documentId, pageNumber, isCompany: true);
+        return blob is null
+            ? Results.NotFound()
+            : Results.File(blob.Content, blob.MimeType, fileDownloadName: blob.FileName);
+    })
+    .AllowAnonymous();
+
 app.Run();

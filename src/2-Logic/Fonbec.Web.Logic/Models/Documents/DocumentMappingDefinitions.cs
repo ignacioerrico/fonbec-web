@@ -1,5 +1,7 @@
 using Fonbec.Web.DataAccess.DataModels.Documents;
 using Fonbec.Web.DataAccess.DataModels.Documents.Input;
+using Fonbec.Web.DataAccess.Entities.Enums;
+using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models.Documents.Input;
 using Mapster;
 
@@ -47,7 +49,8 @@ public class DocumentMappingDefinitions : IRegister
 
         config.NewConfig<DocumentQueueItemDataModel, DocumentQueueItemViewModel>();
 
-        config.NewConfig<SharedDocumentDataModel, SharedDocumentViewModel>();
+        config.NewConfig<SharedDocumentDataModel, SharedDocumentViewModel>()
+            .Map(dest => dest.Title, src => BuildSharedDocumentTitle(src));
 
         config.NewConfig<ReviewWorkspacePageDataModel, ReviewWorkspacePageViewModel>();
 
@@ -59,6 +62,19 @@ public class DocumentMappingDefinitions : IRegister
 
         config.NewConfig<RejectedReasonDataModel, RejectedReasonViewModel>();
     }
+
+    private static string BuildSharedDocumentTitle(SharedDocumentDataModel src) =>
+        src.DocumentType switch
+        {
+            DocumentType.Letter => src.PlanStartsOn is { } planStartsOn
+                ? $"Carta de {planStartsOn.ToSpanishMonthYear()}"
+                : "Carta",
+            DocumentType.ReportCard => src.ReportCardPeriod is { } period
+                ? $"{period.ToDateTime(TimeOnly.MinValue).ToSpanishMonthYear()} — {src.Description}"
+                : src.Description ?? string.Empty,
+            DocumentType.Other => src.Description ?? string.Empty,
+            _ => src.Description ?? string.Empty,
+        };
 
     private static List<CreateBlobPathInputDataModel> SingleBlobToList(CreateBlobPathInputModel? blob) =>
         blob is null

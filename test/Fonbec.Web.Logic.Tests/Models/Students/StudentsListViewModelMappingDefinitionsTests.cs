@@ -189,7 +189,7 @@ public class StudentsListViewModelMappingDefinitionsTests : MappingTestBase
             EndDate = new DateTime(2026, 6, 30),
         };
 
-        sponsor.PeriodTooltip.Should().Be("Marzo de 2025 – Junio de 2026");
+        sponsor.PeriodTooltip.Should().Be("marzo de 2025 – junio de 2026");
     }
 
     [Fact]
@@ -202,7 +202,7 @@ public class StudentsListViewModelMappingDefinitionsTests : MappingTestBase
             EndDate = null,
         };
 
-        sponsor.PeriodTooltip.Should().Be("Desde Marzo de 2025");
+        sponsor.PeriodTooltip.Should().Be("Desde marzo de 2025");
     }
 
     [Fact]

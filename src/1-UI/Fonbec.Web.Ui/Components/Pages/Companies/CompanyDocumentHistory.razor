@@ -1,0 +1,9 @@
+@using Microsoft.AspNetCore.Authorization
+@using Fonbec.Web.Ui.Components.Layout
+@using Fonbec.Web.Ui.Components.NonPages.Documents
+
+@attribute [Route(NavRoutes.CompanyHistoryRouteTemplate)]
+@attribute [AllowAnonymous]
+@layout PublicLayout
+
+<SharedDocumentHistoryList Token="Token" StudentId="StudentId" IsCompany="true" />

@@ -1,3 +1,10 @@
+/* MudBlazor ships no CSS reset, so the browser's default body margin would show as a
+   blank strip around full-height layouts (and make those pages scrollable). */
+html,
+body {
+    margin: 0;
+}
+
 .auth-layout {
     min-height: 100vh;
     display: flex;
@@ -72,6 +79,120 @@
     display: flex;
     flex-direction: column;
     gap: 0.5rem;
+}
+
+.public-layout {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    background:
+        radial-gradient(ellipse at top, color-mix(in srgb, var(--mud-palette-primary) 12%, transparent) 0%, transparent 55%),
+        linear-gradient(180deg, var(--mud-palette-background) 0%, color-mix(in srgb, var(--mud-palette-primary) 4%, var(--mud-palette-background)) 100%);
+}
+
+.public-layout__header {
+    padding: 0.75rem 1.5rem 0;
+    text-align: center;
+}
+
+.public-layout__main {
+    flex: 1;
+    width: 100%;
+    max-width: 48rem;
+    margin: 0 auto;
+    padding: 0 1.5rem 2.5rem;
+}
+
+.public-history-row {
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 1rem;
+    padding: 0.85rem 0;
+    border-bottom: 1px solid var(--mud-palette-lines-default);
+}
+
+.public-history-row:last-child,
+.public-history-row--before-seen {
+    border-bottom: none;
+}
+
+.public-history-row__main {
+    flex: 1;
+    min-width: 0;
+}
+
+.public-history-row__heading {
+    display: flex;
+    align-items: center;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+}
+
+.public-history-row__meta {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+    white-space: nowrap;
+}
+
+.public-history-chip {
+    margin: 0;
+}
+
+.public-history-year {
+    margin-top: 1.5rem;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--mud-palette-text-secondary);
+}
+
+.public-history-divider {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    margin: 1rem 0;
+}
+
+.public-history-divider .mud-divider {
+    flex: 1;
+}
+
+.public-history-divider__label {
+    flex-shrink: 0;
+    color: var(--mud-palette-text-secondary);
+    letter-spacing: 0.08em;
+    text-transform: uppercase;
+}
+
+.public-history-pages {
+    margin: 0.35rem 0 0 1rem;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+}
+
+.public-history-page-row {
+    display: flex;
+    align-items: center;
+    gap: 0.25rem;
+}
+
+.public-history-text {
+    white-space: pre-wrap;
+}
+
+.public-history-viewer {
+    margin-top: 0.75rem;
+    padding: 0.75rem;
+    background: color-mix(in srgb, var(--mud-palette-surface) 92%, var(--mud-palette-primary));
+    border-radius: 0.5rem;
+}
+
+.public-history-viewer iframe {
+    width: 100%;
+    aspect-ratio: 16 / 9;
+    border: 0;
 }
 
 .mud-navmenu .mud-nav-link .mud-icon-root {

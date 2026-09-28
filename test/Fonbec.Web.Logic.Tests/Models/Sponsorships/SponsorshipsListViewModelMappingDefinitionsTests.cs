@@ -62,25 +62,25 @@ public class SponsorshipsListViewModelMappingDefinitionsTests : MappingTestBase
         result.Sponsorships[0].IsSponsoredByCompany.Should().BeFalse();
         result.Sponsorships[0].SponsorshipFullName.Should().Be("Sponsor1 FirstName Sponsor1 LastName");
         result.Sponsorships[0].SponsorshipStartDate.Should().Be(oldestStart);
-        result.Sponsorships[0].SponsorshipStartDateString.Should().Be("Marzo de 2025");
+        result.Sponsorships[0].SponsorshipStartDateString.Should().Be("marzo de 2025");
         result.Sponsorships[0].SponsorshipEndDate.Should().BeNull();
         result.Sponsorships[0].SponsorshipEndDateString.Should().Be("—");
         result.Sponsorships[0].LockedPlanStartsOn.Should().Equal(new DateTime(2025, 3, 1));
-        result.Sponsorships[0].LockedPlanMonthLabels.Should().Equal("Marzo de 2025");
+        result.Sponsorships[0].LockedPlanMonthLabels.Should().Equal("marzo de 2025");
 
         result.Sponsorships[1].IsSponsoredByCompany.Should().BeTrue();
         result.Sponsorships[1].SponsorshipFullName.Should().Be("Company3 Name");
         result.Sponsorships[1].SponsorshipStartDate.Should().Be(middleStart);
-        result.Sponsorships[1].SponsorshipStartDateString.Should().Be("Junio de 2026");
+        result.Sponsorships[1].SponsorshipStartDateString.Should().Be("junio de 2026");
         result.Sponsorships[1].SponsorshipEndDate.Should().Be(middleEnd);
-        result.Sponsorships[1].SponsorshipEndDateString.Should().Be("Diciembre de 2026");
+        result.Sponsorships[1].SponsorshipEndDateString.Should().Be("diciembre de 2026");
 
         result.Sponsorships[2].IsSponsoredByCompany.Should().BeFalse();
         result.Sponsorships[2].SponsorshipFullName.Should().Be("Sponsor2 FirstName Sponsor2 LastName");
         result.Sponsorships[2].SponsorshipStartDate.Should().Be(newestStart);
-        result.Sponsorships[2].SponsorshipStartDateString.Should().Be("Enero de 2027");
+        result.Sponsorships[2].SponsorshipStartDateString.Should().Be("enero de 2027");
         result.Sponsorships[2].SponsorshipEndDate.Should().Be(newestEnd);
-        result.Sponsorships[2].SponsorshipEndDateString.Should().Be("Diciembre de 2027");
+        result.Sponsorships[2].SponsorshipEndDateString.Should().Be("diciembre de 2027");
     }
 
     [Fact]
