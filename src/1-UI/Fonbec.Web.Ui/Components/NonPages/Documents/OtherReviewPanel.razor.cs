@@ -76,6 +76,7 @@ public partial class OtherReviewPanel : ComponentBase
         }
 
         _saving = true;
+        StateHasChanged();
         try
         {
             var result = await DocumentService.ApproveOtherDocumentAsync(new ApproveOtherDocumentInputModel(
@@ -97,6 +98,7 @@ public partial class OtherReviewPanel : ComponentBase
         }
 
         _saving = true;
+        StateHasChanged();
         try
         {
             var result = await DocumentService.RejectOtherDocumentAsync(new RejectOtherDocumentInputModel(

@@ -108,7 +108,7 @@ internal sealed class DocumentTestFixture
 
         DocumentService = new DocumentService(
             DocumentRepository,
-            notificationService,
+            new ImmediateDocumentNotificationQueue(notificationService),
             userService,
             BlobStorageService,
             planCompletionService,
@@ -519,6 +519,21 @@ internal sealed class DocumentTestFixture
         SecurityStamp = Guid.NewGuid().ToString(),
         ChapterId = id is 1 or 3 or 4 ? 1 : null,
     };
+
+    /// <summary>
+    /// Runs notification inline so acceptance tests can assert mail and timestamps
+    /// before <see cref="IDocumentService.ApproveLetterAsync"/> returns.
+    /// The web app uses <see cref="DocumentNotificationQueue"/> instead.
+    /// </summary>
+    private sealed class ImmediateDocumentNotificationQueue(IDocumentNotificationService notifications)
+        : IDocumentNotificationQueue
+    {
+        public Task EnqueueSponsorNotificationAsync(long documentId) =>
+            notifications.NotifySponsorsAsync(documentId);
+
+        public Task EnqueuePlanReadyNotificationAsync(int chapterId, int planId, DateTime planStartsOn) =>
+            notifications.NotifyChapterManagersPlanReadyAsync(chapterId, planId, planStartsOn);
+    }
 
     private IDbContextFactory<FonbecWebDbContext> CreateDbContextFactory() =>
         new TestDbContextFactory(_databaseName);

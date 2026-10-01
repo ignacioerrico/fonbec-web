@@ -260,3 +260,10 @@
         </MudStack>
     </MudStack>
 </MudPaper>
+
+<MudOverlay Visible="_saving" DarkBackground="true" ZIndex="1500">
+    <MudStack AlignItems="AlignItems.Center" Spacing="2">
+        <MudProgressCircular Indeterminate="true" Color="Color.Primary" />
+        <MudText Typo="Typo.body1" Style="color: white;">Guardando…</MudText>
+    </MudStack>
+</MudOverlay>

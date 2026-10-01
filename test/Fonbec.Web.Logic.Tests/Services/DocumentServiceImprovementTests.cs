@@ -14,7 +14,7 @@ namespace Fonbec.Web.Logic.Tests.Services;
 public class DocumentServiceImprovementTests
 {
     private readonly IDocumentRepository _repository = Substitute.For<IDocumentRepository>();
-    private readonly IDocumentNotificationService _notificationService = Substitute.For<IDocumentNotificationService>();
+    private readonly IDocumentNotificationQueue _notificationQueue = Substitute.For<IDocumentNotificationQueue>();
     private readonly IUserService _userService = Substitute.For<IUserService>();
     private readonly IBlobStorageService _blobStorageService = Substitute.For<IBlobStorageService>();
     private readonly IPlanCompletionService _planCompletionService = Substitute.For<IPlanCompletionService>();
@@ -24,7 +24,7 @@ public class DocumentServiceImprovementTests
 
     private DocumentService CreateService() =>
         new(_repository,
-            _notificationService,
+            _notificationQueue,
             _userService,
             _blobStorageService,
             _planCompletionService,

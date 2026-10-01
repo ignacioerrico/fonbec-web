@@ -66,6 +66,10 @@ public interface IDocumentRepository
     Task<ReviewProgressDataModel> GetGlobalReviewProgressAsync(int? planId);
     Task<LetterPlanProgressDataModel> GetLetterPlanProgressAsync(int planId, int? chapterId);
     Task<List<DocumentShareNotificationDataModel>> GetUnnotifiedSharesAsync(long documentId);
+
+    /// <summary>Documents that still have at least one share with no notification timestamp.</summary>
+    Task<List<long>> GetDocumentIdsWithUnnotifiedSharesAsync();
+
     Task MarkShareNotifiedAsync(long documentShareId, DateTime notifiedOn);
     Task<Document?> GetDocumentByIdAsync(long documentId);
     Task<DocumentBlobContextDataModel?> GetDocumentBlobContextAsync(long documentId);
@@ -1378,6 +1382,18 @@ public class DocumentRepository(
                 StudentNickName = s.Student.NickName,
                 StudentGender = s.Student.Gender,
             })
+            .ToListAsync();
+    }
+
+    public async Task<List<long>> GetDocumentIdsWithUnnotifiedSharesAsync()
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        return await db.DocumentShares
+            .AsNoTracking()
+            .Where(s => s.NotificationSentOn == null)
+            .Select(s => s.DocumentId)
+            .Distinct()
             .ToListAsync();
     }
 

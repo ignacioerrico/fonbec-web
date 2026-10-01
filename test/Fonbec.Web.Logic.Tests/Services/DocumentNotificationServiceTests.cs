@@ -47,7 +47,7 @@ public class DocumentNotificationServiceTests
             },
         ]);
 
-        await CreateService().NotifySponsorsAsync(42);
+        await CreateService().NotifySponsorsAsync(42, TestContext.Current.CancellationToken);
 
         await _emailMessageSender.Received(1).SendEmailAsync(
             "padrino@test.com",
@@ -81,7 +81,7 @@ public class DocumentNotificationServiceTests
             },
         ]);
 
-        await CreateService().NotifySponsorsAsync(42);
+        await CreateService().NotifySponsorsAsync(42, TestContext.Current.CancellationToken);
 
         await _emailMessageSender.Received(1).SendEmailAsync(
             "empresa@test.com",
@@ -112,7 +112,7 @@ public class DocumentNotificationServiceTests
             },
         ]);
 
-        await CreateService().NotifySponsorsAsync(42);
+        await CreateService().NotifySponsorsAsync(42, TestContext.Current.CancellationToken);
 
         await _emailMessageSender.DidNotReceive().SendEmailAsync(
             Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
@@ -143,7 +143,7 @@ public class DocumentNotificationServiceTests
                 _ => throw new InvalidOperationException("transient"),
                 _ => Task.CompletedTask);
 
-        await CreateService().NotifySponsorsAsync(42);
+        await CreateService().NotifySponsorsAsync(42, TestContext.Current.CancellationToken);
 
         await _emailMessageSender.Received(2).SendEmailAsync(
             "retry@test.com", Arg.Any<string>(), Arg.Any<string>());
@@ -172,7 +172,7 @@ public class DocumentNotificationServiceTests
             .SendEmailAsync("fail@test.com", Arg.Any<string>(), Arg.Any<string>())
             .ThrowsAsync(new InvalidOperationException("permanent"));
 
-        await CreateService().NotifySponsorsAsync(42);
+        await CreateService().NotifySponsorsAsync(42, TestContext.Current.CancellationToken);
 
         await _emailMessageSender.Received(3).SendEmailAsync(
             "fail@test.com", Arg.Any<string>(), Arg.Any<string>());
@@ -212,7 +212,7 @@ public class DocumentNotificationServiceTests
             .SendEmailAsync("fail@test.com", Arg.Any<string>(), Arg.Any<string>())
             .ThrowsAsync(new InvalidOperationException("permanent"));
 
-        await CreateService().NotifySponsorsAsync(42);
+        await CreateService().NotifySponsorsAsync(42, TestContext.Current.CancellationToken);
 
         await _emailMessageSender.Received(3).SendEmailAsync(
             "fail@test.com", Arg.Any<string>(), Arg.Any<string>());
@@ -230,7 +230,8 @@ public class DocumentNotificationServiceTests
             new ChapterManagerContactDataModel("coord@test.com", "Ana Coordinadora"),
         ]);
 
-        await CreateService().NotifyChapterManagersPlanReadyAsync(3, 88, new DateTime(2026, 9, 1));
+        await CreateService().NotifyChapterManagersPlanReadyAsync(
+            3, 88, new DateTime(2026, 9, 1), TestContext.Current.CancellationToken);
 
         await _emailMessageSender.Received(1).SendEmailAsync(
             "coord@test.com",
@@ -246,7 +247,8 @@ public class DocumentNotificationServiceTests
         _userRepository.GetChapterManagerContactsAsync(3)
             .Returns(Array.Empty<ChapterManagerContactDataModel>());
 
-        await CreateService().NotifyChapterManagersPlanReadyAsync(3, 88, new DateTime(2026, 9, 1));
+        await CreateService().NotifyChapterManagersPlanReadyAsync(
+            3, 88, new DateTime(2026, 9, 1), TestContext.Current.CancellationToken);
 
         await _emailMessageSender.DidNotReceiveWithAnyArgs()
             .SendEmailAsync(default!, default!, default!);
