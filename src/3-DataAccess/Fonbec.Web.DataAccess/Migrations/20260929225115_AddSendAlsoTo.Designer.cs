@@ -4,6 +4,7 @@ using Fonbec.Web.DataAccess;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Infrastructure;
 using Microsoft.EntityFrameworkCore.Metadata;
+using Microsoft.EntityFrameworkCore.Migrations;
 using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 
 #nullable disable
@@ -11,9 +12,11 @@ using Microsoft.EntityFrameworkCore.Storage.ValueConversion;
 namespace Fonbec.Web.DataAccess.Migrations
 {
     [DbContext(typeof(FonbecWebDbContext))]
-    partial class FonbecWebDbContextModelSnapshot : ModelSnapshot
+    [Migration("20260929225115_AddSendAlsoTo")]
+    partial class AddSendAlsoTo
     {
-        protected override void BuildModel(ModelBuilder modelBuilder)
+        /// <inheritdoc />
+        protected override void BuildTargetModel(ModelBuilder modelBuilder)
         {
 #pragma warning disable 612, 618
             modelBuilder
@@ -1235,10 +1238,15 @@ namespace Fonbec.Web.DataAccess.Migrations
                         .HasMaxLength(128)
                         .HasColumnType("nvarchar(128)");
 
-                    b.Property<string>("RecipientName")
+                    b.Property<string>("RecipientFirstName")
                         .IsRequired()
-                        .HasMaxLength(81)
-                        .HasColumnType("nvarchar(81)");
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
+
+                    b.Property<string>("RecipientLastName")
+                        .IsRequired()
+                        .HasMaxLength(40)
+                        .HasColumnType("nvarchar(40)");
 
                     b.Property<int?>("ReenabledById")
                         .HasColumnType("int");

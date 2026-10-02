@@ -56,6 +56,10 @@ public partial class SponsorsList : AuthenticationRequiredComponentBase
         || (!string.IsNullOrEmpty(viewModel.SponsorNickName)
             && $"{viewModel.SponsorNickName} {viewModel.SponsorLastName}".ContainsIgnoringAccents(_searchString))
         || viewModel.SponsorEmail.Contains(_searchString, StringComparison.OrdinalIgnoreCase)
+        || viewModel.SponsoredStudents.Any(student => student.Name.ContainsIgnoringAccents(_searchString))
+        || viewModel.SendAlsoTos.Any(recipient =>
+            recipient.Name.ContainsIgnoringAccents(_searchString)
+            || recipient.Email.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
         || (!string.IsNullOrEmpty(viewModel.SponsorPhoneNumber)
             && viewModel.SponsorPhoneNumber.ContainsIgnoringSpaces(_searchString));
 

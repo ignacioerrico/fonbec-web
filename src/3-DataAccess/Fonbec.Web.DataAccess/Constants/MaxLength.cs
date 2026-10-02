@@ -28,6 +28,11 @@ public static class MaxLength
         public const int PhoneNumber = 32;
     }
 
+    public static class SendAlsoTo
+    {
+        public const int Name = FonbecWebUser.FirstName + 1 + FonbecWebUser.LastName;
+    }
+
     public static class PointOfContact
     {
         public const int FirstName = 40;

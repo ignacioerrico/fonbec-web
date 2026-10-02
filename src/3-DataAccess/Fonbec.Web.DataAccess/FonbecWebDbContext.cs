@@ -22,6 +22,8 @@ public sealed class FonbecWebDbContext : IdentityDbContext<FonbecWebUser, Fonbec
 
     internal DbSet<Sponsor> Sponsors => Set<Sponsor>();
 
+    internal DbSet<SendAlsoTo> SendAlsoTos => Set<SendAlsoTo>();
+
     internal DbSet<Sponsorship> Sponsorships => Set<Sponsorship>();
 
     internal DbSet<Company> Companies => Set<Company>();
