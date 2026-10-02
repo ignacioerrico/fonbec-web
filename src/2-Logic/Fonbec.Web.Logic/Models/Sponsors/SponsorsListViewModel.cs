@@ -1,6 +1,7 @@
 ﻿using Fonbec.Web.DataAccess.DataModels.Sponsors;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.Logic.ExtensionMethods;
+using Fonbec.Web.Logic.Models.Sponsorships;
 using Mapster;
 
 namespace Fonbec.Web.Logic.Models.Sponsors;
@@ -29,6 +30,10 @@ public class SponsorsListViewModel : AuditableViewModel, IDetectChanges<Sponsors
 
     public string SponsorChapterName { get; set; } = string.Empty;
 
+    public List<SponsoredStudentViewModel> SponsoredStudents { get; set; } = [];
+
+    public List<SponsorListRecipientViewModel> SendAlsoTos { get; set; } = [];
+
     public bool IsIdenticalTo(SponsorsListViewModel other)
     {
         return SponsorFirstName == other.SponsorFirstName.NormalizeText()
@@ -39,6 +44,34 @@ public class SponsorsListViewModel : AuditableViewModel, IDetectChanges<Sponsors
                && SponsorPhoneNumber == other.SponsorPhoneNumber.Trim()
                && SponsorCompanyId == other.SponsorCompanyId;
     }
+}
+
+public class SponsoredStudentViewModel
+{
+    public string Name { get; set; } = string.Empty;
+
+    public DateTime StartDate { get; set; }
+
+    public DateTime? EndDate { get; set; }
+
+    public SponsorshipTimelineStatus TimelineStatus =>
+        SponsorshipTimeline.FromPeriod(StartDate, EndDate);
+
+    public string PeriodTooltip =>
+        EndDate is { } endDate
+            ? $"{StartDate.ToSpanishMonthYear()} – {endDate.ToSpanishMonthYear()}"
+            : $"Desde {StartDate.ToSpanishMonthYear()}";
+}
+
+public class SponsorListRecipientViewModel
+{
+    public string Name { get; set; } = string.Empty;
+
+    public string Email { get; set; } = string.Empty;
+
+    public bool SendAsBcc { get; set; }
+
+    public string DeliveryLabel => SendAsBcc ? "BCC" : "CC";
 }
 
 public class SponsorsListViewModelMappingDefinitions : IRegister
@@ -57,7 +90,19 @@ public class SponsorsListViewModelMappingDefinitions : IRegister
             .Map(dest => dest.SponsorCompanyName, src => string.Empty, srcCond => srcCond.SponsorCompany == null)
             .Map(dest => dest.SponsorEmail, src => src.SponsorEmail)
             .Map(dest => dest.IsSponsorActive, src => src.IsSponsorActive)
-            .Map(dest => dest.SponsorChapterName, src => src.SponsorChapterName);
+            .Map(dest => dest.SponsorChapterName, src => src.SponsorChapterName)
+            .Map(dest => dest.SponsoredStudents, src => src.SponsoredStudents)
+            .Map(dest => dest.SendAlsoTos, src => src.SendAlsoTos);
+
+        config.NewConfig<SponsoredStudentDataModel, SponsoredStudentViewModel>()
+            .Map(dest => dest.Name, src => src.Name)
+            .Map(dest => dest.StartDate, src => src.StartDate)
+            .Map(dest => dest.EndDate, src => src.EndDate);
+
+        config.NewConfig<SponsorListRecipientDataModel, SponsorListRecipientViewModel>()
+            .Map(dest => dest.Name, src => src.Name)
+            .Map(dest => dest.Email, src => src.Email)
+            .Map(dest => dest.SendAsBcc, src => src.SendAsBcc);
 
         // Mapping required for the SponsorSelector component
         config.NewConfig<SponsorsListViewModel, SelectableModel<int>>()

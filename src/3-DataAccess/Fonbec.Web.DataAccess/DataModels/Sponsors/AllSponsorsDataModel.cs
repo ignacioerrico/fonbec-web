@@ -25,4 +25,17 @@ public class AllSponsorsDataModel(Auditable auditable) : AuditableDataModel(audi
     public bool IsSponsorActive { get; set; }
 
     public Company? SponsorCompany { get; set; }
+
+    public List<SponsoredStudentDataModel> SponsoredStudents { get; set; } = [];
+
+    public List<SponsorListRecipientDataModel> SendAlsoTos { get; set; } = [];
+}
+
+public class SponsorListRecipientDataModel
+{
+    public string Name { get; set; } = string.Empty;
+
+    public string Email { get; set; } = string.Empty;
+
+    public bool SendAsBcc { get; set; }
 }

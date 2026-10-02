@@ -1,0 +1,27 @@
+<div class="d-flex flex-wrap align-center gap-1">
+    @foreach (var student in ActiveStudents)
+    {
+        <MudTooltip Text="@student.PeriodTooltip" Arrow="true" Placement="Placement.Bottom">
+            <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Default"
+                     Icon="@Icons.Material.Filled.Person">
+                @student.Name
+            </MudChip>
+        </MudTooltip>
+    }
+
+    @if (UpcomingStudents.Count > 0)
+    {
+        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Info"
+                 Icon="@Icons.Material.Filled.Schedule">
+            +@UpcomingStudents.Count
+        </MudChip>
+    }
+
+    @if (FinishedStudents.Count > 0)
+    {
+        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default"
+                 Icon="@Icons.Material.Filled.History">
+            @FinishedStudents.Count
+        </MudChip>
+    }
+</div>

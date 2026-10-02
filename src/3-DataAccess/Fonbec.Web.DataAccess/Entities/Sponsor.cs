@@ -13,6 +13,8 @@ public class Sponsor : UserWithoutAccount
 
     public List<Sponsorship> Sponsorships { get; set; } = [];
 
+    public List<SendAlsoTo> SendAlsoTos { get; set; } = [];
+
     public int? CompanyId { get; set; }
     public Company? Company { get; set; }
 }

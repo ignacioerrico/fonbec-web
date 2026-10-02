@@ -21,4 +21,6 @@ public class SponsorCreateBindModel
     public int? CompanyId { get; set; }
 
     public string SponsorNotes { get; set; } = null!;
+
+    public List<SponsorRecipientBindModel> Recipients { get; set; } = [];
 }

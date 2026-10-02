@@ -36,6 +36,35 @@ public class CreateSponsorInputModelMappingDefinitionsTests : MappingTestBase
         result.SponsorCompanyId.Should().Be(1);
         result.SponsorNotes.Should().Be("Some notes");
         result.CreatedById.Should().Be(99);
+        result.SendAlsoTos.Should().BeEmpty();
+    }
+
+    [Fact]
+    public void Maps_SendAlsoTos_And_Normalizes_Recipient_Fields()
+    {
+        var input = new CreateSponsorInputModel(
+            ChapterId: 1,
+            SponsorFirstName: "Jane",
+            SponsorLastName: "Smith",
+            SponsorNickName: "JS",
+            SponsorGender: Gender.Female,
+            SponsorEmail: "jane@x.com",
+            SponsorPhoneNumber: "555-1234",
+            SponsorCompanyId: 1,
+            SponsorNotes: "Some notes",
+            CreatedById: 99,
+            SendAlsoTos:
+            [
+                new CreateSendAlsoToInputModel("  luIs  pérez  ", "  LuIs@Ejemplo.COM  ", true),
+            ]
+        );
+
+        var result = input.Adapt<CreateSponsorInputDataModel>(Config);
+
+        var recipient = result.SendAlsoTos.Should().ContainSingle().Subject;
+        recipient.RecipientName.Should().Be("Luis Pérez");
+        recipient.RecipientEmail.Should().Be("luis@ejemplo.com");
+        recipient.SendAsBcc.Should().BeTrue();
     }
 
     [Fact]
