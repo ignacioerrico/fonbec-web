@@ -1,0 +1,139 @@
+@attribute [Route(NavRoutes.SponsorRecipientsRouteTemplate)]
+@attribute [Authorize(Policy = nameof(SponsorRecipients))]
+@inherits AuthenticationRequiredComponentBase
+
+@using Fonbec.Web.DataAccess.Constants
+@using Fonbec.Web.Logic.Models.Sponsors
+
+<PageHeader Title="Destinatarios adicionales" />
+
+<LoadingIndicator Loading="Loading" />
+
+@if (_viewModel is not null)
+{
+    <MudText Typo="Typo.body1">Padrino: <strong>@_viewModel.SponsorFullName</strong></MudText>
+    <MudText Typo="Typo.body1" Class="mb-4">Correo electrónico: @_viewModel.SponsorEmail</MudText>
+
+    @if (!_canEdit)
+    {
+        <MudAlert Severity="Severity.Warning" Class="mb-4">@SendAlsoToValidator.InactiveMessage</MudAlert>
+    }
+
+    <MudForm @ref="_form" @bind-IsValid="@_formValidationSucceeded" Disabled="@(!_canEdit)">
+        <MudCard>
+            <MudCardContent>
+                <MudText Typo="Typo.body2" Class="mb-4">
+                    Direcciones adicionales del padrino. CC queda visible para los demás destinatarios; BCC queda oculta.
+                </MudText>
+
+                @if (_recipients.Count > 0)
+                {
+                    <MudTable Items="_recipients"
+                              Dense="true" Hover="true" Striped="true" Bordered="true">
+                        <HeaderContent>
+                            <MudTh>Nombre</MudTh>
+                            <MudTh>Correo electrónico</MudTh>
+                            <MudTh>Envío</MudTh>
+                            @if (_canEdit)
+                            {
+                                <MudTh></MudTh>
+                            }
+                        </HeaderContent>
+                        <RowTemplate>
+                            <MudTd>
+                                @if (_canEdit)
+                                {
+                                    <MudTextField @bind-Value="context.RecipientName"
+                                                  @bind-Value:after="RevalidateAsync"
+                                                  Label="Nombre"
+                                                  Immediate="true"
+                                                  Required="true"
+                                                  RequiredError="Este es un campo obligatorio."
+                                                  MaxLength="@MaxLength.SendAlsoTo.Name" />
+                                }
+                                else
+                                {
+                                    @context.RecipientName
+                                }
+                            </MudTd>
+                            <MudTd>
+                                @if (_canEdit)
+                                {
+                                    <MudTextField T="string" @bind-Value="context.RecipientEmail"
+                                                  @bind-Value:after="RevalidateAsync"
+                                                  Label="Correo electrónico"
+                                                  Immediate="true"
+                                                  Required="true"
+                                                  RequiredError="Este es un campo obligatorio."
+                                                  MaxLength="@MaxLength.FonbecWebUser.Email"
+                                                  Validation="@(new Func<string, string?>(email => ValidateRecipientEmail(context, email)))" />
+                                }
+                                else
+                                {
+                                    @context.RecipientEmail
+                                }
+                            </MudTd>
+                            <MudTd>
+                                @if (_canEdit)
+                                {
+                                    <MudSelect T="bool" @bind-Value="context.SendAsBcc"
+                                               Label="Envío"
+                                               Margin="Margin.Dense"
+                                               Dense="true">
+                                        <MudSelectItem T="bool" Value="false">CC</MudSelectItem>
+                                        <MudSelectItem T="bool" Value="true">BCC</MudSelectItem>
+                                    </MudSelect>
+                                }
+                                else
+                                {
+                                    @(context.SendAsBcc ? "BCC" : "CC")
+                                }
+                            </MudTd>
+                            @if (_canEdit)
+                            {
+                                <MudTd>
+                                    <MudIconButton Icon="@Icons.Material.Filled.Delete"
+                                                   Color="Color.Error"
+                                                   aria-label="Quitar destinatario"
+                                                   OnClick="@(() => RemoveRecipient(context.TempId))" />
+                                </MudTd>
+                            }
+                        </RowTemplate>
+                    </MudTable>
+                }
+                else
+                {
+                    <MudText Class="my-4">No hay destinatarios adicionales.</MudText>
+                }
+
+                @if (_canEdit)
+                {
+                    <MudButton OnClick="AddRecipient"
+                               Disabled="@(!CanAddRecipient)"
+                               StartIcon="@Icons.Material.Filled.Add"
+                               Variant="Variant.Outlined"
+                               Color="Color.Primary"
+                               Class="mt-4">
+                        Agregar destinatario
+                    </MudButton>
+                }
+            </MudCardContent>
+        </MudCard>
+    </MudForm>
+
+    <MudStack Row="true" Class="pt-4">
+        @if (_canEdit)
+        {
+            <MudButton OnClick="Save" Disabled="SaveButtonDisabled"
+                       Variant="Variant.Filled" Color="Color.Primary">
+                Guardar
+            </MudButton>
+        }
+        <MudButton Href="@NavRoutes.Sponsors"
+                   Variant="Variant.Filled" Color="Color.Default" Class="@(_canEdit ? "ms-4" : null)">
+            @(_canEdit ? "Cancelar" : "Volver")
+        </MudButton>
+    </MudStack>
+
+    <LoadingIndicator Loading="_saving" LoadingText="Guardando los datos" />
+}

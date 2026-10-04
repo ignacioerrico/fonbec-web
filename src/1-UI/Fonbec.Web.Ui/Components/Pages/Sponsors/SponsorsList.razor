@@ -94,18 +94,22 @@
                 </EditTemplate>
             </PropertyColumn>
 
-            <PropertyColumn Property="vm => vm.SponsorEmail" Title="Correo electrónico">
-                <CellTemplate>
-                    <MudLink Href="@($"mailto:{context.Item.SponsorEmail}")">
-                        @context.Item.SponsorEmail
-                    </MudLink>
-                </CellTemplate>
+            <PropertyColumn Property="vm => vm.SponsorEmail" Title="Correo electrónico" Hidden="true">
                 <EditTemplate>
                     <MudTextField T="string" @bind-Value="context.Item.SponsorEmail" Immediate="true"
                                   Required="true" RequiredError="Campo obligatorio"
                                   Label="Correo electrónico" Variant="Variant.Outlined" Margin="Margin.Dense"
                                   MaxLength="MaxLength.FonbecWebUser.Email"
                                   Validation="@(new Func<string, string?>(ContactFieldValidator.ValidateEmail))" />
+                </EditTemplate>
+            </PropertyColumn>
+
+            <PropertyColumn Property="@(vm => string.Join(", ", vm.SponsoredStudents.Select(s => s.Name)))"
+                            Title="Becarios" Editable="false" Sortable="false">
+                <CellTemplate>
+                    <SponsorStudentsCell Students="@context.Item.SponsoredStudents" />
+                </CellTemplate>
+                <EditTemplate>
                 </EditTemplate>
             </PropertyColumn>
 
@@ -118,6 +122,25 @@
                                   Label="Teléfono" Variant="Variant.Outlined" Margin="Margin.Dense"
                                   MaxLength="MaxLength.FonbecWebUser.PhoneNumber"
                                   Validation="@(new Func<string, string?>(ContactFieldValidator.ValidatePhone))" />
+                </EditTemplate>
+            </PropertyColumn>
+
+            <PropertyColumn Property="@(vm => string.Join(", ", vm.SendAlsoTos.Select(r => r.Name)))"
+                            Title="Destinatarios adicionales" Editable="false" Sortable="false">
+                <CellTemplate>
+                    <MudStack Spacing="0">
+                        @foreach (var recipient in context.Item.SendAlsoTos)
+                        {
+                            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                <MudLink Href="@($"mailto:{recipient.Email}")">
+                                    @recipient.Name
+                                </MudLink>
+                                <MudText Typo="Typo.caption">(@recipient.DeliveryLabel)</MudText>
+                            </MudStack>
+                        }
+                    </MudStack>
+                </CellTemplate>
+                <EditTemplate>
                 </EditTemplate>
             </PropertyColumn>
 
@@ -162,6 +185,14 @@
                                            Icon="@Icons.Material.Outlined.Edit"
                                            Size="@Size.Small"
                                            Color="Color.Primary" />
+                        </MudTooltip>
+                        <MudTooltip Text="Destinatarios adicionales" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
+                            <MudIconButton Href="@NavRoutes.SponsorRecipients(context.Item.SponsorId)"
+                                           Disabled="@(!context.Item.IsSponsorActive)"
+                                           Icon="@Icons.Material.Outlined.Mail"
+                                           Size="@Size.Small"
+                                           Color="Color.Primary"
+                                           aria-label="Destinatarios adicionales" />
                         </MudTooltip>
                     </AuthorizeView>
                 </CellTemplate>

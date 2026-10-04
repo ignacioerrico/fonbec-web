@@ -32,6 +32,10 @@ public static class NavRoutes
 
     public const string SponsorCreate = $"{Sponsors}/alta";
 
+    public static string SponsorRecipients(int sponsorId) => $"{Sponsors}/{sponsorId}/destinatarios";
+
+    public const string SponsorRecipientsRouteTemplate = $"{Sponsors}/{{SponsorId:int}}/destinatarios";
+
     public static string SponsorHistory(Guid token, int studentId) =>
         $"{Sponsors}/{token}/{studentId}";
 

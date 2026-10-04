@@ -19,6 +19,17 @@ public interface ISponsorRepository
 
     Task<int> UpdateSponsorAsync(UpdateSponsorInputDataModel dataModel);
 
+    /// <summary>
+    /// Load a sponsor and its additional recipients when the sponsor is in <paramref name="chapterId"/>.
+    /// Pass <c>null</c> to allow any chapter. Soft-deleted sponsors are omitted.
+    /// </summary>
+    Task<SponsorSendAlsoTosDataModel?> GetSendAlsoTosBySponsorIdAsync(int sponsorId, int? chapterId);
+
+    /// <summary>
+    /// Replace the sponsor's additional recipients: update matching rows, insert new ones, and delete rows that are no longer present.
+    /// </summary>
+    Task<UpdateSendAlsoTosRepositoryResult> UpdateSendAlsoTosAsync(UpdateSponsorSendAlsoTosInputDataModel dataModel);
+
     /// <summary>Get a single sponsor's name, or <c>null</c> when the sponsor does not exist.</summary>
     Task<CandidateNameDataModel?> GetSponsorNameAsync(int sponsorId);
 
@@ -57,6 +68,30 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
                 IsSponsorActive = s.IsActive,
                 SponsorCompany = s.Company,
                 SponsorChapterName = s.Chapter.Name,
+                SponsoredStudents = s.Sponsorships
+                    .Where(sp => sp.IsActive
+                                 && sp.Student.IsActive
+                                 && !sp.Student.IsDeleted)
+                    .OrderBy(sp => sp.Student.LastName)
+                    .ThenBy(sp => sp.Student.FirstName)
+                    .ThenBy(sp => sp.StartDate)
+                    .Select(sp => new SponsoredStudentDataModel
+                    {
+                        Name = sp.Student.FirstName + " " + sp.Student.LastName,
+                        StartDate = sp.StartDate,
+                        EndDate = sp.EndDate,
+                    })
+                    .ToList(),
+                SendAlsoTos = s.SendAlsoTos
+                    .OrderBy(r => r.SendAsBcc)
+                    .ThenBy(r => r.RecipientName)
+                    .Select(r => new SponsorListRecipientDataModel
+                    {
+                        Name = r.RecipientName,
+                        Email = r.RecipientEmail,
+                        SendAsBcc = r.SendAsBcc,
+                    })
+                    .ToList(),
             })
             .OrderBy(sdm => sdm.SponsorFirstName)
             .ThenBy(sdm => sdm.SponsorLastName)
@@ -82,6 +117,13 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             Notes = dataModel.SponsorNotes,
             CreatedById = dataModel.CreatedById,
             PublicAccessToken = Guid.NewGuid(),
+            SendAlsoTos = (dataModel.SendAlsoTos ?? []).Select(recipient => new SendAlsoTo
+            {
+                RecipientName = recipient.RecipientName,
+                RecipientEmail = recipient.RecipientEmail,
+                SendAsBcc = recipient.SendAsBcc,
+                CreatedById = dataModel.CreatedById,
+            }).ToList(),
         };
 
         db.Sponsors.Add(sponsor);
@@ -110,6 +152,102 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
 
         db.Sponsors.Update(sponsorDb);
         return await db.SaveChangesAsync();
+    }
+
+    public async Task<SponsorSendAlsoTosDataModel?> GetSendAlsoTosBySponsorIdAsync(int sponsorId, int? chapterId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        return await db.Sponsors
+            .AsNoTracking()
+            .Where(s => s.Id == sponsorId
+                        && !s.IsDeleted
+                        && (!chapterId.HasValue || s.ChapterId == chapterId))
+            .Select(s => new SponsorSendAlsoTosDataModel
+            {
+                SponsorId = s.Id,
+                SponsorFirstName = s.FirstName,
+                SponsorLastName = s.LastName,
+                SponsorEmail = s.Email,
+                IsSponsorActive = s.IsActive,
+                Recipients = s.SendAlsoTos
+                    .OrderBy(r => r.RecipientName)
+                    .ThenBy(r => r.Id)
+                    .Select(r => new SendAlsoToDataModel
+                    {
+                        Id = r.Id,
+                        RecipientName = r.RecipientName,
+                        RecipientEmail = r.RecipientEmail,
+                        SendAsBcc = r.SendAsBcc,
+                    })
+                    .ToList(),
+            })
+            .SingleOrDefaultAsync();
+    }
+
+    public async Task<UpdateSendAlsoTosRepositoryResult> UpdateSendAlsoTosAsync(UpdateSponsorSendAlsoTosInputDataModel dataModel)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var sponsor = await db.Sponsors
+            .Include(s => s.SendAlsoTos)
+            .SingleOrDefaultAsync(s =>
+                s.Id == dataModel.SponsorId
+                && !s.IsDeleted
+                && s.IsActive
+                && (!dataModel.ChapterId.HasValue || s.ChapterId == dataModel.ChapterId));
+
+        if (sponsor is null)
+        {
+            return new UpdateSendAlsoTosRepositoryResult(SponsorFound: false, AffectedRows: 0);
+        }
+
+        var existingById = sponsor.SendAlsoTos.ToDictionary(r => r.Id);
+        if (dataModel.Recipients.Any(r => r.Id > 0 && !existingById.ContainsKey(r.Id)))
+        {
+            return new UpdateSendAlsoTosRepositoryResult(SponsorFound: true, AffectedRows: 0, Rejected: true);
+        }
+
+        var incomingIds = dataModel.Recipients
+            .Where(r => r.Id > 0)
+            .Select(r => r.Id)
+            .ToHashSet();
+
+        foreach (var existing in sponsor.SendAlsoTos.Where(r => !incomingIds.Contains(r.Id)).ToList())
+        {
+            db.SendAlsoTos.Remove(existing);
+        }
+
+        foreach (var recipient in dataModel.Recipients)
+        {
+            if (recipient.Id > 0)
+            {
+                var existing = existingById[recipient.Id];
+                if (existing.RecipientName == recipient.RecipientName
+                    && existing.RecipientEmail == recipient.RecipientEmail
+                    && existing.SendAsBcc == recipient.SendAsBcc)
+                {
+                    continue;
+                }
+
+                existing.RecipientName = recipient.RecipientName;
+                existing.RecipientEmail = recipient.RecipientEmail;
+                existing.SendAsBcc = recipient.SendAsBcc;
+                existing.LastUpdatedById = dataModel.UpdatedById;
+                continue;
+            }
+
+            sponsor.SendAlsoTos.Add(new SendAlsoTo
+            {
+                RecipientName = recipient.RecipientName,
+                RecipientEmail = recipient.RecipientEmail,
+                SendAsBcc = recipient.SendAsBcc,
+                CreatedById = dataModel.UpdatedById,
+            });
+        }
+
+        var affectedRows = await db.SaveChangesAsync();
+        return new UpdateSendAlsoTosRepositoryResult(SponsorFound: true, AffectedRows: affectedRows);
     }
 
     public async Task<CandidateNameDataModel?> GetSponsorNameAsync(int sponsorId)

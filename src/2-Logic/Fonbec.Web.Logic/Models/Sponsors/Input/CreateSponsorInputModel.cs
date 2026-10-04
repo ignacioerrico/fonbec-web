@@ -15,7 +15,8 @@ public record CreateSponsorInputModel(
     string SponsorPhoneNumber,
     int? SponsorCompanyId,
     string SponsorNotes,
-    int CreatedById
+    int CreatedById,
+    List<CreateSendAlsoToInputModel>? SendAlsoTos = null
 );
 
 public class CreateSponsorInputModelMappingDefinitions : IRegister
@@ -33,6 +34,7 @@ public class CreateSponsorInputModelMappingDefinitions : IRegister
             .Map(dest => dest.SponsorPhoneNumber, src => src.SponsorPhoneNumber.NullOrTrimmed())
             .Map(dest => dest.SponsorCompanyId, src => src.SponsorCompanyId)
             .Map(dest => dest.SponsorNotes, src => src.SponsorNotes.NullOrTrimmed())
+            .Map(dest => dest.SendAlsoTos, src => src.SendAlsoTos ?? new List<CreateSendAlsoToInputModel>())
             .Map(dest => dest.CreatedById, src => src.CreatedById);
     }
 }

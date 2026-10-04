@@ -22,5 +22,7 @@ public class CreateSponsorInputDataModel
 
     public string? SponsorNotes { get; set; }
 
+    public List<CreateSendAlsoToInputDataModel> SendAlsoTos { get; set; } = [];
+
     public int CreatedById { get; set; }
 }

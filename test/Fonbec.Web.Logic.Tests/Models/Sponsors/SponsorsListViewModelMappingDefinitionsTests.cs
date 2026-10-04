@@ -19,6 +19,24 @@ public class SponsorsListViewModelMappingDefinitionsTests : MappingTestBase
             SponsorPhoneNumber = "1234567890",
             SponsorEmail = "jose@email.com",
             SponsorChapterName = "Cordoba",
+            SponsoredStudents =
+            [
+                new SponsoredStudentDataModel
+                {
+                    Name = "Ana Perez",
+                    StartDate = new DateTime(2024, 3, 1),
+                    EndDate = new DateTime(2025, 12, 1),
+                },
+            ],
+            SendAlsoTos =
+            [
+                new SponsorListRecipientDataModel
+                {
+                    Name = "Luis Perez",
+                    Email = "luis@ejemplo.com",
+                    SendAsBcc = true,
+                },
+            ],
         };
 
         var viewModel = dataModel.Adapt<SponsorsListViewModel>(Config);
@@ -30,6 +48,15 @@ public class SponsorsListViewModelMappingDefinitionsTests : MappingTestBase
         viewModel.SponsorPhoneNumber.Should().Be("1234567890");
         viewModel.SponsorEmail.Should().Be("jose@email.com");
         viewModel.SponsorChapterName.Should().Be("Cordoba");
+        var student = viewModel.SponsoredStudents.Should().ContainSingle().Subject;
+        student.Name.Should().Be("Ana Perez");
+        student.StartDate.Should().Be(new DateTime(2024, 3, 1));
+        student.EndDate.Should().Be(new DateTime(2025, 12, 1));
+        var recipient = viewModel.SendAlsoTos.Should().ContainSingle().Subject;
+        recipient.Name.Should().Be("Luis Perez");
+        recipient.Email.Should().Be("luis@ejemplo.com");
+        recipient.SendAsBcc.Should().BeTrue();
+        recipient.DeliveryLabel.Should().Be("BCC");
     }
 
     [Fact]
