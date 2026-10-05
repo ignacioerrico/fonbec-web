@@ -5,6 +5,12 @@ body {
     margin: 0;
 }
 
+/* Gap between the app bar and the page title: the former 8px body margin plus one
+   body line (0.875rem * 1.43), which an invisible character used to render above the layout. */
+.fonbec-main-content {
+    margin-top: 1.75rem;
+}
+
 .auth-layout {
     min-height: 100vh;
     display: flex;
