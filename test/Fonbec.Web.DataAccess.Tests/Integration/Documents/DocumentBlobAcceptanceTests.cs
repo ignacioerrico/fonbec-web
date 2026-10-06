@@ -60,7 +60,7 @@ public class DocumentBlobAcceptanceTests
         var doc = await _fixture.GetDocumentAsync(result.Value!);
         doc.FileKind.Should().Be(FileKind.Blob);
         doc.DigitalImprovementStatus.Should().Be(DigitalImprovementStatus.NotApplicable);
-        doc.Status.Should().Be(DocumentStatus.Pending);
+        doc.Status.Should().Be(DocumentStatus.ReviewPending);
         doc.UploaderNotes.Should().Be("Optional note");
 
         var pages = await _fixture.GetPagesAsync(result.Value!);
@@ -88,7 +88,7 @@ public class DocumentBlobAcceptanceTests
 
         var doc = await _fixture.GetDocumentAsync(result.Value!);
         doc.DigitalImprovementStatus.Should().Be(DigitalImprovementStatus.Required);
-        doc.Status.Should().Be(DocumentStatus.PendingImprovement);
+        doc.Status.Should().Be(DocumentStatus.DigitalImprovementPending);
 
         var pages = await _fixture.GetPagesAsync(result.Value!);
         pages.Should().ContainSingle();
@@ -134,7 +134,7 @@ public class DocumentBlobAcceptanceTests
 
         var doc = await _fixture.GetDocumentAsync(result.Value!);
         doc.SponsorId.Should().BeNull();
-        doc.Status.Should().Be(DocumentStatus.Pending);
+        doc.Status.Should().Be(DocumentStatus.ReviewPending);
     }
 
     [Fact]
@@ -172,7 +172,7 @@ public class DocumentBlobAcceptanceTests
 
         var doc = await _fixture.GetDocumentAsync(result.Value!);
         doc.DigitalImprovementStatus.Should().Be(DigitalImprovementStatus.Required);
-        doc.Status.Should().Be(DocumentStatus.PendingImprovement);
+        doc.Status.Should().Be(DocumentStatus.DigitalImprovementPending);
     }
 
     [Fact]
@@ -263,7 +263,7 @@ public class DocumentBlobAcceptanceTests
 
         var doc = await _fixture.GetDocumentAsync(locked.DocumentId);
         doc.DigitalImprovementStatus.Should().Be(DigitalImprovementStatus.Complete);
-        doc.Status.Should().Be(DocumentStatus.Pending);
+        doc.Status.Should().Be(DocumentStatus.ReviewPending);
 
         var pages = await _fixture.GetPagesAsync(locked.DocumentId);
         pages.Should().ContainSingle();
@@ -518,7 +518,7 @@ public class DocumentBlobAcceptanceTests
 
         var doc = await _fixture.GetDocumentAsync(locked.DocumentId);
         doc.DigitalImprovementStatus.Should().Be(DigitalImprovementStatus.Complete);
-        doc.Status.Should().Be(DocumentStatus.Pending);
+        doc.Status.Should().Be(DocumentStatus.ReviewPending);
 
         var pages = await _fixture.GetPagesAsync(locked.DocumentId);
         pages.Should().ContainSingle();

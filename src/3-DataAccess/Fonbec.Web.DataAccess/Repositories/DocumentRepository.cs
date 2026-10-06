@@ -185,8 +185,8 @@ public class DocumentRepository(
                 ? DigitalImprovementStatus.Required
                 : DigitalImprovementStatus.NotApplicable,
             Status = requiresImprovement
-                ? DocumentStatus.PendingImprovement
-                : DocumentStatus.Pending,
+                ? DocumentStatus.DigitalImprovementPending
+                : DocumentStatus.ReviewPending,
         });
 
     public Task<CreateDocumentResultDataModel> CreateReportCardAsync(CreateReportCardInputDataModel input) =>
@@ -205,8 +205,8 @@ public class DocumentRepository(
                 ? DigitalImprovementStatus.Required
                 : DigitalImprovementStatus.NotApplicable,
             Status = requiresImprovement
-                ? DocumentStatus.PendingImprovement
-                : DocumentStatus.Pending,
+                ? DocumentStatus.DigitalImprovementPending
+                : DocumentStatus.ReviewPending,
         });
 
     public Task<CreateDocumentResultDataModel> CreateOtherDocumentAsync(CreateOtherDocumentInputDataModel input) =>
@@ -224,8 +224,8 @@ public class DocumentRepository(
                 ? DigitalImprovementStatus.Required
                 : DigitalImprovementStatus.NotApplicable,
             Status = requiresImprovement
-                ? DocumentStatus.PendingImprovement
-                : DocumentStatus.Pending,
+                ? DocumentStatus.DigitalImprovementPending
+                : DocumentStatus.ReviewPending,
         });
 
     private async Task<CreateDocumentResultDataModel> CreateDocumentAsync<TDocument>(
@@ -319,7 +319,7 @@ public class DocumentRepository(
         }
 
         // Lock the next review-eligible document whose lock is free: either never locked
-        // (Status Pending) or taken but abandoned past the timeout (Status Processing with a
+        // (Status ReviewPending) or taken but abandoned past the timeout (Status ReviewOngoing with a
         // stale ReviewLockedAt). Selection is fair across chapters: highest Priority first,
         // then the next chapter after the last served one (wrap-around), then oldest EnqueuedAt
         // within that chapter. The document's RowVersion (and the cursor's) arbitrates concurrent
@@ -335,9 +335,9 @@ public class DocumentRepository(
                 .Include(q => q.Document)
                 .Where(q => (q.Document.DigitalImprovementStatus == DigitalImprovementStatus.NotApplicable
                              || q.Document.DigitalImprovementStatus == DigitalImprovementStatus.Complete)
-                            && ((q.ReviewLockedById == null && q.Document.Status == DocumentStatus.Pending)
+                            && ((q.ReviewLockedById == null && q.Document.Status == DocumentStatus.ReviewPending)
                                 || (q.ReviewLockedById != null
-                                    && q.Document.Status == DocumentStatus.Processing
+                                    && q.Document.Status == DocumentStatus.ReviewOngoing
                                     && q.ReviewLockedAt != null
                                     && q.ReviewLockedAt < lockExpiredBefore)));
 
@@ -370,7 +370,7 @@ public class DocumentRepository(
                 .OrderBy(q => q.EnqueuedAt)
                 .FirstAsync();
 
-            var isExpiredRetake = queueItem.Document.Status == DocumentStatus.Processing;
+            var isExpiredRetake = queueItem.Document.Status == DocumentStatus.ReviewOngoing;
 
             queueItem.ReviewLockedById = userId;
             queueItem.ReviewLockedAt = utcNow;
@@ -379,13 +379,13 @@ public class DocumentRepository(
 
             if (isExpiredRetake)
             {
-                // Status is already Processing, so nothing on the document changes; force a
+                // Status is already ReviewOngoing, so nothing on the document changes; force a
                 // guarded update so its RowVersion still arbitrates concurrent re-takes.
                 db.Entry(queueItem.Document).State = EntityState.Modified;
             }
             else
             {
-                queueItem.Document.Status = DocumentStatus.Processing;
+                queueItem.Document.Status = DocumentStatus.ReviewOngoing;
             }
 
             try
@@ -458,7 +458,7 @@ public class DocumentRepository(
 
     /// <summary>
     /// Releases every review lock whose timeout has elapsed: clears the lock fields and returns the
-    /// document to <see cref="DocumentStatus.Pending"/>. Best-effort — a concurrent take-next that
+    /// document to <see cref="DocumentStatus.ReviewPending"/>. Best-effort — a concurrent take-next that
     /// swept the same items wins and this call simply no-ops.
     /// </summary>
     public async Task ReleaseExpiredReviewLocksAsync()
@@ -484,9 +484,9 @@ public class DocumentRepository(
         {
             queueItem.ReviewLockedById = null;
             queueItem.ReviewLockedAt = null;
-            if (queueItem.Document.Status == DocumentStatus.Processing)
+            if (queueItem.Document.Status == DocumentStatus.ReviewOngoing)
             {
-                queueItem.Document.Status = DocumentStatus.Pending;
+                queueItem.Document.Status = DocumentStatus.ReviewPending;
             }
         }
 
@@ -515,9 +515,9 @@ public class DocumentRepository(
 
         queueItem.ReviewLockedById = null;
         queueItem.ReviewLockedAt = null;
-        if (queueItem.Document.Status == DocumentStatus.Processing)
+        if (queueItem.Document.Status == DocumentStatus.ReviewOngoing)
         {
-            queueItem.Document.Status = DocumentStatus.Pending;
+            queueItem.Document.Status = DocumentStatus.ReviewPending;
         }
 
         await db.SaveChangesAsync();
@@ -563,7 +563,7 @@ public class DocumentRepository(
             document.ImprovementLockedById = userId;
             document.ImprovementLockedAt = utcNow;
             document.DigitalImprovementStatus = DigitalImprovementStatus.InProgress;
-            document.Status = DocumentStatus.ProcessingImprovement;
+            document.Status = DocumentStatus.DigitalImprovementOngoing;
 
             try
             {
@@ -690,7 +690,7 @@ public class DocumentRepository(
         }
 
         document.DigitalImprovementStatus = DigitalImprovementStatus.Complete;
-        document.Status = DocumentStatus.Pending;
+        document.Status = DocumentStatus.ReviewPending;
         document.ImprovementLockedById = null;
         document.ImprovementLockedAt = null;
 
@@ -720,7 +720,7 @@ public class DocumentRepository(
         document.ImprovementLockedById = null;
         document.ImprovementLockedAt = null;
         document.DigitalImprovementStatus = DigitalImprovementStatus.Required;
-        document.Status = DocumentStatus.PendingImprovement;
+        document.Status = DocumentStatus.DigitalImprovementPending;
 
         await db.SaveChangesAsync();
     }
@@ -732,7 +732,7 @@ public class DocumentRepository(
         var letter = await db.Set<Letter>()
             .Include(l => l.QueueItem)
             .FirstOrDefaultAsync(l => l.DocumentId == input.DocumentId
-                                      && l.Status == DocumentStatus.Processing
+                                      && l.Status == DocumentStatus.ReviewOngoing
                                       && l.QueueItem!.ReviewLockedById == input.ReviewerId);
 
         if (letter is null)
@@ -789,7 +789,7 @@ public class DocumentRepository(
         var reportCard = await db.Set<ReportCard>()
             .Include(r => r.QueueItem)
             .FirstOrDefaultAsync(r => r.DocumentId == input.DocumentId
-                                      && r.Status == DocumentStatus.Processing
+                                      && r.Status == DocumentStatus.ReviewOngoing
                                       && r.QueueItem!.ReviewLockedById == input.ReviewerId);
 
         if (reportCard is null)
@@ -827,7 +827,7 @@ public class DocumentRepository(
         var other = await db.Set<OtherDocument>()
             .Include(o => o.QueueItem)
             .FirstOrDefaultAsync(o => o.DocumentId == input.DocumentId
-                                      && o.Status == DocumentStatus.Processing
+                                      && o.Status == DocumentStatus.ReviewOngoing
                                       && o.QueueItem!.ReviewLockedById == input.ReviewerId);
 
         if (other is null)
@@ -1301,22 +1301,22 @@ public class DocumentRepository(
         return new ReviewProgressDataModel
         {
             PendingLetters = counts
-                .Where(c => c.DocumentType == DocumentType.Letter && c.Status == DocumentStatus.Pending)
+                .Where(c => c.DocumentType == DocumentType.Letter && c.Status == DocumentStatus.ReviewPending)
                 .Sum(c => c.Count),
             PendingReportCards = counts
-                .Where(c => c.DocumentType == DocumentType.ReportCard && c.Status == DocumentStatus.Pending)
+                .Where(c => c.DocumentType == DocumentType.ReportCard && c.Status == DocumentStatus.ReviewPending)
                 .Sum(c => c.Count),
             PendingOther = counts
-                .Where(c => c.DocumentType == DocumentType.Other && c.Status == DocumentStatus.Pending)
+                .Where(c => c.DocumentType == DocumentType.Other && c.Status == DocumentStatus.ReviewPending)
                 .Sum(c => c.Count),
             PendingImprovement = counts
-                .Where(c => c.Status == DocumentStatus.PendingImprovement)
+                .Where(c => c.Status == DocumentStatus.DigitalImprovementPending)
                 .Sum(c => c.Count),
             ProcessingImprovement = counts
-                .Where(c => c.Status == DocumentStatus.ProcessingImprovement)
+                .Where(c => c.Status == DocumentStatus.DigitalImprovementOngoing)
                 .Sum(c => c.Count),
             Processing = counts
-                .Where(c => c.Status == DocumentStatus.Processing)
+                .Where(c => c.Status == DocumentStatus.ReviewOngoing)
                 .Sum(c => c.Count),
         };
     }
@@ -1346,10 +1346,10 @@ public class DocumentRepository(
                 .Where(c => c.Status == DocumentStatus.Approved)
                 .Sum(c => c.Count),
             PendingLetters = counts
-                .Where(c => c.Status is DocumentStatus.Pending
-                    or DocumentStatus.PendingImprovement
-                    or DocumentStatus.ProcessingImprovement
-                    or DocumentStatus.Processing)
+                .Where(c => c.Status is DocumentStatus.ReviewPending
+                    or DocumentStatus.DigitalImprovementPending
+                    or DocumentStatus.DigitalImprovementOngoing
+                    or DocumentStatus.ReviewOngoing)
                 .Sum(c => c.Count),
             RejectedLetters = counts
                 .Where(c => c.Status == DocumentStatus.Rejected)
@@ -1654,7 +1654,7 @@ public class DocumentRepository(
         var document = await db.Documents
             .Include(d => d.QueueItem)
             .FirstOrDefaultAsync(d => d.DocumentId == documentId
-                                      && d.Status == DocumentStatus.Processing
+                                      && d.Status == DocumentStatus.ReviewOngoing
                                       && d.QueueItem!.ReviewLockedById == reviewerId);
 
         if (document is null)

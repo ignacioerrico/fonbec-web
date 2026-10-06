@@ -118,12 +118,12 @@ public class LetterPlanProgressRepositoryTests
         var factory = CreateDbContextFactory();
         await SeedBaseAsync(factory);
         await SeedLetterAsync(factory, DocumentStatus.Rejected, documentId: 1, rejectedOn: UtcNow.AddDays(-2));
-        await SeedLetterAsync(factory, DocumentStatus.Pending, documentId: 2);
+        await SeedLetterAsync(factory, DocumentStatus.ReviewPending, documentId: 2);
         var repository = CreateRepository(factory);
 
         var result = await repository.GetProgressAsync(PlanId, ChapterId);
 
-        result!.Rows.Should().ContainSingle(r => r.LetterStatus == DocumentStatus.Pending);
+        result!.Rows.Should().ContainSingle(r => r.LetterStatus == DocumentStatus.ReviewPending);
     }
 
     [Fact]

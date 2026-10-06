@@ -137,10 +137,10 @@ public class LetterAggregationTests
     }
 
     [Theory]
-    [InlineData(DocumentStatus.Pending)]
-    [InlineData(DocumentStatus.PendingImprovement)]
-    [InlineData(DocumentStatus.ProcessingImprovement)]
-    [InlineData(DocumentStatus.Processing)]
+    [InlineData(DocumentStatus.ReviewPending)]
+    [InlineData(DocumentStatus.DigitalImprovementPending)]
+    [InlineData(DocumentStatus.DigitalImprovementOngoing)]
+    [InlineData(DocumentStatus.ReviewOngoing)]
     public void ToSlotStatus_Returns_InReview_For_Non_Terminal_Statuses(DocumentStatus status)
     {
         var result = LetterAggregation.ToSlotStatus(status);

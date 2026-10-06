@@ -166,7 +166,7 @@ public class FacilitatorServiceLetterStatusTests : MappingTestBase
         SetupStudentWithOneSponsor();
         _facilitatorRepository.GetCurrentLetterStatusesAsync(PlanId, Arg.Any<List<int>>())
             .Returns([
-                new SponsorLetterStatusDataModel { StudentId = StudentId, SponsorId = SponsorId, Status = DocumentStatus.Processing },
+                new SponsorLetterStatusDataModel { StudentId = StudentId, SponsorId = SponsorId, Status = DocumentStatus.ReviewOngoing },
             ]);
 
         var result = await _facilitatorService.GetStudentsDashboardAsync(FacilitatorId);

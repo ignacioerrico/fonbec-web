@@ -74,7 +74,7 @@ public class LetterFollowUpRepositoryTests
             hasRedFlag: true, RedFlagPriority.High, hasGreenFlag: true,
             redResolved: true, greenResolved: true);
         await SeedReviewAsync(
-            factory, 2, ChapterId, DocumentStatus.Pending,
+            factory, 2, ChapterId, DocumentStatus.ReviewPending,
             hasRedFlag: true, RedFlagPriority.High, hasGreenFlag: true);
         await SeedReviewAsync(
             factory, 3, OtherChapterId, DocumentStatus.Approved,

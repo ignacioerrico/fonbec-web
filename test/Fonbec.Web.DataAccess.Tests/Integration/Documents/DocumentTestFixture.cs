@@ -273,7 +273,7 @@ internal sealed class DocumentTestFixture
             DigitalImprovementStatus = DigitalImprovementStatus.NotApplicable,
             UploadedOn = enqueuedAt,
             UploadedById = UploaderId,
-            Status = DocumentStatus.Pending,
+            Status = DocumentStatus.ReviewPending,
             RowVersion = Guid.NewGuid().ToByteArray()[..8],
         };
         db.Set<OtherDocument>().Add(document);

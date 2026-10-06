@@ -49,7 +49,7 @@ public class LetterPlanProgressServiceTests
             Rows =
             [
                 Row(StudentId, DocumentStatus.Approved),
-                Row(StudentId + 1, DocumentStatus.Pending),
+                Row(StudentId + 1, DocumentStatus.ReviewPending),
                 Row(StudentId + 2, null),
                 ExemptRow(StudentId + 3),
             ],
@@ -71,7 +71,7 @@ public class LetterPlanProgressServiceTests
         _progressRepository.GetProgressAsync(PlanId, ChapterId).Returns(new LetterPlanProgressQueryResultDataModel
         {
             PlanStartsOn = new DateTime(2026, 3, 1),
-            Rows = [Row(StudentId, DocumentStatus.PendingImprovement)],
+            Rows = [Row(StudentId, DocumentStatus.DigitalImprovementPending)],
         });
 
         var result = await _service.GetProgressAsync(PlanId, ChapterId);
@@ -150,10 +150,10 @@ public class LetterPlanProgressServiceTests
     }
 
     [Theory]
-    [InlineData(DocumentStatus.Pending)]
-    [InlineData(DocumentStatus.PendingImprovement)]
-    [InlineData(DocumentStatus.ProcessingImprovement)]
-    [InlineData(DocumentStatus.Processing)]
+    [InlineData(DocumentStatus.ReviewPending)]
+    [InlineData(DocumentStatus.DigitalImprovementPending)]
+    [InlineData(DocumentStatus.DigitalImprovementOngoing)]
+    [InlineData(DocumentStatus.ReviewOngoing)]
     [InlineData(DocumentStatus.Approved)]
     public async Task ExemptStudentAsync_Returns_False_When_Any_Letter_Was_Provided(
         DocumentStatus providedLetterStatus)

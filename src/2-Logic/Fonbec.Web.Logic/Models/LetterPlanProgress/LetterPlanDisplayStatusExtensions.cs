@@ -18,10 +18,10 @@ public static class LetterPlanDisplayStatusExtensions
 
         return letterStatus.Value switch
         {
-            DocumentStatus.PendingImprovement => LetterPlanDisplayStatus.PendingImprovement,
-            DocumentStatus.ProcessingImprovement => LetterPlanDisplayStatus.ProcessingImprovement,
-            DocumentStatus.Pending => LetterPlanDisplayStatus.PendingReview,
-            DocumentStatus.Processing => LetterPlanDisplayStatus.ProcessingReview,
+            DocumentStatus.DigitalImprovementPending => LetterPlanDisplayStatus.PendingImprovement,
+            DocumentStatus.DigitalImprovementOngoing => LetterPlanDisplayStatus.ProcessingImprovement,
+            DocumentStatus.ReviewPending => LetterPlanDisplayStatus.PendingReview,
+            DocumentStatus.ReviewOngoing => LetterPlanDisplayStatus.ProcessingReview,
             DocumentStatus.Approved => LetterPlanDisplayStatus.Approved,
             DocumentStatus.Rejected => LetterPlanDisplayStatus.Rejected,
             _ => LetterPlanDisplayStatus.Missing,

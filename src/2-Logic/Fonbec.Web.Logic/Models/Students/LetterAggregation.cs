@@ -13,7 +13,7 @@ public static class LetterAggregation
         null => LetterSlotStatus.None,
         DocumentStatus.Approved => LetterSlotStatus.Approved,
         DocumentStatus.Rejected => LetterSlotStatus.Rejected,
-        _ => LetterSlotStatus.InReview, // Pending, PendingImprovement, ProcessingImprovement, Processing
+        _ => LetterSlotStatus.InReview, // DigitalImprovementPending, DigitalImprovementOngoing, ReviewPending, ReviewOngoing
     };
 
     /// <summary>

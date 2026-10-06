@@ -29,7 +29,7 @@ public class DocumentServiceAcceptanceTests
         result.IsSuccess.Should().BeTrue();
         var doc = await _fixture.GetDocumentAsync(result.Value!);
         doc.DigitalImprovementStatus.Should().Be(DigitalImprovementStatus.NotApplicable);
-        doc.Status.Should().Be(DocumentStatus.Pending);
+        doc.Status.Should().Be(DocumentStatus.ReviewPending);
         doc.UploaderNotes.Should().Be("Optional note");
 
         await using var db = await _fixture.Factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
@@ -78,7 +78,7 @@ public class DocumentServiceAcceptanceTests
         result.IsSuccess.Should().BeTrue();
         var doc = await _fixture.GetDocumentAsync(result.Value!);
         doc.DigitalImprovementStatus.Should().Be(DigitalImprovementStatus.Required);
-        doc.Status.Should().Be(DocumentStatus.PendingImprovement);
+        doc.Status.Should().Be(DocumentStatus.DigitalImprovementPending);
 
         var pages = await _fixture.GetPagesAsync(result.Value!);
         pages.Should().ContainSingle();
@@ -120,7 +120,7 @@ public class DocumentServiceAcceptanceTests
         result.IsSuccess.Should().BeTrue();
         var doc = await _fixture.GetDocumentAsync(result.Value!);
         doc.DigitalImprovementStatus.Should().Be(DigitalImprovementStatus.NotApplicable);
-        doc.Status.Should().Be(DocumentStatus.Pending);
+        doc.Status.Should().Be(DocumentStatus.ReviewPending);
     }
 
     [Fact]
@@ -139,7 +139,7 @@ public class DocumentServiceAcceptanceTests
         result.IsSuccess.Should().BeTrue();
         var doc = await _fixture.GetDocumentAsync(result.Value!);
         doc.DigitalImprovementStatus.Should().Be(DigitalImprovementStatus.Required);
-        doc.Status.Should().Be(DocumentStatus.PendingImprovement);
+        doc.Status.Should().Be(DocumentStatus.DigitalImprovementPending);
     }
 
     [Fact]
@@ -163,7 +163,7 @@ public class DocumentServiceAcceptanceTests
 
         await using var db = await _fixture.Factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
         var letter = await db.Set<Document>().FirstAsync(d => d.DocumentType == DocumentType.Letter, TestContext.Current.CancellationToken);
-        letter.Status.Should().Be(DocumentStatus.PendingImprovement);
+        letter.Status.Should().Be(DocumentStatus.DigitalImprovementPending);
         (await db.Set<DocumentQueueItem>().Where(q => q.DocumentId == letter.DocumentId)
             .Select(q => q.ReviewLockedById).FirstAsync(TestContext.Current.CancellationToken)).Should().BeNull();
     }
@@ -185,7 +185,7 @@ public class DocumentServiceAcceptanceTests
 
         var doc = await _fixture.GetDocumentAsync(next.DocumentId);
         doc.ImprovementLockedById.Should().Be(_fixture.ReviewerId);
-        doc.Status.Should().Be(DocumentStatus.ProcessingImprovement);
+        doc.Status.Should().Be(DocumentStatus.DigitalImprovementOngoing);
     }
 
     [Fact]
@@ -227,7 +227,7 @@ public class DocumentServiceAcceptanceTests
         submit.IsSuccess.Should().BeTrue();
         var doc = await _fixture.GetDocumentAsync(locked.DocumentId);
         doc.DigitalImprovementStatus.Should().Be(DigitalImprovementStatus.Complete);
-        doc.Status.Should().Be(DocumentStatus.Pending);
+        doc.Status.Should().Be(DocumentStatus.ReviewPending);
         doc.ImprovementLockedById.Should().BeNull();
 
         var pages = await _fixture.GetPagesAsync(locked.DocumentId);
@@ -446,7 +446,7 @@ public class DocumentServiceAcceptanceTests
 
         result.IsSuccess.Should().BeFalse();
         var doc = await _fixture.GetDocumentAsync(locked.DocumentId);
-        doc.Status.Should().Be(DocumentStatus.Processing);
+        doc.Status.Should().Be(DocumentStatus.ReviewOngoing);
     }
 
     [Fact]
@@ -468,7 +468,7 @@ public class DocumentServiceAcceptanceTests
 
         result.IsSuccess.Should().BeFalse();
         var doc = await _fixture.GetDocumentAsync(locked.DocumentId);
-        doc.Status.Should().Be(DocumentStatus.Processing);
+        doc.Status.Should().Be(DocumentStatus.ReviewOngoing);
     }
 
     [Fact]
@@ -1029,7 +1029,7 @@ public class DocumentServiceAcceptanceTests
         reTaken!.DocumentId.Should().Be(first.DocumentId);
 
         var doc = await _fixture.GetDocumentAsync(reTaken.DocumentId);
-        doc.Status.Should().Be(DocumentStatus.Processing);
+        doc.Status.Should().Be(DocumentStatus.ReviewOngoing);
 
         var queueItem = await _fixture.GetQueueItemAsync(reTaken.DocumentId);
         queueItem.ReviewLockedById.Should().Be(_fixture.ManagerId);
@@ -1147,7 +1147,7 @@ public class DocumentServiceAcceptanceTests
         queueItem.ReviewLockedAt.Should().BeNull();
 
         var doc = await _fixture.GetDocumentAsync(locked.DocumentId);
-        doc.Status.Should().Be(DocumentStatus.Pending);
+        doc.Status.Should().Be(DocumentStatus.ReviewPending);
     }
 
     [Fact]
@@ -1179,7 +1179,7 @@ public class DocumentServiceAcceptanceTests
 
         var doc = await _fixture.GetDocumentAsync(reTaken.DocumentId);
         doc.ImprovementLockedById.Should().Be(_fixture.ManagerId);
-        doc.Status.Should().Be(DocumentStatus.ProcessingImprovement);
+        doc.Status.Should().Be(DocumentStatus.DigitalImprovementOngoing);
     }
 
     [Fact]
