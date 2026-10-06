@@ -43,6 +43,36 @@ public class SponsorDocumentHistoryViewModel
     /// <summary>Sponsor or company display name when authorized; otherwise <c>null</c>.</summary>
     public string? RecipientDisplayName { get; init; }
 
+    /// <summary>CC display names for a person-sponsor. Empty for a company.</summary>
+    public List<string> CcRecipientNames { get; init; } = [];
+
+    /// <summary>
+    /// "Con copia a ..." for <see cref="CcRecipientNames"/>, or <c>null</c> when there is nobody to name.
+    /// </summary>
+    public string? CcRecipientLine
+    {
+        get
+        {
+            var names = CcRecipientNames
+                .Where(name => !string.IsNullOrWhiteSpace(name))
+                .Select(name => name.Trim())
+                .ToList();
+
+            return names.Count switch
+            {
+                0 => null,
+                1 => $"Con copia a {names[0]}.",
+                _ => $"Con copia a {JoinNames(names)}.",
+            };
+        }
+    }
+
+    private static string JoinNames(IReadOnlyList<string> names)
+    {
+        var allButLast = string.Join(", ", names.Take(names.Count - 1));
+        return $"{allButLast} y {names[^1]}";
+    }
+
     /// <summary>True when more shared documents exist beyond the returned page.</summary>
     public bool HasMore { get; init; }
 

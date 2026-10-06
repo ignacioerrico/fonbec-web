@@ -1,6 +1,7 @@
 using Fonbec.Web.DataAccess.DataModels.Documents;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.ExtensionMethods;
+using Fonbec.Web.Logic.Models;
 using Fonbec.Web.Logic.Util;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -101,16 +102,17 @@ public class DocumentNotificationService(
         {
             try
             {
-                // Companies and person-sponsors are notified identically, each linking to its own
-                // public history page. A company with no email address is simply skipped (still marked
-                // notified so it isn't reprocessed); the document remains available on its history page.
+                // A share with no primary address is not emailed. CC/BCC are copies of that mail,
+                // not a substitute To, and the share is still marked notified so it is not retried.
+                // The document remains available on the recipient's history page.
                 if (!string.IsNullOrWhiteSpace(share.RecipientEmail))
                 {
                     var segment = share.IsCompany ? "empresas" : "padrinos";
                     var historyUrl = $"{baseUrl}/{segment}/{share.PublicAccessToken}/{share.StudentId}";
                     var html = DocumentNotificationMessageFormatter.BuildNotificationHtml(share, historyUrl);
+                    var (to, cc, bcc) = BuildRecipients(share);
 
-                    await emailMessageSender.SendEmailAsync(share.RecipientEmail, subject, html);
+                    await emailMessageSender.SendEmailAsync(to, cc, bcc, subject, html);
                 }
 
                 await documentRepository.MarkShareNotifiedAsync(share.DocumentShareId, DateTime.UtcNow);
@@ -185,4 +187,92 @@ public class DocumentNotificationService(
             }
         }
     }
+
+    private (IReadOnlyList<Recipient> To, IReadOnlyList<Recipient> Cc, IReadOnlyList<Recipient> Bcc) BuildRecipients(
+        DocumentShareNotificationDataModel share)
+    {
+        IReadOnlyList<Recipient> to = [new Recipient(share.RecipientEmail)];
+        if (share.IsCompany || share.AdditionalRecipients.Count == 0)
+        {
+            return (to, [], []);
+        }
+
+        var primaryEmail = NormalizeEmail(share.RecipientEmail);
+        var chosen = new Dictionary<string, AdditionalRecipientChoice>(StringComparer.Ordinal);
+
+        foreach (var extra in share.AdditionalRecipients)
+        {
+            var email = extra.RecipientEmail?.Trim() ?? string.Empty;
+            if (email.Length == 0 || !ContactFieldValidator.IsValidEmail(email))
+            {
+                LogSkippedAdditionalRecipient(share.DocumentShareId, extra.RecipientEmail, extra.SendAsBcc);
+                continue;
+            }
+
+            var normalized = NormalizeEmail(email);
+            if (normalized.Length == 0 || normalized == primaryEmail)
+            {
+                continue;
+            }
+
+            if (chosen.TryGetValue(normalized, out var existing))
+            {
+                if (extra.SendAsBcc && !existing.SendAsBcc)
+                {
+                    chosen[normalized] = existing with { SendAsBcc = true };
+                }
+
+                continue;
+            }
+
+            var displayName = string.IsNullOrWhiteSpace(extra.RecipientName) ? null : extra.RecipientName.Trim();
+            chosen[normalized] = new AdditionalRecipientChoice(email, displayName, extra.SendAsBcc);
+        }
+
+        var cc = new List<Recipient>();
+        var bcc = new List<Recipient>();
+        foreach (var extra in chosen.Values)
+        {
+            var recipient = extra.DisplayName is null
+                ? new Recipient(extra.Email)
+                : new Recipient(extra.Email, extra.DisplayName);
+
+            if (extra.SendAsBcc)
+            {
+                bcc.Add(recipient);
+            }
+            else
+            {
+                cc.Add(recipient);
+            }
+        }
+
+        return (to, cc, bcc);
+    }
+
+    private void LogSkippedAdditionalRecipient(long documentShareId, string? email, bool sendAsBcc)
+    {
+        // BCC addresses stay off Information and above. CC skips are operational and include the address.
+        if (sendAsBcc)
+        {
+            logger.LogWarning(
+                "Skipping invalid BCC recipient for document share {DocumentShareId}",
+                documentShareId);
+            logger.LogDebug(
+                "Skipped BCC address {Email} for document share {DocumentShareId}",
+                email,
+                documentShareId);
+            return;
+        }
+
+        logger.LogWarning(
+            "Skipping invalid CC recipient {Email} for document share {DocumentShareId}",
+            email,
+            documentShareId);
+    }
+
+    private static string NormalizeEmail(string? email) =>
+        string.IsNullOrWhiteSpace(email) ? string.Empty : email.Trim().ToLower();
+
+    private readonly record struct AdditionalRecipientChoice(string Email, string? DisplayName, bool SendAsBcc);
 }

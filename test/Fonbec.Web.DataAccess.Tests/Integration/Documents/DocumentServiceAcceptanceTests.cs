@@ -2,6 +2,7 @@ using FluentAssertions;
 using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.DataAccess.Entities.Enums;
+using Fonbec.Web.Logic.Models;
 using Fonbec.Web.Logic.Models.Documents.Input;
 using Microsoft.EntityFrameworkCore;
 using NSubstitute;
@@ -283,7 +284,9 @@ public class DocumentServiceAcceptanceTests
         share.NotificationSentOn.Should().NotBeNull();
 
         await _fixture.EmailSender.Received(1).SendEmailAsync(
-            Arg.Is<string>(e => e == "sponsor.a@test.com"),
+            Arg.Is<IReadOnlyList<Recipient>>(to => to.Count == 1 && to[0].EmailAddress == "<sponsor.a@test.com>"),
+            Arg.Is<IReadOnlyList<Recipient>>(cc => cc.Count == 0),
+            Arg.Is<IReadOnlyList<Recipient>>(bcc => bcc.Count == 0),
             Arg.Any<string>(),
             Arg.Is<string>(html => html.Contains($"/padrinos/{_fixture.SponsorAToken}/{_fixture.StudentId}")));
     }
@@ -324,11 +327,15 @@ public class DocumentServiceAcceptanceTests
 
         // The linked sponsor and the company itself are both emailed, each with its own history link.
         await _fixture.EmailSender.Received(1).SendEmailAsync(
-            Arg.Is<string>(e => e == DocumentTestFixture.CompanyLinkedSponsorEmail),
+            Arg.Is<IReadOnlyList<Recipient>>(to => to.Count == 1 && to[0].EmailAddress == $"<{DocumentTestFixture.CompanyLinkedSponsorEmail}>"),
+            Arg.Is<IReadOnlyList<Recipient>>(cc => cc.Count == 0),
+            Arg.Is<IReadOnlyList<Recipient>>(bcc => bcc.Count == 0),
             Arg.Any<string>(),
             Arg.Is<string>(html => html.Contains($"/padrinos/{_fixture.CompanyLinkedSponsorToken}/")));
         await _fixture.EmailSender.Received(1).SendEmailAsync(
-            Arg.Is<string>(e => e == DocumentTestFixture.CompanyEmail),
+            Arg.Is<IReadOnlyList<Recipient>>(to => to.Count == 1 && to[0].EmailAddress == $"<{DocumentTestFixture.CompanyEmail}>"),
+            Arg.Is<IReadOnlyList<Recipient>>(cc => cc.Count == 0),
+            Arg.Is<IReadOnlyList<Recipient>>(bcc => bcc.Count == 0),
             Arg.Any<string>(),
             Arg.Is<string>(html => html.Contains("Acme SA") && html.Contains("/empresas/")));
     }
@@ -354,7 +361,12 @@ public class DocumentServiceAcceptanceTests
 
         await using var db = await _fixture.Factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
         (await db.Set<DocumentShare>().CountAsync(TestContext.Current.CancellationToken)).Should().Be(2);
-        await _fixture.EmailSender.Received(2).SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await _fixture.EmailSender.Received(2).SendEmailAsync(
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<string>(),
+            Arg.Any<string>());
     }
 
     [Fact]
@@ -385,9 +397,17 @@ public class DocumentServiceAcceptanceTests
         shares.Should().ContainSingle(s => s.SponsorId == _fixture.CompanyLinkedSponsorId && s.CompanyId == null);
 
         await _fixture.EmailSender.Received(1).SendEmailAsync(
-            Arg.Is<string>(e => e == DocumentTestFixture.CompanyEmail), Arg.Any<string>(), Arg.Any<string>());
+            Arg.Is<IReadOnlyList<Recipient>>(to => to.Count == 1 && to[0].EmailAddress == $"<{DocumentTestFixture.CompanyEmail}>"),
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<string>(),
+            Arg.Any<string>());
         await _fixture.EmailSender.Received(1).SendEmailAsync(
-            Arg.Is<string>(e => e == DocumentTestFixture.CompanyLinkedSponsorEmail), Arg.Any<string>(), Arg.Any<string>());
+            Arg.Is<IReadOnlyList<Recipient>>(to => to.Count == 1 && to[0].EmailAddress == $"<{DocumentTestFixture.CompanyLinkedSponsorEmail}>"),
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<string>(),
+            Arg.Any<string>());
     }
 
     [Fact]
@@ -408,7 +428,12 @@ public class DocumentServiceAcceptanceTests
 
         await using var db = await _fixture.Factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
         (await db.Set<DocumentShare>().CountAsync(TestContext.Current.CancellationToken)).Should().Be(2);
-        await _fixture.EmailSender.Received(2).SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await _fixture.EmailSender.Received(2).SendEmailAsync(
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<string>(),
+            Arg.Any<string>());
     }
 
     [Fact]
@@ -428,6 +453,12 @@ public class DocumentServiceAcceptanceTests
         await using var db = await _fixture.Factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
         (await db.Set<DocumentShare>().CountAsync(TestContext.Current.CancellationToken)).Should().Be(0);
         await _fixture.EmailSender.DidNotReceive().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await _fixture.EmailSender.DidNotReceive().SendEmailAsync(
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<string>(),
+            Arg.Any<string>());
     }
 
     [Fact]
@@ -670,6 +701,55 @@ public class DocumentServiceAcceptanceTests
         history.StudentDisplayName.Should().Be("Maria Garcia");
         history.Documents.Should().BeEmpty();
         history.HasMore.Should().BeFalse();
+        history.CcRecipientLine.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetSharedDocuments_Lists_Cc_Names_And_Omits_Bcc()
+    {
+        await _fixture.InitializeAsync();
+
+        await using (var db = await _fixture.Factory.CreateDbContextAsync(TestContext.Current.CancellationToken))
+        {
+            db.Set<SendAlsoTo>().AddRange(
+                new SendAlsoTo
+                {
+                    SponsorId = _fixture.SponsorAId,
+                    RecipientName = "Pedro Roque",
+                    RecipientEmail = "pedro@test.com",
+                    SendAsBcc = false,
+                    CreatedById = _fixture.UploaderId,
+                },
+                new SendAlsoTo
+                {
+                    SponsorId = _fixture.SponsorAId,
+                    RecipientName = "Alicia Mureau",
+                    RecipientEmail = "alicia@test.com",
+                    SendAsBcc = false,
+                    CreatedById = _fixture.UploaderId,
+                },
+                new SendAlsoTo
+                {
+                    SponsorId = _fixture.SponsorAId,
+                    RecipientName = "Marta Gomez",
+                    RecipientEmail = "marta@test.com",
+                    SendAsBcc = true,
+                    CreatedById = _fixture.UploaderId,
+                });
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        var history = await _fixture.DocumentService.GetSharedDocumentsAsync(
+            _fixture.SponsorAToken, _fixture.StudentId);
+
+        history.CcRecipientNames.Should().Equal("Alicia Mureau", "Pedro Roque");
+        history.CcRecipientLine.Should().Be("Con copia a Alicia Mureau y Pedro Roque.");
+
+        var companyHistory = await _fixture.DocumentService.GetSharedDocumentsForCompanyAsync(
+            _fixture.CompanyToken, _fixture.CompanyStudentId);
+        companyHistory.IsAuthorized.Should().BeTrue();
+        companyHistory.CcRecipientNames.Should().BeEmpty();
+        companyHistory.CcRecipientLine.Should().BeNull();
     }
 
     [Fact]

@@ -2,6 +2,7 @@ using Fonbec.Web.DataAccess.DataModels.Documents;
 using Fonbec.Web.DataAccess.DataModels.Users;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Repositories;
+using Fonbec.Web.Logic.Models;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Logic.Util;
 using Microsoft.Extensions.Configuration;
@@ -50,7 +51,9 @@ public class DocumentNotificationServiceTests
         await CreateService().NotifySponsorsAsync(42, TestContext.Current.CancellationToken);
 
         await _emailMessageSender.Received(1).SendEmailAsync(
-            "padrino@test.com",
+            Arg.Is<IReadOnlyList<Recipient>>(to => Matches(to, new Recipient("padrino@test.com"))),
+            Arg.Is<IReadOnlyList<Recipient>>(cc => cc.Count == 0),
+            Arg.Is<IReadOnlyList<Recipient>>(bcc => bcc.Count == 0),
             "Nuevo documento disponible",
             Arg.Is<string>(html =>
                 html.Contains("Hola, Juancito:")
@@ -84,7 +87,9 @@ public class DocumentNotificationServiceTests
         await CreateService().NotifySponsorsAsync(42, TestContext.Current.CancellationToken);
 
         await _emailMessageSender.Received(1).SendEmailAsync(
-            "empresa@test.com",
+            Arg.Is<IReadOnlyList<Recipient>>(to => Matches(to, new Recipient("empresa@test.com"))),
+            Arg.Is<IReadOnlyList<Recipient>>(cc => cc.Count == 0),
+            Arg.Is<IReadOnlyList<Recipient>>(bcc => bcc.Count == 0),
             "Nuevo documento disponible",
             Arg.Is<string>(html =>
                 html.Contains("Hola, Acme SA:")
@@ -115,7 +120,11 @@ public class DocumentNotificationServiceTests
         await CreateService().NotifySponsorsAsync(42, TestContext.Current.CancellationToken);
 
         await _emailMessageSender.DidNotReceive().SendEmailAsync(
-            Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<string>(),
+            Arg.Any<string>());
         await _documentRepository.Received(1).MarkShareNotifiedAsync(9, Arg.Any<DateTime>());
     }
 
@@ -138,7 +147,12 @@ public class DocumentNotificationServiceTests
         ]);
 
         _emailMessageSender
-            .SendEmailAsync("retry@test.com", Arg.Any<string>(), Arg.Any<string>())
+            .SendEmailAsync(
+                Arg.Is<IReadOnlyList<Recipient>>(to => Matches(to, new Recipient("retry@test.com"))),
+                Arg.Any<IReadOnlyList<Recipient>>(),
+                Arg.Any<IReadOnlyList<Recipient>>(),
+                Arg.Any<string>(),
+                Arg.Any<string>())
             .Returns(
                 _ => throw new InvalidOperationException("transient"),
                 _ => Task.CompletedTask);
@@ -146,7 +160,11 @@ public class DocumentNotificationServiceTests
         await CreateService().NotifySponsorsAsync(42, TestContext.Current.CancellationToken);
 
         await _emailMessageSender.Received(2).SendEmailAsync(
-            "retry@test.com", Arg.Any<string>(), Arg.Any<string>());
+            Arg.Is<IReadOnlyList<Recipient>>(to => Matches(to, new Recipient("retry@test.com"))),
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<string>(),
+            Arg.Any<string>());
         await _documentRepository.Received(1).MarkShareNotifiedAsync(3, Arg.Any<DateTime>());
     }
 
@@ -169,13 +187,22 @@ public class DocumentNotificationServiceTests
         ]);
 
         _emailMessageSender
-            .SendEmailAsync("fail@test.com", Arg.Any<string>(), Arg.Any<string>())
+            .SendEmailAsync(
+                Arg.Is<IReadOnlyList<Recipient>>(to => Matches(to, new Recipient("fail@test.com"))),
+                Arg.Any<IReadOnlyList<Recipient>>(),
+                Arg.Any<IReadOnlyList<Recipient>>(),
+                Arg.Any<string>(),
+                Arg.Any<string>())
             .ThrowsAsync(new InvalidOperationException("permanent"));
 
         await CreateService().NotifySponsorsAsync(42, TestContext.Current.CancellationToken);
 
         await _emailMessageSender.Received(3).SendEmailAsync(
-            "fail@test.com", Arg.Any<string>(), Arg.Any<string>());
+            Arg.Is<IReadOnlyList<Recipient>>(to => Matches(to, new Recipient("fail@test.com"))),
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<string>(),
+            Arg.Any<string>());
         await _documentRepository.DidNotReceive().MarkShareNotifiedAsync(4, Arg.Any<DateTime>());
     }
 
@@ -209,15 +236,28 @@ public class DocumentNotificationServiceTests
         ]);
 
         _emailMessageSender
-            .SendEmailAsync("fail@test.com", Arg.Any<string>(), Arg.Any<string>())
+            .SendEmailAsync(
+                Arg.Is<IReadOnlyList<Recipient>>(to => Matches(to, new Recipient("fail@test.com"))),
+                Arg.Any<IReadOnlyList<Recipient>>(),
+                Arg.Any<IReadOnlyList<Recipient>>(),
+                Arg.Any<string>(),
+                Arg.Any<string>())
             .ThrowsAsync(new InvalidOperationException("permanent"));
 
         await CreateService().NotifySponsorsAsync(42, TestContext.Current.CancellationToken);
 
         await _emailMessageSender.Received(3).SendEmailAsync(
-            "fail@test.com", Arg.Any<string>(), Arg.Any<string>());
+            Arg.Is<IReadOnlyList<Recipient>>(to => Matches(to, new Recipient("fail@test.com"))),
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<string>(),
+            Arg.Any<string>());
         await _emailMessageSender.Received(1).SendEmailAsync(
-            "ok@test.com", Arg.Any<string>(), Arg.Any<string>());
+            Arg.Is<IReadOnlyList<Recipient>>(to => Matches(to, new Recipient("ok@test.com"))),
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<string>(),
+            Arg.Any<string>());
         await _documentRepository.DidNotReceive().MarkShareNotifiedAsync(10, Arg.Any<DateTime>());
         await _documentRepository.Received(1).MarkShareNotifiedAsync(11, Arg.Any<DateTime>());
     }
@@ -252,5 +292,277 @@ public class DocumentNotificationServiceTests
 
         await _emailMessageSender.DidNotReceiveWithAnyArgs()
             .SendEmailAsync(default!, default!, default!);
+        await _emailMessageSender.DidNotReceiveWithAnyArgs()
+            .SendEmailAsync(default!, default!, default!, default!, default!);
     }
+
+    [Fact]
+    public async Task NotifySponsorsAsync_Copies_Person_SendAlsoTo_As_Cc_And_Bcc()
+    {
+        var token = Guid.NewGuid();
+        _documentRepository.GetUnnotifiedSharesAsync(42).Returns(
+        [
+            new DocumentShareNotificationDataModel
+            {
+                DocumentShareId = 1,
+                RecipientEmail = "ana@ejemplo.com",
+                RecipientName = "Ana",
+                PublicAccessToken = token,
+                StudentId = 7,
+                StudentFirstName = "María",
+                StudentLastName = "García",
+                StudentGender = Gender.Female,
+                AdditionalRecipients =
+                [
+                    new SendAlsoToNotificationDataModel
+                    {
+                        RecipientName = "Luis Perez",
+                        RecipientEmail = "luis@ejemplo.com",
+                        SendAsBcc = false,
+                    },
+                    new SendAlsoToNotificationDataModel
+                    {
+                        RecipientName = "Pedro Diaz",
+                        RecipientEmail = "pedro@ejemplo.com",
+                        SendAsBcc = false,
+                    },
+                    new SendAlsoToNotificationDataModel
+                    {
+                        RecipientName = "Marta Gomez",
+                        RecipientEmail = "marta@ejemplo.com",
+                        SendAsBcc = true,
+                    },
+                ],
+            },
+        ]);
+
+        await CreateService().NotifySponsorsAsync(42, TestContext.Current.CancellationToken);
+
+        await _emailMessageSender.Received(1).SendEmailAsync(
+            Arg.Is<IReadOnlyList<Recipient>>(to => Matches(to, new Recipient("ana@ejemplo.com"))),
+            Arg.Is<IReadOnlyList<Recipient>>(cc => Matches(
+                cc,
+                new Recipient("luis@ejemplo.com", "Luis Perez"),
+                new Recipient("pedro@ejemplo.com", "Pedro Diaz"))),
+            Arg.Is<IReadOnlyList<Recipient>>(bcc => Matches(bcc, new Recipient("marta@ejemplo.com", "Marta Gomez"))),
+            "Nuevo documento disponible",
+            Arg.Is<string>(html =>
+                html.Contains($"https://fonbec.test/padrinos/{token}/7")
+                && !html.Contains("luis@ejemplo.com")
+                && !html.Contains("marta@ejemplo.com")));
+
+        await _documentRepository.Received(1).MarkShareNotifiedAsync(1, Arg.Any<DateTime>());
+    }
+
+    [Fact]
+    public async Task NotifySponsorsAsync_Keeps_Company_Email_To_Only_Even_If_Extra_Recipients_Are_Present()
+    {
+        _documentRepository.GetUnnotifiedSharesAsync(42).Returns(
+        [
+            new DocumentShareNotificationDataModel
+            {
+                DocumentShareId = 5,
+                IsCompany = true,
+                RecipientEmail = "empresa@test.com",
+                RecipientName = "Acme SA",
+                PublicAccessToken = Guid.NewGuid(),
+                StudentId = 7,
+                StudentFirstName = "María",
+                StudentLastName = "García",
+                StudentGender = Gender.Female,
+                AdditionalRecipients =
+                [
+                    new SendAlsoToNotificationDataModel
+                    {
+                        RecipientName = "Luis Perez",
+                        RecipientEmail = "luis@ejemplo.com",
+                        SendAsBcc = false,
+                    },
+                ],
+            },
+        ]);
+
+        await CreateService().NotifySponsorsAsync(42, TestContext.Current.CancellationToken);
+
+        await _emailMessageSender.Received(1).SendEmailAsync(
+            Arg.Is<IReadOnlyList<Recipient>>(to => Matches(to, new Recipient("empresa@test.com"))),
+            Arg.Is<IReadOnlyList<Recipient>>(cc => cc.Count == 0),
+            Arg.Is<IReadOnlyList<Recipient>>(bcc => bcc.Count == 0),
+            Arg.Any<string>(),
+            Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task NotifySponsorsAsync_Does_Not_Promote_Cc_When_Sponsor_Has_No_Email()
+    {
+        _documentRepository.GetUnnotifiedSharesAsync(42).Returns(
+        [
+            new DocumentShareNotificationDataModel
+            {
+                DocumentShareId = 9,
+                RecipientEmail = "  ",
+                RecipientName = "Ana",
+                PublicAccessToken = Guid.NewGuid(),
+                StudentId = 7,
+                StudentFirstName = "María",
+                StudentLastName = "García",
+                StudentGender = Gender.Female,
+                AdditionalRecipients =
+                [
+                    new SendAlsoToNotificationDataModel
+                    {
+                        RecipientName = "Luis Perez",
+                        RecipientEmail = "luis@ejemplo.com",
+                        SendAsBcc = false,
+                    },
+                ],
+            },
+        ]);
+
+        await CreateService().NotifySponsorsAsync(42, TestContext.Current.CancellationToken);
+
+        await _emailMessageSender.DidNotReceive().SendEmailAsync(
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<string>(),
+            Arg.Any<string>());
+        await _documentRepository.Received(1).MarkShareNotifiedAsync(9, Arg.Any<DateTime>());
+    }
+
+    [Fact]
+    public async Task NotifySponsorsAsync_Omits_Additional_Address_That_Matches_The_Sponsor()
+    {
+        _documentRepository.GetUnnotifiedSharesAsync(42).Returns(
+        [
+            new DocumentShareNotificationDataModel
+            {
+                DocumentShareId = 1,
+                RecipientEmail = "ana@ejemplo.com",
+                RecipientName = "Ana",
+                PublicAccessToken = Guid.NewGuid(),
+                StudentId = 7,
+                StudentFirstName = "María",
+                StudentLastName = "García",
+                StudentGender = Gender.Female,
+                AdditionalRecipients =
+                [
+                    new SendAlsoToNotificationDataModel
+                    {
+                        RecipientName = "Ana Perez",
+                        RecipientEmail = "  ANA@ejemplo.com ",
+                        SendAsBcc = false,
+                    },
+                    new SendAlsoToNotificationDataModel
+                    {
+                        RecipientName = "Pedro Diaz",
+                        RecipientEmail = "pedro@ejemplo.com",
+                        SendAsBcc = true,
+                    },
+                ],
+            },
+        ]);
+
+        await CreateService().NotifySponsorsAsync(42, TestContext.Current.CancellationToken);
+
+        await _emailMessageSender.Received(1).SendEmailAsync(
+            Arg.Is<IReadOnlyList<Recipient>>(to => Matches(to, new Recipient("ana@ejemplo.com"))),
+            Arg.Is<IReadOnlyList<Recipient>>(cc => cc.Count == 0),
+            Arg.Is<IReadOnlyList<Recipient>>(bcc => Matches(bcc, new Recipient("pedro@ejemplo.com", "Pedro Diaz"))),
+            Arg.Any<string>(),
+            Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task NotifySponsorsAsync_Sends_Duplicate_Additional_Address_Once_Preferring_Bcc()
+    {
+        _documentRepository.GetUnnotifiedSharesAsync(42).Returns(
+        [
+            new DocumentShareNotificationDataModel
+            {
+                DocumentShareId = 1,
+                RecipientEmail = "ana@ejemplo.com",
+                RecipientName = "Ana",
+                PublicAccessToken = Guid.NewGuid(),
+                StudentId = 7,
+                StudentFirstName = "María",
+                StudentLastName = "García",
+                StudentGender = Gender.Female,
+                AdditionalRecipients =
+                [
+                    new SendAlsoToNotificationDataModel
+                    {
+                        RecipientName = "Luis Perez",
+                        RecipientEmail = "luis@ejemplo.com",
+                        SendAsBcc = false,
+                    },
+                    new SendAlsoToNotificationDataModel
+                    {
+                        RecipientName = "Luis Perez",
+                        RecipientEmail = " LUIS@ejemplo.com ",
+                        SendAsBcc = true,
+                    },
+                ],
+            },
+        ]);
+
+        await CreateService().NotifySponsorsAsync(42, TestContext.Current.CancellationToken);
+
+        await _emailMessageSender.Received(1).SendEmailAsync(
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Is<IReadOnlyList<Recipient>>(cc => cc.Count == 0),
+            Arg.Is<IReadOnlyList<Recipient>>(bcc => Matches(bcc, new Recipient("luis@ejemplo.com", "Luis Perez"))),
+            Arg.Any<string>(),
+            Arg.Any<string>());
+    }
+
+    [Fact]
+    public async Task NotifySponsorsAsync_Skips_Invalid_Additional_Address_And_Still_Sends()
+    {
+        _documentRepository.GetUnnotifiedSharesAsync(42).Returns(
+        [
+            new DocumentShareNotificationDataModel
+            {
+                DocumentShareId = 1,
+                RecipientEmail = "ana@ejemplo.com",
+                RecipientName = "Ana",
+                PublicAccessToken = Guid.NewGuid(),
+                StudentId = 7,
+                StudentFirstName = "María",
+                StudentLastName = "García",
+                StudentGender = Gender.Female,
+                AdditionalRecipients =
+                [
+                    new SendAlsoToNotificationDataModel
+                    {
+                        RecipientName = "Nope",
+                        RecipientEmail = "not-an-email",
+                        SendAsBcc = false,
+                    },
+                    new SendAlsoToNotificationDataModel
+                    {
+                        RecipientName = "Marta Gomez",
+                        RecipientEmail = "marta@ejemplo.com",
+                        SendAsBcc = true,
+                    },
+                ],
+            },
+        ]);
+
+        await CreateService().NotifySponsorsAsync(42, TestContext.Current.CancellationToken);
+
+        await _emailMessageSender.Received(1).SendEmailAsync(
+            Arg.Is<IReadOnlyList<Recipient>>(to => Matches(to, new Recipient("ana@ejemplo.com"))),
+            Arg.Is<IReadOnlyList<Recipient>>(cc => cc.Count == 0),
+            Arg.Is<IReadOnlyList<Recipient>>(bcc => Matches(bcc, new Recipient("marta@ejemplo.com", "Marta Gomez"))),
+            Arg.Any<string>(),
+            Arg.Any<string>());
+        await _documentRepository.Received(1).MarkShareNotifiedAsync(1, Arg.Any<DateTime>());
+    }
+
+    private static bool Matches(IReadOnlyList<Recipient> actual, params Recipient[] expected) =>
+        actual.Count == expected.Length
+        && actual.Zip(expected).All(pair =>
+            pair.First.EmailAddress == pair.Second.EmailAddress
+            && pair.First.DisplayName == pair.Second.DisplayName);
 }

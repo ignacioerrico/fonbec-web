@@ -49,6 +49,12 @@ public class SponsorDocumentHistoryDataModel
     /// <summary>Sponsor or company display name when authorized; otherwise <c>null</c>.</summary>
     public string? RecipientDisplayName { get; init; }
 
+    /// <summary>
+    /// CC display names for a person-sponsor (<c>SendAlsoTo</c> with <c>SendAsBcc</c> false),
+    /// ordered by name. Empty for a company or when unauthorized.
+    /// </summary>
+    public List<string> CcRecipientNames { get; init; } = [];
+
     /// <summary>True when more shared documents exist beyond the returned page.</summary>
     public bool HasMore { get; init; }
 
@@ -137,8 +143,8 @@ public class LetterPlanProgressDataModel
 
 /// <summary>
 /// A pending notification for a single document share. The recipient is either a person-sponsor
-/// or a company (both are first-class sponsors and are notified the same way, each via its own
-/// <see cref="PublicAccessToken"/>-based history page).
+/// or a company, each via its own <see cref="PublicAccessToken"/>-based history page.
+/// Person-sponsors may also copy <see cref="AdditionalRecipients"/>; company shares do not.
 /// </summary>
 public class DocumentShareNotificationDataModel
 {
@@ -164,6 +170,24 @@ public class DocumentShareNotificationDataModel
     public string StudentLastName { get; init; } = string.Empty;
     public string? StudentNickName { get; init; }
     public Gender StudentGender { get; init; }
+
+    /// <summary>
+    /// Extra recipients stored on the person-sponsor. Empty for a company share.
+    /// </summary>
+    public IReadOnlyList<SendAlsoToNotificationDataModel> AdditionalRecipients { get; init; } = [];
+}
+
+/// <summary>
+/// One <c>SendAlsoTo</c> row copied onto a person-sponsor notification.
+/// <see cref="RecipientName"/> is the full name used as the CC/BCC display name.
+/// </summary>
+public class SendAlsoToNotificationDataModel
+{
+    public string RecipientName { get; init; } = string.Empty;
+
+    public string RecipientEmail { get; init; } = string.Empty;
+
+    public bool SendAsBcc { get; init; }
 }
 
 public class StudentUploadContextDataModel
