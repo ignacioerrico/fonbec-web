@@ -59,6 +59,8 @@ public class FacilitatorStudentsListViewModel : AuditableViewModel, IDetectChang
     public List<SponsorLetterStatusViewModel> LetterStatuses { get; set; } = [];
     public List<ReportCardChipViewModel> ReportCards { get; set; } = [];
 
+    public OtherDocumentsColumnViewModel OtherDocuments { get; set; } = new();
+
     /// <summary>Total number of letter slots (one per active sponsorship).</summary>
     public int SponsorLetterCount => LetterStatuses.Count;
 

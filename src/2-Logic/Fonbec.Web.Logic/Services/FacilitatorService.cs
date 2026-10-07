@@ -9,6 +9,8 @@ namespace Fonbec.Web.Logic.Services;
 public interface IFacilitatorService
 {
     Task<StudentsDashboardViewModel> GetStudentsDashboardAsync(int facilitatorId);
+
+    Task<OtherDocumentsHistoryViewModel?> GetOtherDocumentsHistoryAsync(int facilitatorId, int studentId);
 }
 
 public class FacilitatorService(
@@ -24,14 +26,21 @@ public class FacilitatorService(
 
         var students = studentsDataModel.Adapt<List<FacilitatorStudentsListViewModel>>();
 
-        var reportCards = await facilitatorRepository.GetLatestReportCardsAsync(
-            students.Select(s => s.StudentId).ToList(), RecentReportCardCount);
+        var studentIds = students.Select(s => s.StudentId).ToList();
+
+        var reportCards = await facilitatorRepository.GetLatestReportCardsAsync(studentIds, RecentReportCardCount);
+        var otherDocumentCounts = await facilitatorRepository.GetOtherDocumentCountsAsync(studentIds) ?? [];
 
         foreach (var student in students)
         {
             student.ReportCards = reportCards
                 .Where(r => r.StudentId == student.StudentId)
                 .Adapt<List<ReportCardChipViewModel>>();
+
+            student.OtherDocuments = new OtherDocumentsColumnViewModel
+            {
+                Count = otherDocumentCounts.GetValueOrDefault(student.StudentId),
+            };
         }
 
         if (currentPlan is not null)
@@ -64,6 +73,22 @@ public class FacilitatorService(
             CurrentPlanId = currentPlan?.PlanId,
             CurrentPlanStartsOn = currentPlan?.StartsOn,
             Students = students,
+        };
+    }
+
+    public async Task<OtherDocumentsHistoryViewModel?> GetOtherDocumentsHistoryAsync(int facilitatorId, int studentId)
+    {
+        var history = await facilitatorRepository.GetOtherDocumentsHistoryAsync(facilitatorId, studentId);
+        if (history is null)
+        {
+            return null;
+        }
+
+        return new OtherDocumentsHistoryViewModel
+        {
+            StudentId = history.StudentId,
+            StudentName = history.StudentName,
+            Items = history.Items.Adapt<List<OtherDocumentHistoryItemViewModel>>(),
         };
     }
 

@@ -1,0 +1,174 @@
+@attribute [Route(NavRoutes.FacilitatorOtherDocumentsTemplate)]
+@attribute [Authorize(Policy = nameof(FacilitatorOtherDocuments))]
+@inherits AuthenticationRequiredComponentBase
+
+@using Fonbec.Web.DataAccess.Entities.Enums
+
+<PageTitle>@PageTitleText</PageTitle>
+
+<LoadingIndicator Loading="Loading" />
+
+@if (!Loading && _history is not null)
+{
+    <PageHeader Title="@PageTitleText" />
+
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudButton Href="@NavRoutes.FacilitatorStudents"
+                   StartIcon="@Icons.Material.Filled.ArrowBack"
+                   Variant="Variant.Text"
+                   Color="Color.Default">
+            Mis becarios
+        </MudButton>
+        <MudSpacer />
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Secondary"
+                   StartIcon="@Icons.Material.Filled.Upload"
+                   Size="Size.Small"
+                   Href="@NavRoutes.FacilitatorUploadOther(StudentId)">
+            Subir otro documento
+        </MudButton>
+    </MudStack>
+
+    @if (_history.Items.Count == 0)
+    {
+        <MudText Typo="Typo.body1">Aún no hay otros documentos.</MudText>
+    }
+    else
+    {
+        <MudSimpleTable Dense="true" Hover="true" Striped="true" Bordered="true">
+            <thead>
+                <tr>
+                    <th>Fecha</th>
+                    <th>Descripción</th>
+                    <th>Tipo</th>
+                    <th>Estado</th>
+                    <th>Acciones</th>
+                </tr>
+            </thead>
+            <tbody>
+                @foreach (var item in _history.Items)
+                {
+                    <tr @key="item.DocumentId">
+                        <td>@FormatDate(item.Date)</td>
+                        <td>@(string.IsNullOrWhiteSpace(item.Description) ? "—" : item.Description)</td>
+                        <td>@FileKindLabel(item.FileKind)</td>
+                        <td>
+                            <div class="d-flex align-center gap-2">
+                                <MudIcon Icon="@item.Status.Icon()" Color="@item.Status.Color()" Size="Size.Small" />
+                                <MudText Typo="Typo.body2">@StatusText(item)</MudText>
+                            </div>
+                        </td>
+                        <td>
+                            <div class="d-flex align-center gap-1">
+                                @if (item.FileKind is FileKind.Text or FileKind.YouTube)
+                                {
+                                    <MudButton Variant="Variant.Text"
+                                               Color="Color.Primary"
+                                               Size="Size.Small"
+                                               OnClick="@(() => ToggleExpanded(item.DocumentId))">
+                                        @(IsExpanded(item.DocumentId) ? "Ocultar" : "Ver")
+                                    </MudButton>
+                                }
+                                else if (item.CanDownload && item.PageCount <= 1)
+                                {
+                                    <MudButton Variant="Variant.Text"
+                                               Color="Color.Primary"
+                                               Size="Size.Small"
+                                               Href="@ViewUrl(item, 1)"
+                                               Target="_blank"
+                                               UserAttributes="NoEnhance">
+                                        Ver
+                                    </MudButton>
+                                    <MudButton Variant="Variant.Text"
+                                               Color="Color.Primary"
+                                               Size="Size.Small"
+                                               Href="@DownloadUrl(item, 1)"
+                                               UserAttributes="NoEnhance">
+                                        Descargar
+                                    </MudButton>
+                                }
+                                else if (item.CanDownload)
+                                {
+                                    <MudMenu Dense="true">
+                                        <ActivatorContent>
+                                            <MudButton Variant="Variant.Text"
+                                                       Color="Color.Primary"
+                                                       Size="Size.Small"
+                                                       EndIcon="@Icons.Material.Filled.ArrowDropDown">
+                                                Ver
+                                            </MudButton>
+                                        </ActivatorContent>
+                                        <ChildContent>
+                                            @for (var page = 1; page <= item.PageCount; page++)
+                                            {
+                                                var pageNumber = page;
+                                                <MudMenuItem Href="@ViewUrl(item, pageNumber)"
+                                                             Target="_blank"
+                                                             UserAttributes="NoEnhance">
+                                                    Página @pageNumber
+                                                </MudMenuItem>
+                                            }
+                                        </ChildContent>
+                                    </MudMenu>
+                                    <MudMenu Dense="true">
+                                        <ActivatorContent>
+                                            <MudButton Variant="Variant.Text"
+                                                       Color="Color.Primary"
+                                                       Size="Size.Small"
+                                                       EndIcon="@Icons.Material.Filled.ArrowDropDown">
+                                                Descargar
+                                            </MudButton>
+                                        </ActivatorContent>
+                                        <ChildContent>
+                                            @for (var page = 1; page <= item.PageCount; page++)
+                                            {
+                                                var pageNumber = page;
+                                                <MudMenuItem Href="@DownloadUrl(item, pageNumber)"
+                                                             UserAttributes="NoEnhance">
+                                                    Página @pageNumber
+                                                </MudMenuItem>
+                                            }
+                                        </ChildContent>
+                                    </MudMenu>
+                                }
+                            </div>
+                        </td>
+                    </tr>
+                    @if (IsExpanded(item.DocumentId))
+                    {
+                        <tr>
+                            <td colspan="5">
+                                @if (item.FileKind == FileKind.Text)
+                                {
+                                    <div class="mud-typography mud-typography-body1" style="white-space: pre-wrap;">
+                                        @(string.IsNullOrWhiteSpace(item.TextContent) ? "Contenido no disponible." : item.TextContent)
+                                    </div>
+                                }
+                                else if (item.FileKind == FileKind.YouTube && !string.IsNullOrWhiteSpace(item.YouTubeVideoId))
+                                {
+                                    <iframe src="@($"https://www.youtube.com/embed/{item.YouTubeVideoId}")"
+                                            title="@item.Description"
+                                            style="width: 100%; max-width: 480px; height: 270px; border: 0;"
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                            allowfullscreen>
+                                    </iframe>
+                                    <MudLink Href="@($"https://www.youtube.com/watch?v={item.YouTubeVideoId}")"
+                                             Target="_blank"
+                                             Typo="Typo.caption"
+                                             Class="mt-2 d-inline-block"
+                                             UserAttributes="NoEnhance">
+                                        Abrir en YouTube
+                                    </MudLink>
+                                }
+                                else
+                                {
+                                    <MudText Typo="Typo.body2">Contenido no disponible.</MudText>
+                                }
+                            </td>
+                        </tr>
+                    }
+                }
+            </tbody>
+        </MudSimpleTable>
+    }
+}
