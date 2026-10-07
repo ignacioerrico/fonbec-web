@@ -39,12 +39,15 @@ public partial class SharedDocumentHistoryList
 
     private string? RecipientDisplayName { get; set; }
 
+    private string? CcRecipientLine { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         var history = await LoadPageAsync(skip: 0);
         IsAuthorized = history.IsAuthorized;
         StudentDisplayName = history.StudentDisplayName;
         RecipientDisplayName = history.RecipientDisplayName;
+        CcRecipientLine = history.CcRecipientLine;
         _hasMore = history.HasMore;
         if (history.IsAuthorized)
         {

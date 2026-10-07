@@ -18,6 +18,10 @@ else
     <MudText Typo="Typo.h5">
         Documentos enviados por <strong>@StudentDisplayName</strong> para @RecipientDisplayName
     </MudText>
+    @if (CcRecipientLine is not null)
+    {
+        <MudText Typo="Typo.body2" Class="mt-2">@CcRecipientLine</MudText>
+    }
     <MudText Typo="Typo.body2" Class="mud-text-secondary mt-2 mb-6">
         Este enlace es personal: no lo compartas. Guardalo en favoritos para volver cuando quieras.
     </MudText>

@@ -922,6 +922,7 @@ public class DocumentService(
             IsAuthorized = result.IsAuthorized,
             StudentDisplayName = result.StudentDisplayName,
             RecipientDisplayName = result.RecipientDisplayName,
+            CcRecipientNames = result.CcRecipientNames,
             HasMore = result.HasMore,
             PreviousLastVisitedOnUtc = result.PreviousLastVisitedOnUtc,
             Documents = result.Documents.Adapt<List<SharedDocumentViewModel>>(),

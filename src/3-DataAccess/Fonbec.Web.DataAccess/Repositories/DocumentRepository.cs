@@ -1142,11 +1142,21 @@ public class DocumentRepository(
             page = page.Take(take).ToList();
         }
 
+        var ccRecipientNames = sponsorId is null
+            ? []
+            : await db.SendAlsoTos
+                .AsNoTracking()
+                .Where(r => r.SponsorId == sponsorId && !r.SendAsBcc)
+                .OrderBy(r => r.RecipientName)
+                .Select(r => r.RecipientName)
+                .ToListAsync();
+
         return new SponsorDocumentHistoryDataModel
         {
             IsAuthorized = true,
             StudentDisplayName = studentName,
             RecipientDisplayName = recipientDisplayName,
+            CcRecipientNames = ccRecipientNames,
             HasMore = hasMore,
             PreviousLastVisitedOnUtc = previousLastVisitedOnUtc,
             Documents = page,
@@ -1381,6 +1391,16 @@ public class DocumentRepository(
                 StudentLastName = s.Student.LastName,
                 StudentNickName = s.Student.NickName,
                 StudentGender = s.Student.Gender,
+                AdditionalRecipients = s.Sponsor == null
+                    ? new List<SendAlsoToNotificationDataModel>()
+                    : s.Sponsor.SendAlsoTos
+                        .Select(r => new SendAlsoToNotificationDataModel
+                        {
+                            RecipientName = r.RecipientName,
+                            RecipientEmail = r.RecipientEmail,
+                            SendAsBcc = r.SendAsBcc,
+                        })
+                        .ToList(),
             })
             .ToListAsync();
     }
