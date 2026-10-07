@@ -73,6 +73,13 @@ public interface IDocumentRepository
     Task MarkShareNotifiedAsync(long documentShareId, DateTime notifiedOn);
     Task<Document?> GetDocumentByIdAsync(long documentId);
     Task<DocumentBlobContextDataModel?> GetDocumentBlobContextAsync(long documentId);
+
+    /// <summary>
+    /// Blob context for an other-document only when it belongs to an active student of
+    /// <paramref name="facilitatorId"/>. Null on any authorization failure.
+    /// </summary>
+    Task<DocumentBlobContextDataModel?> GetFacilitatorOtherDocumentBlobContextAsync(
+        int facilitatorId, int studentId, long documentId);
     Task<List<int>> GetActiveSponsorIdsForStudentAsync(int studentId);
     Task<List<DocumentDescriptionOptionDataModel>> GetDescriptionOptionsAsync(int chapterId, DocumentType documentType);
     Task<List<RejectedReasonDataModel>> GetApplicableRejectedReasonsAsync(DocumentType documentType);
@@ -1479,6 +1486,27 @@ public class DocumentRepository(
             ReviewLockedById = document.QueueItem?.ReviewLockedById,
             Pages = pages,
         };
+    }
+
+    public async Task<DocumentBlobContextDataModel?> GetFacilitatorOtherDocumentBlobContextAsync(
+        int facilitatorId, int studentId, long documentId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var isOwned = await db.Set<OtherDocument>()
+            .AsNoTracking()
+            .AnyAsync(d => d.DocumentId == documentId
+                           && d.StudentId == studentId
+                           && d.Student.FacilitatorId == facilitatorId
+                           && d.Student.IsActive
+                           && !d.Student.IsDeleted);
+
+        if (!isOwned)
+        {
+            return null;
+        }
+
+        return await GetDocumentBlobContextAsync(documentId);
     }
 
     private static BlobPathDataModel? ToBlobPathDataModel(BlobPath? blobPath) =>

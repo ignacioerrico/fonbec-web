@@ -101,6 +101,30 @@ else
             </TemplateColumn>
             <TemplateColumn Title="Otros" Filterable="false" Sortable="false">
                 <CellTemplate>
+                    <div class="mt-2 d-flex align-center">
+                        <MudTooltip Text="@(context.Item.OtherDocuments.HasAny ? "Ver otros documentos" : "Sin otros documentos")"
+                                    Arrow="true" Placement="Placement.Right">
+                            @if (context.Item.OtherDocuments.HasAny)
+                            {
+                                <MudBadge Content="@context.Item.OtherDocuments.Count" Color="Color.Primary" Overlap="true" Bordered="true">
+                                    <MudIconButton Icon="@Icons.Material.Filled.History"
+                                                   Color="Color.Primary"
+                                                   Size="Size.Small"
+                                                   Href="@NavRoutes.FacilitatorOtherDocuments(context.Item.StudentId)"
+                                                   aria-label="@($"Otros documentos: {context.Item.OtherDocuments.Count}")" />
+                                </MudBadge>
+                            }
+                            else
+                            {
+                                <MudIconButton Icon="@Icons.Material.Filled.History"
+                                               Color="Color.Default"
+                                               Size="Size.Small"
+                                               Style="opacity: 0.45"
+                                               Href="@NavRoutes.FacilitatorOtherDocuments(context.Item.StudentId)"
+                                               aria-label="Sin otros documentos" />
+                            }
+                        </MudTooltip>
+                    </div>
                 </CellTemplate>
             </TemplateColumn>
         </Columns>

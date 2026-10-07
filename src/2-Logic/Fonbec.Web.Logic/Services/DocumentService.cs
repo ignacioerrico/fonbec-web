@@ -27,6 +27,13 @@ public interface IDocumentService
     Task<CrudResult<long>> CreateReportCardWithBlobAsync(CreateReportCardWithBlobInputModel input);
     Task<CrudResult<long>> CreateOtherDocumentWithBlobAsync(CreateOtherDocumentWithBlobInputModel input);
     Task<DownloadBlobResult?> DownloadDocumentBlobAsync(long documentId, int pageNumber, int requestingUserId);
+
+    /// <summary>
+    /// Streams one page of an other-document when the student belongs to <paramref name="facilitatorId"/>.
+    /// Returns <c>null</c> on any authorization failure (same as not found).
+    /// </summary>
+    Task<DownloadBlobResult?> DownloadFacilitatorOtherDocumentBlobAsync(
+        int facilitatorId, int studentId, long documentId, int pageNumber);
     Task<DownloadBlobResult?> DownloadOriginalDocumentBlobAsync(long documentId, int pageNumber, int requestingUserId);
     Task<CrudResult> SubmitDigitalImprovementWithBlobAsync(SubmitDigitalImprovementWithBlobInputModel input);
     Task<DocumentQueueItemViewModel?> TakeNextForReviewAsync(int userId, string userRole);
@@ -343,6 +350,20 @@ public class DocumentService(
         }
 
         if (!IsAuthorizedForActiveDownload(user.Value, context, requestingUserId))
+        {
+            return null;
+        }
+
+        var page = context.Pages.FirstOrDefault(p => p.PageNumber == pageNumber);
+        return await DownloadBlobAsync(page?.Active, documentId);
+    }
+
+    public async Task<DownloadBlobResult?> DownloadFacilitatorOtherDocumentBlobAsync(
+        int facilitatorId, int studentId, long documentId, int pageNumber)
+    {
+        var context = await documentRepository.GetFacilitatorOtherDocumentBlobContextAsync(
+            facilitatorId, studentId, documentId);
+        if (context is null)
         {
             return null;
         }

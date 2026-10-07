@@ -78,6 +78,21 @@ public static class NavRoutes
     public static string FacilitatorUploadOther(int studentId) =>
         $"{FacilitatorUploadDocument(studentId)}?tipo=otro";
 
+    public const string FacilitatorOtherDocumentsTemplate =
+        $"{FacilitatorStudents}/becarios/{{studentId:int}}/otros";
+
+    public static string FacilitatorOtherDocuments(int studentId) =>
+        $"{FacilitatorStudents}/becarios/{studentId}/otros";
+
+    public const string FacilitatorOtherDocumentPageTemplate =
+        $"{FacilitatorStudents}/becarios/{{studentId:int}}/otros/documentos/{{documentId:long}}/paginas/{{pageNumber:int}}";
+
+    public static string FacilitatorOtherDocumentPage(int studentId, long documentId, int pageNumber, bool download = false)
+    {
+        var url = $"{FacilitatorOtherDocuments(studentId)}/documentos/{documentId}/paginas/{pageNumber}";
+        return download ? $"{url}?descargar=true" : url;
+    }
+
     public const string ManagerUploadDocumentTemplate =
         $"{Students}/{{studentId:int}}/subir";
 

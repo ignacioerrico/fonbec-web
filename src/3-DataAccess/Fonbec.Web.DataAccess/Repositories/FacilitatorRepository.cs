@@ -16,6 +16,14 @@ public interface IFacilitatorRepository
     Task<List<SponsorLetterStatusDataModel>> GetCurrentLetterStatusesAsync(int planId, List<int> studentIds);
 
     Task<List<FacilitatorReportsDataModel>> GetLatestReportCardsAsync(List<int> studentIds, int count);
+
+    Task<Dictionary<int, int>> GetOtherDocumentCountsAsync(List<int> studentIds);
+
+    /// <summary>
+    /// Other documents for one of the facilitator's active students, newest first.
+    /// Null when the student is missing, inactive, deleted, or assigned to someone else.
+    /// </summary>
+    Task<FacilitatorOtherDocumentsHistoryDataModel?> GetOtherDocumentsHistoryAsync(int facilitatorId, int studentId);
 }
 
 public class FacilitatorRepository(
@@ -260,5 +268,74 @@ public class FacilitatorRepository(
                 RejectionReason = r.RejectedReason != null ? r.RejectedReason.Description : r.RejectionNotes
             })
             .ToListAsync();
+    }
+
+    public async Task<Dictionary<int, int>> GetOtherDocumentCountsAsync(List<int> studentIds)
+    {
+        if (studentIds.Count == 0)
+        {
+            return [];
+        }
+
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var counts = await db.Set<OtherDocument>()
+            .AsNoTracking()
+            .Where(d => studentIds.Contains(d.StudentId))
+            .GroupBy(d => d.StudentId)
+            .Select(g => new { StudentId = g.Key, Count = g.Count() })
+            .ToListAsync();
+
+        return counts.ToDictionary(c => c.StudentId, c => c.Count);
+    }
+
+    public async Task<FacilitatorOtherDocumentsHistoryDataModel?> GetOtherDocumentsHistoryAsync(
+        int facilitatorId, int studentId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var studentName = await db.Students
+            .AsNoTracking()
+            .Where(s => s.Id == studentId
+                        && s.FacilitatorId == facilitatorId
+                        && s.IsActive
+                        && !s.IsDeleted)
+            .Select(s => s.FirstName + " " + s.LastName)
+            .FirstOrDefaultAsync();
+
+        if (studentName is null)
+        {
+            return null;
+        }
+
+        var items = await db.Set<OtherDocument>()
+            .AsNoTracking()
+            .Where(d => d.StudentId == studentId)
+            .OrderByDescending(d => d.UploadedOn)
+            .ThenByDescending(d => d.DocumentId)
+            .Select(d => new FacilitatorOtherDocumentItemDataModel
+            {
+                DocumentId = d.DocumentId,
+                UploadedOn = d.UploadedOn,
+                Description = d.Description,
+                FileKind = d.FileKind,
+                Status = d.Status,
+                RejectionReason = d.RejectedReason != null
+                    ? d.RejectionNotes != null && d.RejectionNotes != string.Empty
+                        ? d.RejectedReason.Description + ": " + d.RejectionNotes
+                        : d.RejectedReason.Description
+                    : d.RejectionNotes,
+                TextContent = d.TextContent,
+                YouTubeVideoId = d.YouTubeVideoId,
+                PageCount = d.Pages.Count,
+            })
+            .ToListAsync();
+
+        return new FacilitatorOtherDocumentsHistoryDataModel
+        {
+            StudentId = studentId,
+            StudentName = studentName,
+            Items = items,
+        };
     }
 }
