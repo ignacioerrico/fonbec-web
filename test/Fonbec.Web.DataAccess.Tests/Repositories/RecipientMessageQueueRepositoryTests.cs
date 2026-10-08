@@ -1,7 +1,9 @@
 using FluentAssertions;
+using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.DataModels.RecipientMessages;
 using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.DataAccess.Repositories;
+using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
 
@@ -185,6 +187,57 @@ public sealed class RecipientMessageQueueRepositoryTests : IDisposable
         var delivered = await ReadAsync(deliveredId);
         delivered.SharedOn.Should().Be(when);
         delivered.SharedById.Should().Be(7);
+    }
+
+    [Fact]
+    public async Task CountPending_IgnoresDelivered_AndUsesCurrentFacilitatorOrChapter()
+    {
+        var when = new DateTime(2026, 4, 2, 19, 20, 0, DateTimeKind.Utc);
+        await AddMessageAsync(studentId: 10, facilitatorId: 1, chapterId: 1, body: "pendiente mío");
+        await AddMessageAsync(
+            studentId: 11, facilitatorId: 1, chapterId: 1, body: "entregado", sharedOn: when, sharedById: 7);
+        await AddMessageAsync(studentId: 12, facilitatorId: 2, chapterId: 1, body: "otro mediador");
+        await AddMessageAsync(studentId: 13, facilitatorId: 3, chapterId: 2, body: "otra filial");
+
+        (await _repository.CountPendingForFacilitatorAsync(1)).Should().Be(1);
+        (await _repository.CountPendingForFacilitatorAsync(2)).Should().Be(1);
+        (await _repository.CountPendingForChapterAsync(1)).Should().Be(2);
+        (await _repository.CountPendingForChapterAsync(2)).Should().Be(1);
+    }
+
+    [Fact]
+    public async Task GetActor_ReadsRoleAndChapter_WithoutTheSharedIdentityContext()
+    {
+        var now = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc);
+        await using (var db = await _factory.CreateDbContextAsync(TestContext.Current.CancellationToken))
+        {
+            db.Roles.Add(new FonbecWebRole
+            {
+                Id = 4,
+                Name = FonbecRole.Manager,
+                NormalizedName = FonbecRole.Manager.ToUpperInvariant(),
+            });
+            db.Users.Add(new FonbecWebUser
+            {
+                Id = 22,
+                FirstName = "Luis",
+                LastName = "Gómez",
+                UserName = "luis@example.org",
+                Email = "luis@example.org",
+                ChapterId = 3,
+                CreatedOnUtc = now,
+            });
+            db.UserRoles.Add(new IdentityUserRole<int> { UserId = 22, RoleId = 4 });
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        var actor = await _repository.GetActorAsync(22);
+        var missing = await _repository.GetActorAsync(99);
+
+        actor.Should().NotBeNull();
+        actor!.Role.Should().Be(FonbecRole.Manager);
+        actor.ChapterId.Should().Be(3);
+        missing.Should().BeNull();
     }
 
     public void Dispose() => _connection.Dispose();

@@ -35,3 +35,10 @@ public class RecipientMessageShareStateDataModel
 
     public int? SharedById { get; init; }
 }
+
+public class RecipientMessageActorDataModel
+{
+    public string Role { get; init; } = "";
+
+    public int? ChapterId { get; init; }
+}

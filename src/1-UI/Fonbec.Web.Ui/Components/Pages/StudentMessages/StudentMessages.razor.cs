@@ -2,6 +2,7 @@ using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models.RecipientMessages;
 using Fonbec.Web.Logic.Services;
+using Fonbec.Web.Ui.Components.Layout;
 using Microsoft.AspNetCore.Components;
 using Microsoft.JSInterop;
 using MudBlazor;
@@ -17,6 +18,9 @@ public partial class StudentMessages : AuthenticationRequiredComponentBase
 
     [Inject]
     public IRecipientMessageService RecipientMessageService { get; set; } = null!;
+
+    [Inject]
+    public StudentMessageNavCount NavCount { get; set; } = null!;
 
     [Inject]
     public IJSRuntime JsRuntime { get; set; } = null!;
@@ -87,6 +91,7 @@ public partial class StudentMessages : AuthenticationRequiredComponentBase
             }
 
             await ReloadAsync();
+            NavCount.NotifyChanged();
         }
         finally
         {

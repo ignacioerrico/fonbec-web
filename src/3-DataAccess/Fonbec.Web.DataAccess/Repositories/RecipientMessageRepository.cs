@@ -14,6 +14,15 @@ public interface IRecipientMessageRepository
 
     Task<List<StudentMessageQueueItemDataModel>> GetForChapterAsync(int chapterId);
 
+    Task<int> CountPendingForFacilitatorAsync(int facilitatorUserId);
+
+    Task<int> CountPendingForChapterAsync(int chapterId);
+
+    /// <summary>
+    /// Role and chapter from the user record, on a context that is not shared with Identity.
+    /// </summary>
+    Task<RecipientMessageActorDataModel?> GetActorAsync(int userId);
+
     Task<RecipientMessageShareStateDataModel?> GetInScopeAsync(long recipientMessageId, RecipientMessageScope scope);
 
     /// <summary>
@@ -36,6 +45,46 @@ public class RecipientMessageRepository(IDbContextFactory<FonbecWebDbContext> db
 
     public Task<List<StudentMessageQueueItemDataModel>> GetForChapterAsync(int chapterId) =>
         QueryAsync(messages => messages.Where(m => m.Student.ChapterId == chapterId));
+
+    public Task<int> CountPendingForFacilitatorAsync(int facilitatorUserId) =>
+        CountPendingAsync(messages => messages.Where(m =>
+            m.Student.FacilitatorId == facilitatorUserId && m.SharedOn == null));
+
+    public Task<int> CountPendingForChapterAsync(int chapterId) =>
+        CountPendingAsync(messages => messages.Where(m =>
+            m.Student.ChapterId == chapterId && m.SharedOn == null));
+
+    public async Task<RecipientMessageActorDataModel?> GetActorAsync(int userId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var user = await db.Users
+            .AsNoTracking()
+            .Where(u => u.Id == userId)
+            .Select(u => new { u.ChapterId })
+            .SingleOrDefaultAsync();
+
+        if (user is null)
+        {
+            return null;
+        }
+
+        var role = await db.UserRoles
+            .AsNoTracking()
+            .Where(userRole => userRole.UserId == userId)
+            .Join(
+                db.Roles.AsNoTracking(),
+                userRole => userRole.RoleId,
+                roleRow => roleRow.Id,
+                (_, roleRow) => roleRow.Name)
+            .SingleOrDefaultAsync();
+
+        return new RecipientMessageActorDataModel
+        {
+            Role = role ?? "",
+            ChapterId = user.ChapterId,
+        };
+    }
 
     public async Task<RecipientMessageShareStateDataModel?> GetInScopeAsync(
         long recipientMessageId, RecipientMessageScope scope)
@@ -95,6 +144,13 @@ public class RecipientMessageRepository(IDbContextFactory<FonbecWebDbContext> db
         message.SharedById = null;
         await db.SaveChangesAsync();
         return true;
+    }
+
+    private async Task<int> CountPendingAsync(
+        Func<IQueryable<RecipientMessage>, IQueryable<RecipientMessage>> filter)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+        return await filter(db.RecipientMessages.AsNoTracking()).CountAsync();
     }
 
     private async Task<List<StudentMessageQueueItemDataModel>> QueryAsync(

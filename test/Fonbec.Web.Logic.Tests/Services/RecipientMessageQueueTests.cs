@@ -1,9 +1,9 @@
 using FluentAssertions;
 using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.DataModels.RecipientMessages;
-using Fonbec.Web.DataAccess.DataModels.Users.Output;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.ExtensionMethods;
+using Fonbec.Web.Logic.Models.RecipientMessages;
 using Fonbec.Web.Logic.Services;
 using NSubstitute;
 
@@ -16,12 +16,11 @@ public class RecipientMessageQueueTests
     private static readonly DateTimeOffset UtcNow = new(2026, 4, 2, 14, 5, 0, TimeSpan.Zero);
 
     private readonly IRecipientMessageRepository _repository = Substitute.For<IRecipientMessageRepository>();
-    private readonly IUserRepository _users = Substitute.For<IUserRepository>();
     private readonly RecipientMessageService _service;
 
     public RecipientMessageQueueTests()
     {
-        _service = new RecipientMessageService(_repository, _users, new FixedTimeProvider(UtcNow));
+        _service = new RecipientMessageService(_repository, new FixedTimeProvider(UtcNow));
     }
 
     [Fact]
@@ -213,7 +212,7 @@ public class RecipientMessageQueueTests
     [Fact]
     public async Task MarkShared_UnknownUser_IsDenied()
     {
-        _users.GetUserAsync(7).Returns((GetUserOutputDataModel?)null);
+        _repository.GetActorAsync(7).Returns((RecipientMessageActorDataModel?)null);
 
         var saved = await _service.MarkSharedAsync(1, 7);
 
@@ -221,13 +220,62 @@ public class RecipientMessageQueueTests
         await _repository.DidNotReceive().GetInScopeAsync(Arg.Any<long>(), Arg.Any<RecipientMessageScope>());
     }
 
+    [Fact]
+    public async Task CountPending_Uploader_CountsOnlyThatFacilitatorsStudents()
+    {
+        Actor(UploaderId, FonbecRole.Uploader, chapterId: 9);
+        _repository.CountPendingForFacilitatorAsync(UploaderId).Returns(4);
+
+        var count = await _service.CountPendingForActorAsync(UploaderId);
+
+        count.Should().Be(4);
+        await _repository.Received(1).CountPendingForFacilitatorAsync(UploaderId);
+        await _repository.DidNotReceive().CountPendingForChapterAsync(Arg.Any<int>());
+    }
+
+    [Fact]
+    public async Task CountPending_Manager_UsesTheChapterStoredForThatUser()
+    {
+        Actor(ManagerId, FonbecRole.Manager, chapterId: 4);
+        _repository.CountPendingForChapterAsync(4).Returns(11);
+
+        var count = await _service.CountPendingForActorAsync(ManagerId);
+
+        count.Should().Be(11);
+        await _repository.Received(1).CountPendingForChapterAsync(4);
+        await _repository.DidNotReceive().CountPendingForFacilitatorAsync(Arg.Any<int>());
+    }
+
+    [Theory]
+    [InlineData(FonbecRole.Admin)]
+    [InlineData(FonbecRole.Reviewer)]
+    public async Task CountPending_OtherRoles_IsZero(string role)
+    {
+        Actor(5, role, chapterId: 1);
+
+        var count = await _service.CountPendingForActorAsync(5);
+
+        count.Should().Be(0);
+        await _repository.DidNotReceive().CountPendingForFacilitatorAsync(Arg.Any<int>());
+        await _repository.DidNotReceive().CountPendingForChapterAsync(Arg.Any<int>());
+    }
+
+    [Theory]
+    [InlineData(0, null)]
+    [InlineData(1, "1")]
+    [InlineData(10, "10")]
+    [InlineData(11, "10+")]
+    public void PendingBadge_HidesZero_AndCapsAboveTen(int count, string? badge)
+    {
+        PendingMessageBadge.Format(count).Should().Be(badge);
+    }
+
     private void Actor(int userId, string role, int? chapterId)
     {
-        _users.GetUserAsync(userId).Returns(new GetUserOutputDataModel
+        _repository.GetActorAsync(userId).Returns(new RecipientMessageActorDataModel
         {
+            Role = role,
             ChapterId = chapterId,
-            UserFullName = "Actor",
-            UserRole = role,
         });
     }
 

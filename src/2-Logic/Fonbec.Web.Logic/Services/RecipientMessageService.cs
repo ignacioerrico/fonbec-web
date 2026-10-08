@@ -16,6 +16,11 @@ public interface IRecipientMessageService
     Task<StudentMessagesViewModel> GetForActorAsync(int actorUserId);
 
     /// <summary>
+    /// Pending messages for the actor, using the same scope as <see cref="GetForActorAsync"/>.
+    /// </summary>
+    Task<int> CountPendingForActorAsync(int actorUserId);
+
+    /// <summary>
     /// Records that <paramref name="actorUserId"/> shared the message. An already-shared
     /// message keeps its original who and when. Returns false when the message is missing
     /// or outside the actor's scope.
@@ -31,7 +36,6 @@ public interface IRecipientMessageService
 
 public sealed class RecipientMessageService(
     IRecipientMessageRepository repository,
-    IUserRepository userRepository,
     TimeProvider timeProvider) : IRecipientMessageService
 {
     public async Task<StudentMessagesViewModel> GetForActorAsync(int actorUserId)
@@ -65,6 +69,19 @@ public sealed class RecipientMessageService(
                 .ThenByDescending(row => row.RecipientMessageId)
                 .Select(Map)
                 .ToList(),
+        };
+    }
+
+    public async Task<int> CountPendingForActorAsync(int actorUserId)
+    {
+        var scope = await ResolveScopeAsync(actorUserId);
+        return scope switch
+        {
+            RecipientMessageScope.Facilitator facilitator =>
+                await repository.CountPendingForFacilitatorAsync(facilitator.UserId),
+            RecipientMessageScope.Chapter chapter =>
+                await repository.CountPendingForChapterAsync(chapter.ChapterId),
+            _ => 0,
         };
     }
 
@@ -115,18 +132,18 @@ public sealed class RecipientMessageService(
 
     private async Task<RecipientMessageScope?> ResolveScopeAsync(int actorUserId)
     {
-        var user = await userRepository.GetUserAsync(actorUserId);
-        if (user is null)
+        var actor = await repository.GetActorAsync(actorUserId);
+        if (string.IsNullOrEmpty(actor?.Role))
         {
             return null;
         }
 
-        if (user.UserRole == FonbecRole.Uploader)
+        if (actor.Role == FonbecRole.Uploader)
         {
             return new RecipientMessageScope.Facilitator(actorUserId);
         }
 
-        if (user.UserRole == FonbecRole.Manager && user.ChapterId is int chapterId)
+        if (actor.Role == FonbecRole.Manager && actor.ChapterId is int chapterId)
         {
             return new RecipientMessageScope.Chapter(chapterId);
         }

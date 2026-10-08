@@ -86,9 +86,7 @@
                 </AuthorizeView>
 
                 <AuthorizeView Policy="@nameof(StudentMessages)">
-                    <MudNavLink Href="@NavRoutes.StudentMessages" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Chat">
-                        Mensajes para becarios
-                    </MudNavLink>
+                    <StudentMessagesNavLink />
                 </AuthorizeView>
 
                 <AuthorizeView Policy="@DocumentPermission.DigitalImprovement">
