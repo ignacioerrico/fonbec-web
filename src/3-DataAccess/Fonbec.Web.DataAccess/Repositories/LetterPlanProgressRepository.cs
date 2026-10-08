@@ -2,6 +2,7 @@ using Fonbec.Web.DataAccess.DataModels.LetterPlanProgress;
 using Fonbec.Web.DataAccess.DataModels.LetterFollowUp;
 using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.DataAccess.Entities.Enums;
+using Fonbec.Web.DataAccess.Queries;
 using Microsoft.EntityFrameworkCore;
 
 namespace Fonbec.Web.DataAccess.Repositories;
@@ -48,39 +49,13 @@ public class LetterPlanProgressRepository(
             .Where(e => e.PlannedDeliveryId == planId && !e.IsRevoked)
             .ToDictionaryAsync(e => e.StudentId, e => e.Reason);
 
-        // NOTE: the sponsorship predicate below mirrors FacilitatorRepository, except that eligibility
-        // is evaluated as of the plan's start date (planStartsOn) rather than "now": the sponsorships
-        // that must receive a letter are those in effect when the plan started.
         var slots = await db.Students
             .AsNoTracking()
-            .Where(s => s.ChapterId == chapterId
-                        && s.IsActive
-                        && !s.IsDeleted
-                        && s.Sponsorships.Any(sp =>
-                            sp.IsActive
-                            && sp.StartDate <= planStartsOn
-                            && (sp.EndDate == null || sp.EndDate >= planStartsOn)
-                            && (
-                                (sp.SponsorId != null
-                                 && sp.Sponsor != null
-                                 && sp.Sponsor.IsActive
-                                 && !sp.Sponsor.IsDeleted)
-                                || (sp.CompanyId != null
-                                    && sp.Company != null
-                                    && sp.Company.IsActive))))
+            .Where(s => s.ChapterId == chapterId)
+            .WhereCovered(CampaignQueries.Covers(planStartsOn))
             .SelectMany(s => s.Sponsorships
-                .Where(sp =>
-                    sp.IsActive
-                    && sp.StartDate <= planStartsOn
-                    && (sp.EndDate == null || sp.EndDate >= planStartsOn)
-                    && (
-                        (sp.SponsorId != null
-                         && sp.Sponsor != null
-                         && sp.Sponsor.IsActive
-                         && !sp.Sponsor.IsDeleted)
-                        || (sp.CompanyId != null
-                            && sp.Company != null
-                            && sp.Company.IsActive)))
+                .AsQueryable()
+                .Where(CampaignQueries.Covers(planStartsOn))
                 .Select(sp => new
                 {
                     s.Id,
@@ -212,22 +187,9 @@ public class LetterPlanProgressRepository(
 
         return await db.Students
             .AsNoTracking()
-            .Where(s => s.ChapterId == chapterId
-                        && s.IsActive
-                        && !s.IsDeleted)
-            .SelectMany(s => s.Sponsorships
-                .Where(sp =>
-                    sp.IsActive
-                    && sp.StartDate <= startsOn
-                    && (sp.EndDate == null || sp.EndDate >= startsOn)
-                    && (
-                        (sp.SponsorId != null
-                         && sp.Sponsor != null
-                         && sp.Sponsor.IsActive
-                         && !sp.Sponsor.IsDeleted)
-                        || (sp.CompanyId != null
-                            && sp.Company != null
-                            && sp.Company.IsActive))))
+            .Where(s => s.ChapterId == chapterId)
+            .WhereCovered(CampaignQueries.Covers(startsOn))
+            .SelectMany(s => s.Sponsorships.AsQueryable().Where(CampaignQueries.Covers(startsOn)))
             .CountAsync();
     }
 

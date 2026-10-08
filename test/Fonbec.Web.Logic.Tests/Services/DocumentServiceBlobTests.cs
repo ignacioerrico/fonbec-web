@@ -50,7 +50,7 @@ public class DocumentServiceBlobTests
             IsActive = true,
         });
         _repository.IsActivePlanAsync(PlanId, ChapterId).Returns(true);
-        _repository.HasActiveSponsorshipAsync(StudentId, SponsorId).Returns(true);
+        _repository.HasActiveSponsorshipAsync(StudentId, SponsorId, PlanId).Returns(true);
         _repository.HasDuplicateLetterAsync(StudentId, SponsorId, PlanId).Returns(false);
 
         _blobStorageService
@@ -79,7 +79,7 @@ public class DocumentServiceBlobTests
             IsActive = true,
         });
         _repository.IsActivePlanAsync(PlanId, ChapterId).Returns(true);
-        _repository.HasActiveCompanySponsorshipAsync(StudentId, CompanyId).Returns(true);
+        _repository.HasActiveCompanySponsorshipAsync(StudentId, CompanyId, PlanId).Returns(true);
         _repository.HasDuplicateCompanyLetterAsync(StudentId, CompanyId, PlanId).Returns(false);
         _repository.CreateLetterAsync(Arg.Any<CreateLetterInputDataModel>())
             .Returns(new CreateDocumentResultDataModel { DocumentId = 1 });
@@ -109,8 +109,8 @@ public class DocumentServiceBlobTests
         var result = await service.CreateLetterWithBlobAsync(input);
 
         result.IsSuccess.Should().BeTrue();
-        await _repository.Received(1).HasActiveCompanySponsorshipAsync(StudentId, CompanyId);
-        await _repository.DidNotReceive().HasActiveSponsorshipAsync(Arg.Any<int>(), Arg.Any<int>());
+        await _repository.Received(1).HasActiveCompanySponsorshipAsync(StudentId, CompanyId, PlanId);
+        await _repository.DidNotReceive().HasActiveSponsorshipAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<int>());
         await _repository.Received(1).CreateLetterAsync(Arg.Is<CreateLetterInputDataModel>(m =>
             m.SponsorId == null && m.CompanyId == CompanyId));
         await _blobStorageService.Received(1).UploadAsync(

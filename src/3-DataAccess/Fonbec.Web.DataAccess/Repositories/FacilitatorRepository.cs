@@ -1,5 +1,6 @@
 using Fonbec.Web.DataAccess.DataModels.Facilitators;
 using Fonbec.Web.DataAccess.Entities;
+using Fonbec.Web.DataAccess.Queries;
 using Microsoft.EntityFrameworkCore;
 
 namespace Fonbec.Web.DataAccess.Repositories;
@@ -36,11 +37,17 @@ public class FacilitatorRepository(
 
         var utcNow = timeProvider.GetUtcNow().UtcDateTime;
 
-        // NOTE: the sponsorship predicate below is intentionally duplicated between the outer
-        // student inclusion filter and the inner "Sponsors" projection so that a listed student
-        // only ever shows the same active sponsors/companies that made them eligible. The
-        // predicate is inlined (not a shared method) because EF Core cannot translate a custom
-        // method call into SQL. Keep both copies in sync.
+        var chapterId = await db.Users
+            .AsNoTracking()
+            .Where(u => u.Id == facilitatorId)
+            .Select(u => u.ChapterId)
+            .FirstOrDefaultAsync();
+
+        // With no open plan, list whoever is sponsored today.
+        var asOf = await CampaignQueries.SelectStartsOnAsync(
+                       CampaignQueries.OpenForChapter(db.PlannedDeliveries.AsNoTracking(), chapterId))
+                   ?? utcNow;
+
         var students = await db.Students
             .AsNoTracking()
             .Include(s => s.Facilitator)
@@ -48,21 +55,8 @@ public class FacilitatorRepository(
             .Include(s => s.LastUpdatedBy)
             .Include(s => s.DisabledBy)
             .Include(s => s.ReenabledBy)
-            .Where(s => s.FacilitatorId == facilitatorId
-                        && s.IsActive
-                        && !s.IsDeleted
-                        && s.Sponsorships.Any(sp =>
-                            sp.IsActive
-                            && sp.StartDate <= utcNow
-                            && (sp.EndDate == null || sp.EndDate >= utcNow)
-                            && (
-                                (sp.SponsorId != null
-                                 && sp.Sponsor != null
-                                 && sp.Sponsor.IsActive
-                                 && !sp.Sponsor.IsDeleted)
-                                || (sp.CompanyId != null
-                                    && sp.Company != null
-                                    && sp.Company.IsActive))))
+            .Where(s => s.FacilitatorId == facilitatorId)
+            .WhereCovered(CampaignQueries.Covers(asOf))
             .Select(s => new FacilitatorStudentsDataModel(s)
             {
                 StudentId = s.Id,
@@ -71,18 +65,8 @@ public class FacilitatorRepository(
                 StudentNickName = s.NickName,
                 EducationLevel = s.CurrentEducationLevel,
                 Sponsors = s.Sponsorships
-                    .Where(sp =>
-                        sp.IsActive
-                        && sp.StartDate <= utcNow
-                        && (sp.EndDate == null || sp.EndDate >= utcNow)
-                        && (
-                            (sp.SponsorId != null
-                             && sp.Sponsor != null
-                             && sp.Sponsor.IsActive
-                             && !sp.Sponsor.IsDeleted)
-                            || (sp.CompanyId != null
-                                && sp.Company != null
-                                && sp.Company.IsActive)))
+                    .AsQueryable()
+                    .Where(CampaignQueries.Covers(asOf))
                     .Select(sp => new DashboardSponsorDataModel
                     {
                         SponsorshipId = sp.Id,
@@ -108,28 +92,14 @@ public class FacilitatorRepository(
     {
         await using var db = await dbContext.CreateDbContextAsync();
 
-        var utcNow = timeProvider.GetUtcNow().UtcDateTime;
-
         var chapterId = await db.Users
             .AsNoTracking()
             .Where(u => u.Id == facilitatorId)
             .Select(u => u.ChapterId)
             .FirstOrDefaultAsync();
 
-        // The current plan is the most recently started, still-active planned delivery
-        // for the facilitator's chapter whose collection window has already begun.
-        return await db.PlannedDeliveries
-            .AsNoTracking()
-            .Where(pd => pd.IsActive
-                         && pd.ChapterId == chapterId
-                         && pd.StartsOn <= utcNow)
-            .OrderByDescending(pd => pd.StartsOn)
-            .Select(pd => new CurrentPlanDataModel
-            {
-                PlanId = pd.Id,
-                StartsOn = pd.StartsOn,
-            })
-            .FirstOrDefaultAsync();
+        return await CampaignQueries.SelectCurrentAsync(
+            CampaignQueries.OpenForChapter(db.PlannedDeliveries.AsNoTracking(), chapterId));
     }
 
     public async Task<FacilitatorUploadContextDataModel?> GetUploadContextAsync(

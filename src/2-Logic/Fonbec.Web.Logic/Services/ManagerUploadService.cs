@@ -1,4 +1,5 @@
 using Fonbec.Web.DataAccess.Constants;
+using Fonbec.Web.DataAccess.DataModels.Facilitators;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Models.Documents.Input;
@@ -144,7 +145,7 @@ public class ManagerUploadService(
 
         var options = isExempt
             ? []
-            : await BuildRecipientOptionsAsync(studentId, currentPlan.PlanId);
+            : await BuildRecipientOptionsAsync(studentId, currentPlan);
 
         return new ManagerLetterRecipientOptionsViewModel
         {
@@ -155,9 +156,11 @@ public class ManagerUploadService(
         };
     }
 
-    private async Task<List<ManagerLetterRecipientOptionViewModel>> BuildRecipientOptionsAsync(int studentId, int planId)
+    private async Task<List<ManagerLetterRecipientOptionViewModel>> BuildRecipientOptionsAsync(
+        int studentId, CurrentPlanDataModel currentPlan)
     {
-        var sponsorships = await managerUploadRepository.GetActiveSponsorshipsAsync(studentId);
+        var planId = currentPlan.PlanId;
+        var sponsorships = await managerUploadRepository.GetActiveSponsorshipsAsync(studentId, currentPlan.StartsOn);
 
         var options = new List<ManagerLetterRecipientOptionViewModel>();
         foreach (var sponsorship in sponsorships)

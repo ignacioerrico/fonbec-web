@@ -2,6 +2,7 @@
 using Fonbec.Web.DataAccess.DataModels.PlannedDelivery.Input;
 using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.DataAccess.Entities.Enums;
+using Fonbec.Web.DataAccess.Queries;
 using Microsoft.EntityFrameworkCore;
 
 namespace Fonbec.Web.DataAccess.Repositories;
@@ -36,12 +37,7 @@ public class PlannedDeliveryRepository(
 
         await using var db = await dbContext.CreateDbContextAsync();
 
-        return await db.PlannedDeliveries
-            .AsNoTracking()
-            .Where(pd => pd.IsActive
-                         && pd.ChapterId == chapterId
-                         && !pd.Completed)
-            .OrderByDescending(pd => pd.StartsOn)
+        return await CampaignQueries.OpenForChapter(db.PlannedDeliveries.AsNoTracking(), chapterId)
             .Select(pd => new CurrentPlannedDeliveryDataModel
             {
                 PlannedDeliveryId = pd.Id,
@@ -110,11 +106,8 @@ public class PlannedDeliveryRepository(
 
         await using var db = await dbContext.CreateDbContextAsync();
 
-        return await db.PlannedDeliveries
-            .AsNoTracking()
-            .AnyAsync(pd => pd.IsActive
-                            && pd.ChapterId == chapterId
-                            && !pd.Completed);
+        return await CampaignQueries.OpenForChapter(db.PlannedDeliveries.AsNoTracking(), chapterId)
+            .AnyAsync();
     }
 
     public async Task<List<DateTime>> GetPlannedDeliveryDatesAsync(int chapterId, DateTime? from)

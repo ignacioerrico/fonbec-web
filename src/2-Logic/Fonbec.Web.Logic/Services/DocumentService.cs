@@ -1030,7 +1030,7 @@ public class DocumentService(
 
         if (sponsorId.HasValue)
         {
-            if (!await documentRepository.HasActiveSponsorshipAsync(studentId, sponsorId.Value))
+            if (!await documentRepository.HasActiveSponsorshipAsync(studentId, sponsorId.Value, planId))
             {
                 return DocumentMessages.SponsorNotActiveForStudent;
             }
@@ -1043,7 +1043,7 @@ public class DocumentService(
             return null;
         }
 
-        if (!await documentRepository.HasActiveCompanySponsorshipAsync(studentId, companyId!.Value))
+        if (!await documentRepository.HasActiveCompanySponsorshipAsync(studentId, companyId!.Value, planId))
         {
             return DocumentMessages.CompanyNotActiveForStudent;
         }

@@ -5,6 +5,7 @@ using Fonbec.Web.DataAccess.DataModels.Review;
 using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Options;
+using Fonbec.Web.DataAccess.Queries;
 using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.Options;
 
@@ -14,8 +15,8 @@ public interface IDocumentRepository
 {
     Task<StudentUploadContextDataModel?> GetStudentUploadContextAsync(int studentId);
     Task<bool> IsActivePlanAsync(int planId, int chapterId);
-    Task<bool> HasActiveSponsorshipAsync(int studentId, int sponsorId);
-    Task<bool> HasActiveCompanySponsorshipAsync(int studentId, int companyId);
+    Task<bool> HasActiveSponsorshipAsync(int studentId, int sponsorId, int planId);
+    Task<bool> HasActiveCompanySponsorshipAsync(int studentId, int companyId, int planId);
     Task<bool> HasDuplicateLetterAsync(int studentId, int sponsorId, int planId);
     Task<bool> HasDuplicateCompanyLetterAsync(int studentId, int companyId, int planId);
     Task<CreateDocumentResultDataModel> CreateLetterAsync(CreateLetterInputDataModel input);
@@ -113,44 +114,44 @@ public class DocumentRepository(
     public async Task<bool> IsActivePlanAsync(int planId, int chapterId)
     {
         await using var db = await dbContext.CreateDbContextAsync();
-        return await db.PlannedDeliveries
-            .AsNoTracking()
+        return await CampaignQueries.Open(db.PlannedDeliveries.AsNoTracking())
             .AnyAsync(p => p.Id == planId
-                           && p.IsActive
-                           && !p.Completed
                            && (p.ChapterId == null || p.ChapterId == chapterId));
     }
 
-    public async Task<bool> HasActiveSponsorshipAsync(int studentId, int sponsorId)
+    public async Task<bool> HasActiveSponsorshipAsync(int studentId, int sponsorId, int planId)
     {
         await using var db = await dbContext.CreateDbContextAsync();
-        var utcNow = DateTime.UtcNow;
+        var asOf = await OpenPlanStartsOnAsync(db, planId);
+        if (asOf is null)
+        {
+            return false;
+        }
+
         return await db.Sponsorships
             .AsNoTracking()
-            .AnyAsync(sp => sp.StudentId == studentId
-                            && sp.SponsorId == sponsorId
-                            && sp.IsActive
-                            && sp.StartDate <= utcNow
-                            && (sp.EndDate == null || sp.EndDate >= utcNow)
-                            && sp.Sponsor != null
-                            && sp.Sponsor.IsActive
-                            && !sp.Sponsor.IsDeleted);
+            .Where(CampaignQueries.Covers(asOf.Value))
+            .AnyAsync(sp => sp.StudentId == studentId && sp.SponsorId == sponsorId);
     }
 
-    public async Task<bool> HasActiveCompanySponsorshipAsync(int studentId, int companyId)
+    public async Task<bool> HasActiveCompanySponsorshipAsync(int studentId, int companyId, int planId)
     {
         await using var db = await dbContext.CreateDbContextAsync();
-        var utcNow = DateTime.UtcNow;
+        var asOf = await OpenPlanStartsOnAsync(db, planId);
+        if (asOf is null)
+        {
+            return false;
+        }
+
         return await db.Sponsorships
             .AsNoTracking()
-            .AnyAsync(sp => sp.StudentId == studentId
-                            && sp.CompanyId == companyId
-                            && sp.IsActive
-                            && sp.StartDate <= utcNow
-                            && (sp.EndDate == null || sp.EndDate >= utcNow)
-                            && sp.Company != null
-                            && sp.Company.IsActive);
+            .Where(CampaignQueries.Covers(asOf.Value))
+            .AnyAsync(sp => sp.StudentId == studentId && sp.CompanyId == companyId);
     }
+
+    private static Task<DateTime?> OpenPlanStartsOnAsync(FonbecWebDbContext db, int planId) =>
+        CampaignQueries.SelectStartsOnAsync(
+            CampaignQueries.Open(db.PlannedDeliveries.AsNoTracking()).Where(p => p.Id == planId));
 
     public async Task<bool> HasDuplicateLetterAsync(int studentId, int sponsorId, int planId)
     {

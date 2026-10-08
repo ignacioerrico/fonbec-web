@@ -102,6 +102,38 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
     }
 
     [Fact]
+    public async Task GetActiveSponsoredStudentsAsync_Includes_Sponsorship_That_Starts_On_The_Open_Plan()
+    {
+        var factory = CreateDbContextFactory();
+        var planStartsOn = UtcNow.AddMonths(1);
+        await SeedAsync(factory, studentId: 10, sponsorshipStart: planStartsOn, sponsorshipEnd: null);
+        await SeedPlannedDeliveryAsync(factory, planId: 101, chapterId: ChapterId, startsOn: planStartsOn);
+        var repository = CreateRepository(factory);
+
+        var students = await repository.GetActiveSponsoredStudentsAsync(FacilitatorId);
+
+        students.Should().ContainSingle(s => s.StudentId == 10);
+    }
+
+    [Fact]
+    public async Task GetActiveSponsoredStudentsAsync_Excludes_Sponsorship_That_Ends_Before_The_Open_Plan()
+    {
+        var factory = CreateDbContextFactory();
+        var planStartsOn = UtcNow.AddMonths(1);
+        await SeedAsync(
+            factory,
+            studentId: 10,
+            sponsorshipStart: UtcNow.AddMonths(-2),
+            sponsorshipEnd: UtcNow.AddDays(10));
+        await SeedPlannedDeliveryAsync(factory, planId: 101, chapterId: ChapterId, startsOn: planStartsOn);
+        var repository = CreateRepository(factory);
+
+        var students = await repository.GetActiveSponsoredStudentsAsync(FacilitatorId);
+
+        students.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task GetActiveSponsoredStudentsAsync_Excludes_Inactive_Student()
     {
         var factory = CreateDbContextFactory();
@@ -308,17 +340,31 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
     }
 
     [Fact]
-    public async Task GetCurrentPlanForFacilitatorAsync_Ignores_Future_Plan()
+    public async Task GetCurrentPlanForFacilitatorAsync_Returns_Open_Plan_That_Has_Not_Started_Yet()
     {
         var factory = CreateDbContextFactory();
         await SeedAsync(factory, studentId: 10);
-        await SeedPlannedDeliveryAsync(factory, planId: 100, chapterId: ChapterId, startsOn: UtcNow.AddMonths(-1));
-        await SeedPlannedDeliveryAsync(factory, planId: 101, chapterId: ChapterId, startsOn: UtcNow.AddMonths(2));
+        await SeedPlannedDeliveryAsync(factory, planId: 100, chapterId: ChapterId, startsOn: UtcNow.AddMonths(-1), completed: true);
+        await SeedPlannedDeliveryAsync(factory, planId: 101, chapterId: ChapterId, startsOn: UtcNow.AddMonths(1));
         var repository = CreateRepository(factory);
 
         var plan = await repository.GetCurrentPlanForFacilitatorAsync(FacilitatorId);
 
-        plan!.PlanId.Should().Be(100);
+        plan.Should().NotBeNull();
+        plan!.PlanId.Should().Be(101);
+    }
+
+    [Fact]
+    public async Task GetCurrentPlanForFacilitatorAsync_Returns_Null_When_Only_Completed_Plans_Exist()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedAsync(factory, studentId: 10);
+        await SeedPlannedDeliveryAsync(factory, planId: 100, chapterId: ChapterId, startsOn: UtcNow.AddMonths(-1), completed: true);
+        var repository = CreateRepository(factory);
+
+        var plan = await repository.GetCurrentPlanForFacilitatorAsync(FacilitatorId);
+
+        plan.Should().BeNull();
     }
 
     [Fact]
@@ -350,7 +396,7 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
         new(Guid.NewGuid().ToString());
 
     // A fixed clock anchored to the same instant the seed data is built around, so the
-    // active-sponsorship / current-plan date filters are deterministic regardless of the real date.
+    // active-sponsorship date filters are deterministic regardless of the real date.
     private static FacilitatorRepository CreateRepository(TestDbContextFactory factory) =>
         new(factory, new FixedTimeProvider(new DateTimeOffset(UtcNow)));
 
@@ -363,7 +409,8 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
         TestDbContextFactory factory,
         int planId,
         int chapterId,
-        DateTime startsOn)
+        DateTime startsOn,
+        bool completed = false)
     {
         await using var db = await factory.CreateDbContextAsync();
 
@@ -372,7 +419,7 @@ public class FacilitatorRepositoryGetActiveSponsoredStudentsTests
             Id = planId,
             ChapterId = chapterId,
             StartsOn = startsOn,
-            Completed = false,
+            Completed = completed,
             CreatedById = 1,
             CreatedOnUtc = UtcNow,
         });

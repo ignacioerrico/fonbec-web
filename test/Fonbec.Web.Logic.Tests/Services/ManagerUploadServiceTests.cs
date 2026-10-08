@@ -207,7 +207,7 @@ public class ManagerUploadServiceTests
         _managerUploadRepository.GetUploadContextAsync(StudentId, null, null, null).Returns(StudentContext());
         _managerUploadRepository.GetCurrentPlanForChapterAsync(ManagerChapterId)
             .Returns(new CurrentPlanDataModel { PlanId = PlanId, StartsOn = new DateTime(2026, 3, 1) });
-        _managerUploadRepository.GetActiveSponsorshipsAsync(StudentId).Returns(
+        _managerUploadRepository.GetActiveSponsorshipsAsync(StudentId, new DateTime(2026, 3, 1)).Returns(
         [
             new ManagerLetterRecipientOptionDataModel { SponsorId = SponsorId, RecipientName = "María López" },
             new ManagerLetterRecipientOptionDataModel { CompanyId = CompanyId, RecipientName = "Acme SA" },
@@ -228,7 +228,7 @@ public class ManagerUploadServiceTests
         _managerUploadRepository.GetUploadContextAsync(StudentId, null, null, null).Returns(StudentContext());
         _managerUploadRepository.GetCurrentPlanForChapterAsync(ManagerChapterId)
             .Returns(new CurrentPlanDataModel { PlanId = PlanId, StartsOn = new DateTime(2026, 3, 1) });
-        _managerUploadRepository.GetActiveSponsorshipsAsync(StudentId).Returns(
+        _managerUploadRepository.GetActiveSponsorshipsAsync(StudentId, new DateTime(2026, 3, 1)).Returns(
         [
             new ManagerLetterRecipientOptionDataModel { SponsorId = SponsorId, RecipientName = "María López" },
             new ManagerLetterRecipientOptionDataModel { CompanyId = CompanyId, RecipientName = "  " },

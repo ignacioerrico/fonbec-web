@@ -1,5 +1,6 @@
 using Fonbec.Web.DataAccess.DataModels.Facilitators;
 using Fonbec.Web.DataAccess.DataModels.Managers;
+using Fonbec.Web.DataAccess.Queries;
 using Microsoft.EntityFrameworkCore;
 
 namespace Fonbec.Web.DataAccess.Repositories;
@@ -9,7 +10,7 @@ public interface IManagerUploadRepository
     Task<ManagerUploadContextDataModel?> GetUploadContextAsync(
         int studentId, int? planId, int? sponsorId, int? companyId);
 
-    Task<List<ManagerLetterRecipientOptionDataModel>> GetActiveSponsorshipsAsync(int studentId);
+    Task<List<ManagerLetterRecipientOptionDataModel>> GetActiveSponsorshipsAsync(int studentId, DateTime asOf);
 
     Task<CurrentPlanDataModel?> GetCurrentPlanForChapterAsync(int chapterId);
 }
@@ -53,15 +54,14 @@ public class ManagerUploadRepository(
         DateTime? planStartsOn = null;
         if (planId.HasValue)
         {
-            planStartsOn = await db.PlannedDeliveries
-                .AsNoTracking()
-                .Where(p => p.Id == planId.Value
-                            && p.IsActive
-                            && !p.Completed
-                            && (p.ChapterId == null || p.ChapterId == student.ChapterId))
-                .Select(p => (DateTime?)p.StartsOn)
-                .FirstOrDefaultAsync();
+            planStartsOn = await CampaignQueries.SelectStartsOnAsync(
+                CampaignQueries.Open(db.PlannedDeliveries.AsNoTracking())
+                    .Where(p => p.Id == planId.Value
+                                && (p.ChapterId == null || p.ChapterId == student.ChapterId)));
         }
+
+        // A letter is for the plan's start date. Other uploads have no plan, so they use today.
+        var asOf = planStartsOn ?? utcNow;
 
         // Resolve the recipient name only from an active sponsorship with the student, so an
         // unrelated or inactive sponsor/company does not produce a renderable letter context.
@@ -71,14 +71,8 @@ public class ManagerUploadRepository(
         {
             var sponsor = await db.Sponsorships
                 .AsNoTracking()
-                .Where(sp => sp.StudentId == studentId
-                             && sp.SponsorId == sponsorId.Value
-                             && sp.IsActive
-                             && sp.StartDate <= utcNow
-                             && (sp.EndDate == null || sp.EndDate >= utcNow)
-                             && sp.Sponsor != null
-                             && sp.Sponsor.IsActive
-                             && !sp.Sponsor.IsDeleted)
+                .Where(CampaignQueries.Covers(asOf))
+                .Where(sp => sp.StudentId == studentId && sp.SponsorId == sponsorId.Value)
                 .Select(sp => new { sp.Sponsor!.FirstName, sp.Sponsor.LastName })
                 .FirstOrDefaultAsync();
             sponsorFirstName = sponsor?.FirstName;
@@ -90,13 +84,8 @@ public class ManagerUploadRepository(
         {
             companyName = await db.Sponsorships
                 .AsNoTracking()
-                .Where(sp => sp.StudentId == studentId
-                             && sp.CompanyId == companyId.Value
-                             && sp.IsActive
-                             && sp.StartDate <= utcNow
-                             && (sp.EndDate == null || sp.EndDate >= utcNow)
-                             && sp.Company != null
-                             && sp.Company.IsActive)
+                .Where(CampaignQueries.Covers(asOf))
+                .Where(sp => sp.StudentId == studentId && sp.CompanyId == companyId.Value)
                 .Select(sp => sp.Company!.Name)
                 .FirstOrDefaultAsync();
         }
@@ -119,26 +108,14 @@ public class ManagerUploadRepository(
         };
     }
 
-    public async Task<List<ManagerLetterRecipientOptionDataModel>> GetActiveSponsorshipsAsync(int studentId)
+    public async Task<List<ManagerLetterRecipientOptionDataModel>> GetActiveSponsorshipsAsync(int studentId, DateTime asOf)
     {
         await using var db = await dbContext.CreateDbContextAsync();
 
-        var utcNow = timeProvider.GetUtcNow().UtcDateTime;
-
         return await db.Sponsorships
             .AsNoTracking()
-            .Where(sp => sp.StudentId == studentId
-                         && sp.IsActive
-                         && sp.StartDate <= utcNow
-                         && (sp.EndDate == null || sp.EndDate >= utcNow)
-                         && (
-                             (sp.SponsorId != null
-                              && sp.Sponsor != null
-                              && sp.Sponsor.IsActive
-                              && !sp.Sponsor.IsDeleted)
-                             || (sp.CompanyId != null
-                                 && sp.Company != null
-                                 && sp.Company.IsActive)))
+            .Where(sp => sp.StudentId == studentId)
+            .Where(CampaignQueries.Covers(asOf))
             .Select(sp => new ManagerLetterRecipientOptionDataModel
             {
                 SponsorId = sp.SponsorId,
@@ -156,21 +133,7 @@ public class ManagerUploadRepository(
     {
         await using var db = await dbContext.CreateDbContextAsync();
 
-        var utcNow = timeProvider.GetUtcNow().UtcDateTime;
-
-        // The current plan is the most recently started, still-active planned delivery
-        // for the manager's chapter whose collection window has already begun.
-        return await db.PlannedDeliveries
-            .AsNoTracking()
-            .Where(pd => pd.IsActive
-                         && pd.ChapterId == chapterId
-                         && pd.StartsOn <= utcNow)
-            .OrderByDescending(pd => pd.StartsOn)
-            .Select(pd => new CurrentPlanDataModel
-            {
-                PlanId = pd.Id,
-                StartsOn = pd.StartsOn,
-            })
-            .FirstOrDefaultAsync();
+        return await CampaignQueries.SelectCurrentAsync(
+            CampaignQueries.OpenForChapter(db.PlannedDeliveries.AsNoTracking(), chapterId));
     }
 }
