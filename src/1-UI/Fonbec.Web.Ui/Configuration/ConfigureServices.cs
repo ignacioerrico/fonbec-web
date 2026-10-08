@@ -10,6 +10,7 @@ using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Logic.Util;
 using Fonbec.Web.Ui.Account.Communication;
 using Fonbec.Web.Ui.Authorization;
+using Fonbec.Web.Ui.Components.Layout;
 using Fonbec.Web.Ui.Options;
 using Microsoft.AspNetCore.Authorization;
 using Microsoft.AspNetCore.Identity;
@@ -82,6 +83,8 @@ public static class ConfigureServices
         services.AddScoped<ISponsorshipService, SponsorshipService>();
         services.AddScoped<ICompanyService, CompanyService>();
         services.AddScoped<IDocumentService, DocumentService>();
+        services.AddScoped<IRecipientMessageService, RecipientMessageService>();
+        services.AddScoped<StudentMessageNavCount>();
         services.AddScoped<IDocumentNotificationService, DocumentNotificationService>();
         services.AddSingleton<DocumentNotificationQueue>();
         services.AddSingleton<IDocumentNotificationQueue>(sp => sp.GetRequiredService<DocumentNotificationQueue>());
@@ -103,6 +106,7 @@ public static class ConfigureServices
         services.AddScoped<ISponsorshipRepository, SponsorshipRepository>();
         services.AddScoped<ICompanyRepository, CompanyRepository>();
         services.AddScoped<IDocumentRepository, DocumentRepository>();
+        services.AddScoped<IRecipientMessageRepository, RecipientMessageRepository>();
     }
 
     public static void RegisterPolicies(IServiceCollection services)

@@ -1,0 +1,82 @@
+@attribute [Route(NavRoutes.StudentMessages)]
+@attribute [Authorize(Policy = nameof(StudentMessages))]
+@inherits AuthenticationRequiredComponentBase
+
+<PageTitle>Mensajes para becarios</PageTitle>
+<PageHeader Title="Mensajes para becarios" />
+
+<LoadingIndicator Loading="Loading" />
+
+@if (!Loading)
+{
+    <MudTextField T="string" @bind-Value="_searchString"
+                  Placeholder="Buscar"
+                  Clearable="true" Immediate="true"
+                  Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search"
+                  IconSize="Size.Medium"
+                  Class="mb-2"
+                  Style="max-width: 24rem" />
+
+    <MudStack Spacing="6" Class="mt-4">
+        @foreach (var messageSection in Sections)
+        {
+            <div>
+                <MudText Typo="Typo.h5" Class="mb-3">@messageSection.Title</MudText>
+                @if (messageSection.Items.Count == 0)
+                {
+                    <MudText Class="mud-text-secondary">@messageSection.EmptyText</MudText>
+                }
+                else
+                {
+                    @foreach (var item in messageSection.Items)
+                    {
+                        <MudPaper Outlined="true" Class="pa-4 mb-3" @key="item.RecipientMessageId">
+                            <MudText Typo="Typo.subtitle1" Color="Color.Primary">
+                                <strong>@item.StudentFullName</strong>
+                            </MudText>
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                                @item.SenderKindLabel: @item.SenderName · @item.SentOnLabel
+                            </MudText>
+                            <div class="student-message-body mt-2">@item.Body</div>
+                            @if (!messageSection.Pending)
+                            {
+                                <MudText Typo="Typo.body2" Class="mt-2">
+                                    @DeliveredLine(item)
+                                </MudText>
+                            }
+                            <div class="d-flex justify-end gap-2 mt-3">
+                                <MudButton Variant="Variant.Outlined"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           Disabled="_updating"
+                                           OnClick="@(() => CopyAsync(item))">
+                                    Copiar
+                                </MudButton>
+                                @if (messageSection.Pending)
+                                {
+                                    <MudButton Variant="Variant.Filled"
+                                               Color="Color.Primary"
+                                               Size="Size.Small"
+                                               Disabled="_updating"
+                                               OnClick="@(() => MarkAsync(item))">
+                                        Ya lo compartí
+                                    </MudButton>
+                                }
+                                else
+                                {
+                                    <MudButton Variant="Variant.Outlined"
+                                               Color="Color.Default"
+                                               Size="Size.Small"
+                                               Disabled="_updating"
+                                               OnClick="@(() => UndoAsync(item))">
+                                        Deshacer
+                                    </MudButton>
+                                }
+                            </div>
+                        </MudPaper>
+                    }
+                }
+            </div>
+        }
+    </MudStack>
+}
