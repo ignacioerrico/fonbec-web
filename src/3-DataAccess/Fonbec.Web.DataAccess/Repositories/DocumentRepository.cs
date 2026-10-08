@@ -51,6 +51,25 @@ public interface IDocumentRepository
         Guid companyPublicAccessToken, int studentId, int skip, int take);
 
     /// <summary>
+    /// Same authorization as the anonymous history page. Null when the token, recipient, or sponsorship fails.
+    /// </summary>
+    Task<RecipientHistoryAccessDataModel?> GetRecipientHistoryAccessAsync(
+        Guid publicAccessToken, int studentId, bool isCompany);
+
+    /// <summary>
+    /// Letters shared with this recipient and this recipient's messages, oldest first within the page.
+    /// <paramref name="skipFromEnd"/> skips that many of the newest items so older pages can be prepended.
+    /// </summary>
+    Task<RecipientThreadDataModel> GetRecipientThreadAsync(
+        Guid publicAccessToken, int studentId, bool isCompany, int skipFromEnd, int take);
+
+    /// <summary>
+    /// Inserts a message with <c>SharedOn</c> null. Does not insert when unauthorized or the body is empty or too long.
+    /// </summary>
+    Task<SendRecipientMessageDataModel> SendRecipientMessageAsync(
+        Guid publicAccessToken, int studentId, bool isCompany, string? body);
+
+    /// <summary>
     /// Records an authorized history-page visit. Returns <c>false</c> without writing
     /// when the token or sponsorship is invalid.
     /// </summary>
@@ -936,6 +955,142 @@ public class DocumentRepository(
             s => s.CompanyId == company.Id && s.StudentId == studentId);
     }
 
+    public async Task<RecipientHistoryAccessDataModel?> GetRecipientHistoryAccessAsync(
+        Guid publicAccessToken, int studentId, bool isCompany)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+        return await TryAuthorizeHistoryAsync(db, publicAccessToken, studentId, isCompany);
+    }
+
+    public async Task<RecipientThreadDataModel> GetRecipientThreadAsync(
+        Guid publicAccessToken, int studentId, bool isCompany, int skipFromEnd, int take)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+        var access = await TryAuthorizeHistoryAsync(db, publicAccessToken, studentId, isCompany);
+        if (access is null)
+        {
+            return new RecipientThreadDataModel { IsAuthorized = false };
+        }
+
+        if (skipFromEnd < 0)
+        {
+            skipFromEnd = 0;
+        }
+
+        if (take < 1)
+        {
+            take = 1;
+        }
+
+        var letterShares = db.DocumentShares
+            .AsNoTracking()
+            .Where(s => s.StudentId == studentId && s.Document.DocumentType == DocumentType.Letter);
+        letterShares = access.SponsorId is int sponsorId
+            ? letterShares.Where(s => s.SponsorId == sponsorId)
+            : letterShares.Where(s => s.CompanyId == access.CompanyId);
+
+        var letters = await letterShares
+            .Select(s => new RecipientThreadItemDataModel
+            {
+                IsMessage = false,
+                OccurredOnUtc = s.SharedOn,
+                SortId = s.DocumentShareId,
+                DocumentId = s.DocumentId,
+                DocumentType = s.Document.DocumentType,
+                FileKind = s.Document.FileKind,
+                PageCount = s.Document.Pages.Count,
+                PlanStartsOn = db.Set<Letter>()
+                    .Where(l => l.DocumentId == s.DocumentId)
+                    .Select(l => (DateTime?)l.Plan.StartsOn)
+                    .FirstOrDefault(),
+                TextContent = s.Document.FileKind == FileKind.Text ? s.Document.TextContent : null,
+                YouTubeVideoId = s.Document.FileKind == FileKind.YouTube ? s.Document.YouTubeVideoId : null,
+            })
+            .ToListAsync();
+
+        var messageQuery = db.RecipientMessages
+            .AsNoTracking()
+            .Where(m => m.StudentId == studentId);
+        messageQuery = access.SponsorId is int messageSponsorId
+            ? messageQuery.Where(m => m.SponsorId == messageSponsorId)
+            : messageQuery.Where(m => m.CompanyId == access.CompanyId);
+
+        var messages = await messageQuery
+            .Select(m => new RecipientThreadItemDataModel
+            {
+                IsMessage = true,
+                OccurredOnUtc = m.SentOn,
+                SortId = m.RecipientMessageId,
+                Body = m.Body,
+                SentOn = m.SentOn,
+                MessageSharedOn = m.SharedOn,
+                RecipientMessageId = m.RecipientMessageId,
+            })
+            .ToListAsync();
+
+        var ordered = letters
+            .Concat(messages)
+            .OrderBy(i => i.OccurredOnUtc)
+            .ThenBy(i => i.IsMessage)
+            .ThenBy(i => i.SortId)
+            .ToList();
+
+        var available = Math.Max(0, ordered.Count - skipFromEnd);
+        var start = Math.Max(0, available - take);
+        var page = ordered.Skip(start).Take(available - start).ToList();
+
+        return new RecipientThreadDataModel
+        {
+            IsAuthorized = true,
+            HasOlder = start > 0,
+            Items = page,
+        };
+    }
+
+    public async Task<SendRecipientMessageDataModel> SendRecipientMessageAsync(
+        Guid publicAccessToken, int studentId, bool isCompany, string? body)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+        var access = await TryAuthorizeHistoryAsync(db, publicAccessToken, studentId, isCompany);
+        if (access is null)
+        {
+            return new SendRecipientMessageDataModel { IsAuthorized = false };
+        }
+
+        var trimmed = body?.Trim() ?? string.Empty;
+        if (trimmed.Length == 0 || trimmed.Length > MaxLength.RecipientMessage.Body)
+        {
+            return new SendRecipientMessageDataModel { IsAuthorized = true, IsValid = false };
+        }
+
+        var sentOn = timeProvider.GetUtcNow().UtcDateTime;
+        var message = new RecipientMessage
+        {
+            StudentId = studentId,
+            SponsorId = access.SponsorId,
+            CompanyId = access.CompanyId,
+            Body = trimmed,
+            SentOn = sentOn,
+        };
+        db.RecipientMessages.Add(message);
+        await db.SaveChangesAsync();
+
+        return new SendRecipientMessageDataModel
+        {
+            IsAuthorized = true,
+            IsValid = true,
+            Message = new RecipientThreadItemDataModel
+            {
+                IsMessage = true,
+                OccurredOnUtc = sentOn,
+                SortId = message.RecipientMessageId,
+                RecipientMessageId = message.RecipientMessageId,
+                Body = trimmed,
+                SentOn = sentOn,
+            },
+        };
+    }
+
     public async Task<bool> RecordSharedDocumentHistoryVisitAsync(
         Guid publicAccessToken, int studentId, bool isCompany)
     {
@@ -1084,6 +1239,90 @@ public class DocumentRepository(
         return await GetDocumentBlobContextAsync(documentId);
     }
 
+    /// <summary>
+    /// Same token and active-sponsorship checks as the US 125 history page.
+    /// Returns null on any failure, without saying which check failed.
+    /// </summary>
+    private static async Task<RecipientHistoryAccessDataModel?> TryAuthorizeHistoryAsync(
+        FonbecWebDbContext db, Guid publicAccessToken, int studentId, bool isCompany)
+    {
+        int? sponsorId = null;
+        int? companyId = null;
+
+        if (isCompany)
+        {
+            var company = await db.Companies
+                .AsNoTracking()
+                .FirstOrDefaultAsync(c => c.PublicAccessToken == publicAccessToken && c.IsActive);
+
+            if (company is null)
+            {
+                return null;
+            }
+
+            var utcNow = DateTime.UtcNow;
+            var hasSponsorship = await db.Sponsorships
+                .AsNoTracking()
+                .AnyAsync(sp => sp.StudentId == studentId
+                                && sp.CompanyId == company.Id
+                                && sp.IsActive
+                                && sp.StartDate <= utcNow
+                                && (sp.EndDate == null || sp.EndDate >= utcNow));
+
+            if (!hasSponsorship)
+            {
+                return null;
+            }
+
+            companyId = company.Id;
+        }
+        else
+        {
+            var sponsor = await db.Sponsors
+                .AsNoTracking()
+                .FirstOrDefaultAsync(s => s.PublicAccessToken == publicAccessToken
+                                          && s.IsActive
+                                          && !s.IsDeleted);
+
+            if (sponsor is null)
+            {
+                return null;
+            }
+
+            var utcNow = DateTime.UtcNow;
+            var hasSponsorship = await db.Sponsorships
+                .AsNoTracking()
+                .AnyAsync(sp => sp.StudentId == studentId
+                                && sp.IsActive
+                                && sp.StartDate <= utcNow
+                                && (sp.EndDate == null || sp.EndDate >= utcNow)
+                                && (sp.SponsorId == sponsor.Id
+                                    || (sponsor.CompanyId != null && sp.CompanyId == sponsor.CompanyId)));
+
+            if (!hasSponsorship)
+            {
+                return null;
+            }
+
+            sponsorId = sponsor.Id;
+        }
+
+        var studentExists = await db.Students
+            .AsNoTracking()
+            .AnyAsync(s => s.Id == studentId && !s.IsDeleted);
+
+        if (!studentExists)
+        {
+            return null;
+        }
+
+        return new RecipientHistoryAccessDataModel
+        {
+            SponsorId = sponsorId,
+            CompanyId = companyId,
+        };
+    }
+
     private async Task<SponsorDocumentHistoryDataModel> BuildSharedHistoryAsync(
         FonbecWebDbContext db,
         int studentId,
@@ -1094,13 +1333,13 @@ public class DocumentRepository(
         int take,
         System.Linq.Expressions.Expression<Func<DocumentShare, bool>> shareFilter)
     {
-        var studentName = await db.Students
+        var student = await db.Students
             .AsNoTracking()
             .Where(s => s.Id == studentId && !s.IsDeleted)
-            .Select(s => s.FirstName + " " + s.LastName)
+            .Select(s => new { Name = s.FirstName + " " + s.LastName, s.Gender })
             .FirstOrDefaultAsync();
 
-        if (studentName is null)
+        if (student is null)
         {
             return new SponsorDocumentHistoryDataModel { IsAuthorized = false };
         }
@@ -1110,6 +1349,7 @@ public class DocumentRepository(
         var page = await db.DocumentShares
             .AsNoTracking()
             .Where(shareFilter)
+            .Where(s => s.Document.DocumentType != DocumentType.Letter)
             .OrderByDescending(s => s.SharedOn)
             .Skip(skip)
             .Take(take + 1)
@@ -1162,7 +1402,8 @@ public class DocumentRepository(
         return new SponsorDocumentHistoryDataModel
         {
             IsAuthorized = true,
-            StudentDisplayName = studentName,
+            StudentDisplayName = student.Name,
+            StudentGender = student.Gender,
             RecipientDisplayName = recipientDisplayName,
             CcRecipientNames = ccRecipientNames,
             HasMore = hasMore,

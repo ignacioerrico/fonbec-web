@@ -1,10 +1,9 @@
+using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.Entities.Enums;
-using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models.Documents;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Ui.Constants;
 using Microsoft.AspNetCore.Components;
-using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.NonPages.Documents;
 
@@ -12,11 +11,17 @@ public partial class SharedDocumentHistoryList
 {
     private readonly HashSet<long> _expandedDocumentIds = [];
     private readonly List<SharedDocumentViewModel> _documents = [];
+    private readonly List<RecipientThreadItemViewModel> _threadItems = [];
 
     private bool _loaded;
     private bool _hasMore;
     private bool _loadingMore;
+    private bool _hasOlder;
+    private bool _loadingOlder;
+    private bool _sending;
     private bool _visitRecorded;
+    private string _draft = "";
+    private string? _sendError;
 
     /// <summary>Watermark from the first authorized load; kept for the whole session across paging.</summary>
     private DateTime? _previousLastVisitedOnUtc;
@@ -37,22 +42,41 @@ public partial class SharedDocumentHistoryList
 
     private string? StudentDisplayName { get; set; }
 
+    private Gender StudentGender { get; set; }
+
+    private string MessageLabel =>
+        StudentGender == Gender.Female
+            ? "Escribile un mensaje a tu ahijada"
+            : "Escribile un mensaje a tu ahijado";
+
     private string? RecipientDisplayName { get; set; }
 
     private string? CcRecipientLine { get; set; }
 
+    private bool CanSend =>
+        !_sending && !string.IsNullOrWhiteSpace(_draft);
+
     protected override async Task OnInitializedAsync()
     {
-        var history = await LoadPageAsync(skip: 0);
-        IsAuthorized = history.IsAuthorized;
+        var historyTask = LoadPageAsync(skip: 0);
+        var threadTask = LoadThreadAsync(skipFromEnd: 0);
+        await Task.WhenAll(historyTask, threadTask);
+
+        var history = await historyTask;
+        var thread = await threadTask;
+
+        IsAuthorized = history.IsAuthorized && thread.IsAuthorized;
         StudentDisplayName = history.StudentDisplayName;
+        StudentGender = history.StudentGender;
         RecipientDisplayName = history.RecipientDisplayName;
         CcRecipientLine = history.CcRecipientLine;
         _hasMore = history.HasMore;
-        if (history.IsAuthorized)
+        _hasOlder = thread.HasOlder;
+        if (IsAuthorized)
         {
             _previousLastVisitedOnUtc = history.PreviousLastVisitedOnUtc;
             _documents.AddRange(history.Documents);
+            _threadItems.AddRange(thread.Items);
         }
 
         _loaded = true;
@@ -86,6 +110,7 @@ public partial class SharedDocumentHistoryList
             {
                 IsAuthorized = false;
                 _documents.Clear();
+                _threadItems.Clear();
                 return;
             }
 
@@ -98,12 +123,82 @@ public partial class SharedDocumentHistoryList
         }
     }
 
+    private async Task LoadOlderAsync()
+    {
+        if (!_hasOlder || _loadingOlder)
+        {
+            return;
+        }
+
+        _loadingOlder = true;
+        try
+        {
+            var thread = await LoadThreadAsync(_threadItems.Count);
+            if (!thread.IsAuthorized)
+            {
+                IsAuthorized = false;
+                _documents.Clear();
+                _threadItems.Clear();
+                return;
+            }
+
+            _threadItems.InsertRange(0, thread.Items);
+            _hasOlder = thread.HasOlder;
+        }
+        finally
+        {
+            _loadingOlder = false;
+        }
+    }
+
+    private async Task SendAsync()
+    {
+        if (!CanSend)
+        {
+            return;
+        }
+
+        _sending = true;
+        _sendError = null;
+        var body = _draft;
+        try
+        {
+            var result = await DocumentService.SendRecipientMessageAsync(Token, StudentId, IsCompany, body);
+            if (!result.IsAuthorized)
+            {
+                IsAuthorized = false;
+                _documents.Clear();
+                _threadItems.Clear();
+                return;
+            }
+
+            if (!result.IsSaved || result.Message is null)
+            {
+                _sendError = body.Trim().Length > MaxLength.RecipientMessage.Body
+                    ? "El mensaje no puede superar los 2000 caracteres."
+                    : "No se pudo enviar el mensaje.";
+                return;
+            }
+
+            _draft = "";
+            _threadItems.Add(result.Message);
+        }
+        finally
+        {
+            _sending = false;
+        }
+    }
+
     private async Task<SponsorDocumentHistoryViewModel> LoadPageAsync(int skip) =>
         IsCompany
             ? await DocumentService.GetSharedDocumentsForCompanyAsync(
                 Token, StudentId, skip, Logic.Services.DocumentService.SharedDocumentHistoryPageSize)
             : await DocumentService.GetSharedDocumentsAsync(
                 Token, StudentId, skip, Logic.Services.DocumentService.SharedDocumentHistoryPageSize);
+
+    private Task<RecipientThreadViewModel> LoadThreadAsync(int skipFromEnd) =>
+        DocumentService.GetRecipientThreadAsync(
+            Token, StudentId, IsCompany, skipFromEnd, Logic.Services.DocumentService.RecipientThreadPageSize);
 
     private string DownloadUrl(long documentId, int pageNumber) =>
         IsCompany
@@ -164,26 +259,4 @@ public partial class SharedDocumentHistoryList
 
     private IEnumerable<IGrouping<int, SharedDocumentViewModel>> DocumentsByYear() =>
         _documents.GroupBy(d => d.SharedOn.ToLocalTime().Year);
-
-    private static bool IsDirectDownload(SharedDocumentViewModel document) =>
-        document.FileKind == FileKind.Blob && document.PageCount <= 1;
-
-    private static string ExpandIcon(SharedDocumentViewModel document, bool expanded) =>
-        document.FileKind switch
-        {
-            FileKind.YouTube when !expanded => Icons.Material.Filled.PlayArrow,
-            _ when expanded => Icons.Material.Filled.ExpandLess,
-            _ => Icons.Material.Filled.ExpandMore,
-        };
-
-    private static string TypeLabel(DocumentType documentType) =>
-        documentType switch
-        {
-            DocumentType.Letter => "Carta",
-            DocumentType.ReportCard => "Boletín",
-            _ => "Otro",
-        };
-
-    private static string FormatSharedOn(DateTime sharedOn) =>
-        sharedOn.ToLocalTime().ToSpanishShortDate();
 }

@@ -1,4 +1,5 @@
 using Fonbec.Web.DataAccess.Entities.Enums;
+using Fonbec.Web.Logic.ExtensionMethods;
 
 namespace Fonbec.Web.Logic.Models.Documents;
 
@@ -39,6 +40,9 @@ public class SponsorDocumentHistoryViewModel
 
     /// <summary>Student display name when authorized; otherwise <c>null</c>.</summary>
     public string? StudentDisplayName { get; init; }
+
+    /// <summary>Student gender. Unknown is treated as male by the composer label.</summary>
+    public Gender StudentGender { get; init; }
 
     /// <summary>Sponsor or company display name when authorized; otherwise <c>null</c>.</summary>
     public string? RecipientDisplayName { get; init; }
@@ -82,6 +86,45 @@ public class SponsorDocumentHistoryViewModel
     public DateTime? PreviousLastVisitedOnUtc { get; init; }
 
     public List<SharedDocumentViewModel> Documents { get; init; } = [];
+}
+
+public class RecipientThreadItemViewModel
+{
+    public bool IsMessage { get; init; }
+    public DateTime OccurredOnUtc { get; init; }
+
+    /// <summary>Shared letter. Null when <see cref="IsMessage"/> is true.</summary>
+    public SharedDocumentViewModel? Letter { get; init; }
+
+    public long? RecipientMessageId { get; init; }
+    public string? Body { get; init; }
+    public DateTime? SentOn { get; init; }
+
+    /// <summary>Null while the message is Pendiente.</summary>
+    public DateTime? SharedOn { get; init; }
+
+    public string? SentOnLabel =>
+        SentOn is { } sentOn ? sentOn.ToLocalTime().ToLocalizedDateTime() : null;
+
+    /// <summary>Pendiente, or Entregado with the time it was marked. Never includes a staff name.</summary>
+    public string StatusLabel =>
+        SharedOn is { } sharedOn
+            ? $"Entregado {sharedOn.ToLocalTime().ToLocalizedDateTime()}"
+            : "Pendiente";
+}
+
+public class RecipientThreadViewModel
+{
+    public bool IsAuthorized { get; init; }
+    public bool HasOlder { get; init; }
+    public List<RecipientThreadItemViewModel> Items { get; init; } = [];
+}
+
+public class SendRecipientMessageResult
+{
+    public bool IsAuthorized { get; init; }
+    public bool IsSaved { get; init; }
+    public RecipientThreadItemViewModel? Message { get; init; }
 }
 
 /// <summary>A single readable page of a blob-backed document under review.</summary>

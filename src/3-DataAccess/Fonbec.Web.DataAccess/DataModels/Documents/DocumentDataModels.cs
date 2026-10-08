@@ -46,6 +46,9 @@ public class SponsorDocumentHistoryDataModel
     /// <summary>Student display name when authorized; otherwise <c>null</c>.</summary>
     public string? StudentDisplayName { get; init; }
 
+    /// <summary>Student gender. <see cref="Gender.Unknown"/> when not specified.</summary>
+    public Gender StudentGender { get; init; }
+
     /// <summary>Sponsor or company display name when authorized; otherwise <c>null</c>.</summary>
     public string? RecipientDisplayName { get; init; }
 
@@ -65,6 +68,52 @@ public class SponsorDocumentHistoryDataModel
     public DateTime? PreviousLastVisitedOnUtc { get; init; }
 
     public List<SharedDocumentDataModel> Documents { get; init; } = [];
+}
+
+/// <summary>
+/// Authorized person-sponsor or company for the anonymous history page.
+/// Exactly one of <see cref="SponsorId"/> and <see cref="CompanyId"/> is set.
+/// </summary>
+public class RecipientHistoryAccessDataModel
+{
+    public int? SponsorId { get; init; }
+    public int? CompanyId { get; init; }
+}
+
+public class RecipientThreadItemDataModel
+{
+    public bool IsMessage { get; init; }
+    public DateTime OccurredOnUtc { get; init; }
+    public long SortId { get; init; }
+
+    public long? DocumentId { get; init; }
+    public DocumentType DocumentType { get; init; }
+    public FileKind FileKind { get; init; }
+    public int PageCount { get; init; }
+    public DateTime? PlanStartsOn { get; init; }
+    public string? TextContent { get; init; }
+    public string? YouTubeVideoId { get; init; }
+
+    public long? RecipientMessageId { get; init; }
+    public string? Body { get; init; }
+    public DateTime? SentOn { get; init; }
+
+    /// <summary>When a mediador marked the message shared. Null while Pendiente.</summary>
+    public DateTime? MessageSharedOn { get; init; }
+}
+
+public class RecipientThreadDataModel
+{
+    public bool IsAuthorized { get; init; }
+    public bool HasOlder { get; init; }
+    public List<RecipientThreadItemDataModel> Items { get; init; } = [];
+}
+
+public class SendRecipientMessageDataModel
+{
+    public bool IsAuthorized { get; init; }
+    public bool IsValid { get; init; }
+    public RecipientThreadItemDataModel? Message { get; init; }
 }
 
 /// <summary>A single readable page of a blob-backed document under review.</summary>

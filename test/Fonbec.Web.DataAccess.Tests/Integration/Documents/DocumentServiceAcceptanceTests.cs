@@ -610,7 +610,8 @@ public class DocumentServiceAcceptanceTests
         var history = await _fixture.DocumentService.GetSharedDocumentsAsync(_fixture.SponsorAToken, _fixture.StudentId);
 
         history.IsAuthorized.Should().BeTrue();
-        history.Documents.Should().HaveCount(2);
+        history.Documents.Should().ContainSingle();
+        history.Documents.Single().DocumentType.Should().Be(DocumentType.Other);
         history.Documents.Select(d => d.SharedOn).Should().BeInDescendingOrder();
     }
 
@@ -655,8 +656,8 @@ public class DocumentServiceAcceptanceTests
         history.IsAuthorized.Should().BeTrue();
         history.StudentDisplayName.Should().Be("Maria Garcia");
         history.RecipientDisplayName.Should().Be("John Smith");
-        history.Documents.Should().HaveCount(3);
-        history.Documents.Should().Contain(d => d.Title.StartsWith("Carta de "));
+        history.Documents.Should().HaveCount(2);
+        history.Documents.Should().NotContain(d => d.DocumentType == DocumentType.Letter);
         history.Documents.Should().Contain(d => d.Title == "marzo de 2026 — Boletín 1º trimestre");
         history.Documents.Should().Contain(d => d.Title == "Certificado de alumno");
         history.Documents.Select(d => d.SharedOn).Should().BeInDescendingOrder();
@@ -788,14 +789,24 @@ public class DocumentServiceAcceptanceTests
         companyHistory.IsAuthorized.Should().BeTrue();
         companyHistory.StudentDisplayName.Should().Be("Empresa Becario");
         companyHistory.RecipientDisplayName.Should().Be("Acme SA");
-        companyHistory.Documents.Should().ContainSingle();
-        companyHistory.Documents[0].Title.Should().StartWith("Carta de ");
+        companyHistory.Documents.Should().BeEmpty();
+
+        var companyThread = await _fixture.DocumentService.GetRecipientThreadAsync(
+            _fixture.CompanyToken, _fixture.CompanyStudentId, isCompany: true, skipFromEnd: 0, take: 20);
+        companyThread.IsAuthorized.Should().BeTrue();
+        companyThread.Items.Should().ContainSingle();
+        companyThread.Items[0].Letter!.Title.Should().StartWith("Carta de ");
 
         // Linked person-sponsor sees their own share via the person API, not the company URL.
         var linkedHistory = await _fixture.DocumentService.GetSharedDocumentsAsync(
             _fixture.CompanyLinkedSponsorToken, _fixture.CompanyStudentId);
         linkedHistory.IsAuthorized.Should().BeTrue();
-        linkedHistory.Documents.Should().ContainSingle();
+        linkedHistory.Documents.Should().BeEmpty();
+
+        var linkedThread = await _fixture.DocumentService.GetRecipientThreadAsync(
+            _fixture.CompanyLinkedSponsorToken, _fixture.CompanyStudentId, isCompany: false, skipFromEnd: 0, take: 20);
+        linkedThread.Items.Should().ContainSingle();
+        linkedThread.Items[0].Letter!.Title.Should().StartWith("Carta de ");
     }
 
     [Fact]
@@ -821,9 +832,16 @@ public class DocumentServiceAcceptanceTests
             await GetSponsorBTokenAsync(), _fixture.StudentId);
 
         historyA.IsAuthorized.Should().BeTrue();
-        historyA.Documents.Should().ContainSingle();
+        historyA.Documents.Should().BeEmpty();
         historyB.IsAuthorized.Should().BeTrue();
         historyB.Documents.Should().BeEmpty();
+
+        var threadA = await _fixture.DocumentService.GetRecipientThreadAsync(
+            _fixture.SponsorAToken, _fixture.StudentId, isCompany: false, skipFromEnd: 0, take: 20);
+        var threadB = await _fixture.DocumentService.GetRecipientThreadAsync(
+            await GetSponsorBTokenAsync(), _fixture.StudentId, isCompany: false, skipFromEnd: 0, take: 20);
+        threadA.Items.Should().ContainSingle();
+        threadB.Items.Should().BeEmpty();
     }
 
     [Fact]
@@ -882,7 +900,12 @@ public class DocumentServiceAcceptanceTests
             await db.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
-        await CreateAndApproveLetterForShareAsync();
+        await _fixture.DocumentService.CreateOtherDocumentAsync(new CreateOtherDocumentInputModel(
+            _fixture.StudentId, _fixture.UploaderContext, FileKind.Text,
+            Description: "Constancia nueva", TextContent: "Nueva"));
+        var locked = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer")!;
+        await _fixture.DocumentService.ApproveOtherDocumentAsync(new ApproveOtherDocumentInputModel(
+            locked!.DocumentId, _fixture.ReviewerId, "Reviewer", locked.RowVersion));
 
         var second = await _fixture.DocumentService.GetSharedDocumentsAsync(_fixture.SponsorAToken, _fixture.StudentId);
         second.PreviousLastVisitedOnUtc.Should().Be(watermark);
