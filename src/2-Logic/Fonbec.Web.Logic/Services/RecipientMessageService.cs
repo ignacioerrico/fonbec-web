@@ -160,9 +160,9 @@ public sealed class RecipientMessageService(
             SenderName = row.SenderName,
             Body = row.Body,
             SentOn = row.SentOn,
-            SentOnLabel = row.SentOn.ToLocalTime().ToLocalizedDateTime(),
+            SentOnLabel = row.SentOn.ToLocalTime().ToSpanishShortDate(),
             SharedOn = row.SharedOn,
-            SharedOnLabel = row.SharedOn?.ToLocalTime().ToLocalizedDateTime(),
+            SharedOnLabel = row.SharedOn?.ToLocalTime().ToSpanishShortDate(),
             SharedByFullName = row.SharedByFullName,
         };
 }

@@ -107,12 +107,12 @@ public class RecipientMessageQueueTests
         result.Pending.Select(m => m.RecipientMessageId).Should().Equal(10, 20);
         result.Pending[0].SenderKindLabel.Should().Be("Empresa");
         result.Pending[0].SenderName.Should().Be("Acme SA");
-        result.Pending[0].SentOnLabel.Should().Be(firstSent.ToLocalTime().ToLocalizedDateTime());
+        result.Pending[0].SentOnLabel.Should().Be(firstSent.ToLocalTime().ToSpanishShortDate());
         result.Pending[1].SenderKindLabel.Should().Be("Padrino");
         result.Pending[1].SenderName.Should().Be("Ana Pérez");
 
         result.Delivered.Select(m => m.RecipientMessageId).Should().Equal(50, 30, 40);
-        result.Delivered[0].SharedOnLabel.Should().Be(newerShared.ToLocalTime().ToLocalizedDateTime());
+        result.Delivered[0].SharedOnLabel.Should().Be(newerShared.ToLocalTime().ToSpanishShortDate());
         result.Delivered[0].SharedByFullName.Should().Be("Ana Mediadora");
     }
 
