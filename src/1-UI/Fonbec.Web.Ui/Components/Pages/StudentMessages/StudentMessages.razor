@@ -18,17 +18,17 @@
                   Style="max-width: 24rem" />
 
     <MudStack Spacing="6" Class="mt-4">
-        @foreach (var section in Sections)
+        @foreach (var messageSection in Sections)
         {
             <div>
-                <MudText Typo="Typo.h5" Class="mb-3">@section.Title</MudText>
-                @if (section.Items.Count == 0)
+                <MudText Typo="Typo.h5" Class="mb-3">@messageSection.Title</MudText>
+                @if (messageSection.Items.Count == 0)
                 {
-                    <MudText Class="mud-text-secondary">@section.EmptyText</MudText>
+                    <MudText Class="mud-text-secondary">@messageSection.EmptyText</MudText>
                 }
                 else
                 {
-                    @foreach (var item in section.Items)
+                    @foreach (var item in messageSection.Items)
                     {
                         <MudPaper Outlined="true" Class="pa-4 mb-3" @key="item.RecipientMessageId">
                             <MudText Typo="Typo.subtitle1" Color="Color.Primary">
@@ -38,7 +38,7 @@
                                 @item.SenderKindLabel: @item.SenderName · @item.SentOnLabel
                             </MudText>
                             <div class="student-message-body mt-2">@item.Body</div>
-                            @if (!section.Pending)
+                            @if (!messageSection.Pending)
                             {
                                 <MudText Typo="Typo.body2" Class="mt-2">
                                     @DeliveredLine(item)
@@ -52,7 +52,7 @@
                                            OnClick="@(() => CopyAsync(item))">
                                     Copiar
                                 </MudButton>
-                                @if (section.Pending)
+                                @if (messageSection.Pending)
                                 {
                                     <MudButton Variant="Variant.Filled"
                                                Color="Color.Primary"
