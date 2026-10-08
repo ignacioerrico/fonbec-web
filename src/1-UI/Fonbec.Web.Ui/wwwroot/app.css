@@ -201,6 +201,48 @@ body {
     border: 0;
 }
 
+.recipient-thread {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+}
+
+.recipient-thread__item--incoming {
+    align-self: stretch;
+}
+
+.recipient-thread__item--incoming .public-history-row {
+    border-bottom: none;
+    padding-top: 0.25rem;
+    padding-bottom: 0.25rem;
+}
+
+.recipient-thread__item--outgoing {
+    align-self: flex-end;
+    max-width: min(85%, 28rem);
+}
+
+.recipient-thread__bubble {
+    padding: 0.75rem 1rem;
+    border-radius: 0.75rem;
+    background: color-mix(in srgb, var(--mud-palette-primary) 12%, var(--mud-palette-surface));
+}
+
+.recipient-thread__body {
+    white-space: pre-wrap;
+    overflow-wrap: anywhere;
+}
+
+.recipient-thread__status {
+    display: block;
+    margin-top: 0.15rem;
+    color: var(--mud-palette-text-secondary);
+}
+
+.recipient-composer {
+    margin-top: 1.5rem;
+}
+
 .mud-navmenu .mud-nav-link .mud-icon-root {
     transition: color 0.15s ease, fill 0.15s ease;
 }

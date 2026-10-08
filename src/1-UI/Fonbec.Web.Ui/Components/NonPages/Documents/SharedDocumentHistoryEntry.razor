@@ -1,0 +1,103 @@
+@using Fonbec.Web.DataAccess.Entities.Enums
+
+<div class="public-history-row @RowClass">
+    <div class="public-history-row__main">
+        <div class="public-history-row__heading">
+            <MudChip T="string"
+                     Size="Size.Small"
+                     Variant="Variant.Outlined"
+                     Color="Color.Default"
+                     Class="public-history-chip">
+                @TypeLabel(Document.DocumentType)
+            </MudChip>
+            @if (IsDirectDownload(Document))
+            {
+                <MudLink Href="@PageUrl(1)" Typo="Typo.body1" Underline="Underline.Hover">
+                    @Document.Title
+                </MudLink>
+            }
+            else
+            {
+                <MudLink Typo="Typo.body1"
+                         Underline="Underline.Hover"
+                         OnClick="OnToggle">
+                    @Document.Title
+                </MudLink>
+            }
+            @if (ShowNewChip)
+            {
+                <MudChip T="string"
+                         Size="Size.Small"
+                         Variant="Variant.Filled"
+                         Color="Color.Primary"
+                         Class="public-history-chip">
+                    Nuevo
+                </MudChip>
+            }
+        </div>
+
+        @if (Expanded && Document.FileKind == FileKind.Blob)
+        {
+            <div class="public-history-pages">
+                @for (var page = 1; page <= Document.PageCount; page++)
+                {
+                    var pageNumber = page;
+                    <div class="public-history-page-row">
+                        <MudLink Href="@PageUrl(pageNumber)" Typo="Typo.body2">
+                            Página @pageNumber
+                        </MudLink>
+                        <MudIconButton Icon="@Icons.Material.Filled.Download"
+                                       Size="Size.Small"
+                                       Color="Color.Primary"
+                                       Href="@PageUrl(pageNumber)"
+                                       aria-label="@($"Descargar página {pageNumber}")" />
+                    </div>
+                }
+            </div>
+        }
+
+        @if (Expanded && Document.FileKind == FileKind.Text)
+        {
+            <div class="public-history-viewer">
+                <div class="mud-typography mud-typography-body1 public-history-text">@Document.TextContent</div>
+            </div>
+        }
+
+        @if (Expanded && Document.FileKind == FileKind.YouTube && !string.IsNullOrWhiteSpace(Document.YouTubeVideoId))
+        {
+            <div class="public-history-viewer">
+                <iframe src="@($"https://www.youtube.com/embed/{Document.YouTubeVideoId}")"
+                        title="@Document.Title"
+                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                        allowfullscreen>
+                </iframe>
+                <MudLink Href="@($"https://www.youtube.com/watch?v={Document.YouTubeVideoId}")"
+                         Target="_blank"
+                         Typo="Typo.caption"
+                         Class="mt-2 d-inline-block">
+                    Abrir en YouTube
+                </MudLink>
+            </div>
+        }
+    </div>
+
+    <div class="public-history-row__meta">
+        <MudText Typo="Typo.body2" Class="mud-text-secondary">@FormatSharedOn(Document.SharedOn)</MudText>
+        @if (IsDirectDownload(Document))
+        {
+            <MudIconButton Icon="@Icons.Material.Filled.Download"
+                           Size="Size.Small"
+                           Color="Color.Primary"
+                           Href="@PageUrl(1)"
+                           aria-label="Descargar" />
+        }
+        else
+        {
+            <MudIconButton Icon="@ExpandIcon(Document, Expanded)"
+                           Size="Size.Small"
+                           Color="Color.Primary"
+                           OnClick="OnToggle"
+                           aria-label="@(Expanded ? "Ocultar" : "Ver")" />
+        }
+    </div>
+</div>

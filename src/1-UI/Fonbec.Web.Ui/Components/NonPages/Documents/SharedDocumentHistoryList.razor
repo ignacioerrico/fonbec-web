@@ -1,4 +1,4 @@
-@using Fonbec.Web.DataAccess.Entities.Enums
+@using Fonbec.Web.DataAccess.Constants
 
 @if (!_loaded)
 {
@@ -26,12 +26,84 @@ else
         Este enlace es personal: no lo compartas. Guardalo en favoritos para volver cuando quieras.
     </MudText>
 
-    @if (_documents.Count == 0)
+    <div class="recipient-thread">
+        @if (_threadItems.Count == 0)
+        {
+            <MudText Typo="Typo.body1">Todavía no hay cartas ni mensajes.</MudText>
+        }
+        else
+        {
+            @if (_hasOlder)
+            {
+                <div class="d-flex justify-center">
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Primary"
+                               Disabled="_loadingOlder"
+                               OnClick="LoadOlderAsync">
+                        @(_loadingOlder ? "Cargando…" : "Cargar anteriores")
+                    </MudButton>
+                </div>
+            }
+
+            @foreach (var item in _threadItems)
+            {
+                if (item.IsMessage)
+                {
+                    <div class="recipient-thread__item recipient-thread__item--outgoing" @key="@($"m{item.RecipientMessageId}")">
+                        <div class="recipient-thread__bubble">
+                            <div class="recipient-thread__body">@item.Body</div>
+                            <MudText Typo="Typo.caption" Class="mud-text-secondary mt-1">@item.SentOnLabel</MudText>
+                            <MudText Typo="Typo.caption" Class="recipient-thread__status">@item.StatusLabel</MudText>
+                        </div>
+                    </div>
+                }
+                else if (item.Letter is not null)
+                {
+                    var letter = item.Letter;
+                    var expanded = _expandedDocumentIds.Contains(letter.DocumentId);
+                    <div class="recipient-thread__item recipient-thread__item--incoming" @key="@($"d{letter.DocumentId}")">
+                        <SharedDocumentHistoryEntry Document="letter"
+                                                    Expanded="expanded"
+                                                    PageUrl="@(page => DownloadUrl(letter.DocumentId, page))"
+                                                    OnToggle="@(() => ToggleExpanded(letter.DocumentId))" />
+                    </div>
+                }
+            }
+        }
+    </div>
+
+    <div class="recipient-composer">
+        <MudText Typo="Typo.body2" Class="mud-text-secondary mb-2">
+            El mediador le va a hacer llegar este mensaje al becario. No llega de forma inmediata.
+        </MudText>
+        <MudTextField @bind-Value="_draft"
+                      T="string"
+                      Label="@MessageLabel"
+                      Variant="Variant.Outlined"
+                      Lines="3"
+                      MaxLength="@MaxLength.RecipientMessage.Body"
+                      Immediate="true"
+                      Disabled="_sending"
+                      AutoGrow="true"
+                      MaxLines="8" />
+        @if (_sendError is not null)
+        {
+            <MudText Typo="Typo.caption" Color="Color.Error" Class="mt-1">@_sendError</MudText>
+        }
+        <div class="d-flex justify-end mt-2">
+            <MudButton Variant="Variant.Filled"
+                       Color="Color.Primary"
+                       Disabled="@(!CanSend)"
+                       OnClick="SendAsync">
+                Enviar
+            </MudButton>
+        </div>
+    </div>
+
+    @if (_documents.Count > 0)
     {
-        <MudText Typo="Typo.body1">Aún no hay documentos</MudText>
-    }
-    else
-    {
+        <MudText Typo="Typo.h6" Class="mt-8 mb-2">Otros documentos</MudText>
+
         @foreach (var year in DocumentsByYear())
         {
             @if (ShowYearHeadings)
@@ -50,109 +122,13 @@ else
                 }
 
                 var expanded = _expandedDocumentIds.Contains(doc.DocumentId);
-
-                <div class="public-history-row @(IsLastNewDocument(doc) ? "public-history-row--before-seen" : null)"
-                     @key="doc.DocumentId">
-                    <div class="public-history-row__main">
-                        <div class="public-history-row__heading">
-                            <MudChip T="string"
-                                     Size="Size.Small"
-                                     Variant="Variant.Outlined"
-                                     Color="Color.Default"
-                                     Class="public-history-chip">
-                                @TypeLabel(doc.DocumentType)
-                            </MudChip>
-                            @if (IsDirectDownload(doc))
-                            {
-                                <MudLink Href="@DownloadUrl(doc.DocumentId, 1)" Typo="Typo.body1" Underline="Underline.Hover">
-                                    @doc.Title
-                                </MudLink>
-                            }
-                            else
-                            {
-                                <MudLink Typo="Typo.body1"
-                                         Underline="Underline.Hover"
-                                         OnClick="@(() => ToggleExpanded(doc.DocumentId))">
-                                    @doc.Title
-                                </MudLink>
-                            }
-                            @if (IsNewSinceLastVisit(doc))
-                            {
-                                <MudChip T="string"
-                                         Size="Size.Small"
-                                         Variant="Variant.Filled"
-                                         Color="Color.Primary"
-                                         Class="public-history-chip">
-                                    Nuevo
-                                </MudChip>
-                            }
-                        </div>
-
-                        @if (expanded && doc.FileKind == FileKind.Blob)
-                        {
-                            <div class="public-history-pages">
-                                @for (var page = 1; page <= doc.PageCount; page++)
-                                {
-                                    var pageNumber = page;
-                                    <div class="public-history-page-row">
-                                        <MudLink Href="@DownloadUrl(doc.DocumentId, pageNumber)" Typo="Typo.body2">
-                                            Página @pageNumber
-                                        </MudLink>
-                                        <MudIconButton Icon="@Icons.Material.Filled.Download"
-                                                       Size="Size.Small"
-                                                       Color="Color.Primary"
-                                                       Href="@DownloadUrl(doc.DocumentId, pageNumber)"
-                                                       aria-label="@($"Descargar página {pageNumber}")" />
-                                    </div>
-                                }
-                            </div>
-                        }
-
-                        @if (expanded && doc.FileKind == FileKind.Text)
-                        {
-                            <div class="public-history-viewer">
-                                <div class="mud-typography mud-typography-body1 public-history-text">@doc.TextContent</div>
-                            </div>
-                        }
-
-                        @if (expanded && doc.FileKind == FileKind.YouTube && !string.IsNullOrWhiteSpace(doc.YouTubeVideoId))
-                        {
-                            <div class="public-history-viewer">
-                                <iframe src="@($"https://www.youtube.com/embed/{doc.YouTubeVideoId}")"
-                                        title="@doc.Title"
-                                        allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                        allowfullscreen>
-                                </iframe>
-                                <MudLink Href="@($"https://www.youtube.com/watch?v={doc.YouTubeVideoId}")"
-                                         Target="_blank"
-                                         Typo="Typo.caption"
-                                         Class="mt-2 d-inline-block">
-                                    Abrir en YouTube
-                                </MudLink>
-                            </div>
-                        }
-                    </div>
-
-                    <div class="public-history-row__meta">
-                        <MudText Typo="Typo.body2" Class="mud-text-secondary">@FormatSharedOn(doc.SharedOn)</MudText>
-                        @if (IsDirectDownload(doc))
-                        {
-                            <MudIconButton Icon="@Icons.Material.Filled.Download"
-                                           Size="Size.Small"
-                                           Color="Color.Primary"
-                                           Href="@DownloadUrl(doc.DocumentId, 1)"
-                                           aria-label="Descargar" />
-                        }
-                        else
-                        {
-                            <MudIconButton Icon="@ExpandIcon(doc, expanded)"
-                                           Size="Size.Small"
-                                           Color="Color.Primary"
-                                           OnClick="@(() => ToggleExpanded(doc.DocumentId))"
-                                           aria-label="@(expanded ? "Ocultar" : "Ver")" />
-                        }
-                    </div>
-                </div>
+                <SharedDocumentHistoryEntry @key="doc.DocumentId"
+                                            Document="doc"
+                                            Expanded="expanded"
+                                            ShowNewChip="IsNewSinceLastVisit(doc)"
+                                            RowClass="@(IsLastNewDocument(doc) ? "public-history-row--before-seen" : null)"
+                                            PageUrl="@(page => DownloadUrl(doc.DocumentId, page))"
+                                            OnToggle="@(() => ToggleExpanded(doc.DocumentId))" />
             }
         }
 

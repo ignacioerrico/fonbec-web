@@ -73,6 +73,11 @@ public static class MaxLength
         public const int Description = 256;
     }
 
+    public static class RecipientMessage
+    {
+        public const int Body = 2000;
+    }
+
     public static class Assessment
     {
         public const int IssuesNotes = 1024;

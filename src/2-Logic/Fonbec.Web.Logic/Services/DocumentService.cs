@@ -82,6 +82,12 @@ public interface IDocumentService
     Task<SponsorDocumentHistoryViewModel> GetSharedDocumentsForCompanyAsync(
         Guid companyPublicAccessToken, int studentId, int skip, int take);
 
+    Task<RecipientThreadViewModel> GetRecipientThreadAsync(
+        Guid publicAccessToken, int studentId, bool isCompany, int skipFromEnd, int take);
+
+    Task<SendRecipientMessageResult> SendRecipientMessageAsync(
+        Guid publicAccessToken, int studentId, bool isCompany, string? body);
+
     /// <summary>
     /// Records that the token recipient opened the history page. No-op when unauthorized.
     /// Call after the page has rendered so prerender does not consume the unread watermark.
@@ -893,6 +899,8 @@ public class DocumentService(
 
     public const int SharedDocumentHistoryPageSize = 10;
 
+    public const int RecipientThreadPageSize = 20;
+
     public Task<SponsorDocumentHistoryViewModel> GetSharedDocumentsAsync(
         Guid sponsorPublicAccessToken, int studentId) =>
         GetSharedDocumentsAsync(sponsorPublicAccessToken, studentId, skip: 0, take: SharedDocumentHistoryPageSize);
@@ -937,11 +945,108 @@ public class DocumentService(
         return await DownloadBlobAsync(page?.Active, documentId);
     }
 
+    public async Task<RecipientThreadViewModel> GetRecipientThreadAsync(
+        Guid publicAccessToken, int studentId, bool isCompany, int skipFromEnd, int take)
+    {
+        var result = await documentRepository.GetRecipientThreadAsync(
+            publicAccessToken, studentId, isCompany, skipFromEnd, take);
+
+        if (!result.IsAuthorized)
+        {
+            return new RecipientThreadViewModel { IsAuthorized = false };
+        }
+
+        var items = result.Items
+            .Where(item => item.IsMessage || item.DocumentType == DocumentType.Letter)
+            .OrderBy(item => item.OccurredOnUtc)
+            .ThenBy(item => item.IsMessage)
+            .ThenBy(item => item.SortId)
+            .Select(MapThreadItem)
+            .ToList();
+
+        return new RecipientThreadViewModel
+        {
+            IsAuthorized = true,
+            HasOlder = result.HasOlder,
+            Items = items,
+        };
+    }
+
+    public async Task<SendRecipientMessageResult> SendRecipientMessageAsync(
+        Guid publicAccessToken, int studentId, bool isCompany, string? body)
+    {
+        var access = await documentRepository.GetRecipientHistoryAccessAsync(
+            publicAccessToken, studentId, isCompany);
+        if (access is null)
+        {
+            return new SendRecipientMessageResult { IsAuthorized = false };
+        }
+
+        var trimmed = body?.Trim() ?? string.Empty;
+        if (trimmed.Length == 0 || trimmed.Length > MaxLength.RecipientMessage.Body)
+        {
+            return new SendRecipientMessageResult { IsAuthorized = true };
+        }
+
+        var saved = await documentRepository.SendRecipientMessageAsync(
+            publicAccessToken, studentId, isCompany, trimmed);
+        if (!saved.IsAuthorized || !saved.IsValid || saved.Message is null)
+        {
+            return new SendRecipientMessageResult
+            {
+                IsAuthorized = saved.IsAuthorized,
+            };
+        }
+
+        return new SendRecipientMessageResult
+        {
+            IsAuthorized = true,
+            IsSaved = true,
+            Message = MapThreadItem(saved.Message),
+        };
+    }
+
+    private static RecipientThreadItemViewModel MapThreadItem(RecipientThreadItemDataModel item)
+    {
+        if (item.IsMessage)
+        {
+            return new RecipientThreadItemViewModel
+            {
+                IsMessage = true,
+                OccurredOnUtc = item.OccurredOnUtc,
+                RecipientMessageId = item.RecipientMessageId,
+                Body = item.Body,
+                SentOn = item.SentOn,
+                SharedOn = item.MessageSharedOn,
+            };
+        }
+
+        var letter = new SharedDocumentDataModel
+        {
+            DocumentId = item.DocumentId ?? 0,
+            DocumentType = item.DocumentType,
+            SharedOn = item.OccurredOnUtc,
+            FileKind = item.FileKind,
+            PageCount = item.PageCount,
+            PlanStartsOn = item.PlanStartsOn,
+            TextContent = item.TextContent,
+            YouTubeVideoId = item.YouTubeVideoId,
+        }.Adapt<SharedDocumentViewModel>();
+
+        return new RecipientThreadItemViewModel
+        {
+            IsMessage = false,
+            OccurredOnUtc = item.OccurredOnUtc,
+            Letter = letter,
+        };
+    }
+
     private static SponsorDocumentHistoryViewModel MapSharedHistory(SponsorDocumentHistoryDataModel result) =>
         new()
         {
             IsAuthorized = result.IsAuthorized,
             StudentDisplayName = result.StudentDisplayName,
+            StudentGender = result.StudentGender,
             RecipientDisplayName = result.RecipientDisplayName,
             CcRecipientNames = result.CcRecipientNames,
             HasMore = result.HasMore,
