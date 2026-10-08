@@ -80,9 +80,7 @@
                 </AuthorizeView>
 
                 <AuthorizeView Policy="@nameof(FacilitatorStudentsList)">
-                    <MudNavLink Href="@NavRoutes.FacilitatorStudents" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Face">
-                        Mis becarios
-                    </MudNavLink>
+                    <FacilitatorStudentsNavLink />
                 </AuthorizeView>
 
                 <AuthorizeView Policy="@nameof(StudentMessages)">

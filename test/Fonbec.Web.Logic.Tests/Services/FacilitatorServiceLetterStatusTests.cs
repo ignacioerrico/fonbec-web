@@ -175,6 +175,59 @@ public class FacilitatorServiceLetterStatusTests : MappingTestBase
     }
 
     [Fact]
+    public async Task CountPendingLettersAsync_Is_Zero_When_There_Is_No_Current_Plan()
+    {
+        _facilitatorRepository.GetCurrentPlanForFacilitatorAsync(FacilitatorId).Returns((CurrentPlanDataModel?)null);
+
+        var count = await _facilitatorService.CountPendingLettersAsync(FacilitatorId);
+
+        count.Should().Be(0);
+        await _facilitatorRepository.DidNotReceive().GetActiveSponsoredStudentsAsync(Arg.Any<int>());
+    }
+
+    [Fact]
+    public async Task CountPendingLettersAsync_Counts_Missing_And_Rejected_Letters()
+    {
+        SetupStudentWithTwoSponsors();
+        _facilitatorRepository.GetCurrentLetterStatusesAsync(PlanId, Arg.Any<List<int>>())
+            .Returns([
+                new SponsorLetterStatusDataModel { StudentId = StudentId, SponsorId = SponsorId, Status = DocumentStatus.Approved },
+                new SponsorLetterStatusDataModel { StudentId = StudentId, CompanyId = CompanyId, Status = DocumentStatus.Rejected },
+            ]);
+
+        var count = await _facilitatorService.CountPendingLettersAsync(FacilitatorId);
+
+        count.Should().Be(1);
+    }
+
+    [Fact]
+    public async Task CountPendingLettersAsync_Does_Not_Count_A_Letter_Already_Uploaded()
+    {
+        SetupStudentWithOneSponsor();
+        _facilitatorRepository.GetCurrentLetterStatusesAsync(PlanId, Arg.Any<List<int>>())
+            .Returns([
+                new SponsorLetterStatusDataModel { StudentId = StudentId, SponsorId = SponsorId, Status = DocumentStatus.ReviewPending },
+            ]);
+
+        var count = await _facilitatorService.CountPendingLettersAsync(FacilitatorId);
+
+        count.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task CountPendingLettersAsync_Does_Not_Count_An_Exempt_Student()
+    {
+        SetupStudentWithOneSponsor();
+        _facilitatorRepository.GetCurrentLetterStatusesAsync(PlanId, Arg.Any<List<int>>()).Returns([]);
+        _letterExemptionService.GetActiveExemptionReasonsForPlanAsync(PlanId)
+            .Returns(new Dictionary<int, string> { [StudentId] = "Beca de intercambio" });
+
+        var count = await _facilitatorService.CountPendingLettersAsync(FacilitatorId);
+
+        count.Should().Be(0);
+    }
+
+    [Fact]
     public async Task GetStudentsDashboardAsync_Maps_Sponsor_Identity_Onto_LetterStatuses()
     {
         SetupStudentWithOneSponsor();

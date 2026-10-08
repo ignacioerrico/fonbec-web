@@ -1,0 +1,9 @@
+<MudNavLink Href="@NavRoutes.FacilitatorStudents" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Face">
+    <span class="nav-count">
+        <span class="nav-count__label">Mis becarios</span>
+        @if (_badge is not null)
+        {
+            <span class="nav-count__badge">@_badge</span>
+        }
+    </span>
+</MudNavLink>

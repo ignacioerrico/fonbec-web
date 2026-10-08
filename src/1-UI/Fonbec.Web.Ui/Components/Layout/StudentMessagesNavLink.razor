@@ -1,9 +1,9 @@
 <MudNavLink Href="@NavRoutes.StudentMessages" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Chat">
-    <span class="student-messages-nav">
-        <span class="student-messages-nav__label">Mensajes para becarios</span>
+    <span class="nav-count">
+        <span class="nav-count__label">Mensajes para becarios</span>
         @if (_badge is not null)
         {
-            <span class="student-messages-nav__count">@_badge</span>
+            <span class="nav-count__badge">@_badge</span>
         }
     </span>
 </MudNavLink>

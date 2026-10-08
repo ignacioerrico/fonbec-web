@@ -10,6 +10,12 @@ public interface IFacilitatorService
 {
     Task<StudentsDashboardViewModel> GetStudentsDashboardAsync(int facilitatorId);
 
+    /// <summary>
+    /// Letters for the current plan that still need an upload: missing or rejected.
+    /// Exempt students and a chapter with no open plan count as zero.
+    /// </summary>
+    Task<int> CountPendingLettersAsync(int facilitatorId);
+
     Task<OtherDocumentsHistoryViewModel?> GetOtherDocumentsHistoryAsync(int facilitatorId, int studentId);
 }
 
@@ -74,6 +80,37 @@ public class FacilitatorService(
             CurrentPlanStartsOn = currentPlan?.StartsOn,
             Students = students,
         };
+    }
+
+    public async Task<int> CountPendingLettersAsync(int facilitatorId)
+    {
+        var currentPlan = await facilitatorRepository.GetCurrentPlanForFacilitatorAsync(facilitatorId);
+        if (currentPlan is null)
+        {
+            return 0;
+        }
+
+        var students = await facilitatorRepository.GetActiveSponsoredStudentsAsync(facilitatorId);
+        if (students.Count == 0)
+        {
+            return 0;
+        }
+
+        var exemptionReasons = await letterExemptionService.GetActiveExemptionReasonsForPlanAsync(currentPlan.PlanId);
+        var letterStatuses = await facilitatorRepository.GetCurrentLetterStatusesAsync(
+            currentPlan.PlanId, students.Select(student => student.StudentId).ToList());
+
+        return students
+            .Where(student => !exemptionReasons.ContainsKey(student.StudentId))
+            .Sum(student => student.Sponsors.Count(sponsor =>
+            {
+                var currentLetter = letterStatuses.SingleOrDefault(letter =>
+                    letter.StudentId == student.StudentId
+                    && letter.SponsorId == sponsor.SponsorId
+                    && letter.CompanyId == sponsor.CompanyId);
+
+                return LetterAggregation.NeedsUpload(LetterAggregation.ToSlotStatus(currentLetter?.Status));
+            }));
     }
 
     public async Task<OtherDocumentsHistoryViewModel?> GetOtherDocumentsHistoryAsync(int facilitatorId, int studentId)
