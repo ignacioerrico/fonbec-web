@@ -50,6 +50,8 @@ public static class NavRoutes
 
     public const string FacilitatorStudents = "/mediadores/mis-becarios";
 
+    public const string StudentMessages = "/mensajes-para-becarios";
+
     public const string FacilitatorUploadDocumentTemplate =
         $"{FacilitatorStudents}/becarios/{{studentId:int}}/subir";
 

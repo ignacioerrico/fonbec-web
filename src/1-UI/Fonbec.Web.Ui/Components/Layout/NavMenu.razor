@@ -7,6 +7,7 @@
 @using Fonbec.Web.Ui.Components.Pages.Review
 @using Fonbec.Web.Ui.Components.Pages.Sponsors
 @using Fonbec.Web.Ui.Components.Pages.Facilitators
+@using Fonbec.Web.Ui.Components.Pages.StudentMessages
 @using Fonbec.Web.Ui.Components.Pages.Students
 @using Fonbec.Web.Ui.Components.Pages.Users
 @using System.Security.Claims
@@ -81,6 +82,12 @@
                 <AuthorizeView Policy="@nameof(FacilitatorStudentsList)">
                     <MudNavLink Href="@NavRoutes.FacilitatorStudents" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Face">
                         Mis becarios
+                    </MudNavLink>
+                </AuthorizeView>
+
+                <AuthorizeView Policy="@nameof(StudentMessages)">
+                    <MudNavLink Href="@NavRoutes.StudentMessages" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Chat">
+                        Mensajes para becarios
                     </MudNavLink>
                 </AuthorizeView>
 

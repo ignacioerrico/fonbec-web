@@ -82,6 +82,7 @@ public static class ConfigureServices
         services.AddScoped<ISponsorshipService, SponsorshipService>();
         services.AddScoped<ICompanyService, CompanyService>();
         services.AddScoped<IDocumentService, DocumentService>();
+        services.AddScoped<IRecipientMessageService, RecipientMessageService>();
         services.AddScoped<IDocumentNotificationService, DocumentNotificationService>();
         services.AddSingleton<DocumentNotificationQueue>();
         services.AddSingleton<IDocumentNotificationQueue>(sp => sp.GetRequiredService<DocumentNotificationQueue>());
@@ -103,6 +104,7 @@ public static class ConfigureServices
         services.AddScoped<ISponsorshipRepository, SponsorshipRepository>();
         services.AddScoped<ICompanyRepository, CompanyRepository>();
         services.AddScoped<IDocumentRepository, DocumentRepository>();
+        services.AddScoped<IRecipientMessageRepository, RecipientMessageRepository>();
     }
 
     public static void RegisterPolicies(IServiceCollection services)
