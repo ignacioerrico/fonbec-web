@@ -2,6 +2,7 @@ using FluentAssertions;
 using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.DataModels.RecipientMessages;
 using Fonbec.Web.DataAccess.Entities;
+using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.Data.Sqlite;
@@ -79,10 +80,12 @@ public sealed class RecipientMessageQueueRepositoryTests : IDisposable
             chapterId: 1,
             studentFirst: "Juan",
             studentLast: "García",
+            studentGender: Gender.Male,
             body: "del padrino",
             sponsorId: 5,
             sponsorFirst: "Ana",
-            sponsorLast: "Pérez");
+            sponsorLast: "Pérez",
+            sponsorGender: Gender.Female);
         var deliveredOn = new DateTime(2026, 3, 2, 19, 20, 0, DateTimeKind.Utc);
         await AddMessageAsync(
             studentId: 11,
@@ -90,6 +93,7 @@ public sealed class RecipientMessageQueueRepositoryTests : IDisposable
             chapterId: 1,
             studentFirst: "María",
             studentLast: "López",
+            studentGender: Gender.Female,
             body: "de la empresa",
             companyId: 8,
             companyName: "Acme SA",
@@ -103,6 +107,8 @@ public sealed class RecipientMessageQueueRepositoryTests : IDisposable
         var person = rows.Should().ContainSingle(m => m.Body == "del padrino").Subject;
         person.IsCompany.Should().BeFalse();
         person.StudentFullName.Should().Be("Juan García");
+        person.StudentGender.Should().Be(Gender.Male);
+        person.SenderGender.Should().Be(Gender.Female);
         person.SenderName.Should().Be("Ana Pérez");
         person.SharedOn.Should().BeNull();
         person.SharedByFullName.Should().BeNull();
@@ -110,6 +116,8 @@ public sealed class RecipientMessageQueueRepositoryTests : IDisposable
         var company = rows.Should().ContainSingle(m => m.Body == "de la empresa").Subject;
         company.IsCompany.Should().BeTrue();
         company.StudentFullName.Should().Be("María López");
+        company.StudentGender.Should().Be(Gender.Female);
+        company.SenderGender.Should().BeNull();
         company.SenderName.Should().Be("Acme SA");
         company.SharedOn.Should().Be(deliveredOn);
         company.SharedByFullName.Should().Be("Luis Gómez");
@@ -240,7 +248,110 @@ public sealed class RecipientMessageQueueRepositoryTests : IDisposable
         missing.Should().BeNull();
     }
 
+    [Fact]
+    public async Task GetFacilitatorNotification_ProjectsCurrentFacilitator_PersonAndCompany()
+    {
+        await AddFacilitatorAsync(1, "mediador@example.org");
+        var personId = await AddMessageAsync(
+            studentId: 10,
+            facilitatorId: 1,
+            chapterId: 1,
+            studentFirst: "Camila",
+            studentLast: "Escobar",
+            studentNickName: "Cami",
+            studentGender: Gender.Female,
+            body: "del padrino",
+            sponsorId: 5,
+            sponsorFirst: "Claudia",
+            sponsorLast: "Romero",
+            sponsorGender: Gender.Female);
+        var companyId = await AddMessageAsync(
+            studentId: 11,
+            facilitatorId: 1,
+            chapterId: 1,
+            studentFirst: "María",
+            studentLast: "López",
+            studentGender: Gender.Female,
+            body: "de la empresa",
+            companyId: 8,
+            companyName: "Acme SA");
+
+        var person = await _repository.GetFacilitatorNotificationAsync(personId);
+        person.Should().NotBeNull();
+        person!.FacilitatorEmail.Should().Be("mediador@example.org");
+        person.StudentFullName.Should().Be("Camila Escobar");
+        person.StudentFirstName.Should().Be("Camila");
+        person.StudentNickName.Should().Be("Cami");
+        person.StudentGender.Should().Be(Gender.Female);
+        person.IsCompany.Should().BeFalse();
+        person.SenderGender.Should().Be(Gender.Female);
+        person.SenderName.Should().Be("Claudia Romero");
+        person.Body.Should().Be("del padrino");
+        person.FacilitatorNotifiedOn.Should().BeNull();
+
+        var company = await _repository.GetFacilitatorNotificationAsync(companyId);
+        company!.IsCompany.Should().BeTrue();
+        company.SenderName.Should().Be("Acme SA");
+        company.StudentFullName.Should().Be("María López");
+        company.StudentGender.Should().Be(Gender.Female);
+        company.SenderGender.Should().BeNull();
+        company.FacilitatorEmail.Should().Be("mediador@example.org");
+    }
+
+    [Fact]
+    public async Task MarkFacilitatorNotified_SetsUtcOnce_AndSurvivesFacilitatorChangeAndShare()
+    {
+        await AddFacilitatorAsync(2, "nuevo@example.org");
+        var messageId = await AddMessageAsync(studentId: 10, facilitatorId: 1, chapterId: 1, body: "hola");
+        var when = new DateTime(2026, 10, 8, 15, 0, 0, DateTimeKind.Utc);
+        var later = when.AddDays(1);
+        var scope = new RecipientMessageScope.Facilitator(1);
+
+        await _repository.MarkFacilitatorNotifiedAsync(messageId, when);
+        await _repository.MarkFacilitatorNotifiedAsync(messageId, later);
+        await _repository.MarkFacilitatorNotifiedAsync(999, when);
+        await _repository.SetSharedAsync(messageId, scope, actorUserId: 7, later);
+
+        await using (var db = await _factory.CreateDbContextAsync(TestContext.Current.CancellationToken))
+        {
+            var student = await db.Set<Student>().SingleAsync(s => s.Id == 10, TestContext.Current.CancellationToken);
+            student.FacilitatorId = 2;
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        await _repository.ClearSharedAsync(messageId, new RecipientMessageScope.Facilitator(2));
+
+        var row = await ReadAsync(messageId);
+        row.FacilitatorNotifiedOn.Should().Be(when);
+        row.SharedOn.Should().BeNull();
+        (await _repository.GetForFacilitatorAsync(2)).Should().ContainSingle(m => m.RecipientMessageId == messageId);
+
+        var notice = await _repository.GetFacilitatorNotificationAsync(messageId);
+        notice!.FacilitatorEmail.Should().Be("nuevo@example.org");
+        notice.FacilitatorNotifiedOn.Should().Be(when);
+    }
+
     public void Dispose() => _connection.Dispose();
+
+    private async Task AddFacilitatorAsync(int userId, string email)
+    {
+        await using var db = await _factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        if (await db.Users.AnyAsync(u => u.Id == userId, TestContext.Current.CancellationToken))
+        {
+            return;
+        }
+
+        db.Users.Add(new FonbecWebUser
+        {
+            Id = userId,
+            FirstName = "Marta",
+            LastName = "Ruiz",
+            Email = email,
+            UserName = email,
+            CreatedOnUtc = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),
+        });
+        await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+    }
 
     private async Task<long> AddMessageAsync(
         int studentId,
@@ -249,9 +360,12 @@ public sealed class RecipientMessageQueueRepositoryTests : IDisposable
         string body,
         string studentFirst = "Juan",
         string studentLast = "García",
+        string? studentNickName = null,
+        Gender studentGender = Gender.Unknown,
         int? sponsorId = null,
         string sponsorFirst = "Ana",
         string sponsorLast = "Pérez",
+        Gender sponsorGender = Gender.Unknown,
         int? companyId = null,
         string? companyName = null,
         DateTime? sharedOn = null,
@@ -269,6 +383,8 @@ public sealed class RecipientMessageQueueRepositoryTests : IDisposable
                 Id = studentId,
                 FirstName = studentFirst,
                 LastName = studentLast,
+                NickName = studentNickName,
+                Gender = studentGender,
                 ChapterId = chapterId,
                 FacilitatorId = facilitatorId,
                 CreatedById = 1,
@@ -298,6 +414,7 @@ public sealed class RecipientMessageQueueRepositoryTests : IDisposable
                 Id = sponsor,
                 FirstName = sponsorFirst,
                 LastName = sponsorLast,
+                Gender = sponsorGender,
                 ChapterId = chapterId,
                 PublicAccessToken = Guid.NewGuid(),
                 CreatedById = 1,

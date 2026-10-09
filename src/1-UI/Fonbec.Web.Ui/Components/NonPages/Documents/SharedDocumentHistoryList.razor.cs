@@ -45,9 +45,7 @@ public partial class SharedDocumentHistoryList
     private Gender StudentGender { get; set; }
 
     private string MessageLabel =>
-        StudentGender == Gender.Female
-            ? "Escribile un mensaje a tu ahijada"
-            : "Escribile un mensaje a tu ahijado";
+        $"Escribile un mensaje a tu {GenderWords.Ahijado(StudentGender)}";
 
     private string? RecipientDisplayName { get; set; }
 

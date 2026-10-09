@@ -23,7 +23,7 @@ public interface IRecipientMessageService
     /// <summary>
     /// Records that <paramref name="actorUserId"/> shared the message. An already-shared
     /// message keeps its original who and when. Returns false when the message is missing
-    /// or outside the actor's scope.
+    /// or outside the actor's scope. Does not send email.
     /// </summary>
     Task<bool> MarkSharedAsync(long recipientMessageId, int actorUserId);
 
@@ -158,6 +158,7 @@ public sealed class RecipientMessageService(
             StudentFullName = row.StudentFullName,
             SenderKindLabel = row.IsCompany ? "Empresa" : "Padrino",
             SenderName = row.SenderName,
+            CopyText = StudentMessageCopy.Format(row),
             Body = row.Body,
             SentOn = row.SentOn,
             SentOnLabel = row.SentOn.ToLocalTime().ToSpanishShortDate(),

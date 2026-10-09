@@ -31,6 +31,7 @@ public class DocumentServiceReviewTests
             _blobStorageService,
             _planCompletionService,
             Microsoft.Extensions.Options.Options.Create(new BlobStorageOptions()),
+            Substitute.For<IRecipientMessageNotificationService>(),
             NullLogger<DocumentService>.Instance);
 
     private static ReviewWorkspaceDataModel Workspace(int? lockedById, DateTime? expiresAtUtc) =>

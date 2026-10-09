@@ -8,13 +8,7 @@ public static class DocumentNotificationMessageFormatter
     public static string GetSponsorSalutation(string? nickName, string firstName) =>
         string.IsNullOrWhiteSpace(nickName) ? firstName : nickName;
 
-    public static string GetStudentTerm(Gender gender) =>
-        gender switch
-        {
-            Gender.Male => "ahijado",
-            Gender.Female => "ahijada",
-            _ => "ahijado/a",
-        };
+    public static string GetStudentTerm(Gender gender) => GenderWords.Ahijado(gender);
 
     public static string GetStudentDisplayName(string firstName, string lastName, string? nickName)
     {

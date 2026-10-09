@@ -84,6 +84,7 @@ public static class ConfigureServices
         services.AddScoped<ICompanyService, CompanyService>();
         services.AddScoped<IDocumentService, DocumentService>();
         services.AddScoped<IRecipientMessageService, RecipientMessageService>();
+        services.AddScoped<IRecipientMessageNotificationService, RecipientMessageNotificationService>();
         services.AddScoped<StudentMessageNavCount>();
         services.AddScoped<IDocumentNotificationService, DocumentNotificationService>();
         services.AddSingleton<DocumentNotificationQueue>();

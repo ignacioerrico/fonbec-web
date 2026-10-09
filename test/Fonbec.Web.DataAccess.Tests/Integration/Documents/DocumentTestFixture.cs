@@ -113,6 +113,7 @@ internal sealed class DocumentTestFixture
             BlobStorageService,
             planCompletionService,
             blobOptions,
+            Substitute.For<IRecipientMessageNotificationService>(),
             NullLogger<DocumentService>.Instance);
     }
 
