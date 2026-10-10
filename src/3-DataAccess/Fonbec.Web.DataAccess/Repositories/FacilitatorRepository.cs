@@ -12,7 +12,7 @@ public interface IFacilitatorRepository
     Task<CurrentPlanDataModel?> GetCurrentPlanForFacilitatorAsync(int facilitatorId);
 
     Task<FacilitatorUploadContextDataModel?> GetUploadContextAsync(
-        int studentId, int? planId, int? sponsorId, int? companyId);
+        int facilitatorId, int studentId, int? planId, int? sponsorId, int? companyId);
 
     Task<List<SponsorLetterStatusDataModel>> GetCurrentLetterStatusesAsync(int planId, List<int> studentIds);
 
@@ -103,13 +103,13 @@ public class FacilitatorRepository(
     }
 
     public async Task<FacilitatorUploadContextDataModel?> GetUploadContextAsync(
-        int studentId, int? planId, int? sponsorId, int? companyId)
+        int facilitatorId, int studentId, int? planId, int? sponsorId, int? companyId)
     {
         await using var db = await dbContext.CreateDbContextAsync();
 
         var student = await db.Students
             .AsNoTracking()
-            .Where(s => s.Id == studentId && !s.IsDeleted)
+            .Where(s => s.Id == studentId && !s.IsDeleted && s.FacilitatorId == facilitatorId)
             .Select(s => new
             {
                 s.Id,
@@ -152,6 +152,53 @@ public class FacilitatorRepository(
         }
 
         string? companyName = null;
+        if (planId.HasValue && (sponsorId.HasValue || companyId.HasValue))
+        {
+            var plan = await db.PlannedDeliveries
+                .AsNoTracking()
+                .Where(p => p.Id == planId.Value)
+                .Select(p => (DateTime?)p.StartsOn)
+                .FirstOrDefaultAsync();
+
+            if (plan is null)
+            {
+                return null;
+            }
+
+            planStartsOn = plan;
+            var hasValidSponsorship = await db.Set<Sponsorship>()
+                .AsNoTracking()
+                .AnyAsync(sp => sp.StudentId == studentId &&
+                                sp.StartDate <= plan.Value &&
+                                (sp.EndDate == null || sp.EndDate >= plan.Value) &&
+                                (sponsorId.HasValue && sp.SponsorId == sponsorId.Value ||
+                                 companyId.HasValue && sp.CompanyId == companyId.Value));
+
+            if (!hasValidSponsorship)
+            {
+                return null;
+            }
+        }
+        else if (planId.HasValue)
+        {
+            planStartsOn = await db.PlannedDeliveries
+                .AsNoTracking()
+                .Where(p => p.Id == planId.Value)
+                .Select(p => (DateTime?)p.StartsOn)
+                .FirstOrDefaultAsync();
+        }
+
+        if (sponsorId.HasValue)
+        {
+            var sponsor = await db.Sponsors
+                .AsNoTracking()
+                .Where(s => s.Id == sponsorId.Value && !s.IsDeleted)
+                .Select(s => new { s.FirstName, s.LastName })
+                .FirstOrDefaultAsync();
+            sponsorFirstName = sponsor?.FirstName;
+            sponsorLastName = sponsor?.LastName;
+        }
+
         if (companyId.HasValue)
         {
             companyName = await db.Companies
