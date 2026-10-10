@@ -19,7 +19,7 @@ public class RecipientMessage
     public int? CompanyId { get; set; }
     public Company? Company { get; set; }
 
-    public string Body { get; set; } = "";
+    public string Body { get; set; } = string.Empty;
 
     public DateTime SentOn { get; set; }
 
@@ -28,4 +28,10 @@ public class RecipientMessage
 
     public int? SharedById { get; set; }
     public FonbecWebUser? SharedBy { get; set; }
+
+    /// <summary>
+    /// UTC time the student's mediador was emailed about this message.
+    /// Stays null when that user has no email or every send attempt failed.
+    /// </summary>
+    public DateTime? FacilitatorNotifiedOn { get; set; }
 }

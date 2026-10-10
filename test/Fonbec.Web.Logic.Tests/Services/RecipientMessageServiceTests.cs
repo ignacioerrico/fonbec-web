@@ -10,12 +10,15 @@ using Fonbec.Web.Logic.Services;
 using Mapster;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
+using NSubstitute.ExceptionExtensions;
 
 namespace Fonbec.Web.Logic.Tests.Services;
 
 public class RecipientMessageServiceTests
 {
     private readonly IDocumentRepository _repository = Substitute.For<IDocumentRepository>();
+    private readonly IRecipientMessageNotificationService _notifications =
+        Substitute.For<IRecipientMessageNotificationService>();
     private readonly DocumentService _service;
 
     private static readonly Guid Token = Guid.Parse("aaaaaaaa-bbbb-cccc-dddd-eeeeeeeeeeee");
@@ -32,6 +35,7 @@ public class RecipientMessageServiceTests
             Substitute.For<IBlobStorageService>(),
             Substitute.For<IPlanCompletionService>(),
             Microsoft.Extensions.Options.Options.Create(new BlobStorageOptions()),
+            _notifications,
             NullLogger<DocumentService>.Instance);
     }
 
@@ -52,6 +56,7 @@ public class RecipientMessageServiceTests
         result.Message.StatusLabel.Should().Be("Pendiente");
         result.Message.Letter.Should().BeNull();
         await _repository.Received(1).SendRecipientMessageAsync(Token, StudentId, false, "Hola\ncómo estás");
+        await _notifications.Received(1).NotifyFacilitatorOfRecipientMessageAsync(1, Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -68,6 +73,7 @@ public class RecipientMessageServiceTests
         await _repository.Received(1).SendRecipientMessageAsync(Token, StudentId, true, "Gracias");
         await _repository.DidNotReceive().SendRecipientMessageAsync(
             Token, StudentId, false, Arg.Any<string?>());
+        await _notifications.Received(1).NotifyFacilitatorOfRecipientMessageAsync(1, Arg.Any<CancellationToken>());
     }
 
     [Theory]
@@ -85,6 +91,8 @@ public class RecipientMessageServiceTests
         result.Message.Should().BeNull();
         await _repository.DidNotReceive().SendRecipientMessageAsync(
             Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<bool>(), Arg.Any<string?>());
+        await _notifications.DidNotReceive().NotifyFacilitatorOfRecipientMessageAsync(
+            Arg.Any<long>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]
@@ -104,6 +112,24 @@ public class RecipientMessageServiceTests
 
         await _repository.DidNotReceive().SendRecipientMessageAsync(Token, StudentId, false, over);
         await _repository.Received(1).SendRecipientMessageAsync(Token, StudentId, false, exact);
+        await _notifications.Received(1).NotifyFacilitatorOfRecipientMessageAsync(1, Arg.Any<CancellationToken>());
+    }
+
+    [Fact]
+    public async Task Send_WhenNotificationThrows_StillSavesAsPending()
+    {
+        AuthorizePerson();
+        _repository.SendRecipientMessageAsync(Token, StudentId, false, "Hola")
+            .Returns(SavedMessage("Hola", DateTime.UtcNow, sharedOn: null));
+        _notifications
+            .NotifyFacilitatorOfRecipientMessageAsync(1, Arg.Any<CancellationToken>())
+            .ThrowsAsync(new InvalidOperationException("mail down"));
+
+        var result = await _service.SendRecipientMessageAsync(Token, StudentId, false, "Hola");
+
+        result.IsSaved.Should().BeTrue();
+        result.Message!.StatusLabel.Should().Be("Pendiente");
+        result.Message.SharedOn.Should().BeNull();
     }
 
     [Fact]
@@ -119,6 +145,8 @@ public class RecipientMessageServiceTests
         result.Message.Should().BeNull();
         await _repository.DidNotReceive().SendRecipientMessageAsync(
             Arg.Any<Guid>(), Arg.Any<int>(), Arg.Any<bool>(), Arg.Any<string?>());
+        await _notifications.DidNotReceive().NotifyFacilitatorOfRecipientMessageAsync(
+            Arg.Any<long>(), Arg.Any<CancellationToken>());
     }
 
     [Fact]

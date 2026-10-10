@@ -113,6 +113,7 @@ public class DocumentService(
     IBlobStorageService blobStorageService,
     IPlanCompletionService planCompletionService,
     IOptions<BlobStorageOptions> blobStorageOptions,
+    IRecipientMessageNotificationService recipientMessageNotifications,
     ILogger<DocumentService> logger) : IDocumentService
 {
     private readonly BlobStorageOptions _blobStorageOptions = blobStorageOptions.Value;
@@ -996,6 +997,21 @@ public class DocumentService(
             {
                 IsAuthorized = saved.IsAuthorized,
             };
+        }
+
+        if (saved.Message.RecipientMessageId is long recipientMessageId)
+        {
+            try
+            {
+                await recipientMessageNotifications.NotifyFacilitatorOfRecipientMessageAsync(recipientMessageId);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(
+                    ex,
+                    "Facilitator notification for recipient message {RecipientMessageId} failed",
+                    recipientMessageId);
+            }
         }
 
         return new SendRecipientMessageResult

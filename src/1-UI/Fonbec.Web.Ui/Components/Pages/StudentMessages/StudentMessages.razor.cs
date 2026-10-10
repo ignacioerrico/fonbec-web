@@ -55,7 +55,7 @@ public partial class StudentMessages : AuthenticationRequiredComponentBase
     {
         try
         {
-            var copied = await JsRuntime.InvokeAsync<bool>("fonbecCopyText", item.Body);
+            var copied = await JsRuntime.InvokeAsync<bool>("fonbecCopyText", item.CopyText);
             if (copied)
             {
                 Snackbar.Add("Copiado", Severity.Success);

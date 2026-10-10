@@ -29,6 +29,7 @@ public class DocumentServiceImprovementTests
             _blobStorageService,
             _planCompletionService,
             Microsoft.Extensions.Options.Options.Create(new BlobStorageOptions()),
+            Substitute.For<IRecipientMessageNotificationService>(),
             NullLogger<DocumentService>.Instance);
 
     private void GrantImprovement()

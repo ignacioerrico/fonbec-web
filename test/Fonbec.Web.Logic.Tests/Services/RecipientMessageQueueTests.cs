@@ -137,6 +137,8 @@ public class RecipientMessageQueueTests
             Arg.Is<RecipientMessageScope.Facilitator>(s => s.UserId == UploaderId),
             UploaderId,
             UtcNow.UtcDateTime);
+        await _repository.DidNotReceive().GetFacilitatorNotificationAsync(Arg.Any<long>());
+        await _repository.DidNotReceive().MarkFacilitatorNotifiedAsync(Arg.Any<long>(), Arg.Any<DateTime>());
     }
 
     [Fact]
@@ -175,6 +177,8 @@ public class RecipientMessageQueueTests
         cleared.Should().BeTrue();
         await _repository.Received(1).ClearSharedAsync(
             8, Arg.Is<RecipientMessageScope.Chapter>(s => s.ChapterId == 4));
+        await _repository.DidNotReceive().GetFacilitatorNotificationAsync(Arg.Any<long>());
+        await _repository.DidNotReceive().MarkFacilitatorNotifiedAsync(Arg.Any<long>(), Arg.Any<DateTime>());
     }
 
     [Fact]

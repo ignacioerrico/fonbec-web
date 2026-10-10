@@ -36,6 +36,18 @@ public interface IRecipientMessageRepository
     /// Returns false when the message is missing or outside <paramref name="scope"/>.
     /// </summary>
     Task<bool> ClearSharedAsync(long recipientMessageId, RecipientMessageScope scope);
+
+    /// <summary>
+    /// Current facilitator email, student name, and sender name for one saved message.
+    /// Null when the message does not exist.
+    /// </summary>
+    Task<RecipientMessageFacilitatorNotificationDataModel?> GetFacilitatorNotificationAsync(long recipientMessageId);
+
+    /// <summary>
+    /// Sets <see cref="RecipientMessage.FacilitatorNotifiedOn"/> when it is still null.
+    /// A later facilitator change does not clear it.
+    /// </summary>
+    Task MarkFacilitatorNotifiedAsync(long recipientMessageId, DateTime notifiedOnUtc);
 }
 
 public class RecipientMessageRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : IRecipientMessageRepository
@@ -146,6 +158,47 @@ public class RecipientMessageRepository(IDbContextFactory<FonbecWebDbContext> db
         return true;
     }
 
+    public async Task<RecipientMessageFacilitatorNotificationDataModel?> GetFacilitatorNotificationAsync(
+        long recipientMessageId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        return await db.RecipientMessages
+            .AsNoTracking()
+            .Where(m => m.RecipientMessageId == recipientMessageId)
+            .Select(m => new RecipientMessageFacilitatorNotificationDataModel
+            {
+                FacilitatorNotifiedOn = m.FacilitatorNotifiedOn,
+                FacilitatorEmail = m.Student.Facilitator.Email,
+                StudentFullName = m.Student.FirstName + " " + m.Student.LastName,
+                StudentFirstName = m.Student.FirstName,
+                StudentNickName = m.Student.NickName,
+                StudentGender = m.Student.Gender,
+                IsCompany = m.CompanyId != null,
+                SenderGender = m.CompanyId != null ? null : m.Sponsor!.Gender,
+                SenderName = m.CompanyId != null
+                    ? m.Company!.Name
+                    : m.Sponsor!.FirstName + " " + m.Sponsor.LastName,
+                Body = m.Body,
+            })
+            .SingleOrDefaultAsync();
+    }
+
+    public async Task MarkFacilitatorNotifiedAsync(long recipientMessageId, DateTime notifiedOnUtc)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+        var message = await db.RecipientMessages
+            .SingleOrDefaultAsync(m => m.RecipientMessageId == recipientMessageId);
+
+        if (message is null || message.FacilitatorNotifiedOn is not null)
+        {
+            return;
+        }
+
+        message.FacilitatorNotifiedOn = notifiedOnUtc;
+        await db.SaveChangesAsync();
+    }
+
     private async Task<int> CountPendingAsync(
         Func<IQueryable<RecipientMessage>, IQueryable<RecipientMessage>> filter)
     {
@@ -164,7 +217,9 @@ public class RecipientMessageRepository(IDbContextFactory<FonbecWebDbContext> db
             {
                 RecipientMessageId = m.RecipientMessageId,
                 StudentFullName = m.Student.FirstName + " " + m.Student.LastName,
+                StudentGender = m.Student.Gender,
                 IsCompany = m.CompanyId != null,
+                SenderGender = m.CompanyId != null ? null : m.Sponsor!.Gender,
                 SenderName = m.CompanyId != null
                     ? m.Company!.Name
                     : m.Sponsor!.FirstName + " " + m.Sponsor.LastName,

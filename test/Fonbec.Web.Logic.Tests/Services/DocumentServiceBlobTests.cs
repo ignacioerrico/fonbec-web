@@ -38,6 +38,7 @@ public class DocumentServiceBlobTests
             _blobStorageService,
             _planCompletionService,
             Microsoft.Extensions.Options.Options.Create(options ?? new BlobStorageOptions()),
+            Substitute.For<IRecipientMessageNotificationService>(),
             NullLogger<DocumentService>.Instance);
 
     private void ConfigureValidLetterUpload()
