@@ -63,13 +63,11 @@
                 <CellTemplate>
                     <AuditableItemDisplay Id="@context.Item.StudentId"
                                           ItemName="@StudentFullName(context.Item)"
+                                          Nickname="@context.Item.StudentNickName"
                                           Email="@context.Item.StudentEmail"
+                                          Phone="@context.Item.StudentPhoneNumber"
                                           IsActive="@context.Item.IsStudentActive"
                                           AuditableViewModel="@context.Item" />
-                    @if (!string.IsNullOrWhiteSpace(context.Item.StudentNickName))
-                    {
-                        <span>(<em>@context.Item.StudentNickName</em>)</span>
-                    }
                 </CellTemplate>
                 <EditTemplate>
                     <MudTextField T="string" @bind-Value="@context.Item.StudentFirstName" Immediate="true"

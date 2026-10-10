@@ -50,6 +50,12 @@ public class SponsoredStudentViewModel
 {
     public string Name { get; set; } = string.Empty;
 
+    /// <summary>
+    /// Who holds the sponsorship when it is not the row itself.
+    /// Empty for a padrino's own students. "Empresa" or a padrino name on the company list.
+    /// </summary>
+    public string? Source { get; set; }
+
     public DateTime StartDate { get; set; }
 
     public DateTime? EndDate { get; set; }
@@ -58,6 +64,26 @@ public class SponsoredStudentViewModel
         SponsorshipTimeline.FromPeriod(StartDate, EndDate);
 
     public string PeriodTooltip =>
+        string.IsNullOrWhiteSpace(Source) ? PeriodRange : $"{Source} · {PeriodRange}";
+
+    public string PeriodTooltipLine
+    {
+        get
+        {
+            var who = string.IsNullOrWhiteSpace(Source) ? Name : $"{Name} · {Source}";
+            if (TimelineStatus == SponsorshipTimelineStatus.Active)
+            {
+                return who;
+            }
+
+            var when = TimelineStatus == SponsorshipTimelineStatus.Finished
+                ? (EndDate ?? StartDate).ToSpanishMonthYear()
+                : StartDate.ToSpanishMonthYear();
+            return $"{who} · {when}";
+        }
+    }
+
+    private string PeriodRange =>
         EndDate is { } endDate
             ? $"{StartDate.ToSpanishMonthYear()} – {endDate.ToSpanishMonthYear()}"
             : $"Desde {StartDate.ToSpanishMonthYear()}";

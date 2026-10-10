@@ -62,13 +62,11 @@
                 <CellTemplate>
                     <AuditableItemDisplay Id="@context.Item.SponsorId"
                                           ItemName="@SponsorFullName(context.Item)"
+                                          Nickname="@context.Item.SponsorNickName"
                                           Email="@context.Item.SponsorEmail"
+                                          Phone="@context.Item.SponsorPhoneNumber"
                                           IsActive="@context.Item.IsSponsorActive"
                                           AuditableViewModel="@context.Item" />
-                    @if (!string.IsNullOrWhiteSpace(context.Item.SponsorNickName))
-                    {
-                        <span>(<em>@context.Item.SponsorNickName</em>)</span>
-                    }
                 </CellTemplate>
                 <EditTemplate>
                     <MudTextField T="string" @bind-Value="@context.Item.SponsorFirstName" Immediate="true"
@@ -79,6 +77,15 @@
                                   Required="true" RequiredError="Campo obligatorio"
                                   Label="Apellido" Variant="Variant.Outlined" Margin="Margin.Dense"
                                   MaxLength="MaxLength.FonbecWebUser.LastName" />
+                    <MudTextField T="string" @bind-Value="context.Item.SponsorEmail" Immediate="true" Class="mt-4"
+                                  Required="true" RequiredError="Campo obligatorio"
+                                  Label="Correo electrónico" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                  MaxLength="MaxLength.FonbecWebUser.Email"
+                                  Validation="@(new Func<string, string?>(ContactFieldValidator.ValidateEmail))" />
+                    <MudTextField T="string" @bind-Value="context.Item.SponsorPhoneNumber" Immediate="true" Class="mt-4"
+                                  Label="Teléfono" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                  MaxLength="MaxLength.FonbecWebUser.PhoneNumber"
+                                  Validation="@(new Func<string, string?>(ContactFieldValidator.ValidatePhone))" />
                 </EditTemplate>
             </PropertyColumn>
 
@@ -100,34 +107,12 @@
                 </EditTemplate>
             </PropertyColumn>
 
-            <PropertyColumn Property="vm => vm.SponsorEmail" Title="Correo electrónico" Hidden="true">
-                <EditTemplate>
-                    <MudTextField T="string" @bind-Value="context.Item.SponsorEmail" Immediate="true"
-                                  Required="true" RequiredError="Campo obligatorio"
-                                  Label="Correo electrónico" Variant="Variant.Outlined" Margin="Margin.Dense"
-                                  MaxLength="MaxLength.FonbecWebUser.Email"
-                                  Validation="@(new Func<string, string?>(ContactFieldValidator.ValidateEmail))" />
-                </EditTemplate>
-            </PropertyColumn>
-
             <PropertyColumn Property="@(vm => string.Join(", ", vm.SponsoredStudents.Select(s => s.Name)))"
                             Title="Becarios" Editable="false" Sortable="false">
                 <CellTemplate>
                     <SponsorStudentsCell Students="@context.Item.SponsoredStudents" />
                 </CellTemplate>
                 <EditTemplate>
-                </EditTemplate>
-            </PropertyColumn>
-
-            <PropertyColumn Property="vm => vm.SponsorPhoneNumber" Title="Teléfono" Required="false">
-                <CellTemplate>
-                    @context.Item.SponsorPhoneNumber
-                </CellTemplate>
-                <EditTemplate>
-                    <MudTextField T="string" @bind-Value="context.Item.SponsorPhoneNumber" Immediate="true"
-                                  Label="Teléfono" Variant="Variant.Outlined" Margin="Margin.Dense"
-                                  MaxLength="MaxLength.FonbecWebUser.PhoneNumber"
-                                  Validation="@(new Func<string, string?>(ContactFieldValidator.ValidatePhone))" />
                 </EditTemplate>
             </PropertyColumn>
 

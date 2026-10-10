@@ -13,7 +13,13 @@ public partial class AuditableItemDisplay
     public string ItemName { get; set; } = string.Empty;
 
     [Parameter]
+    public string? Nickname { get; set; }
+
+    [Parameter]
     public string? Email { get; set; }
+
+    [Parameter]
+    public string? Phone { get; set; }
 
     [Parameter]
     public bool IsActive { get; set; }

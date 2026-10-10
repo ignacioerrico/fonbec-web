@@ -51,48 +51,73 @@
                           Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
         </ToolBarContent>
         <Columns>
-            <HierarchyColumn ButtonDisabledFunc="@(vm => !vm.CompanyPointsOfContact.Any() && !vm.CompanySponsors.Any())" EnableHeaderToggle="true" />
             <PropertyColumn Property="vm => vm.CompanyName" Title="Nombre">
                 <CellTemplate>
                     <AuditableItemDisplay Id="@context.Item.CompanyId"
                                           ItemName="@context.Item.CompanyName"
+                                          Email="@context.Item.CompanyEmail"
+                                          Phone="@context.Item.CompanyPhoneNumber"
                                           IsActive="true"
                                           AuditableViewModel="@context.Item" />
                 </CellTemplate>
-            </PropertyColumn>
-            <PropertyColumn Property="vm => vm.CompanyEmail" Title="Correo electrónico" Required="false">
-                <CellTemplate>
-                    <MudLink Href="@($"mailto:{context.Item.CompanyEmail}")">
-                        @context.Item.CompanyEmail
-                    </MudLink>
-                </CellTemplate>
                 <EditTemplate>
-                    <MudTextField T="string" @bind-Value="context.Item.CompanyEmail" Immediate="true"
+                    <MudTextField T="string" @bind-Value="context.Item.CompanyName" Immediate="true"
+                                  Required="true" RequiredError="Campo obligatorio"
+                                  Label="Nombre" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                  MaxLength="MaxLength.Company.Name" />
+                    <MudTextField T="string" @bind-Value="context.Item.CompanyEmail" Immediate="true" Class="mt-4"
                                   Label="Correo" Variant="Variant.Outlined" Margin="Margin.Dense"
                                   MaxLength="MaxLength.Company.Email"
                                   Validation="@(new Func<string, string?>(ContactFieldValidator.ValidateEmail))" />
-                </EditTemplate>
-            </PropertyColumn>
-            <PropertyColumn Property="vm => vm.CompanyPhoneNumber" Title="Teléfono" Required="false">
-                <EditTemplate>
-                    <MudTextField T="string" @bind-Value="context.Item.CompanyPhoneNumber" Immediate="true"
+                    <MudTextField T="string" @bind-Value="context.Item.CompanyPhoneNumber" Immediate="true" Class="mt-4"
                                   Label="Teléfono" Variant="Variant.Outlined" Margin="Margin.Dense"
                                   MaxLength="MaxLength.Company.PhoneNumber"
                                   Validation="@(new Func<string, string?>(ContactFieldValidator.ValidatePhone))" />
                 </EditTemplate>
             </PropertyColumn>
-            <PropertyColumn Property="vm => vm.CompanyNotes" Title="Información adicional" Required="false">
+            <PropertyColumn Property="@(vm => string.Join(", ", vm.SponsoredStudents.Select(s => s.Name)))"
+                            Title="Becarios" Editable="false" Sortable="false">
+                <CellTemplate>
+                    <SponsorStudentsCell Students="@context.Item.SponsoredStudents" />
+                </CellTemplate>
+                <EditTemplate />
+            </PropertyColumn>
+            <PropertyColumn Property="@(vm => string.Join(", ", vm.CompanySponsors))"
+                            Title="Padrinos" Editable="false" Sortable="false">
+                <CellTemplate>
+                    <div class="d-flex flex-wrap align-center gap-1">
+                        @foreach (var sponsor in context.Item.CompanySponsors)
+                        {
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Default"
+                                     Icon="@Icons.Material.Filled.Person">
+                                @sponsor
+                            </MudChip>
+                        }
+                    </div>
+                </CellTemplate>
+                <EditTemplate />
+            </PropertyColumn>
+            <PropertyColumn Property="@(vm => string.Join(", ", vm.CompanyPointsOfContact))"
+                            Title="Contactos administrativos" Editable="false" Sortable="false">
+                <CellTemplate>
+                    <div class="d-flex flex-wrap align-center gap-1">
+                        @foreach (var contact in context.Item.CompanyPointsOfContact)
+                        {
+                            <MudChip T="string" Size="Size.Small" Variant="Variant.Text" Color="Color.Default"
+                                     Icon="@Icons.Material.Filled.Badge">
+                                @contact
+                            </MudChip>
+                        }
+                    </div>
+                </CellTemplate>
+                <EditTemplate />
+            </PropertyColumn>
+            <PropertyColumn Property="vm => vm.CompanyNotes" Title="Información adicional" Hidden="true" Required="false">
                 <EditTemplate>
                     <MudTextField T="string" @bind-Value="context.Item.CompanyNotes" Immediate="true"
-                                  Label="Notas personales" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                  Label="Información adicional" Variant="Variant.Outlined" Margin="Margin.Dense"
                                   MaxLength="MaxLength.Auditable.Notes" />
                 </EditTemplate>
-            </PropertyColumn>
-            <PropertyColumn Property="vm => vm.CompanyPointsOfContact.Count" Title="Contactos Administrativos">
-                <EditTemplate />
-            </PropertyColumn>
-            <PropertyColumn Property="vm => vm.CompanySponsors.Count" Title="Padrinos">
-                <EditTemplate />
             </PropertyColumn>
             <TemplateColumn Title="Acciones" Filterable="false" Sortable="false">
                 <CellTemplate>
@@ -110,29 +135,6 @@
         <NoRecordsContent>
             <MudText Align="Align.Center" Class="pa-4 mud-text-secondary">No hay resultados.</MudText>
         </NoRecordsContent>
-        <ChildRowContent>
-            @if (context.Item.CompanyPointsOfContact.Any())
-            {
-                <MudText Typo="Typo.h5">Contactos administrativos</MudText>
-                <MudList T="string">
-                    @foreach (var companyPoc in context.Item.CompanyPointsOfContact)
-                    {
-                        <MudListItem Text="@companyPoc" />
-                    }
-                </MudList>
-            }
-
-            @if (context.Item.CompanySponsors.Any())
-            {
-                <MudText Typo="Typo.h5">Padrinos</MudText>
-                <MudList T="string">
-                    @foreach (var sponsor in context.Item.CompanySponsors)
-                    {
-                        <MudListItem Text="@sponsor" />
-                    }
-                </MudList>
-            }
-        </ChildRowContent>
         <PagerContent>
             <MudDataGridPager T="CompaniesListViewModel" RowsPerPageString="Filas por página:" InfoFormat="{first_item}-{last_item} of {all_items}" />
         </PagerContent>

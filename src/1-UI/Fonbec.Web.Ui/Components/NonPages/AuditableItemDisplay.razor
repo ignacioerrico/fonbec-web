@@ -1,7 +1,7 @@
 ﻿@using Fonbec.Web.Logic.ExtensionMethods
 @using Fonbec.Web.Ui.Components.NonPages.Buttons
 
-<MudStack Row="true">
+<MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
     <MudTooltip Delay="500" Arrow="true" Placement="Placement.Bottom" Color="Color.Dark">
         <ChildContent>
             @if (@IsActive)
@@ -38,13 +38,19 @@
             }
         </TooltipContent>
     </MudTooltip>
-    
+
+    @if (!string.IsNullOrWhiteSpace(Nickname))
+    {
+        <MudText Typo="Typo.body2">(<em>@Nickname</em>)</MudText>
+    }
+
+    <EmailIconButton EmailAddress="@Email" />
+    <PhoneIconButton PhoneNumber="@Phone" />
+
     @if (!string.IsNullOrWhiteSpace(AuditableViewModel.Notes))
     {
         <MudTooltip Text="@AuditableViewModel.Notes" Placement="Placement.Top">
             <MudIconButton Icon="@Icons.Material.Filled.Info" Size="Size.Small"/>
         </MudTooltip>
     }
-
-    <EmailIconButton EmailAddress="@Email" />
 </MudStack>

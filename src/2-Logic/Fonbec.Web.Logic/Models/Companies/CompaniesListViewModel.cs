@@ -1,6 +1,7 @@
 ﻿using Fonbec.Web.DataAccess.DataModels.Companies;
 using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.Logic.ExtensionMethods;
+using Fonbec.Web.Logic.Models.Sponsors;
 using Mapster;
 
 namespace Fonbec.Web.Logic.Models.Companies;
@@ -14,6 +15,7 @@ public class CompaniesListViewModel : AuditableViewModel, IDetectChanges<Compani
     public string CompanyNotes { get; set; } = string.Empty;
     public List<string> CompanySponsors { get; set; } = [];
     public List<string> CompanyPointsOfContact { get; set; } = [];
+    public List<SponsoredStudentViewModel> SponsoredStudents { get; set; } = [];
 
     public bool IsIdenticalTo(CompaniesListViewModel other) =>
         CompanyName == other.CompanyName.NormalizeText()
@@ -33,7 +35,14 @@ public class CompanyListViewModelMappingDefinitions : IRegister
             .Map(dest => dest.CompanyPhoneNumber, src => src.CompanyPhoneNumber ?? string.Empty)
             .Map(dest => dest.CompanyNotes, src => src.Notes ?? string.Empty)
             .Map(dest => dest.CompanyPointsOfContact, src => (src.CompanyPointsOfContact ?? Enumerable.Empty<PointOfContact>()).Select(PocDisplayName).ToList())
-            .Map(dest => dest.CompanySponsors, src => (src.CompanySponsors ?? Enumerable.Empty<Sponsor>()).Select(sponsor => sponsor.FullName()).ToList());
+            .Map(dest => dest.CompanySponsors, src => (src.CompanySponsors ?? Enumerable.Empty<Sponsor>()).Select(sponsor => sponsor.FullName()).ToList())
+            .Map(dest => dest.SponsoredStudents, src => src.SponsoredStudents);
+
+        config.NewConfig<CompanySponsoredStudentDataModel, SponsoredStudentViewModel>()
+            .Map(dest => dest.Name, src => src.Name)
+            .Map(dest => dest.StartDate, src => src.StartDate)
+            .Map(dest => dest.EndDate, src => src.EndDate)
+            .Map(dest => dest.Source, src => string.IsNullOrWhiteSpace(src.SponsorName) ? "Empresa" : src.SponsorName);
 
         config.NewConfig<CompaniesListViewModel, SelectableModel<int>>()
             .Map(dest => dest.Key, src => src.CompanyId)

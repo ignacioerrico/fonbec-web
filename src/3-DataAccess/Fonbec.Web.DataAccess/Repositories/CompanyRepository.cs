@@ -49,7 +49,98 @@ public class CompanyRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             .OrderBy(c => c.CompanyName)
             .ToListAsync();
 
+        if (allCompanies.Count == 0)
+        {
+            return allCompanies;
+        }
+
+        var companyIds = allCompanies.Select(c => c.CompanyId).ToList();
+        var sponsoredStudents = await GetSponsoredStudentsAsync(db, companyIds);
+        foreach (var company in allCompanies)
+        {
+            company.SponsoredStudents = sponsoredStudents
+                .Where(student => student.DirectCompanyId == company.CompanyId)
+                .OrderBy(student => student.Name)
+                .ThenBy(student => student.StartDate)
+                .Select(student => new CompanySponsoredStudentDataModel
+                {
+                    Name = student.Name,
+                    SponsorName = student.SponsorName,
+                    StartDate = student.StartDate,
+                    EndDate = student.EndDate,
+                })
+                .ToList();
+        }
+
         return allCompanies;
+    }
+
+    private static async Task<List<CompanyStudentRow>> GetSponsoredStudentsAsync(
+        FonbecWebDbContext db,
+        List<int> companyIds)
+    {
+        var direct = await db.Sponsorships
+            .AsNoTracking()
+            .Where(sp => sp.CompanyId != null
+                         && companyIds.Contains(sp.CompanyId.Value)
+                         && sp.IsActive
+                         && sp.Student.IsActive
+                         && !sp.Student.IsDeleted)
+            .Select(sp => new
+            {
+                CompanyId = sp.CompanyId,
+                Name = sp.Student.FirstName + " " + sp.Student.LastName,
+                sp.StartDate,
+                sp.EndDate,
+            })
+            .ToListAsync();
+
+        var throughSponsors = await db.Sponsorships
+            .AsNoTracking()
+            .Where(sp => sp.Sponsor != null
+                         && sp.Sponsor.CompanyId != null
+                         && companyIds.Contains(sp.Sponsor.CompanyId.Value)
+                         && sp.Sponsor.IsActive
+                         && !sp.Sponsor.IsDeleted
+                         && sp.IsActive
+                         && sp.Student.IsActive
+                         && !sp.Student.IsDeleted
+                         && (sp.CompanyId == null || sp.CompanyId != sp.Sponsor.CompanyId))
+            .Select(sp => new
+            {
+                CompanyId = sp.Sponsor!.CompanyId,
+                SponsorName = sp.Sponsor.FirstName + " " + sp.Sponsor.LastName,
+                Name = sp.Student.FirstName + " " + sp.Student.LastName,
+                sp.StartDate,
+                sp.EndDate,
+            })
+            .ToListAsync();
+
+        return direct.Select(student => new CompanyStudentRow
+            {
+                DirectCompanyId = student.CompanyId,
+                Name = student.Name,
+                StartDate = student.StartDate,
+                EndDate = student.EndDate,
+            })
+            .Concat(throughSponsors.Select(student => new CompanyStudentRow
+            {
+                DirectCompanyId = student.CompanyId,
+                SponsorName = student.SponsorName,
+                Name = student.Name,
+                StartDate = student.StartDate,
+                EndDate = student.EndDate,
+            }))
+            .ToList();
+    }
+
+    private sealed class CompanyStudentRow
+    {
+        public int? DirectCompanyId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? SponsorName { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
     }
 
     public async Task<int> CountCompaniesAsync()

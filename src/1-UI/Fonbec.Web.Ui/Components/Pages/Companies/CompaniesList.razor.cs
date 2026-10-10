@@ -36,7 +36,14 @@ public partial class CompaniesList : AuthenticationRequiredComponentBase
     private bool Filter(CompaniesListViewModel viewModel) =>
         _sponsorCountFilter.Matches(viewModel.CompanySponsors.Count)
         && (string.IsNullOrWhiteSpace(_searchString)
-            || viewModel.CompanyName.ContainsIgnoringAccents(_searchString));
+            || viewModel.CompanyName.ContainsIgnoringAccents(_searchString)
+            || (!string.IsNullOrEmpty(viewModel.CompanyEmail)
+                && viewModel.CompanyEmail.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            || (!string.IsNullOrEmpty(viewModel.CompanyPhoneNumber)
+                && viewModel.CompanyPhoneNumber.ContainsIgnoringSpaces(_searchString))
+            || viewModel.SponsoredStudents.Any(student => student.Name.ContainsIgnoringAccents(_searchString))
+            || viewModel.CompanySponsors.Any(sponsor => sponsor.ContainsIgnoringAccents(_searchString))
+            || viewModel.CompanyPointsOfContact.Any(contact => contact.ContainsIgnoringAccents(_searchString)));
 
     private void StartedEditingItem(CompaniesListViewModel originalViewModel) =>
         _originalViewModel = originalViewModel.DeepClone();
@@ -79,7 +86,9 @@ public partial class CompaniesList : AuthenticationRequiredComponentBase
             return;
         }
 
-        _viewModels.Single(vm => vm.CompanyId == modifiedViewModel.CompanyId).LastUpdatedOnUtc = DateTime.Now;
+        var updated = _viewModels.Single(vm => vm.CompanyId == modifiedViewModel.CompanyId);
+        updated.LastUpdatedOnUtc = DateTime.Now;
+        updated.Notes = modifiedViewModel.CompanyNotes;
     }
 
     private void RevertItemChanges(int companyId)

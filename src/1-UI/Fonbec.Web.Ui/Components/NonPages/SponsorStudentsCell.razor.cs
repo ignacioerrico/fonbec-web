@@ -17,10 +17,12 @@ public partial class SponsorStudentsCell
     private List<SponsoredStudentViewModel> UpcomingStudents =>
         Students
             .Where(s => s.TimelineStatus == SponsorshipTimelineStatus.NotStarted)
+            .OrderBy(s => s.StartDate)
             .ToList();
 
     private List<SponsoredStudentViewModel> FinishedStudents =>
         Students
             .Where(s => s.TimelineStatus == SponsorshipTimelineStatus.Finished)
+            .OrderBy(s => s.EndDate)
             .ToList();
 }
