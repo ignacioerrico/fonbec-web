@@ -103,7 +103,7 @@ public class FacilitatorRepository(
     }
 
     public async Task<FacilitatorUploadContextDataModel?> GetUploadContextAsync(
-        int facilitatorId, int studentId, int? planId, int? sponsorId, int? companyId)
+          int facilitatorId, int studentId, int? planId, int? sponsorId, int? companyId)
     {
         await using var db = await dbContext.CreateDbContextAsync();
 
@@ -131,11 +131,37 @@ public class FacilitatorRepository(
         DateTime? planStartsOn = null;
         if (planId.HasValue)
         {
-            planStartsOn = await db.PlannedDeliveries
-                .AsNoTracking()
+            var plan = await CampaignQueries.OpenForChapter(db.PlannedDeliveries.AsNoTracking(), student.ChapterId)
                 .Where(p => p.Id == planId.Value)
                 .Select(p => (DateTime?)p.StartsOn)
                 .FirstOrDefaultAsync();
+
+            if (plan is null)
+            {
+                return null;
+            }
+
+            planStartsOn = plan;
+        }
+        if (planId.HasValue && (sponsorId.HasValue || companyId.HasValue))
+        {
+            if (planStartsOn is null)
+            {
+                return null;
+            }
+
+            var hasValidSponsorship = await db.Set<Sponsorship>()
+                .AsNoTracking()
+                .AnyAsync(sp => sp.StudentId == studentId &&
+                                sp.StartDate <= planStartsOn.Value &&
+                                (sp.EndDate == null || sp.EndDate >= planStartsOn.Value) &&
+                                (sponsorId.HasValue && sp.SponsorId == sponsorId.Value ||
+                                 companyId.HasValue && sp.CompanyId == companyId.Value));
+
+            if (!hasValidSponsorship)
+            {
+                return null;
+            }
         }
 
         string? sponsorFirstName = null;
@@ -152,53 +178,6 @@ public class FacilitatorRepository(
         }
 
         string? companyName = null;
-        if (planId.HasValue && (sponsorId.HasValue || companyId.HasValue))
-        {
-            var plan = await db.PlannedDeliveries
-                .AsNoTracking()
-                .Where(p => p.Id == planId.Value)
-                .Select(p => (DateTime?)p.StartsOn)
-                .FirstOrDefaultAsync();
-
-            if (plan is null)
-            {
-                return null;
-            }
-
-            planStartsOn = plan;
-            var hasValidSponsorship = await db.Set<Sponsorship>()
-                .AsNoTracking()
-                .AnyAsync(sp => sp.StudentId == studentId &&
-                                sp.StartDate <= plan.Value &&
-                                (sp.EndDate == null || sp.EndDate >= plan.Value) &&
-                                (sponsorId.HasValue && sp.SponsorId == sponsorId.Value ||
-                                 companyId.HasValue && sp.CompanyId == companyId.Value));
-
-            if (!hasValidSponsorship)
-            {
-                return null;
-            }
-        }
-        else if (planId.HasValue)
-        {
-            planStartsOn = await db.PlannedDeliveries
-                .AsNoTracking()
-                .Where(p => p.Id == planId.Value)
-                .Select(p => (DateTime?)p.StartsOn)
-                .FirstOrDefaultAsync();
-        }
-
-        if (sponsorId.HasValue)
-        {
-            var sponsor = await db.Sponsors
-                .AsNoTracking()
-                .Where(s => s.Id == sponsorId.Value && !s.IsDeleted)
-                .Select(s => new { s.FirstName, s.LastName })
-                .FirstOrDefaultAsync();
-            sponsorFirstName = sponsor?.FirstName;
-            sponsorLastName = sponsor?.LastName;
-        }
-
         if (companyId.HasValue)
         {
             companyName = await db.Companies
@@ -224,7 +203,6 @@ public class FacilitatorRepository(
             CompanyName = companyName,
         };
     }
-
     public async Task<List<SponsorLetterStatusDataModel>> GetCurrentLetterStatusesAsync(int planId, List<int> studentIds)
     {
         await using var db = await dbContext.CreateDbContextAsync();
