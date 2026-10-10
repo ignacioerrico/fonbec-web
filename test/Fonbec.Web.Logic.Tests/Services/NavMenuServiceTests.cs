@@ -13,7 +13,6 @@ namespace Fonbec.Web.Logic.Tests.Services;
 
 public class NavMenuServiceTests
 {
-    private const int UserId = 22;
     private const int ChapterId = 4;
     private const int PlanId = 7;
 
@@ -24,7 +23,6 @@ public class NavMenuServiceTests
     private readonly IPlannedDeliveryRepository _plans = Substitute.For<IPlannedDeliveryRepository>();
     private readonly ILetterPlanProgressService _progress = Substitute.For<ILetterPlanProgressService>();
     private readonly IDocumentRepository _documents = Substitute.For<IDocumentRepository>();
-    private readonly IUserService _users = Substitute.For<IUserService>();
     private readonly NavMenuService _service;
 
     public NavMenuServiceTests()
@@ -35,7 +33,6 @@ public class NavMenuServiceTests
         _followUp.CountOpenFlagsAsync(Arg.Any<int>()).Returns(new OpenFlagCounts(0, 0));
         _plans.GetCurrentPlanAsync(Arg.Any<int>()).Returns((CurrentPlannedDeliveryDataModel?)null);
         _documents.GetGlobalReviewProgressAsync(Arg.Any<int?>()).Returns(new ReviewProgressDataModel());
-        _users.HasDigitalImprovementGrantAsync(Arg.Any<int>()).Returns(false);
 
         _service = new NavMenuService(
             _students,
@@ -44,8 +41,7 @@ public class NavMenuServiceTests
             _followUp,
             _plans,
             _progress,
-            _documents,
-            _users);
+            _documents);
     }
 
     [Fact]
@@ -68,9 +64,7 @@ public class NavMenuServiceTests
             PendingOther = 0,
             PendingImprovement = 6,
         });
-        _users.HasDigitalImprovementGrantAsync(UserId).Returns(true);
-
-        var indicators = await _service.GetAsync(UserId, FonbecRole.Manager, ChapterId);
+        var indicators = await _service.GetAsync(FonbecRole.Manager, ChapterId, canImproveImages: true);
 
         indicators.StudentCount.Should().Be(18);
         indicators.SponsorCount.Should().Be(9);
@@ -87,7 +81,7 @@ public class NavMenuServiceTests
     {
         _plans.GetCurrentPlanAsync(ChapterId).Returns((CurrentPlannedDeliveryDataModel?)null);
 
-        var indicators = await _service.GetAsync(UserId, FonbecRole.Manager, ChapterId);
+        var indicators = await _service.GetAsync(FonbecRole.Manager, ChapterId, canImproveImages: false);
 
         indicators.CampaignCompletionPercent.Should().BeNull();
         await _progress.DidNotReceive().GetProgressAsync(Arg.Any<int>(), Arg.Any<int>());
@@ -102,7 +96,7 @@ public class NavMenuServiceTests
         });
         _progress.GetProgressAsync(PlanId, ChapterId).Returns(Progress(0));
 
-        var indicators = await _service.GetAsync(UserId, FonbecRole.Manager, ChapterId);
+        var indicators = await _service.GetAsync(FonbecRole.Manager, ChapterId, canImproveImages: false);
 
         indicators.CampaignCompletionPercent.Should().Be(0);
     }
@@ -115,9 +109,8 @@ public class NavMenuServiceTests
             PendingLetters = 2,
             PendingImprovement = 8,
         });
-        _users.HasDigitalImprovementGrantAsync(UserId).Returns(false);
 
-        var indicators = await _service.GetAsync(UserId, FonbecRole.Manager, ChapterId);
+        var indicators = await _service.GetAsync(FonbecRole.Manager, ChapterId, canImproveImages: false);
 
         indicators.PendingReview.Should().Be(2);
         indicators.PendingImprovement.Should().BeNull();
@@ -129,7 +122,7 @@ public class NavMenuServiceTests
         _students.CountStudentsAsync(null).Returns(40);
         _sponsors.CountSponsorsAsync(null).Returns(12);
 
-        var indicators = await _service.GetAsync(UserId, FonbecRole.Admin, chapterId: null);
+        var indicators = await _service.GetAsync(FonbecRole.Admin, chapterId: null, canImproveImages: false);
 
         indicators.StudentCount.Should().Be(40);
         indicators.SponsorCount.Should().Be(12);
@@ -152,9 +145,7 @@ public class NavMenuServiceTests
             PendingReportCards = 3,
             PendingImprovement = 1,
         });
-        _users.HasDigitalImprovementGrantAsync(UserId).Returns(true);
-
-        var indicators = await _service.GetAsync(UserId, FonbecRole.Reviewer, chapterId: null);
+        var indicators = await _service.GetAsync(FonbecRole.Reviewer, chapterId: null, canImproveImages: true);
 
         indicators.StudentCount.Should().BeNull();
         indicators.PendingReview.Should().Be(3);
@@ -166,7 +157,7 @@ public class NavMenuServiceTests
     [Fact]
     public async Task GetAsync_Uploader_Loads_Nothing()
     {
-        var indicators = await _service.GetAsync(UserId, FonbecRole.Uploader, ChapterId);
+        var indicators = await _service.GetAsync(FonbecRole.Uploader, ChapterId, canImproveImages: false);
 
         indicators.Should().BeEquivalentTo(NavMenuIndicators.Empty);
         await _students.DidNotReceive().CountStudentsAsync(Arg.Any<int?>());

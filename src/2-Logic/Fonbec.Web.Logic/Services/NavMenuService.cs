@@ -8,7 +8,7 @@ namespace Fonbec.Web.Logic.Services;
 
 public interface INavMenuService
 {
-    Task<NavMenuIndicators> GetAsync(int? userId, string role, int? chapterId);
+    Task<NavMenuIndicators> GetAsync(string role, int? chapterId, bool canImproveImages);
 }
 
 public sealed class NavMenuService(
@@ -18,10 +18,9 @@ public sealed class NavMenuService(
     ILetterFollowUpRepository letterFollowUpRepository,
     IPlannedDeliveryRepository plannedDeliveryRepository,
     ILetterPlanProgressService letterPlanProgressService,
-    IDocumentRepository documentRepository,
-    IUserService userService) : INavMenuService
+    IDocumentRepository documentRepository) : INavMenuService
 {
-    public async Task<NavMenuIndicators> GetAsync(int? userId, string role, int? chapterId)
+    public async Task<NavMenuIndicators> GetAsync(string role, int? chapterId, bool canImproveImages)
     {
         Task<int>? students = null;
         Task<int>? sponsors = null;
@@ -29,7 +28,6 @@ public sealed class NavMenuService(
         Task<int?>? campaignPercent = null;
         Task<OpenFlagCounts>? flags = null;
         Task<ReviewProgressDataModel>? progress = null;
-        Task<bool>? canImprove = null;
 
         var pending = new List<Task>();
 
@@ -59,12 +57,6 @@ public sealed class NavMenuService(
         {
             progress = documentRepository.GetGlobalReviewProgressAsync(null);
             pending.Add(progress);
-
-            if (userId is int id)
-            {
-                canImprove = userService.HasDigitalImprovementGrantAsync(id);
-                pending.Add(canImprove);
-            }
         }
 
         if (pending.Count > 0)
@@ -78,7 +70,7 @@ public sealed class NavMenuService(
         {
             var review = await progress;
             pendingReview = review.PendingLetters + review.PendingReportCards + review.PendingOther;
-            if (canImprove is not null && await canImprove)
+            if (canImproveImages)
             {
                 pendingImprovement = review.PendingImprovement;
             }

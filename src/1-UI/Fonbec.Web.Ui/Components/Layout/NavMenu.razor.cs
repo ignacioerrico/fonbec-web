@@ -1,4 +1,5 @@
 using System.Security.Claims;
+using Fonbec.Web.Logic.Constants;
 using Fonbec.Web.Logic.Models.Navigation;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Ui.Constants;
@@ -20,6 +21,9 @@ public sealed partial class NavMenu : ComponentBase, IDisposable
 
     [Inject]
     public INavMenuService NavMenuService { get; set; } = null!;
+
+    [Inject]
+    public IUserService UserService { get; set; } = null!;
 
     [Inject]
     public NavMenuRefresh NavMenuRefresh { get; set; } = null!;
@@ -63,15 +67,18 @@ public sealed partial class NavMenu : ComponentBase, IDisposable
             return;
         }
 
-        var userId = user.FindFirstValue(ClaimTypes.NameIdentifier);
-        int? parsedUserId = int.TryParse(userId, out var id) ? id : null;
         var role = user.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
         var chapterIdValue = user.FindFirstValue(FonbecWebUserCustomClaim.ChapterId);
         int? chapterId = int.TryParse(chapterIdValue, out var parsedChapterId)
             ? parsedChapterId
             : null;
+        var canImproveImages = UserService.HasPermission(
+            null,
+            role,
+            DocumentPermission.DigitalImprovement,
+            UserService.GetFonbecGrantsClaim(user));
 
-        var indicators = await NavMenuService.GetAsync(parsedUserId, role, chapterId);
+        var indicators = await NavMenuService.GetAsync(role, chapterId, canImproveImages);
         if (_disposed || version != _reloadVersion)
         {
             return;
