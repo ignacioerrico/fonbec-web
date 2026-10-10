@@ -42,7 +42,7 @@ public class FacilitatorUploadService(
             return null;
         }
 
-        var context = await facilitatorRepository.GetUploadContextAsync(studentId, planId, sponsorId, companyId);
+        var context = await facilitatorRepository.GetUploadContextAsync(facilitatorId, studentId, planId, sponsorId, companyId);
         if (context is not { IsActive: true } || context.FacilitatorId != facilitatorId)
         {
             return null;
