@@ -24,6 +24,12 @@
 
 @if (_viewModels.Any())
 {
+    <RelatedCountFilter Class="mt-4"
+                        Caption="Padrinos"
+                        Noun="padrino"
+                        Hint="Cuenta padrinos activos vinculados a la empresa."
+                        @bind-Value="_sponsorCountFilter" />
+
     <MudDataGrid T="CompaniesListViewModel"
                  Items="_viewModels"
                  Dense="true" Hover="true" Striped="true" Bordered="true"
@@ -37,7 +43,7 @@
                  FilterCaseSensitivity="DataGridFilterCaseSensitivity.CaseInsensitive"
                  StartedEditingItem="StartedEditingItem"
                  SortMode="SortMode.Multiple"
-                 Class="mt-4">
+                 Class="mt-2">
         <ToolBarContent>
             <MudTextField T="string" @bind-Value="_searchString"
                           Placeholder="Buscar"
@@ -101,6 +107,9 @@
                 </CellTemplate>
             </TemplateColumn>
         </Columns>
+        <NoRecordsContent>
+            <MudText Align="Align.Center" Class="pa-4 mud-text-secondary">No hay resultados.</MudText>
+        </NoRecordsContent>
         <ChildRowContent>
             @if (context.Item.CompanyPointsOfContact.Any())
             {

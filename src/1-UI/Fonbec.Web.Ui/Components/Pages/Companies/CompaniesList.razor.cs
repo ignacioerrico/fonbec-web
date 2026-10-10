@@ -3,6 +3,7 @@ using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models.Companies;
 using Fonbec.Web.Logic.Models.Companies.Input;
 using Fonbec.Web.Logic.Services;
+using Fonbec.Web.Logic.Util;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
@@ -16,6 +17,8 @@ public partial class CompaniesList : AuthenticationRequiredComponentBase
     private CompaniesListViewModel _originalViewModel = new();
 
     private string _searchString = string.Empty;
+
+    private RelatedCount _sponsorCountFilter = RelatedCount.Any;
 
     [Inject]
     public ICompanyService CompanyService { get; set; } = null!;
@@ -31,8 +34,9 @@ public partial class CompaniesList : AuthenticationRequiredComponentBase
         Loading = false;
     }
     private bool Filter(CompaniesListViewModel viewModel) =>
-        string.IsNullOrWhiteSpace(_searchString)
-        || viewModel.CompanyName.ContainsIgnoringAccents(_searchString);
+        _sponsorCountFilter.Matches(viewModel.CompanySponsors.Count)
+        && (string.IsNullOrWhiteSpace(_searchString)
+            || viewModel.CompanyName.ContainsIgnoringAccents(_searchString));
 
     private void StartedEditingItem(CompaniesListViewModel originalViewModel) =>
         _originalViewModel = originalViewModel.DeepClone();

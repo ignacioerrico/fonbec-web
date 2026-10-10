@@ -31,6 +31,12 @@
 
 @if (_viewModels.Any())
 {
+    <RelatedCountFilter Class="mt-4"
+                        Caption="Becarios"
+                        Noun="becario"
+                        Hint="Cuenta becarios vigentes o por comenzar. Los finalizados no se incluyen."
+                        @bind-Value="_studentCountFilter" />
+
     <MudDataGrid T="SponsorsListViewModel"
                  Items="_viewModels"
                  Dense="true" Hover="true" Striped="true" Bordered="true"
@@ -44,7 +50,7 @@
                  FilterCaseSensitivity="DataGridFilterCaseSensitivity.CaseInsensitive"
                  StartedEditingItem="StartedEditingItem"
                  SortMode="SortMode.Multiple"
-                 Class="mt-4">
+                 Class="mt-2">
         <ToolBarContent>
             <MudTextField T="string" @bind-Value="_searchString"
                           Placeholder="Buscar"
@@ -198,6 +204,9 @@
                 </CellTemplate>
             </TemplateColumn>
         </Columns>
+        <NoRecordsContent>
+            <MudText Align="Align.Center" Class="pa-4 mud-text-secondary">No hay resultados.</MudText>
+        </NoRecordsContent>
         <PagerContent>
             <MudDataGridPager T="SponsorsListViewModel" RowsPerPageString="Filas por página:" InfoFormat="{first_item}-{last_item} of {all_items}" />
         </PagerContent>

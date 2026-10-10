@@ -1,9 +1,11 @@
 ﻿using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.Logic.ExtensionMethods;
+using Fonbec.Web.Logic.Models.Sponsorships;
 using Fonbec.Web.Logic.Models.Students;
 using Fonbec.Web.Logic.Models.Students.Input;
 using Fonbec.Web.Logic.Services;
+using Fonbec.Web.Logic.Util;
 using Fonbec.Web.Ui.Components.NonPages.Dialogs;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
@@ -26,6 +28,8 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
     private string _searchString = string.Empty;
 
     private bool _sortByLastName;
+
+    private RelatedCount _sponsorCountFilter = RelatedCount.Any;
 
     [Inject]
     public IStudentService StudentService { get; set; } = null!;
@@ -61,16 +65,20 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
     /// <param name="viewModel">The student view model to evaluate against the search string. Cannot be null.</param>
     /// <returns>true if the student matches the search string in any of the relevant fields; otherwise, false.</returns>
     private bool Filter(StudentsListViewModel viewModel) =>
-        string.IsNullOrWhiteSpace(_searchString)
-        || $"{viewModel.StudentFirstName} {viewModel.StudentLastName}".ContainsIgnoringAccents(_searchString)
-        || (!string.IsNullOrEmpty(viewModel.StudentNickName)
-            && $"{viewModel.StudentNickName} {viewModel.StudentLastName}".ContainsIgnoringAccents(_searchString))
-        || viewModel.FacilitatorFullName.ContainsIgnoringAccents(_searchString)
-        || viewModel.ActiveSponsors.Any(s => s.Name.ContainsIgnoringAccents(_searchString))
-        || (!string.IsNullOrEmpty(viewModel.StudentEmail)
-            && viewModel.StudentEmail.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
-        || (!string.IsNullOrEmpty(viewModel.StudentPhoneNumber)
-            && viewModel.StudentPhoneNumber.ContainsIgnoringSpaces(_searchString));
+        _sponsorCountFilter.Matches(ActiveOrUpcomingSponsorCount(viewModel))
+        && (string.IsNullOrWhiteSpace(_searchString)
+            || $"{viewModel.StudentFirstName} {viewModel.StudentLastName}".ContainsIgnoringAccents(_searchString)
+            || (!string.IsNullOrEmpty(viewModel.StudentNickName)
+                && $"{viewModel.StudentNickName} {viewModel.StudentLastName}".ContainsIgnoringAccents(_searchString))
+            || viewModel.FacilitatorFullName.ContainsIgnoringAccents(_searchString)
+            || viewModel.ActiveSponsors.Any(s => s.Name.ContainsIgnoringAccents(_searchString))
+            || (!string.IsNullOrEmpty(viewModel.StudentEmail)
+                && viewModel.StudentEmail.Contains(_searchString, StringComparison.OrdinalIgnoreCase))
+            || (!string.IsNullOrEmpty(viewModel.StudentPhoneNumber)
+                && viewModel.StudentPhoneNumber.ContainsIgnoringSpaces(_searchString)));
+
+    private static int ActiveOrUpcomingSponsorCount(StudentsListViewModel viewModel) =>
+        viewModel.ActiveSponsors.Count(sponsor => sponsor.TimelineStatus != SponsorshipTimelineStatus.Finished);
 
     private void StartedEditingItem(StudentsListViewModel originalViewModel) =>
         _originalViewModel = originalViewModel.DeepClone();
