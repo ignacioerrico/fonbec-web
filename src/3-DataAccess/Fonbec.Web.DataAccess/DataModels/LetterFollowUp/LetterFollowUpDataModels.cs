@@ -9,6 +9,11 @@ public sealed class LetterFollowUpQueryResultDataModel
     public List<LetterFollowUpTaskDataModel> GreenFlags { get; set; } = [];
 }
 
+/// <summary>
+/// Open follow-up flags for one chapter. A review with both kinds counts in each.
+/// </summary>
+public readonly record struct OpenFlagCounts(int RedFlags, int GreenFlags);
+
 public sealed class LetterFollowUpTaskDataModel
 {
     public long AssessmentId { get; set; }

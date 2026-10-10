@@ -9,6 +9,10 @@ namespace Fonbec.Web.DataAccess.Repositories;
 public interface ICompanyRepository
 {
     Task<List<AllCompaniesDataModel>> GetAllCompaniesAsync();
+
+    /// <summary>Active companies visible on the companies list.</summary>
+    Task<int> CountCompaniesAsync();
+
     Task<bool> CompanyNameExistsAsync(string companyName, int? excludeCompanyId = null);
     Task<CreateCompanyRepositoryResult> CreateCompanyAsync(CreateCompanyInputDataModel dataModel);
     Task<int> UpdateCompanyAsync(UpdateCompanyInputDataModel dataModel);
@@ -46,6 +50,15 @@ public class CompanyRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             .ToListAsync();
 
         return allCompanies;
+    }
+
+    public async Task<int> CountCompaniesAsync()
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        return await db.Companies
+            .AsNoTracking()
+            .CountAsync(c => c.IsActive);
     }
 
     public async Task<bool> CompanyNameExistsAsync(string companyName, int? excludeCompanyId = null)

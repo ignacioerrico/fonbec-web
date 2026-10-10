@@ -10,6 +10,8 @@
 @using Fonbec.Web.Ui.Components.Pages.StudentMessages
 @using Fonbec.Web.Ui.Components.Pages.Students
 @using Fonbec.Web.Ui.Components.Pages.Users
+@using Fonbec.Web.Logic.Models.Navigation
+@using Fonbec.Web.Logic.Models.RecipientMessages
 @using System.Security.Claims
 
 <MudNavMenu Class="d-flex flex-column" Style="height: 100%;">
@@ -37,43 +39,48 @@
                 </AuthorizeView>
 
                 <AuthorizeView Policy="@nameof(UsersList)">
-                    <MudNavLink Href="@NavRoutes.Users" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AccountBox">
-                        Usuarios
-                    </MudNavLink>
+                    <MudNavGroup Title="Usuarios" Icon="@Icons.Material.Filled.AccountBox" Expanded="true">
+                        <MudNavLink Href="@NavRoutes.Users" Match="NavLinkMatch.Prefix">
+                            Usuarios
+                        </MudNavLink>
+                    </MudNavGroup>
                 </AuthorizeView>
 
                 <AuthorizeView Roles="@($"{FonbecRole.Admin},{FonbecRole.Manager}")" Context="sponsorshipsContext">
                     <MudNavGroup Title="Apadrinamientos" Icon="@Icons.Material.Filled.Handshake" Expanded="true">
                         <AuthorizeView Policy="@nameof(StudentsList)" Context="studentsContext">
                             <MudNavLink Href="@NavRoutes.Students" Match="NavLinkMatch.Prefix">
-                                Becarios
+                                <span class="nav-count">
+                                    <span class="nav-count__label">Becarios</span>
+                                    @if (_indicators.StudentCount is int students)
+                                    {
+                                        <span class="nav-count__note">@NavMenuFormatting.CountNote(students)</span>
+                                    }
+                                </span>
                             </MudNavLink>
                         </AuthorizeView>
 
                         <AuthorizeView Policy="@nameof(SponsorsList)" Context="sponsorsContext">
                             <MudNavLink Href="@NavRoutes.Sponsors" Match="NavLinkMatch.Prefix">
-                                Padrinos
+                                <span class="nav-count">
+                                    <span class="nav-count__label">Padrinos</span>
+                                    @if (_indicators.SponsorCount is int sponsors)
+                                    {
+                                        <span class="nav-count__note">@NavMenuFormatting.CountNote(sponsors)</span>
+                                    }
+                                </span>
                             </MudNavLink>
                         </AuthorizeView>
 
                         <AuthorizeView Policy="@nameof(CompaniesList)" Context="companiesContext">
                             <MudNavLink Href="@NavRoutes.Companies" Match="NavLinkMatch.Prefix">
-                                Empresas
-                            </MudNavLink>
-                        </AuthorizeView>
-                    </MudNavGroup>
-                </AuthorizeView>
-
-                <AuthorizeView Roles="@FonbecRole.Manager" Context="managerContext">
-                    <MudNavGroup Title="Cartas" Icon="@Icons.Material.Filled.MailOutline" Expanded="true">
-                        <AuthorizeView Policy="@nameof(PlannedDeliveriesList)" Context="plannedDeliveriesContext">
-                            <MudNavLink Href="@NavRoutes.PlannedDeliveries" Match="NavLinkMatch.Prefix">
-                                Campañas
-                            </MudNavLink>
-                        </AuthorizeView>
-                        <AuthorizeView Policy="@nameof(LetterFollowUp)" Context="letterFollowUpContext">
-                            <MudNavLink Href="@NavRoutes.LetterFollowUp" Match="NavLinkMatch.Prefix">
-                                Seguimiento
+                                <span class="nav-count">
+                                    <span class="nav-count__label">Empresas</span>
+                                    @if (_indicators.CompanyCount is int companies)
+                                    {
+                                        <span class="nav-count__note">@NavMenuFormatting.CountNote(companies)</span>
+                                    }
+                                </span>
                             </MudNavLink>
                         </AuthorizeView>
                     </MudNavGroup>
@@ -83,20 +90,81 @@
                     <FacilitatorStudentsNavLink />
                 </AuthorizeView>
 
-                <AuthorizeView Policy="@nameof(StudentMessages)">
-                    <StudentMessagesNavLink />
+                <AuthorizeView Roles="@($"{FonbecRole.Manager},{FonbecRole.Uploader}")" Context="lettersContext">
+                    <MudNavGroup Title="Cartas" Icon="@Icons.Material.Filled.MailOutline" Expanded="true">
+                        <AuthorizeView Policy="@nameof(PlannedDeliveriesList)" Context="plannedDeliveriesContext">
+                            <MudNavLink Href="@NavRoutes.PlannedDeliveries" Match="NavLinkMatch.Prefix">
+                                <span class="nav-count">
+                                    <span class="nav-count__label">Campañas</span>
+                                    @if (_indicators.CampaignCompletionPercent is int percent)
+                                    {
+                                        <span class="nav-count__note" title="Avance de la campaña activa">@NavMenuFormatting.PercentNote(percent)</span>
+                                    }
+                                </span>
+                            </MudNavLink>
+                        </AuthorizeView>
+                        <AuthorizeView Policy="@nameof(LetterFollowUp)" Context="letterFollowUpContext">
+                            <MudNavLink Href="@NavRoutes.LetterFollowUp" Match="NavLinkMatch.Prefix">
+                                <span class="nav-count">
+                                    <span class="nav-count__label">Seguimiento</span>
+                                    @if (_indicators.RedFlags > 0 || _indicators.GreenFlags > 0)
+                                    {
+                                        <span class="nav-count__badges">
+                                            @if (_indicators.RedFlags > 0)
+                                            {
+                                                <span class="nav-count__badge"
+                                                      title="@NavMenuFormatting.RedFlags(_indicators.RedFlags)"
+                                                      aria-label="@NavMenuFormatting.RedFlags(_indicators.RedFlags)">@_indicators.RedFlags</span>
+                                            }
+                                            @if (_indicators.GreenFlags > 0)
+                                            {
+                                                <span class="nav-count__badge nav-count__badge--success"
+                                                      title="@NavMenuFormatting.GreenFlags(_indicators.GreenFlags)"
+                                                      aria-label="@NavMenuFormatting.GreenFlags(_indicators.GreenFlags)">@_indicators.GreenFlags</span>
+                                            }
+                                        </span>
+                                    }
+                                </span>
+                            </MudNavLink>
+                        </AuthorizeView>
+                        <AuthorizeView Policy="@nameof(StudentMessages)" Context="studentMessagesContext">
+                            <StudentMessagesNavLink />
+                        </AuthorizeView>
+                    </MudNavGroup>
                 </AuthorizeView>
 
-                <AuthorizeView Policy="@DocumentPermission.DigitalImprovement">
-                    <MudNavLink Href="@NavRoutes.ImprovementQueue" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AutoFixHigh">
-                        Mejorar imágenes
-                    </MudNavLink>
-                </AuthorizeView>
+                <AuthorizeView Roles="@($"{FonbecRole.Reviewer},{FonbecRole.Manager}")" Context="reviewContext">
+                    <MudNavGroup Title="Revisión" Icon="@Icons.Material.Filled.RateReview" Expanded="true">
+                        <AuthorizeView Policy="@DocumentPermission.DigitalImprovement" Context="improvementContext">
+                            <MudNavLink Href="@NavRoutes.ImprovementQueue" Match="NavLinkMatch.Prefix">
+                                <span class="nav-count">
+                                    <span class="nav-count__label">Mejorar imágenes</span>
+                                    @if (_indicators.PendingImprovement is int pendingImprovement
+                                         && PendingMessageBadge.Format(pendingImprovement) is string improvementBadge)
+                                    {
+                                        <span class="nav-count__badge"
+                                              title="@NavMenuFormatting.PendingChanges(pendingImprovement)"
+                                              aria-label="@NavMenuFormatting.PendingChanges(pendingImprovement)">@improvementBadge</span>
+                                    }
+                                </span>
+                            </MudNavLink>
+                        </AuthorizeView>
 
-                <AuthorizeView Policy="@nameof(ReviewQueue)">
-                    <MudNavLink Href="@NavRoutes.ReviewQueue" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.RateReview">
-                        Revisar documentos
-                    </MudNavLink>
+                        <AuthorizeView Policy="@nameof(ReviewQueue)" Context="reviewQueueContext">
+                            <MudNavLink Href="@NavRoutes.ReviewQueue" Match="NavLinkMatch.Prefix">
+                                <span class="nav-count">
+                                    <span class="nav-count__label">Revisar documentos</span>
+                                    @if (_indicators.PendingReview is int pendingReview
+                                         && PendingMessageBadge.Format(pendingReview) is string reviewBadge)
+                                    {
+                                        <span class="nav-count__badge"
+                                              title="@NavMenuFormatting.PendingChanges(pendingReview)"
+                                              aria-label="@NavMenuFormatting.PendingChanges(pendingReview)">@reviewBadge</span>
+                                    }
+                                </span>
+                            </MudNavLink>
+                        </AuthorizeView>
+                    </MudNavGroup>
                 </AuthorizeView>
             </Authorized>
         </AuthorizeView>
@@ -128,9 +196,3 @@
         </NotAuthorized>
     </AuthorizeView>
 </MudNavMenu>
-
-@code {
-    // The Account section renders statically, so leaving it means crossing into interactive
-    // rendering. Patching the DOM across that boundary flashes; a full load does not.
-    private string? EnhancedNav => RendererInfo.Name == "Static" ? "false" : null;
-}

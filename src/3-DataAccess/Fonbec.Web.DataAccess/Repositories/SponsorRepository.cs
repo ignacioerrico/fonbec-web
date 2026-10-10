@@ -15,6 +15,11 @@ public interface ISponsorRepository
     /// <returns>A list of <see cref="AllSponsorsDataModel"/></returns>
     Task<List<AllSponsorsDataModel>> GetAllSponsorsAsync(int? chapterId);
 
+    /// <summary>
+    /// Sponsors visible on the sponsors list (not soft-deleted). <paramref name="chapterId"/> null counts every chapter.
+    /// </summary>
+    Task<int> CountSponsorsAsync(int? chapterId);
+
     Task<int> CreateSponsorAsync(CreateSponsorInputDataModel dataModel);
 
     Task<int> UpdateSponsorAsync(UpdateSponsorInputDataModel dataModel);
@@ -98,6 +103,16 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             .ToListAsync();
 
         return allSponsors;
+    }
+
+    public async Task<int> CountSponsorsAsync(int? chapterId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        return await db.Sponsors
+            .AsNoTracking()
+            .CountAsync(s => !s.IsDeleted
+                             && (!chapterId.HasValue || s.ChapterId == chapterId));
     }
 
     public async Task<int> CreateSponsorAsync(CreateSponsorInputDataModel dataModel)

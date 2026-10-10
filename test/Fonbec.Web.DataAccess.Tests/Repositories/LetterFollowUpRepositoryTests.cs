@@ -88,6 +88,35 @@ public class LetterFollowUpRepositoryTests
     }
 
     [Fact]
+    public async Task CountOpenFlagsAsync_Matches_Open_Task_Lists()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedReviewAsync(
+            factory, 1, ChapterId, DocumentStatus.Approved,
+            hasRedFlag: true, RedFlagPriority.Low, hasGreenFlag: true);
+        await SeedReviewAsync(
+            factory, 2, ChapterId, DocumentStatus.Approved,
+            hasRedFlag: true, RedFlagPriority.High, hasGreenFlag: false);
+        await SeedReviewAsync(
+            factory, 3, ChapterId, DocumentStatus.Approved,
+            hasRedFlag: true, RedFlagPriority.High, hasGreenFlag: true,
+            redResolved: true, greenResolved: true);
+        await SeedReviewAsync(
+            factory, 4, ChapterId, DocumentStatus.ReviewPending,
+            hasRedFlag: true, RedFlagPriority.High, hasGreenFlag: true);
+        await SeedReviewAsync(
+            factory, 5, OtherChapterId, DocumentStatus.Approved,
+            hasRedFlag: true, RedFlagPriority.High, hasGreenFlag: true);
+
+        var repository = new LetterFollowUpRepository(factory);
+        var tasks = await repository.GetOpenTasksAsync(ChapterId);
+        var counts = await repository.CountOpenFlagsAsync(ChapterId);
+
+        counts.RedFlags.Should().Be(tasks.RedFlags.Count).And.Be(2);
+        counts.GreenFlags.Should().Be(tasks.GreenFlags.Count).And.Be(1);
+    }
+
+    [Fact]
     public async Task ResolveRedFlagAsync_Sets_Audit_Without_Resolving_Green_Flag()
     {
         var factory = CreateDbContextFactory();

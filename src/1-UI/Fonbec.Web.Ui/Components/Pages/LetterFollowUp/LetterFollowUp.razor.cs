@@ -2,6 +2,7 @@ using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.Logic.Models.LetterFollowUp;
 using Fonbec.Web.Logic.Services;
+using Fonbec.Web.Ui.Components.Layout;
 using Fonbec.Web.Ui.Constants;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
@@ -18,6 +19,9 @@ public partial class LetterFollowUp
 
     [Inject]
     public IDialogService DialogService { get; set; } = null!;
+
+    [Inject]
+    public NavMenuRefresh NavMenuRefresh { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
@@ -61,6 +65,7 @@ public partial class LetterFollowUp
         }
 
         Snackbar.Add("Tarea resuelta.", Severity.Success);
+        NavMenuRefresh.NotifyChanged();
         await ReloadAsync();
     }
 
