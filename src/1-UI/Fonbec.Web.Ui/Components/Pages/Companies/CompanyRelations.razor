@@ -1,0 +1,165 @@
+@attribute [Route(NavRoutes.CompanyRelationsRouteTemplate)]
+@attribute [Authorize(Policy = nameof(CompanyRelations))]
+@inherits AuthenticationRequiredComponentBase
+
+@using Fonbec.Web.DataAccess.Constants
+@using Fonbec.Web.Logic.Models
+@using Fonbec.Web.Logic.Util
+
+<PageHeader Title="Contactos y padrinos" />
+
+<LoadingIndicator Loading="Loading" />
+
+@if (_notFound)
+{
+    <MudAlert Severity="Severity.Warning" Class="mb-4">No se encontró la empresa.</MudAlert>
+    <MudButton Href="@NavRoutes.Companies" Variant="Variant.Filled" Color="Color.Default">
+        Volver
+    </MudButton>
+}
+else if (_companyName is not null)
+{
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4">
+        <MudIconButton Href="@NavRoutes.Companies"
+                       Icon="@Icons.Material.Outlined.ArrowBack"
+                       Color="Color.Primary"
+                       aria-label="Volver a empresas" />
+        <MudText Typo="Typo.h6">@_companyName</MudText>
+    </MudStack>
+
+    <MudForm @ref="_form">
+        <MudGrid Spacing="4">
+            <MudItem xs="12" md="7">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Contactos administrativos</MudText>
+                        <MudText Typo="Typo.body2" Class="mb-4">
+                            Personas de consulta que no son padrinos. El nombre es obligatorio. Al guardar, un contacto quitado deja de mostrarse.
+                        </MudText>
+
+                        @if (_contacts.Count == 0)
+                        {
+                            <MudText Class="mb-4 mud-text-secondary">No hay contactos administrativos.</MudText>
+                        }
+
+                        @foreach (var contact in _contacts)
+                        {
+                            <MudPaper @key="contact.Key" Outlined="true" Class="pa-4 mb-4">
+                                <MudStack Row="true" Justify="Justify.SpaceBetween" AlignItems="AlignItems.Center" Class="mb-2">
+                                    <MudText Typo="Typo.subtitle2">@ContactHeading(contact)</MudText>
+                                    <MudTooltip Text="Quitar contacto" Arrow="true" Placement="Placement.Left">
+                                        <MudIconButton Icon="@Icons.Material.Outlined.Delete"
+                                                       Color="Color.Error"
+                                                       Size="Size.Small"
+                                                       aria-label="@($"Quitar a {ContactHeading(contact)}")"
+                                                       OnClick="@(() => RemoveContact(contact))" />
+                                    </MudTooltip>
+                                </MudStack>
+                                <MudGrid Spacing="2">
+                                    <MudItem xs="12" sm="6">
+                                        <MudTextField T="string" @bind-Value="contact.FirstName" Immediate="true"
+                                                      Required="true" RequiredError="El nombre es obligatorio"
+                                                      Label="Nombre" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                      MaxLength="MaxLength.PointOfContact.FirstName" />
+                                    </MudItem>
+                                    <MudItem xs="12" sm="6">
+                                        <MudTextField T="string" @bind-Value="contact.LastName" Immediate="true"
+                                                      Label="Apellido" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                      MaxLength="MaxLength.PointOfContact.LastName" />
+                                    </MudItem>
+                                    <MudItem xs="12" sm="6">
+                                        <MudTextField T="string" @bind-Value="contact.NickName" Immediate="true"
+                                                      Label="Apodo" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                      MaxLength="MaxLength.PointOfContact.NickName" />
+                                    </MudItem>
+                                    <MudItem xs="12" sm="6">
+                                        <MudTextField T="string" @bind-Value="contact.Email" Immediate="true"
+                                                      Label="Correo electrónico" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                      MaxLength="MaxLength.PointOfContact.Email"
+                                                      Validation="@(new Func<string, string?>(ContactFieldValidator.ValidateEmail))" />
+                                    </MudItem>
+                                    <MudItem xs="12" sm="6">
+                                        <MudTextField T="string" @bind-Value="contact.PhoneNumber" Immediate="true"
+                                                      Label="Teléfono" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                      MaxLength="MaxLength.PointOfContact.PhoneNumber"
+                                                      Validation="@(new Func<string, string?>(ContactFieldValidator.ValidatePhone))" />
+                                    </MudItem>
+                                    <MudItem xs="12">
+                                        <MudTextField T="string" @bind-Value="contact.Notes" Immediate="true"
+                                                      Label="Notas" Variant="Variant.Outlined" Margin="Margin.Dense"
+                                                      Lines="2"
+                                                      MaxLength="MaxLength.Auditable.Notes" />
+                                    </MudItem>
+                                </MudGrid>
+                            </MudPaper>
+                        }
+
+                        <MudButton OnClick="AddContact"
+                                   Disabled="!CanAddContact"
+                                   StartIcon="@Icons.Material.Filled.Add"
+                                   Variant="Variant.Outlined"
+                                   Color="Color.Primary">
+                            Agregar contacto
+                        </MudButton>
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+
+            <MudItem xs="12" md="5">
+                <MudCard>
+                    <MudCardContent>
+                        <MudText Typo="Typo.h6">Padrinos vinculados</MudText>
+                        <MudText Typo="Typo.body2" Class="mb-4">
+                            Quitar un padrino lo desvincula de la empresa. No lo elimina.
+                        </MudText>
+
+                        @if (_sponsors.Count == 0)
+                        {
+                            <MudText Class="mb-4 mud-text-secondary">No hay padrinos vinculados.</MudText>
+                        }
+                        else
+                        {
+                            <div class="d-flex flex-wrap align-center gap-1 mb-4">
+                                @foreach (var sponsor in _sponsors)
+                                {
+                                    <MudChip @key="sponsor.Key" T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                                             Icon="@Icons.Material.Filled.Person"
+                                             OnClose="@(_ => RemoveSponsor(sponsor))">
+                                        @sponsor.DisplayName
+                                    </MudChip>
+                                }
+                            </div>
+                        }
+
+                        <MudAutocomplete @ref="_sponsorAutocomplete"
+                                         T="SelectableModel<int>"
+                                         Label="Agregar padrino"
+                                         Placeholder="Buscar por nombre"
+                                         SearchFunc="SearchSponsors"
+                                         ValueChanged="AddSponsor"
+                                         ToStringFunc="@(sponsor => sponsor?.DisplayName)"
+                                         Clearable="true"
+                                         ResetValueOnEmptyText="true"
+                                         Variant="Variant.Outlined"
+                                         Margin="Margin.Dense"
+                                         AdornmentIcon="@Icons.Material.Filled.Search"
+                                         Adornment="Adornment.Start" />
+                    </MudCardContent>
+                </MudCard>
+            </MudItem>
+        </MudGrid>
+
+        <MudStack Row="true" Class="pt-4">
+            <MudButton OnClick="Save" Disabled="SaveButtonDisabled"
+                       Variant="Variant.Filled" Color="Color.Primary">
+                Guardar
+            </MudButton>
+            <MudButton Href="@NavRoutes.Companies"
+                       Variant="Variant.Filled" Color="Color.Default">
+                Cancelar
+            </MudButton>
+        </MudStack>
+    </MudForm>
+
+    <LoadingIndicator Loading="_saving" LoadingText="Guardando los datos" />
+}

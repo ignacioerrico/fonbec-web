@@ -127,6 +127,13 @@
                                 <MudIconButton OnClick="@context.Actions.StartEditingItemAsync"
                                                Icon="@Icons.Material.Outlined.Edit" Size="@Size.Small" Color="Color.Primary" />
                             </MudTooltip>
+                            <MudTooltip Text="Contactos y padrinos" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
+                                <MudIconButton Href="@NavRoutes.CompanyRelations(context.Item.CompanyId)"
+                                               Icon="@Icons.Material.Outlined.Groups"
+                                               Size="@Size.Small"
+                                               Color="Color.Primary"
+                                               aria-label="@($"Contactos y padrinos de {context.Item.CompanyName}")" />
+                            </MudTooltip>
                         </Authorized>
                     </AuthorizeView>
                 </CellTemplate>

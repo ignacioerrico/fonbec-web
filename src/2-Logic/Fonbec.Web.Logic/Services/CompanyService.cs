@@ -17,6 +17,12 @@ public interface ICompanyService
     Task<CreateCompanyResult> CreateCompanyAsync(CreateCompanyInputModel inputModel);
 
     Task<CrudResult> UpdateCompanyAsync(UpdateCompanyInputModel inputModel);
+
+    Task<CompanyRelationsViewModel?> GetCompanyRelationsAsync(int companyId);
+
+    Task<List<SelectableModel<int>>> GetSponsorsAvailableToLinkAsync();
+
+    Task<UpdateCompanyRelationsResult> UpdateCompanyRelationsAsync(UpdateCompanyRelationsInputModel inputModel);
 }
 
 public class CompanyService(ICompanyRepository companyRepository) : ICompanyService
@@ -81,5 +87,44 @@ public class CompanyService(ICompanyRepository companyRepository) : ICompanyServ
 
         var affectedRows = await companyRepository.UpdateCompanyAsync(updateCompanyInputDataModel);
         return new CrudResult(affectedRows);
+    }
+
+    public async Task<CompanyRelationsViewModel?> GetCompanyRelationsAsync(int companyId)
+    {
+        var dataModel = await companyRepository.GetCompanyRelationsAsync(companyId);
+        return dataModel?.Adapt<CompanyRelationsViewModel>();
+    }
+
+    public async Task<List<SelectableModel<int>>> GetSponsorsAvailableToLinkAsync()
+    {
+        var sponsors = await companyRepository.GetSponsorsAvailableToLinkAsync();
+        return sponsors.Adapt<List<SelectableModel<int>>>();
+    }
+
+    public async Task<UpdateCompanyRelationsResult> UpdateCompanyRelationsAsync(UpdateCompanyRelationsInputModel inputModel)
+    {
+        var dataModel = inputModel.Adapt<UpdateCompanyRelationsInputDataModel>();
+        var result = await companyRepository.UpdateCompanyRelationsAsync(dataModel);
+
+        if (result.MissingSponsorIds is { Count: > 0 })
+        {
+            var sponsorsById = inputModel.Sponsors
+                .GroupBy(s => s.Key)
+                .ToDictionary(g => g.Key, g => g.First());
+            var missingSponsors = result.MissingSponsorIds
+                .Select(id => new MissingSponsor(
+                    id,
+                    sponsorsById.TryGetValue(id, out var sponsor) && !string.IsNullOrWhiteSpace(sponsor.DisplayName)
+                        ? sponsor.DisplayName
+                        : "Padrino desconocido"))
+                .ToList();
+
+            return new UpdateCompanyRelationsResult(result.CompanyFound, MissingSponsors: missingSponsors);
+        }
+
+        return new UpdateCompanyRelationsResult(
+            result.CompanyFound,
+            result.AffectedRows,
+            HasUnknownContacts: result.HasUnknownContacts);
     }
 }

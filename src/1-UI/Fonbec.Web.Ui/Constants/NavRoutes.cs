@@ -141,6 +141,10 @@ public static class NavRoutes
 
     public const string CompanyCreate = $"{Companies}/alta";
 
+    public static string CompanyRelations(int companyId) => $"{Companies}/{companyId}/contactos";
+
+    public const string CompanyRelationsRouteTemplate = $"{Companies}/{{CompanyId:int}}/contactos";
+
     public static string CompanyHistory(Guid token, int studentId) =>
         $"{Companies}/{token}/{studentId}";
 
