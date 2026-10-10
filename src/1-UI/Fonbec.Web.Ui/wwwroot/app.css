@@ -266,6 +266,24 @@ body {
     min-width: 0;
 }
 
+.nav-count__note {
+    flex-shrink: 0;
+    color: var(--mud-palette-text-secondary);
+    font-size: 0.8125rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+    white-space: nowrap;
+    margin-right: 0.5rem;
+}
+
+.nav-count__badges {
+    display: inline-flex;
+    align-items: center;
+    flex-shrink: 0;
+    gap: 2px;
+    margin-right: 0.5rem;
+}
+
 .nav-count__badge {
     display: inline-flex;
     align-items: center;
@@ -281,6 +299,15 @@ body {
     font-size: 0.75rem;
     font-weight: 700;
     line-height: 1;
+    margin-right: 0.5rem;
+}
+
+.nav-count__badges .nav-count__badge {
+    margin-right: 0;
+}
+
+.nav-count__badge.nav-count__badge--success {
+    background: var(--mud-palette-success);
 }
 
 .mud-navmenu .mud-nav-link .mud-icon-root {

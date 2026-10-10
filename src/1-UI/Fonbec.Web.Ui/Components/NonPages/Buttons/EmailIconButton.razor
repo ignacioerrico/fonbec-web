@@ -1,8 +1,11 @@
 ﻿@if (!string.IsNullOrWhiteSpace(EmailAddress))
 {
-    <MudIconButton Href="@($"mailto:{EmailAddress}")"
-                   Icon="@Icons.Material.Outlined.Email"
-                   Size="Size.Small" />
+    <MudTooltip Text="@EmailAddress" Arrow="true" Placement="Placement.Bottom">
+        <MudIconButton Href="@($"mailto:{EmailAddress}")"
+                       Icon="@Icons.Material.Outlined.Email"
+                       Size="Size.Small"
+                       aria-label="@($"Enviar correo a {EmailAddress}")" />
+    </MudTooltip>
 }
 
 @code {

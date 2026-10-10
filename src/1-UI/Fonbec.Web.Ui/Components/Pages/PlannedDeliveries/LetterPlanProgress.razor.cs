@@ -3,6 +3,7 @@ using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models.LetterFollowUp;
 using Fonbec.Web.Logic.Models.LetterPlanProgress;
 using Fonbec.Web.Logic.Services;
+using Fonbec.Web.Ui.Components.Layout;
 using Fonbec.Web.Ui.Components.NonPages.Dialogs;
 using Fonbec.Web.Ui.Constants;
 using Microsoft.AspNetCore.Components;
@@ -37,6 +38,9 @@ public partial class LetterPlanProgress
 
     [Inject]
     public IDialogService DialogService { get; set; } = null!;
+
+    [Inject]
+    public NavMenuRefresh NavMenuRefresh { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
@@ -213,6 +217,7 @@ public partial class LetterPlanProgress
             }
 
             Snackbar.Add("Tarea resuelta.", Severity.Success);
+            NavMenuRefresh.NotifyChanged();
             await ReloadAsync();
             return;
         }
@@ -264,6 +269,7 @@ public partial class LetterPlanProgress
         }
 
         Snackbar.Add("Exención registrada.", Severity.Success);
+        NavMenuRefresh.NotifyChanged();
         await ReloadAsync();
 
         if (_viewModel is { IsReadyToComplete: true })
@@ -302,6 +308,7 @@ public partial class LetterPlanProgress
         }
 
         Snackbar.Add("Exención revocada.", Severity.Success);
+        NavMenuRefresh.NotifyChanged();
         await ReloadAsync();
     }
 
@@ -383,6 +390,7 @@ public partial class LetterPlanProgress
         }
 
         Snackbar.Add("La campaña fue marcada como completada.", Severity.Success);
+        NavMenuRefresh.NotifyChanged();
         await ReloadAsync();
     }
 }

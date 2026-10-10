@@ -123,4 +123,36 @@ public class CompaniesListViewModelMappingDefinitionsTests : MappingTestBase
         viewModel.CompanyPointsOfContact.Should().ContainInOrder("John Doe", "Jane Smith");
         viewModel.CompanySponsors.Should().ContainInOrder("Alice Johnson", "Bob Brown");
     }
+
+    [Fact]
+    public void Maps_Direct_And_Sponsor_Students()
+    {
+        var dataModel = new AllCompaniesDataModel(Auditable)
+        {
+            SponsoredStudents =
+            [
+                new CompanySponsoredStudentDataModel
+                {
+                    Name = "Ana Perez",
+                    SponsorName = null,
+                    StartDate = new DateTime(2024, 3, 1),
+                },
+                new CompanySponsoredStudentDataModel
+                {
+                    Name = "Luis Gomez",
+                    SponsorName = "Alice Johnson",
+                    StartDate = new DateTime(2025, 1, 1),
+                    EndDate = new DateTime(2025, 6, 1),
+                },
+            ],
+        };
+
+        var viewModel = dataModel.Adapt<CompaniesListViewModel>(Config);
+
+        viewModel.SponsoredStudents.Should().HaveCount(2);
+        viewModel.SponsoredStudents[0].Source.Should().Be("Empresa");
+        viewModel.SponsoredStudents[0].PeriodTooltip.Should().Be("Empresa · Desde marzo de 2024");
+        viewModel.SponsoredStudents[1].Source.Should().Be("Alice Johnson");
+        viewModel.SponsoredStudents[1].PeriodTooltip.Should().Be("Alice Johnson · enero de 2025 – junio de 2025");
+    }
 }

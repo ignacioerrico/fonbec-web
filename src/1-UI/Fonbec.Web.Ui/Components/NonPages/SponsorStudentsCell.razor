@@ -11,17 +11,37 @@
 
     @if (UpcomingStudents.Count > 0)
     {
-        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Info"
-                 Icon="@Icons.Material.Filled.Schedule">
-            +@UpcomingStudents.Count
-        </MudChip>
+        <MudTooltip Arrow="true" Placement="Placement.Bottom">
+            <ChildContent>
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Info"
+                         Icon="@Icons.Material.Filled.Schedule">
+                    +@UpcomingStudents.Count
+                </MudChip>
+            </ChildContent>
+            <TooltipContent>
+                @foreach (var student in UpcomingStudents)
+                {
+                    <MudText Typo="Typo.body2">@student.PeriodTooltipLine</MudText>
+                }
+            </TooltipContent>
+        </MudTooltip>
     }
 
     @if (FinishedStudents.Count > 0)
     {
-        <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default"
-                 Icon="@Icons.Material.Filled.History">
-            @FinishedStudents.Count
-        </MudChip>
+        <MudTooltip Arrow="true" Placement="Placement.Bottom">
+            <ChildContent>
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Default"
+                         Icon="@Icons.Material.Filled.History">
+                    @FinishedStudents.Count
+                </MudChip>
+            </ChildContent>
+            <TooltipContent>
+                @foreach (var student in FinishedStudents)
+                {
+                    <MudText Typo="Typo.body2">@student.PeriodTooltipLine</MudText>
+                }
+            </TooltipContent>
+        </MudTooltip>
     }
 </div>

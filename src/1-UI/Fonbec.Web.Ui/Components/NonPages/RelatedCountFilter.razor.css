@@ -1,0 +1,63 @@
+.related-count-filter {
+    box-sizing: border-box;
+    width: 100%;
+    max-width: 52rem;
+    overflow-x: auto;
+}
+
+.related-count-filter__heading {
+    margin-bottom: 0.25rem;
+}
+
+.related-count-filter__hint {
+    display: inline-flex;
+    color: var(--mud-palette-text-secondary);
+    cursor: help;
+}
+
+.related-count-filter__hint:focus-visible {
+    outline: 2px solid var(--mud-palette-primary);
+    outline-offset: 2px;
+    border-radius: 999px;
+}
+
+.related-count-filter__control {
+    position: relative;
+    min-width: 32rem;
+    margin-inline: 5.5rem;
+    padding-bottom: 1.75rem;
+}
+
+.related-count-filter__control ::deep .mud-slider {
+    display: block;
+}
+
+.related-count-filter__label {
+    position: absolute;
+    bottom: 0;
+    transform: translateX(-50%);
+    margin: 0;
+    padding: 0.15rem 0.25rem;
+    border: 0;
+    background: none;
+    cursor: pointer;
+    font-family: inherit;
+    font-size: 0.75rem;
+    line-height: 1.2;
+    white-space: nowrap;
+    color: var(--mud-palette-text-secondary);
+}
+
+.related-count-filter__label:hover,
+.related-count-filter__label--selected {
+    color: var(--mud-palette-primary);
+}
+
+.related-count-filter__label--selected {
+    font-weight: 600;
+}
+
+.related-count-filter__label:focus-visible {
+    outline: 2px solid var(--mud-palette-primary);
+    outline-offset: 2px;
+}

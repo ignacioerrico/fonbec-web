@@ -11,6 +11,12 @@ namespace Fonbec.Web.DataAccess.Repositories;
 public interface IStudentRepository
 {
     Task<List<AllStudentsDataModel>> GetAllStudentsAsync(int? chapterId);
+
+    /// <summary>
+    /// Active students visible on the students list. <paramref name="chapterId"/> null counts every chapter.
+    /// </summary>
+    Task<int> CountStudentsAsync(int? chapterId);
+
     Task<int?> GetStudentChapterIdAsync(int studentId);
     Task<int> CreateStudentAsync(CreateStudentInputDataModel inputDataModel);
     Task<int> UpdateStudentAsync(UpdateStudentInputDataModel dataModel);
@@ -95,6 +101,16 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext,
             .ToListAsync();
 
         return allStudents;
+    }
+
+    public async Task<int> CountStudentsAsync(int? chapterId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        return await db.Students
+            .AsNoTracking()
+            .CountAsync(s => s.IsActive
+                             && (chapterId == null || chapterId == s.ChapterId));
     }
 
     public async Task<int?> GetStudentChapterIdAsync(int studentId)

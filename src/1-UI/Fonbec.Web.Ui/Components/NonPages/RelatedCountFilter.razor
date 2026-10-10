@@ -1,0 +1,46 @@
+@using Fonbec.Web.Logic.Util
+
+<div class="related-count-filter @Class">
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Class="related-count-filter__heading">
+        <MudText Typo="Typo.subtitle1">@Caption</MudText>
+        @if (!string.IsNullOrWhiteSpace(Hint))
+        {
+            <MudTooltip Text="@Hint" Arrow="true" Placement="Placement.Top">
+                <span tabindex="0" class="related-count-filter__hint" aria-label="@Hint">
+                    <MudIcon Icon="@Icons.Material.Outlined.Info" Size="Size.Small" />
+                </span>
+            </MudTooltip>
+        }
+    </MudStack>
+
+    <div class="related-count-filter__control">
+        <MudSlider T="int"
+                   Value="@((int)Value)"
+                   ValueChanged="OnSliderChanged"
+                   Min="0"
+                   Max="@MaxPosition"
+                   Step="1"
+                   TickMarks="true"
+                   Immediate="false"
+                   Size="Size.Small"
+                   Color="Color.Primary"
+                   aria-label="@SliderAriaLabel"
+                   aria-valuetext="@SelectedLabel" />
+
+        <div class="related-count-filter__labels" role="radiogroup" aria-label="@SliderAriaLabel">
+            @for (var index = 0; index < _tickLabels.Length; index++)
+            {
+                var position = index;
+                var filter = (RelatedCount)position;
+                <button type="button"
+                        class="@LabelClass(filter)"
+                        style="@LabelStyle(position)"
+                        role="radio"
+                        aria-checked="@(Value == filter ? "true" : "false")"
+                        @onclick="@(() => SelectAsync(filter))">
+                    @_tickLabels[position]
+                </button>
+            }
+        </div>
+    </div>
+</div>

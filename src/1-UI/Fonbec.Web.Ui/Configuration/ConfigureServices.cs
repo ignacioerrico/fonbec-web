@@ -86,7 +86,9 @@ public static class ConfigureServices
         services.AddScoped<IRecipientMessageService, RecipientMessageService>();
         services.AddScoped<IRecipientMessageNotificationService, RecipientMessageNotificationService>();
         services.AddScoped<StudentMessageNavCount>();
+        services.AddScoped<NavMenuRefresh>();
         services.AddScoped<IDocumentNotificationService, DocumentNotificationService>();
+        services.AddScoped<INavMenuService, NavMenuService>();
         services.AddSingleton<DocumentNotificationQueue>();
         services.AddSingleton<IDocumentNotificationQueue>(sp => sp.GetRequiredService<DocumentNotificationQueue>());
         services.AddHostedService(sp => sp.GetRequiredService<DocumentNotificationQueue>());

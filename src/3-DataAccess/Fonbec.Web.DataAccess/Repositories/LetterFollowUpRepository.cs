@@ -9,6 +9,9 @@ public interface ILetterFollowUpRepository
 {
     Task<LetterFollowUpQueryResultDataModel> GetOpenTasksAsync(int chapterId);
 
+    /// <summary>Counts the same open flags <see cref="GetOpenTasksAsync"/> returns.</summary>
+    Task<OpenFlagCounts> CountOpenFlagsAsync(int chapterId);
+
     Task<bool> ResolveRedFlagAsync(
         long assessmentId, int chapterId, int resolvedById, DateTime resolvedOn);
 
@@ -26,11 +29,7 @@ public sealed class LetterFollowUpRepository(
     {
         await using var db = await dbContext.CreateDbContextAsync();
 
-        var reviews = db.LetterReviews
-            .AsNoTracking()
-            .Where(review =>
-                review.Document.ChapterId == chapterId
-                && review.Document.Status == DocumentStatus.Approved);
+        var reviews = ApprovedReviews(db, chapterId);
 
         var redFlags = await reviews
             .Where(review =>
@@ -83,6 +82,23 @@ public sealed class LetterFollowUpRepository(
             RedFlags = redFlags,
             GreenFlags = greenFlags,
         };
+    }
+
+    public async Task<OpenFlagCounts> CountOpenFlagsAsync(int chapterId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var redFlags = await ApprovedReviews(db, chapterId)
+            .CountAsync(review =>
+                review.Assessment.HasRedFlags
+                && !review.Assessment.IsRedFlagResolved);
+
+        var greenFlags = await ApprovedReviews(db, chapterId)
+            .CountAsync(review =>
+                review.Assessment.HasGreenFlags
+                && !review.Assessment.IsGreenFlagResolved);
+
+        return new OpenFlagCounts(redFlags, greenFlags);
     }
 
     public async Task<bool> ResolveRedFlagAsync(
@@ -139,6 +155,13 @@ public sealed class LetterFollowUpRepository(
         await db.SaveChangesAsync();
         return true;
     }
+
+    private static IQueryable<LetterReview> ApprovedReviews(FonbecWebDbContext db, int chapterId) =>
+        db.LetterReviews
+            .AsNoTracking()
+            .Where(review =>
+                review.Document.ChapterId == chapterId
+                && review.Document.Status == DocumentStatus.Approved);
 
     private static Task<Assessment?> GetOpenAssessmentAsync(
         FonbecWebDbContext db, long assessmentId, int chapterId, bool redFlag)

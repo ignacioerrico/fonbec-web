@@ -9,9 +9,16 @@ namespace Fonbec.Web.DataAccess.Repositories;
 public interface ICompanyRepository
 {
     Task<List<AllCompaniesDataModel>> GetAllCompaniesAsync();
+
+    /// <summary>Active companies visible on the companies list.</summary>
+    Task<int> CountCompaniesAsync();
+
     Task<bool> CompanyNameExistsAsync(string companyName, int? excludeCompanyId = null);
     Task<CreateCompanyRepositoryResult> CreateCompanyAsync(CreateCompanyInputDataModel dataModel);
     Task<int> UpdateCompanyAsync(UpdateCompanyInputDataModel dataModel);
+    Task<CompanyRelationsDataModel?> GetCompanyRelationsAsync(int companyId);
+    Task<List<CompanyLinkedSponsorDataModel>> GetSponsorsAvailableToLinkAsync();
+    Task<UpdateCompanyRelationsRepositoryResult> UpdateCompanyRelationsAsync(UpdateCompanyRelationsInputDataModel dataModel);
     Task<CandidateNameDataModel?> GetCompanyNameAsync(int companyId);
     /// <summary>
     /// Get every active company name except <paramref name="excludeCompanyId"/>, ordered by id.
@@ -45,7 +52,107 @@ public class CompanyRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             .OrderBy(c => c.CompanyName)
             .ToListAsync();
 
+        if (allCompanies.Count == 0)
+        {
+            return allCompanies;
+        }
+
+        var companyIds = allCompanies.Select(c => c.CompanyId).ToList();
+        var sponsoredStudents = await GetSponsoredStudentsAsync(db, companyIds);
+        foreach (var company in allCompanies)
+        {
+            company.SponsoredStudents = sponsoredStudents
+                .Where(student => student.DirectCompanyId == company.CompanyId)
+                .OrderBy(student => student.Name)
+                .ThenBy(student => student.StartDate)
+                .Select(student => new CompanySponsoredStudentDataModel
+                {
+                    Name = student.Name,
+                    SponsorName = student.SponsorName,
+                    StartDate = student.StartDate,
+                    EndDate = student.EndDate,
+                })
+                .ToList();
+        }
+
         return allCompanies;
+    }
+
+    private static async Task<List<CompanyStudentRow>> GetSponsoredStudentsAsync(
+        FonbecWebDbContext db,
+        List<int> companyIds)
+    {
+        var direct = await db.Sponsorships
+            .AsNoTracking()
+            .Where(sp => sp.CompanyId != null
+                         && companyIds.Contains(sp.CompanyId.Value)
+                         && sp.IsActive
+                         && sp.Student.IsActive
+                         && !sp.Student.IsDeleted)
+            .Select(sp => new
+            {
+                CompanyId = sp.CompanyId,
+                Name = sp.Student.FirstName + " " + sp.Student.LastName,
+                sp.StartDate,
+                sp.EndDate,
+            })
+            .ToListAsync();
+
+        var throughSponsors = await db.Sponsorships
+            .AsNoTracking()
+            .Where(sp => sp.Sponsor != null
+                         && sp.Sponsor.CompanyId != null
+                         && companyIds.Contains(sp.Sponsor.CompanyId.Value)
+                         && sp.Sponsor.IsActive
+                         && !sp.Sponsor.IsDeleted
+                         && sp.IsActive
+                         && sp.Student.IsActive
+                         && !sp.Student.IsDeleted
+                         && (sp.CompanyId == null || sp.CompanyId != sp.Sponsor.CompanyId))
+            .Select(sp => new
+            {
+                CompanyId = sp.Sponsor!.CompanyId,
+                SponsorName = sp.Sponsor.FirstName + " " + sp.Sponsor.LastName,
+                Name = sp.Student.FirstName + " " + sp.Student.LastName,
+                sp.StartDate,
+                sp.EndDate,
+            })
+            .ToListAsync();
+
+        return direct.Select(student => new CompanyStudentRow
+            {
+                DirectCompanyId = student.CompanyId,
+                Name = student.Name,
+                StartDate = student.StartDate,
+                EndDate = student.EndDate,
+            })
+            .Concat(throughSponsors.Select(student => new CompanyStudentRow
+            {
+                DirectCompanyId = student.CompanyId,
+                SponsorName = student.SponsorName,
+                Name = student.Name,
+                StartDate = student.StartDate,
+                EndDate = student.EndDate,
+            }))
+            .ToList();
+    }
+
+    private sealed class CompanyStudentRow
+    {
+        public int? DirectCompanyId { get; set; }
+        public string Name { get; set; } = string.Empty;
+        public string? SponsorName { get; set; }
+        public DateTime StartDate { get; set; }
+        public DateTime? EndDate { get; set; }
+    }
+
+    public async Task<int> CountCompaniesAsync()
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        return await db.Companies
+            .AsNoTracking()
+            .CountAsync(c => c.IsActive);
     }
 
     public async Task<bool> CompanyNameExistsAsync(string companyName, int? excludeCompanyId = null)
@@ -156,6 +263,155 @@ public class CompanyRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
 
         db.Companies.Update(companyDb);
         return await db.SaveChangesAsync();
+    }
+
+    public async Task<CompanyRelationsDataModel?> GetCompanyRelationsAsync(int companyId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        return await db.Companies
+            .AsNoTracking()
+            .Where(c => c.Id == companyId && c.IsActive)
+            .Select(c => new CompanyRelationsDataModel
+            {
+                CompanyId = c.Id,
+                CompanyName = c.Name,
+                Contacts = c.PointsOfContact
+                    .Where(p => p.IsActive)
+                    .OrderBy(p => p.FirstName)
+                    .ThenBy(p => p.LastName)
+                    .Select(p => new CompanyContactDataModel
+                    {
+                        Id = p.Id,
+                        FirstName = p.FirstName,
+                        LastName = p.LastName,
+                        NickName = p.NickName,
+                        Email = p.Email,
+                        PhoneNumber = p.PhoneNumber,
+                        Notes = p.Notes,
+                    })
+                    .ToList(),
+                Sponsors = c.Sponsors == null
+                    ? new List<CompanyLinkedSponsorDataModel>()
+                    : c.Sponsors
+                        .Where(s => s.IsActive && !s.IsDeleted)
+                        .OrderBy(s => s.FirstName)
+                        .ThenBy(s => s.LastName)
+                        .Select(s => new CompanyLinkedSponsorDataModel
+                        {
+                            Id = s.Id,
+                            FullName = s.FirstName + " " + s.LastName,
+                        })
+                        .ToList(),
+            })
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<List<CompanyLinkedSponsorDataModel>> GetSponsorsAvailableToLinkAsync()
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        return await db.Sponsors
+            .AsNoTracking()
+            .Where(s => s.IsActive && !s.IsDeleted && s.CompanyId == null)
+            .OrderBy(s => s.FirstName)
+            .ThenBy(s => s.LastName)
+            .Select(s => new CompanyLinkedSponsorDataModel
+            {
+                Id = s.Id,
+                FullName = s.FirstName + " " + s.LastName,
+            })
+            .ToListAsync();
+    }
+
+    public async Task<UpdateCompanyRelationsRepositoryResult> UpdateCompanyRelationsAsync(
+        UpdateCompanyRelationsInputDataModel dataModel)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var company = await db.Companies
+            .Include(c => c.PointsOfContact)
+            .Include(c => c.Sponsors)
+            .SingleOrDefaultAsync(c => c.Id == dataModel.CompanyId && c.IsActive);
+
+        if (company is null)
+        {
+            return new UpdateCompanyRelationsRepositoryResult(CompanyFound: false);
+        }
+
+        var activeContacts = company.PointsOfContact.Where(p => p.IsActive).ToList();
+        var submittedIds = dataModel.Contacts
+            .Where(c => c.Id is not null)
+            .Select(c => c.Id!.Value)
+            .ToList();
+        if (submittedIds.Count != submittedIds.Distinct().Count()
+            || submittedIds.Any(id => activeContacts.All(p => p.Id != id)))
+        {
+            return new UpdateCompanyRelationsRepositoryResult(CompanyFound: true, HasUnknownContacts: true);
+        }
+
+        var currentSponsors = (company.Sponsors ?? []).Where(s => s.IsActive && !s.IsDeleted).ToList();
+        var desiredSponsorIds = dataModel.SponsorIds.Distinct().ToList();
+        var sponsorIdsToLink = desiredSponsorIds.Where(id => currentSponsors.All(s => s.Id != id)).ToList();
+        var sponsorsToLink = sponsorIdsToLink.Count == 0
+            ? []
+            : await db.Sponsors
+                .Where(s => sponsorIdsToLink.Contains(s.Id) && s.IsActive && !s.IsDeleted && s.CompanyId == null)
+                .ToListAsync();
+        var foundSponsorIds = sponsorsToLink.Select(s => s.Id).ToHashSet();
+        var missingSponsorIds = sponsorIdsToLink.Where(id => !foundSponsorIds.Contains(id)).ToList();
+        if (missingSponsorIds.Count > 0)
+        {
+            return new UpdateCompanyRelationsRepositoryResult(CompanyFound: true, MissingSponsorIds: missingSponsorIds);
+        }
+
+        foreach (var contact in activeContacts.Where(p => !submittedIds.Contains(p.Id)))
+        {
+            contact.DisabledById = dataModel.UpdatedById;
+        }
+
+        foreach (var input in dataModel.Contacts)
+        {
+            if (input.Id is int contactId)
+            {
+                var contact = activeContacts.Single(p => p.Id == contactId);
+                contact.FirstName = input.FirstName;
+                contact.LastName = input.LastName;
+                contact.NickName = input.NickName;
+                contact.Email = input.Email;
+                contact.PhoneNumber = input.PhoneNumber;
+                contact.Notes = input.Notes;
+                contact.LastUpdatedById = dataModel.UpdatedById;
+                continue;
+            }
+
+            company.PointsOfContact.Add(new PointOfContact
+            {
+                FirstName = input.FirstName,
+                LastName = input.LastName,
+                NickName = input.NickName,
+                Email = input.Email,
+                PhoneNumber = input.PhoneNumber,
+                Notes = input.Notes,
+                CreatedById = dataModel.UpdatedById,
+            });
+        }
+
+        foreach (var sponsor in currentSponsors.Where(s => !desiredSponsorIds.Contains(s.Id)))
+        {
+            sponsor.CompanyId = null;
+            sponsor.LastUpdatedById = dataModel.UpdatedById;
+        }
+
+        foreach (var sponsor in sponsorsToLink)
+        {
+            sponsor.CompanyId = company.Id;
+            sponsor.LastUpdatedById = dataModel.UpdatedById;
+        }
+
+        company.LastUpdatedById = dataModel.UpdatedById;
+        var affectedRows = await db.SaveChangesAsync();
+        return new UpdateCompanyRelationsRepositoryResult(CompanyFound: true, AffectedRows: affectedRows);
     }
 
     public async Task<CandidateNameDataModel?> GetCompanyNameAsync(int companyId)

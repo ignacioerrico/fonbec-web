@@ -1,0 +1,17 @@
+@if (!string.IsNullOrWhiteSpace(PhoneNumber))
+{
+    <MudTooltip Text="@PhoneNumber" Arrow="true" Placement="Placement.Bottom">
+        <MudIconButton Href="@TelHref"
+                       Icon="@Icons.Material.Outlined.Phone"
+                       Size="Size.Small"
+                       aria-label="@($"Llamar a {PhoneNumber}")" />
+    </MudTooltip>
+}
+
+@code {
+    [Parameter]
+    public string? PhoneNumber { get; set; }
+
+    private string TelHref =>
+        "tel:" + new string((PhoneNumber ?? string.Empty).Where(c => char.IsDigit(c) || c == '+').ToArray());
+}
