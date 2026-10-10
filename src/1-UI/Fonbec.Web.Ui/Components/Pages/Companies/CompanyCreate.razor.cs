@@ -3,6 +3,7 @@ using Fonbec.Web.Logic.Models;
 using Fonbec.Web.Logic.Models.Companies;
 using Fonbec.Web.Logic.Models.Companies.Input;
 using Fonbec.Web.Logic.Services;
+using Fonbec.Web.Logic.Util;
 using Fonbec.Web.Ui.Constants;
 using Fonbec.Web.Ui.Models.Company;
 using Microsoft.AspNetCore.Components;
@@ -15,51 +16,89 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
 {
     private readonly CompanyCreateBindModel _bindModel = new();
 
+    private readonly List<SelectableModel<int>> _sponsorPool = [];
+
     private MudForm _form = null!;
 
-    private bool _formValidationSucceeded;
+    private MudAutocomplete<SelectableModel<int>> _sponsorAutocomplete = null!;
 
     private bool _saving;
 
-    private bool _addPointsOfContact;
-
-    private bool _linkSponsors;
+    private bool _sponsorsLoading;
 
     [Inject]
     private ICompanyService CompanyService { get; set; } = null!;
 
-    private bool SaveButtonDisabled => Loading
-                                       || _saving
-                                       || (_linkSponsors && _bindModel.Sponsors.Count == 0)
-                                       || !_formValidationSucceeded;
+    private bool SaveButtonDisabled =>
+        Loading || _saving || _sponsorsLoading || !CompanyFieldsAreValid;
+
+    private bool CompanyFieldsAreValid =>
+        CompanyFieldValidator.IsValidName(_bindModel.CompanyName)
+        && ContactFieldValidator.ValidateEmail(_bindModel.CompanyEmail) is null
+        && ContactFieldValidator.ValidatePhone(_bindModel.CompanyPhoneNumber) is null;
+
+    private bool ContactsAreValid =>
+        _bindModel.PointsOfContact.All(contact =>
+            !string.IsNullOrWhiteSpace(contact.PocFirstName)
+            && ContactFieldValidator.ValidateEmail(contact.PocEmail) is null
+            && ContactFieldValidator.ValidatePhone(contact.PocPhoneNumber) is null);
 
     private bool CanAddPointOfContact =>
-        _bindModel.PointsOfContact.All(poc =>
-            !string.IsNullOrWhiteSpace(poc.PocFirstName));
+        _bindModel.PointsOfContact.All(contact => !string.IsNullOrWhiteSpace(contact.PocFirstName));
+
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        _sponsorsLoading = true;
+        _sponsorPool.AddRange(await CompanyService.GetSponsorsAvailableToLinkAsync());
+        _sponsorsLoading = false;
+    }
 
     private void AddPointOfContact() =>
         _bindModel.PointsOfContact.Add(new());
 
-    private void RemovePointOfContact(Guid tempId) =>
-        _bindModel.PointsOfContact.RemoveAll(poc => poc.TempId == tempId);
+    private void SetContactFirstName(CompanyCreatePointOfContactBindModel contact, string? value) =>
+        contact.PocFirstName = value ?? string.Empty;
 
-    private string QtySponsorsInfo => _bindModel.Sponsors.Count switch
-    {
-        0 => "No hay padrinos vinculados.",
-        1 => "<strong>Un</strong> padrino vinculado.",
-        _ => $"<strong>{_bindModel.Sponsors.Count}</strong> padrinos vinculados."
-    };
+    private void RemovePointOfContact(CompanyCreatePointOfContactBindModel contact) =>
+        _bindModel.PointsOfContact.Remove(contact);
 
     private void RemoveSponsor(SelectableModel<int> sponsor) =>
         _bindModel.Sponsors.Remove(sponsor);
 
-    private void RemoveAllSponsors() =>
-        _bindModel.Sponsors.Clear();
+    private Task<IEnumerable<SelectableModel<int>?>> SearchSponsors(string value, CancellationToken token)
+    {
+        var linkedIds = _bindModel.Sponsors.Select(sponsor => sponsor.Key).ToHashSet();
+        IEnumerable<SelectableModel<int>?> available = _sponsorPool.Where(sponsor => !linkedIds.Contains(sponsor.Key));
+        if (!string.IsNullOrWhiteSpace(value))
+        {
+            available = available.Where(sponsor =>
+                sponsor!.DisplayName.Contains(value, StringComparison.OrdinalIgnoreCase));
+        }
+
+        return Task.FromResult(available);
+    }
+
+    private async Task AddSponsor(SelectableModel<int>? sponsor)
+    {
+        if (sponsor is null || sponsor.Key == 0)
+        {
+            return;
+        }
+
+        if (_bindModel.Sponsors.All(existing => existing.Key != sponsor.Key))
+        {
+            _bindModel.Sponsors.Add(sponsor);
+        }
+
+        await _sponsorAutocomplete.ClearAsync();
+    }
 
     private async Task Save()
     {
         await _form.Validate();
-        if (!_form.IsValid)
+        if (!CompanyFieldsAreValid || !ContactsAreValid)
         {
             return;
         }
@@ -74,24 +113,18 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
             return;
         }
 
-        var pointsOfContact = _addPointsOfContact
-            ? _bindModel.PointsOfContact
-                .Where(poc => !string.IsNullOrWhiteSpace(poc.PocFirstName))
-                .Select(poc =>
-                    new CreateCompanyPointOfContactInputModel(
-                        poc.PocFirstName,
-                        poc.PocLastName,
-                        poc.PocNickName,
-                        poc.PocEmail,
-                        poc.PocPhoneNumber,
-                        poc.PocNotes
-                    ))
-                .ToList()
-            : [];
-
-        var sponsors = _linkSponsors
-            ? _bindModel.Sponsors
-            : [];
+        var pointsOfContact = _bindModel.PointsOfContact
+            .Where(contact => !string.IsNullOrWhiteSpace(contact.PocFirstName))
+            .Select(contact =>
+                new CreateCompanyPointOfContactInputModel(
+                    contact.PocFirstName,
+                    contact.PocLastName,
+                    contact.PocNickName,
+                    contact.PocEmail,
+                    contact.PocPhoneNumber,
+                    contact.PocNotes
+                ))
+            .ToList();
 
         var createCompanyInputModel = new CreateCompanyInputModel(
             _bindModel.CompanyName,
@@ -99,7 +132,7 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
             _bindModel.CompanyPhoneNumber,
             _bindModel.CompanyNotes,
             pointsOfContact,
-            sponsors,
+            _bindModel.Sponsors,
             FonbecClaim.UserId
         );
 
@@ -131,19 +164,9 @@ public partial class CompanyCreate : AuthenticationRequiredComponentBase
     private static string? ValidateNameFormat(string? name) =>
         CompanyFieldValidator.IsValidName(name) ? null : "Nombre inválido.";
 
-    private void OnSelectedSponsorChanged(SelectableModel<int> sponsor)
+    private static string ContactHeading(CompanyCreatePointOfContactBindModel contact)
     {
-        if (sponsor is null || sponsor.Key == 0)
-        {
-            return;
-        }
-
-        if (_bindModel.Sponsors.Contains(sponsor))
-        {
-            Snackbar.Add("El padrino ya fue agregado.", Severity.Warning);
-            return;
-        }
-
-        _bindModel.Sponsors.Add(sponsor);
+        var name = $"{contact.PocFirstName} {contact.PocLastName}".Trim();
+        return string.IsNullOrWhiteSpace(name) ? "Nuevo contacto" : name;
     }
 }

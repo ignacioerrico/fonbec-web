@@ -12,7 +12,7 @@ public class CompanyCreateBindModel
 
     public string CompanyNotes { get; set; } = string.Empty;
 
-    public List<CompanyCreatePointOfContactBindModel> PointsOfContact { get; set; } = [new()];
+    public List<CompanyCreatePointOfContactBindModel> PointsOfContact { get; set; } = [];
 
     public List<SelectableModel<int>> Sponsors { get; set; } = [];
 }
@@ -20,7 +20,7 @@ public class CompanyCreateBindModel
 public class CompanyCreatePointOfContactBindModel
 {
     public Guid TempId { get; set; } = Guid.NewGuid();
-    public string PocFirstName { get; set; } = null!;
+    public string PocFirstName { get; set; } = string.Empty;
     public string PocLastName { get; set; } = string.Empty;
     public string PocNickName { get; set; } = string.Empty;
     public string PocEmail { get; set; } = string.Empty;

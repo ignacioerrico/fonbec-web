@@ -27,7 +27,7 @@ else if (_companyName is not null)
         <MudText Typo="Typo.h6">@_companyName</MudText>
     </MudStack>
 
-    <MudForm @ref="_form">
+    <MudForm @ref="_form" ValidationDelay="0">
         <MudGrid Spacing="4">
             <MudItem xs="12" md="7">
                 <MudCard>
@@ -57,7 +57,8 @@ else if (_companyName is not null)
                                 </MudStack>
                                 <MudGrid Spacing="2">
                                     <MudItem xs="12" sm="6">
-                                        <MudTextField T="string" @bind-Value="contact.FirstName" Immediate="true"
+                                        <MudTextField T="string" Value="contact.FirstName" ValueChanged="@(value => SetContactFirstName(contact, value))"
+                                                      Immediate="true" TextUpdateSuppression="false" DebounceInterval="0"
                                                       Required="true" RequiredError="El nombre es obligatorio"
                                                       Label="Nombre" Variant="Variant.Outlined" Margin="Margin.Dense"
                                                       MaxLength="MaxLength.PointOfContact.FirstName" />

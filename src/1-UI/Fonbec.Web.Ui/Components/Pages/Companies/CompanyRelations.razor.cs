@@ -41,7 +41,7 @@ public partial class CompanyRelations : AuthenticationRequiredComponentBase
     [Inject]
     private ICompanyService CompanyService { get; set; } = null!;
 
-    private bool SaveButtonDisabled => Loading || _saving || !ContactsAreValid;
+    private bool SaveButtonDisabled => Loading || _saving;
 
     private bool ContactsAreValid =>
         _contacts.All(contact =>
@@ -98,6 +98,9 @@ public partial class CompanyRelations : AuthenticationRequiredComponentBase
 
     private void AddContact() =>
         _contacts.Add(new CompanyContactEditModel());
+
+    private void SetContactFirstName(CompanyContactEditModel contact, string? value) =>
+        contact.FirstName = value ?? string.Empty;
 
     private void RemoveContact(CompanyContactEditModel contact) =>
         _contacts.Remove(contact);
