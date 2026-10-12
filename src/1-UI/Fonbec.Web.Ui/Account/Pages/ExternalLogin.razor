@@ -1,59 +1,23 @@
 ﻿@page "/Account/ExternalLogin"
 
-@using System.ComponentModel.DataAnnotations
-@using System.Security.Claims
-@using System.Text
-@using System.Text.Encodings.Web
 @using Fonbec.Web.DataAccess.Entities
+@using Fonbec.Web.Ui.Account
 @using Microsoft.AspNetCore.Identity
-@using Microsoft.AspNetCore.WebUtilities
 
 @inject SignInManager<FonbecWebUser> SignInManager
 @inject UserManager<FonbecWebUser> UserManager
-@inject IUserStore<FonbecWebUser> UserStore
-@inject IEmailSender<FonbecWebUser> EmailSender
-@inject NavigationManager NavigationManager
 @inject IdentityRedirectManager RedirectManager
 @inject ILogger<ExternalLogin> Logger
 
-<PageTitle>Registrarse</PageTitle>
+<PageTitle>Iniciar sesión</PageTitle>
 
-<MudText Typo="Typo.h4" Align="Align.Center" GutterBottom="true">Registrarse</MudText>
-<MudText Typo="Typo.body2" Align="Align.Center" Class="mb-6 mud-text-secondary">
-    Asociá tu cuenta de @ProviderDisplayName.
-</MudText>
-
-<StatusMessage Message="@_message" Class="mb-6" />
-
-<MudAlert Severity="Severity.Info" Variant="Variant.Outlined" Class="mb-6">
-    Te autenticaste correctamente con <strong>@ProviderDisplayName</strong>.
-    Ingresá un correo electrónico para este sitio y hacé clic en Registrarse para completar el inicio de sesión.
-</MudAlert>
-
-<EditForm Model="Input" OnValidSubmit="OnValidSubmitAsync" FormName="confirmation" method="post">
-    <DataAnnotationsValidator />
-
-    <MudStack Spacing="3">
-        <MudStaticTextField @bind-Value="Input.Email" For="@(() => Input.Email)"
-                            Label="Correo electrónico" Placeholder="nombre@ejemplo.com" HelperText="Ingresá tu correo electrónico."
-                            UserAttributes="@(new() { { "autocomplete", "email" }, { "aria-required", "true" } })" />
-        <MudStaticButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" FormAction="FormAction.Submit">
-            Registrarse
-        </MudStaticButton>
-    </MudStack>
-</EditForm>
+<MudText Typo="Typo.body1" Align="Align.Center">Redirigiendo…</MudText>
 
 @code {
     public const string LoginCallbackAction = "LoginCallback";
 
-    private string? _message;
-    private ExternalLoginInfo? _externalLoginInfo;
-
     [CascadingParameter]
     private HttpContext HttpContext { get; set; } = null!;
-
-    [SupplyParameterFromForm]
-    private InputModel Input { get; set; } = null!;
 
     [SupplyParameterFromQuery]
     private string? RemoteError { get; set; }
@@ -64,151 +28,105 @@
     [SupplyParameterFromQuery]
     private string? Action { get; set; }
 
-    private string? ProviderDisplayName => _externalLoginInfo?.ProviderDisplayName;
-
-    protected override void OnInitialized()
-    {
-        Input ??= new();
-    }
-
     protected override async Task OnInitializedAsync()
     {
         if (RemoteError is not null)
         {
-            RedirectManager.RedirectToWithStatus("Account/Login", $"Error del proveedor externo: {RemoteError}", HttpContext);
+            Logger.LogWarning("External login failed with remote error {RemoteError}.", RemoteError);
+            RedirectManager.RedirectToWithStatus(
+                "Account/Login",
+                ExternalLoginCopy.RemoteErrorMessage(RemoteError),
+                HttpContext);
+        }
+
+        if (!HttpMethods.IsGet(HttpContext.Request.Method) || Action != LoginCallbackAction)
+        {
+            RedirectManager.RedirectTo("Account/Login");
         }
 
         var info = await SignInManager.GetExternalLoginInfoAsync();
         if (info is null)
         {
-            RedirectManager.RedirectToWithStatus("Account/Login", "Error al cargar la información de inicio de sesión externo.", HttpContext);
+            RedirectManager.RedirectToWithStatus("Account/Login", ExternalLoginCopy.LoadFailed, HttpContext);
         }
 
-        _externalLoginInfo = info;
-
-        if (HttpMethods.IsGet(HttpContext.Request.Method))
-        {
-            if (Action == LoginCallbackAction)
-            {
-                await OnLoginCallbackAsync();
-                return;
-            }
-
-            // We should only reach this page via the login callback, so redirect back to
-            // the login page if we get here some other way.
-            RedirectManager.RedirectTo("Account/Login");
-        }
+        await CompleteLoginAsync(info);
     }
 
-    private async Task OnLoginCallbackAsync()
+    private async Task CompleteLoginAsync(ExternalLoginInfo info)
     {
-        if (_externalLoginInfo is null)
-        {
-            RedirectManager.RedirectToWithStatus("Account/Login", "Error al cargar la información de inicio de sesión externo.", HttpContext);
-        }
-
-        // Sign in the user with this external login provider if the user already has a login.
         var result = await SignInManager.ExternalLoginSignInAsync(
-            _externalLoginInfo!.LoginProvider,
-            _externalLoginInfo!.ProviderKey,
+            info.LoginProvider,
+            info.ProviderKey,
             isPersistent: false,
             bypassTwoFactor: true);
 
-        if (result.Succeeded)
+        var email = ExternalLoginPolicy.ReadEmail(info.Principal);
+        FonbecWebUser? user = null;
+        if (!result.Succeeded && !result.IsLockedOut && !result.IsNotAllowed && email is not null)
         {
-            Logger.LogInformation(
-                "{Name} logged in with {LoginProvider} provider.",
-                _externalLoginInfo.Principal.Identity?.Name,
-                _externalLoginInfo.LoginProvider);
-            RedirectManager.RedirectTo(ReturnUrl);
+            user = await UserManager.FindByEmailAsync(email);
         }
-        else if (result.IsLockedOut)
+
+        var userLockedOut = user is not null && await UserManager.IsLockedOutAsync(user);
+        var decision = ExternalLoginPolicy.Decide(
+            alreadySignedIn: result.Succeeded,
+            alreadyLinkedAndLockedOut: result.IsLockedOut,
+            alreadyLinkedAndNotAllowed: result.IsNotAllowed,
+            matchingUserExists: user is not null,
+            matchingUserLockedOut: userLockedOut);
+
+        switch (decision)
+        {
+            case ExternalLoginDecision.SignIn:
+                Logger.LogInformation("User signed in with {LoginProvider}.", info.LoginProvider);
+                RedirectManager.RedirectTo(ReturnUrl);
+                break;
+            case ExternalLoginDecision.Lockout:
+                Logger.LogWarning("External sign-in denied because the account is locked out.");
+                RedirectManager.RedirectTo("Account/Lockout");
+                break;
+            case ExternalLoginDecision.NotAllowed:
+                RedirectManager.RedirectToWithStatus("Account/Login", ExternalLoginCopy.NotAllowed, HttpContext);
+                break;
+            case ExternalLoginDecision.NotProvisioned:
+                Logger.LogInformation("External sign-in denied because no matching FONBEC user exists.");
+                RedirectManager.RedirectToWithStatus("Account/Login", ExternalLoginCopy.NotProvisioned, HttpContext);
+                break;
+            case ExternalLoginDecision.LinkAndSignIn:
+                if (user is null)
+                {
+                    RedirectManager.RedirectToWithStatus("Account/Login", ExternalLoginCopy.NotProvisioned, HttpContext);
+                }
+
+                await LinkAndSignInAsync(user, info);
+                break;
+        }
+    }
+
+    private async Task LinkAndSignInAsync(FonbecWebUser user, ExternalLoginInfo info)
+    {
+        if (await UserManager.IsLockedOutAsync(user))
         {
             RedirectManager.RedirectTo("Account/Lockout");
         }
 
-        // If the user does not have an account, then ask the user to create an account.
-        if (_externalLoginInfo.Principal.HasClaim(c => c.Type == ClaimTypes.Email))
+        var addLogin = await UserManager.AddLoginAsync(user, info);
+        if (!addLogin.Succeeded)
         {
-            Input.Email = _externalLoginInfo.Principal.FindFirstValue(ClaimTypes.Email) ?? "";
-        }
-    }
-
-    private async Task OnValidSubmitAsync()
-    {
-        if (Input is null)
-        {
-            return;
+            Logger.LogWarning(
+                "Could not link {LoginProvider} for user {UserId}: {Errors}",
+                info.LoginProvider,
+                user.Id,
+                string.Join(", ", addLogin.Errors.Select(error => error.Description)));
+            RedirectManager.RedirectToWithStatus("Account/Login", ExternalLoginCopy.LinkFailed, HttpContext);
         }
 
-        if (_externalLoginInfo is null)
-        {
-            RedirectManager.RedirectToWithStatus("Account/Login", "Error al cargar la información de inicio de sesión externo durante la confirmación.", HttpContext);
-        }
-
-        var emailStore = GetEmailStore();
-        var user = CreateUser();
-
-        await UserStore.SetUserNameAsync(user, Input.Email, CancellationToken.None);
-        await emailStore.SetEmailAsync(user, Input.Email, CancellationToken.None);
-
-        var result = await UserManager.CreateAsync(user);
-        if (result.Succeeded)
-        {
-            result = await UserManager.AddLoginAsync(user, _externalLoginInfo);
-            if (result.Succeeded)
-            {
-                Logger.LogInformation("User created an account using {Name} provider.", _externalLoginInfo.LoginProvider);
-
-                var userId = await UserManager.GetUserIdAsync(user);
-                var code = await UserManager.GenerateEmailConfirmationTokenAsync(user);
-                code = WebEncoders.Base64UrlEncode(Encoding.UTF8.GetBytes(code));
-
-                var callbackUrl = NavigationManager.GetUriWithQueryParameters(
-                    NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
-                    new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code });
-                await EmailSender.SendConfirmationLinkAsync(user, Input.Email, HtmlEncoder.Default.Encode(callbackUrl));
-
-                // If account confirmation is required, we need to show the link if we don't have a real email sender
-                if (UserManager.Options.SignIn.RequireConfirmedAccount)
-                {
-                    RedirectManager.RedirectTo("Account/RegisterConfirmation", new() { ["email"] = Input.Email });
-                }
-
-                await SignInManager.SignInAsync(user, isPersistent: false, _externalLoginInfo.LoginProvider);
-                RedirectManager.RedirectTo(ReturnUrl);
-            }
-        }
-
-        _message = $"Error: {string.Join(",", result.Errors.Select(error => error.Description))}";
-    }
-
-    private static FonbecWebUser CreateUser()
-    {
-        try
-        {
-            return Activator.CreateInstance<FonbecWebUser>();
-        }
-        catch
-        {
-            throw new InvalidOperationException($"Can't create an instance of '{nameof(FonbecWebUser)}'. " +
-                $"Ensure that '{nameof(FonbecWebUser)}' is not an abstract class and has a parameterless constructor");
-        }
-    }
-
-    private IUserEmailStore<FonbecWebUser> GetEmailStore()
-    {
-        if (!UserManager.SupportsUserEmail)
-        {
-            throw new NotSupportedException("The default UI requires a user store with email support.");
-        }
-        return (IUserEmailStore<FonbecWebUser>)UserStore;
-    }
-
-    private sealed class InputModel
-    {
-        [Required]
-        [EmailAddress]
-        public string Email { get; set; } = "";
+        await SignInManager.SignInAsync(user, isPersistent: false, info.LoginProvider);
+        Logger.LogInformation(
+            "Linked {LoginProvider} and signed in user {UserId}.",
+            info.LoginProvider,
+            user.Id);
+        RedirectManager.RedirectTo(ReturnUrl);
     }
 }

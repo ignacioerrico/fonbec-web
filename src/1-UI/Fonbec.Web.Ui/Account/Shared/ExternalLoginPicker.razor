@@ -1,4 +1,5 @@
 ﻿@using Fonbec.Web.DataAccess.Entities
+@using Fonbec.Web.Ui.Account
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Identity
 
@@ -19,10 +20,16 @@
                 @foreach (var provider in _externalLogins)
                 {
                     <button type="submit"
-                            class="mud-button-root mud-button mud-button-outlined mud-button-outlined-primary mud-ripple mud-width-full"
+                            class="mud-button-root mud-button mud-button-outlined mud-button-outlined-primary mud-button-outlined-size-medium mud-ripple mud-width-full"
                             name="provider"
                             value="@provider.Name">
-                        @provider.DisplayName
+                        <span class="mud-button-label">
+                            @if (ExternalLoginCopy.IsGoogle(provider.Name))
+                            {
+                                <MudIcon Icon="@Icons.Custom.Brands.Google" Class="mr-2" />
+                            }
+                            @ExternalLoginCopy.SignInButtonText(provider.Name, provider.DisplayName)
+                        </span>
                     </button>
                 }
             </MudStack>

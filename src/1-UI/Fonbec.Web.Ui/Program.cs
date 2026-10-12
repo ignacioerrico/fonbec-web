@@ -6,7 +6,9 @@ using Fonbec.Web.Ui.Account;
 using Fonbec.Web.Ui.Components;
 using Fonbec.Web.Ui.Configuration;
 using Fonbec.Web.Ui.Constants;
+using Google.Apis.Auth.AspNetCore3;
 using Mapster;
+using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Components.Authorization;
 using Microsoft.AspNetCore.Identity;
 
@@ -43,6 +45,27 @@ builder.Services.AddAuthentication(options =>
         options.DefaultSignInScheme = IdentityConstants.ExternalScheme;
     })
     .AddIdentityCookies();
+
+var googleClientId = builder.Configuration["Authentication:Google:ClientId"];
+var googleClientSecret = builder.Configuration["Authentication:Google:ClientSecret"];
+var googleSignInConfigured = !string.IsNullOrWhiteSpace(googleClientId)
+                             && !string.IsNullOrWhiteSpace(googleClientSecret);
+if (googleSignInConfigured)
+{
+    builder.Services.AddAuthentication().AddGoogleOpenIdConnect(
+        GoogleOpenIdConnectDefaults.AuthenticationScheme,
+        "Google",
+        googleOptions =>
+        {
+            googleOptions.ClientId = googleClientId;
+            googleOptions.ClientSecret = googleClientSecret;
+            // OpenID Connect's default callback is /signin-oidc. The Cloud Console
+            // redirect URI for this app is /signin-google.
+            googleOptions.CallbackPath = "/signin-google";
+            googleOptions.Events ??= new OpenIdConnectEvents();
+            googleOptions.Events.OnRemoteFailure = GoogleSignInFailure.Handle;
+        });
+}
 
 var defaultLockoutTimeSpanInMinutes = builder.Configuration.GetValue<int>("Identity:Lockout:DefaultLockoutTimeSpanInMinutes");
 
@@ -83,6 +106,19 @@ TypeAdapterConfig.GlobalSettings.Scan(logicAssembly);
 
 var app = builder.Build();
 
+if (googleSignInConfigured)
+{
+    app.Logger.LogInformation("Google sign-in is enabled.");
+}
+else if (!string.IsNullOrWhiteSpace(googleClientId) || !string.IsNullOrWhiteSpace(googleClientSecret))
+{
+    app.Logger.LogWarning("Google sign-in is disabled because ClientId and ClientSecret must both be configured.");
+}
+else
+{
+    app.Logger.LogInformation("Google sign-in is disabled because credentials are not configured.");
+}
+
 // Configure the HTTP request pipeline.
 
 await ConfigureMiddleware.ApplyMigrationsAndSeedingAsync(app, applySeeding: false);
@@ -102,6 +138,9 @@ else
 }
 
 app.UseHttpsRedirection();
+
+app.UseAuthentication();
+app.UseAuthorization();
 
 app.UseAntiforgery();
 

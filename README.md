@@ -229,3 +229,32 @@ Add this to your user secrets.
 
 The values above correspond to the default values used by ASP.NET Core
 Indentity.
+
+### Sign in with Google
+
+Google is an alternate way for an **existing** user to sign in. It does not
+create accounts, and it does not assign a role, chapter, or permissions. An
+Admin or Coordinador still creates the user in **Alta de usuario**. The Google
+account email must match that user's email.
+
+If `ClientId` and `ClientSecret` are missing, the app starts normally and the
+login page does not show a Google button.
+
+Create a **Web application** OAuth client in [Google API &
+Services](https://console.cloud.google.com/apis) and add this authorized
+redirect URI for local HTTPS (`launchSettings.json`, profile `https`):
+
+`https://localhost:7038/signin-google`
+
+For each deployed host, add `https://{host}/signin-google` as well.
+
+Store the credentials outside source control. For local development, in the UI
+project:
+
+```bash
+dotnet user-secrets set "Authentication:Google:ClientId" "{CLIENT_ID}" --project src/1-UI/Fonbec.Web.Ui
+dotnet user-secrets set "Authentication:Google:ClientSecret" "{CLIENT_SECRET}" --project src/1-UI/Fonbec.Web.Ui
+```
+
+In production, set `Authentication__Google__ClientId` and
+`Authentication__Google__ClientSecret`. Do not commit the values.
