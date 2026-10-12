@@ -691,6 +691,11 @@ namespace Fonbec.Web.DataAccess.Migrations
                     b.Property<byte>("Gender")
                         .HasColumnType("tinyint");
 
+                    b.Property<bool>("IsDarkMode")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(false);
+
                     b.Property<string>("LastName")
                         .IsRequired()
                         .HasMaxLength(40)

@@ -1,6 +1,8 @@
+@using Fonbec.Web.Ui.Account
+@inject RequestTheme RequestTheme
 @inherits LayoutComponentBase
 
-<MudThemeProvider />
+<MudThemeProvider IsDarkMode="_isDarkMode" />
 <MudPopoverProvider />
 <MudDialogProvider />
 <MudSnackbarProvider />
@@ -17,3 +19,12 @@
         </div>
     </main>
 </div>
+
+@code {
+    private bool _isDarkMode;
+
+    protected override void OnInitialized()
+    {
+        _isDarkMode = RequestTheme.IsDark;
+    }
+}

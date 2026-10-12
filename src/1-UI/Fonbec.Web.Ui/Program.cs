@@ -32,6 +32,7 @@ builder.Services.Configure<Microsoft.AspNetCore.Server.Kestrel.Core.KestrelServe
     options.Limits.MaxRequestBodySize = maxUploadMessageSize);
 
 builder.Services.AddCascadingAuthenticationState();
+builder.Services.AddScoped<RequestTheme>();
 builder.Services.AddScoped<IdentityUserAccessor>();
 builder.Services.AddScoped<IdentityRedirectManager>();
 builder.Services.AddScoped<AuthenticationStateProvider, IdentityRevalidatingAuthenticationStateProvider>();
@@ -64,7 +65,7 @@ builder.Services.AddIdentityCore<FonbecWebUser>(options =>
     })
     .AddRoles<FonbecWebRole>()
     .AddEntityFrameworkStores<FonbecWebDbContext>()
-    .AddSignInManager()
+    .AddSignInManager<FonbecSignInManager>()
     .AddErrorDescriber<SpanishIdentityErrorDescriber>()
     .AddDefaultTokenProviders();
 
@@ -103,6 +104,13 @@ else
 app.UseHttpsRedirection();
 
 app.UseAntiforgery();
+
+app.Use(async (context, next) =>
+{
+    var requestTheme = context.RequestServices.GetRequiredService<RequestTheme>();
+    requestTheme.IsDark = ThemeCookie.IsDark(context.Request);
+    await next();
+});
 
 app.MapStaticAssets();
 app.MapRazorComponents<App>()

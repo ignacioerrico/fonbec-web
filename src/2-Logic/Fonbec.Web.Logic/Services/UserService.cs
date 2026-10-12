@@ -23,6 +23,8 @@ public interface IUserService
     Task<List<UsersListViewModel>> GetAllUsersAsync(int? chapterId);
     Task<List<SelectableModel<int>>> GetAllUsersInRoleForSelectionAsync(string role, int? chapterId = null);
     Task<GetUserOutputModel> GetUserAsync(int userId);
+    Task<bool> GetIsDarkModeAsync(int userId);
+    Task SetIsDarkModeAsync(int userId, bool isDarkMode);
     Task<(int userId, List<string> errors)> CreateUserAsync(CreateUserInputModel model);
     Task<bool> UpdateUserAsync(UpdateUserInputModel model);
     Task<List<string>> DisableUserAsync(DisableUserInputModel model);
@@ -109,6 +111,16 @@ public class UserService(
     {
         var getUserOutputDataModel = await userRepository.GetUserAsync(userId);
         return getUserOutputDataModel.Adapt<GetUserOutputModel>();
+    }
+
+    public async Task<bool> GetIsDarkModeAsync(int userId)
+    {
+        return await userRepository.GetIsDarkModeAsync(userId);
+    }
+
+    public async Task SetIsDarkModeAsync(int userId, bool isDarkMode)
+    {
+        await userRepository.SetIsDarkModeAsync(userId, isDarkMode);
     }
 
     public async Task<(int userId, List<string> errors)> CreateUserAsync(CreateUserInputModel model)
