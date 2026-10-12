@@ -1,7 +1,7 @@
 @inherits LayoutComponentBase
 
 @* Required *@
-<MudThemeProvider />
+<MudThemeProvider IsDarkMode="_isDarkMode" />
 <MudPopoverProvider />
 
 @* Needed for dialogs *@
@@ -26,6 +26,35 @@
             <MudText Typo="Typo.h6" Class="ml-1">@chapterName</MudText>
         </AuthorizeView>
         <MudSpacer />
+        <AuthorizeView>
+            <MudTooltip Text="@ThemeTooltip">
+                @if (IsStaticRender)
+                {
+                    <form method="post" action="Account/Theme" class="d-inline-flex">
+                        <AntiforgeryToken />
+                        <input type="hidden" name="isDark" value="@NextIsDarkValue" />
+                        <input type="hidden" name="returnUrl" value="@ReturnUrl" />
+                        <MudIconButton id="theme-toggle"
+                                       Icon="@ThemeIcon"
+                                       Color="Color.Inherit"
+                                       title="@ThemeTooltip"
+                                       aria-label="@ThemeTooltip"
+                                       ButtonType="ButtonType.Submit"
+                                       Class="ml-2" />
+                    </form>
+                }
+                else
+                {
+                    <MudIconButton id="theme-toggle"
+                                   Icon="@ThemeIcon"
+                                   Color="Color.Inherit"
+                                   title="@ThemeTooltip"
+                                   aria-label="@ThemeTooltip"
+                                   OnClick="ToggleThemeAsync"
+                                   Class="ml-2" />
+                }
+            </MudTooltip>
+        </AuthorizeView>
     </MudAppBar>
     <MudDrawer id="nav-drawer" Open="true" ClipMode="DrawerClipMode.Always" Elevation="2">
         <NavMenu />

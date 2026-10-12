@@ -35,6 +35,9 @@ internal class FonbecUserConfiguration : IEntityTypeConfiguration<FonbecWebUser>
         builder.Property(u => u.Notes)
             .HasMaxLength(MaxLength.Auditable.Notes);
 
+        builder.Property(u => u.IsDarkMode)
+            .HasDefaultValue(false);
+
         builder.HasOne(u => u.Chapter)
             .WithMany()
             .HasForeignKey(u => u.ChapterId)

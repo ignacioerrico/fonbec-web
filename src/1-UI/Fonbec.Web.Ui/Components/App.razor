@@ -16,11 +16,21 @@
 </head>
 
 <body>
-    <Routes @rendermode="PageRenderMode" />
+    @if (PageRenderMode is null)
+    {
+        <CascadingValue Value="HttpContext" IsFixed="true">
+            <Routes />
+        </CascadingValue>
+    }
+    else
+    {
+        <Routes @rendermode="PageRenderMode" />
+    }
     <script src="_framework/blazor.web.js"></script>
     <script src="@Assets["_content/MudBlazor/MudBlazor.min.js"]"></script>
     <script src="@Assets["_content/Extensions.MudBlazor.StaticInput/NavigationObserver.js"]"></script>
     <script src="@Assets["password-visibility.js"]"></script>
+    <script src="@Assets["theme.js"]"></script>
     <script src="@Assets["copy-text.js"]"></script>
     <script src="@Assets["_content/CodeBeam.MudBlazor.Extensions/MudExtensions.min.js"]"></script>
     <script src="@Assets["lib/canvas-confetti/dist/confetti.browser.min.js"]"></script>

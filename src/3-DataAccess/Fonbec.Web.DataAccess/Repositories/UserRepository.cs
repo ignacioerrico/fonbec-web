@@ -28,6 +28,8 @@ public interface IUserRepository
     Task<Dictionary<int, string>> GetUserClaimsOfTypeAsync(string claimType);
     Task SetUserClaim(string userId, string claimType, string claimValue);
     Task RemoveUserClaim(string userId, string claimType);
+    Task<bool> GetIsDarkModeAsync(int userId);
+    Task SetIsDarkModeAsync(int userId, bool isDarkMode);
 }
 
 public class UserRepository(
@@ -446,5 +448,30 @@ public class UserRepository(
         {
             await userManager.RemoveClaimAsync(fonbecUser, claim);
         }
+    }
+
+    public async Task<bool> GetIsDarkModeAsync(int userId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+        var isDarkMode = await db.Users
+            .AsNoTracking()
+            .Where(u => u.Id == userId)
+            .Select(u => (bool?)u.IsDarkMode)
+            .SingleOrDefaultAsync();
+
+        return isDarkMode ?? false;
+    }
+
+    public async Task SetIsDarkModeAsync(int userId, bool isDarkMode)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+        var user = await db.Users.SingleOrDefaultAsync(u => u.Id == userId);
+        if (user is null || user.IsDarkMode == isDarkMode)
+        {
+            return;
+        }
+
+        user.IsDarkMode = isDarkMode;
+        await db.SaveChangesAsync();
     }
 }

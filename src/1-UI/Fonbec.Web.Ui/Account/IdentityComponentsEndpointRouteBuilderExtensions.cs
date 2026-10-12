@@ -1,6 +1,7 @@
 using System.Security.Claims;
 using System.Text.Json;
 using Fonbec.Web.DataAccess.Entities;
+using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Ui.Account.Pages;
 using Fonbec.Web.Ui.Account.Pages.Manage;
 using Microsoft.AspNetCore.Authentication;
@@ -46,8 +47,27 @@ internal static class IdentityComponentsEndpointRouteBuilderExtensions
             [FromForm] string returnUrl) =>
         {
             await signInManager.SignOutAsync();
+            // Fonbec.Theme stays so this browser keeps the theme on the login page.
             return TypedResults.LocalRedirect($"~/{returnUrl}");
         });
+
+        accountGroup.MapPost("/Theme", async (
+            HttpContext context,
+            ClaimsPrincipal user,
+            [FromServices] IUserService userService,
+            [FromForm] bool isDark,
+            [FromForm] string? returnUrl) =>
+        {
+            var userIdValue = user.FindFirstValue(ClaimTypes.NameIdentifier);
+            if (!int.TryParse(userIdValue, out var userId))
+            {
+                return Results.Unauthorized();
+            }
+
+            await userService.SetIsDarkModeAsync(userId, isDark);
+            ThemeCookie.Set(context.Response, isDark);
+            return Results.LocalRedirect(ThemeCookie.NormalizeReturnUrl(returnUrl));
+        }).RequireAuthorization();
 
         var manageGroup = accountGroup.MapGroup("/Manage").RequireAuthorization();
 

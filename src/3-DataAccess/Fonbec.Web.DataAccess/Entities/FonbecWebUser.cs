@@ -21,6 +21,11 @@ public class FonbecWebUser : IdentityUser<int>
     public string? Notes { get; set; }
 
     /// <summary>
+    /// When <see langword="true"/>, the app uses the dark theme. Light (<see langword="false"/>) is the default.
+    /// </summary>
+    public bool IsDarkMode { get; set; }
+
+    /// <summary>
     /// Branch Office this user belongs to; set to <value>null</value> to make it a global user.
     /// </summary>
     public int? ChapterId { get; set; }
