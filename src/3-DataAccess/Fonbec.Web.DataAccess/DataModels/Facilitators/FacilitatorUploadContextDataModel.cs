@@ -18,14 +18,14 @@ public class FacilitatorUploadContextDataModel
 
     public DateTime? UniversityStartYear { get; init; }
 
-    /// <summary>Populated only when a <c>planId</c> is supplied (letter uploads).</summary>
+    /// <summary>Populated only when the supplied <c>planId</c> is an open plan for the student's chapter (letter uploads).</summary>
     public DateTime? PlanStartsOn { get; init; }
 
-    /// <summary>Populated only when a <c>sponsorId</c> is supplied (sponsor-based letter).</summary>
+    /// <summary>Populated only when the supplied <c>sponsorId</c> sponsors the student on that plan.</summary>
     public string? SponsorFirstName { get; init; }
 
     public string? SponsorLastName { get; init; }
 
-    /// <summary>Populated only when a <c>companyId</c> is supplied (company-based letter).</summary>
+    /// <summary>Populated only when the supplied <c>companyId</c> sponsors the student on that plan.</summary>
     public string? CompanyName { get; init; }
 }
