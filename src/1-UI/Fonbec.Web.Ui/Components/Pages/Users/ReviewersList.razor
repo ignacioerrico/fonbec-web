@@ -1,0 +1,12 @@
+@attribute [Route(NavRoutes.Reviewers)]
+@attribute [Authorize(Policy = nameof(ReviewersList))]
+
+@using Fonbec.Web.DataAccess.Constants
+
+<RoleUsersList Title="Revisores"
+               Role="@FonbecRole.Reviewer"
+               EmptyMessage="No hay revisores."
+               CreateRoute="@NavRoutes.ReviewerCreate"
+               CreateTooltip="Alta de revisor"
+               CreatePolicy="@nameof(ReviewerCreate)"
+               ShowDigitalImprovement="true" />

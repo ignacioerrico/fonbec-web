@@ -1,0 +1,8 @@
+@attribute [Route(NavRoutes.MediatorCreate)]
+@attribute [Authorize(Policy = nameof(MediatorCreate))]
+
+@using Fonbec.Web.DataAccess.Constants
+
+<RoleUserCreate Title="Alta de mediador"
+                Role="@FonbecRole.Uploader"
+                CancelRoute="@NavRoutes.Mediators" />

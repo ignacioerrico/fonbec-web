@@ -1,0 +1,8 @@
+@attribute [Route(NavRoutes.ReviewerCreate)]
+@attribute [Authorize(Policy = nameof(ReviewerCreate))]
+
+@using Fonbec.Web.DataAccess.Constants
+
+<RoleUserCreate Title="Alta de revisor"
+                Role="@FonbecRole.Reviewer"
+                CancelRoute="@NavRoutes.Reviewers" />

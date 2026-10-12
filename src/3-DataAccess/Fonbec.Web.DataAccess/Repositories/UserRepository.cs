@@ -17,6 +17,7 @@ public interface IUserRepository
     Task<(bool isPasswordValid, List<string> errors)> ValidatePasswordAsync(string password);
     Task<AllUsersDataModel> GetAllUsersAsync(int? chapterId);
     Task<IEnumerable<SelectableDataModel<int>>> GetAllUsersInRoleForSelectionAsync(string role, int? chapterId = null);
+    Task<int> CountUsersInRoleAsync(string role, int? chapterId);
     Task<IReadOnlyList<ChapterManagerContactDataModel>> GetChapterManagerContactsAsync(int chapterId);
     Task<GetUserOutputDataModel?> GetUserAsync(int userId);
     Task<(int userId, List<string> errors)> CreateUserAsync(CreateUserInputDataModel model);
@@ -145,6 +146,20 @@ public class UserRepository(
             .OrderBy(u => u.Value);
 
         return activeUsers;
+    }
+
+    public async Task<int> CountUsersInRoleAsync(string role, int? chapterId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        return await (
+            from user in db.Users.AsNoTracking()
+            join userRole in db.UserRoles on user.Id equals userRole.UserId
+            join identityRole in db.Roles on userRole.RoleId equals identityRole.Id
+            where identityRole.Name == role
+                  && (chapterId == null || user.ChapterId == chapterId)
+            select user.Id
+        ).CountAsync();
     }
 
     public async Task<IReadOnlyList<ChapterManagerContactDataModel>> GetChapterManagerContactsAsync(int chapterId)

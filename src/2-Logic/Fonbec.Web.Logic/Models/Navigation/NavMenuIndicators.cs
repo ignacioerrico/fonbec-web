@@ -10,6 +10,10 @@ public sealed class NavMenuIndicators
 
     public int? CompanyCount { get; init; }
 
+    public int? MediatorCount { get; init; }
+
+    public int? ReviewerCount { get; init; }
+
     /// <summary>Completion of the chapter's open campaign, or null when there is no open campaign.</summary>
     public int? CampaignCompletionPercent { get; init; }
 

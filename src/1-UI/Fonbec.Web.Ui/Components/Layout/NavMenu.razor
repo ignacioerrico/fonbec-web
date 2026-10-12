@@ -46,6 +46,34 @@
                     </MudNavGroup>
                 </AuthorizeView>
 
+                <AuthorizeView Roles="@FonbecRole.Manager">
+                    <MudNavGroup Title="Usuarios" Icon="@Icons.Material.Filled.AccountBox" Expanded="true">
+                        <AuthorizeView Policy="@nameof(MediatorsList)" Context="mediatorsContext">
+                            <MudNavLink Href="@NavRoutes.Mediators" Match="NavLinkMatch.Prefix">
+                                <span class="nav-count">
+                                    <span class="nav-count__label">Mediadores</span>
+                                    @if (_indicators.MediatorCount is int mediators)
+                                    {
+                                        <span class="nav-count__note">@NavMenuFormatting.CountNote(mediators)</span>
+                                    }
+                                </span>
+                            </MudNavLink>
+                        </AuthorizeView>
+
+                        <AuthorizeView Policy="@nameof(ReviewersList)" Context="reviewersContext">
+                            <MudNavLink Href="@NavRoutes.Reviewers" Match="NavLinkMatch.Prefix">
+                                <span class="nav-count">
+                                    <span class="nav-count__label">Revisores</span>
+                                    @if (_indicators.ReviewerCount is int reviewers)
+                                    {
+                                        <span class="nav-count__note">@NavMenuFormatting.CountNote(reviewers)</span>
+                                    }
+                                </span>
+                            </MudNavLink>
+                        </AuthorizeView>
+                    </MudNavGroup>
+                </AuthorizeView>
+
                 <AuthorizeView Roles="@($"{FonbecRole.Admin},{FonbecRole.Manager}")" Context="sponsorshipsContext">
                     <MudNavGroup Title="Apadrinamientos" Icon="@Icons.Material.Filled.Handshake" Expanded="true">
                         <AuthorizeView Policy="@nameof(StudentsList)" Context="studentsContext">

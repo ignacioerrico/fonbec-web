@@ -8,7 +8,7 @@ using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.Pages.Users;
 
-[PageMetadata(nameof(UserCreate), "Crear y actualizar usuarios", [FonbecRole.Admin, FonbecRole.Manager])]
+[PageMetadata(nameof(UserCreate), "Crear y actualizar usuarios", [FonbecRole.Admin])]
 public partial class UserCreate : AuthenticationRequiredComponentBase
 {
     private readonly UserCreateBindModel _bindModel = new();

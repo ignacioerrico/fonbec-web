@@ -13,7 +13,7 @@
 }
 else if (NoFacilitatorsForCurrentChapter)
 {
-    <MudAlert Severity="Severity.Error">No hay mediadores. Para dar de alta becarios se requiere <MudLink Href="@NavRoutes.UserCreate" Typo="Typo.body2">al menos un mediador</MudLink>.</MudAlert>
+    <MudAlert Severity="Severity.Error">No hay mediadores. Para dar de alta becarios se requiere <MudLink Href="@(UserRole == FonbecRole.Manager ? NavRoutes.MediatorCreate : NavRoutes.UserCreate)" Typo="Typo.body2">al menos un mediador</MudLink>.</MudAlert>
 }
 
 <LoadingIndicator Loading="Loading" />

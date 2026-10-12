@@ -19,6 +19,7 @@ public class NavMenuServiceTests
     private readonly IStudentRepository _students = Substitute.For<IStudentRepository>();
     private readonly ISponsorRepository _sponsors = Substitute.For<ISponsorRepository>();
     private readonly ICompanyRepository _companies = Substitute.For<ICompanyRepository>();
+    private readonly IUserRepository _users = Substitute.For<IUserRepository>();
     private readonly ILetterFollowUpRepository _followUp = Substitute.For<ILetterFollowUpRepository>();
     private readonly IPlannedDeliveryRepository _plans = Substitute.For<IPlannedDeliveryRepository>();
     private readonly ILetterPlanProgressService _progress = Substitute.For<ILetterPlanProgressService>();
@@ -30,6 +31,7 @@ public class NavMenuServiceTests
         _students.CountStudentsAsync(Arg.Any<int?>()).Returns(0);
         _sponsors.CountSponsorsAsync(Arg.Any<int?>()).Returns(0);
         _companies.CountCompaniesAsync().Returns(0);
+        _users.CountUsersInRoleAsync(Arg.Any<string>(), Arg.Any<int?>()).Returns(0);
         _followUp.CountOpenFlagsAsync(Arg.Any<int>()).Returns(new OpenFlagCounts(0, 0));
         _plans.GetCurrentPlanAsync(Arg.Any<int>()).Returns((CurrentPlannedDeliveryDataModel?)null);
         _documents.GetGlobalReviewProgressAsync(Arg.Any<int?>()).Returns(new ReviewProgressDataModel());
@@ -38,6 +40,7 @@ public class NavMenuServiceTests
             _students,
             _sponsors,
             _companies,
+            _users,
             _followUp,
             _plans,
             _progress,
@@ -50,6 +53,8 @@ public class NavMenuServiceTests
         _students.CountStudentsAsync(ChapterId).Returns(18);
         _sponsors.CountSponsorsAsync(ChapterId).Returns(9);
         _companies.CountCompaniesAsync().Returns(3);
+        _users.CountUsersInRoleAsync(FonbecRole.Uploader, ChapterId).Returns(7);
+        _users.CountUsersInRoleAsync(FonbecRole.Reviewer, ChapterId).Returns(2);
         _followUp.CountOpenFlagsAsync(ChapterId).Returns(new OpenFlagCounts(2, 5));
         _plans.GetCurrentPlanAsync(ChapterId).Returns(new CurrentPlannedDeliveryDataModel
         {
@@ -69,6 +74,8 @@ public class NavMenuServiceTests
         indicators.StudentCount.Should().Be(18);
         indicators.SponsorCount.Should().Be(9);
         indicators.CompanyCount.Should().Be(3);
+        indicators.MediatorCount.Should().Be(7);
+        indicators.ReviewerCount.Should().Be(2);
         indicators.CampaignCompletionPercent.Should().Be(37);
         indicators.RedFlags.Should().Be(2);
         indicators.GreenFlags.Should().Be(5);
@@ -127,12 +134,15 @@ public class NavMenuServiceTests
         indicators.StudentCount.Should().Be(40);
         indicators.SponsorCount.Should().Be(12);
         indicators.CompanyCount.Should().BeNull();
+        indicators.MediatorCount.Should().BeNull();
+        indicators.ReviewerCount.Should().BeNull();
         indicators.CampaignCompletionPercent.Should().BeNull();
         indicators.RedFlags.Should().Be(0);
         indicators.GreenFlags.Should().Be(0);
         indicators.PendingReview.Should().BeNull();
         indicators.PendingImprovement.Should().BeNull();
         await _companies.DidNotReceive().CountCompaniesAsync();
+        await _users.DidNotReceive().CountUsersInRoleAsync(Arg.Any<string>(), Arg.Any<int?>());
         await _plans.DidNotReceive().GetCurrentPlanAsync(Arg.Any<int>());
         await _documents.DidNotReceive().GetGlobalReviewProgressAsync(Arg.Any<int?>());
     }
@@ -152,6 +162,7 @@ public class NavMenuServiceTests
         indicators.PendingImprovement.Should().Be(1);
         await _students.DidNotReceive().CountStudentsAsync(Arg.Any<int?>());
         await _companies.DidNotReceive().CountCompaniesAsync();
+        await _users.DidNotReceive().CountUsersInRoleAsync(Arg.Any<string>(), Arg.Any<int?>());
     }
 
     [Fact]
@@ -161,6 +172,7 @@ public class NavMenuServiceTests
 
         indicators.Should().BeEquivalentTo(NavMenuIndicators.Empty);
         await _students.DidNotReceive().CountStudentsAsync(Arg.Any<int?>());
+        await _users.DidNotReceive().CountUsersInRoleAsync(Arg.Any<string>(), Arg.Any<int?>());
         await _documents.DidNotReceive().GetGlobalReviewProgressAsync(Arg.Any<int?>());
     }
 

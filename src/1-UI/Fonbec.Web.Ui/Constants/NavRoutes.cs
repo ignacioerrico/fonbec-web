@@ -12,6 +12,14 @@ public static class NavRoutes
 
     public const string UserCreate = $"{Users}/alta";
 
+    public const string Mediators = $"{Users}/mediadores";
+
+    public const string MediatorCreate = $"{Mediators}/alta";
+
+    public const string Reviewers = $"{Users}/revisores";
+
+    public const string ReviewerCreate = $"{Reviewers}/alta";
+
     public static string UsersUserIdPermissions(int userId) => $"{Users}/{userId}/permisos";
 
     public const string PlannedDeliveries = "/planificaciones";

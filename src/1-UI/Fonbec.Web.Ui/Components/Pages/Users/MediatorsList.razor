@@ -1,0 +1,11 @@
+@attribute [Route(NavRoutes.Mediators)]
+@attribute [Authorize(Policy = nameof(MediatorsList))]
+
+@using Fonbec.Web.DataAccess.Constants
+
+<RoleUsersList Title="Mediadores"
+               Role="@FonbecRole.Uploader"
+               EmptyMessage="No hay mediadores."
+               CreateRoute="@NavRoutes.MediatorCreate"
+               CreateTooltip="Alta de mediador"
+               CreatePolicy="@nameof(MediatorCreate)" />

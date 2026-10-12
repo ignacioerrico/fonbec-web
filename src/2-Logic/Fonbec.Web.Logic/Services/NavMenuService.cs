@@ -15,6 +15,7 @@ public sealed class NavMenuService(
     IStudentRepository studentRepository,
     ISponsorRepository sponsorRepository,
     ICompanyRepository companyRepository,
+    IUserRepository userRepository,
     ILetterFollowUpRepository letterFollowUpRepository,
     IPlannedDeliveryRepository plannedDeliveryRepository,
     ILetterPlanProgressService letterPlanProgressService,
@@ -25,6 +26,8 @@ public sealed class NavMenuService(
         Task<int>? students = null;
         Task<int>? sponsors = null;
         Task<int>? companies = null;
+        Task<int>? mediators = null;
+        Task<int>? reviewers = null;
         Task<int?>? campaignPercent = null;
         Task<OpenFlagCounts>? flags = null;
         Task<ReviewProgressDataModel>? progress = null;
@@ -42,7 +45,11 @@ public sealed class NavMenuService(
         if (role == FonbecRole.Manager)
         {
             companies = companyRepository.CountCompaniesAsync();
+            mediators = userRepository.CountUsersInRoleAsync(FonbecRole.Uploader, chapterId);
+            reviewers = userRepository.CountUsersInRoleAsync(FonbecRole.Reviewer, chapterId);
             pending.Add(companies);
+            pending.Add(mediators);
+            pending.Add(reviewers);
         }
 
         if (role == FonbecRole.Manager && chapterId is int managerChapterId)
@@ -85,6 +92,8 @@ public sealed class NavMenuService(
             StudentCount = students is null ? null : await students,
             SponsorCount = sponsors is null ? null : await sponsors,
             CompanyCount = companies is null ? null : await companies,
+            MediatorCount = mediators is null ? null : await mediators,
+            ReviewerCount = reviewers is null ? null : await reviewers,
             CampaignCompletionPercent = campaignPercent is null ? null : await campaignPercent,
             RedFlags = openFlags.RedFlags,
             GreenFlags = openFlags.GreenFlags,
