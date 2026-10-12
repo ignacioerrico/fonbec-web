@@ -41,7 +41,7 @@ public static class ThemeCookie
         var path = returnUrl.Trim();
         if (path.StartsWith("//", StringComparison.Ordinal)
             || path.Contains('\\')
-            || Uri.TryCreate(path, UriKind.Absolute, out _))
+            || IsOffSiteAbsolute(path))
         {
             return "~/";
         }
@@ -52,5 +52,19 @@ public static class ThemeCookie
         }
 
         return "~" + path;
+    }
+
+    private static bool IsOffSiteAbsolute(string path)
+    {
+        if (!Uri.TryCreate(path, UriKind.Absolute, out var uri))
+        {
+            return false;
+        }
+
+        // On Linux, Uri.TryCreate treats a rooted path such as "/Account/Manage" as a file URI.
+        // That path is still local. A real file URL includes a scheme in the text.
+        return uri.Scheme != Uri.UriSchemeFile
+            || path.Contains("://", StringComparison.Ordinal)
+            || path.StartsWith("file:", StringComparison.OrdinalIgnoreCase);
     }
 }

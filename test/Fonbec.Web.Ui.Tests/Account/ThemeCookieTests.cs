@@ -64,6 +64,7 @@ public class ThemeCookieTests
     [InlineData("/Account/Manage", "~/Account/Manage")]
     [InlineData("Account/Manage?x=1", "~/Account/Manage?x=1")]
     [InlineData("https://evil.test/Account/Login", "~/")]
+    [InlineData("file:///etc/passwd", "~/")]
     [InlineData("//evil.test", "~/")]
     [InlineData("/\\evil.test", "~/")]
     public void NormalizeReturnUrl_StaysOnThisSite(string? returnUrl, string expected)
