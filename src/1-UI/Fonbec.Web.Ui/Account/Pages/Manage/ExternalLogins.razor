@@ -1,6 +1,7 @@
 ﻿@page "/Account/Manage/ExternalLogins"
 
 @using Fonbec.Web.DataAccess.Entities
+@using Fonbec.Web.Ui.Account
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Identity
 
@@ -58,7 +59,7 @@
 
                     <input type="hidden" name="Provider" value="@provider.Name" />
 
-                    <MudStaticButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" FormAction="FormAction.Submit">@provider.DisplayName</MudStaticButton>
+                    <MudStaticButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" FormAction="FormAction.Submit">@ExternalLoginCopy.LinkButtonText(provider.Name, provider.DisplayName)</MudStaticButton>
                 </form>
             </MudItem>
         }
@@ -85,8 +86,17 @@
     [SupplyParameterFromQuery]
     private string? Action { get; set; }
 
+    [SupplyParameterFromQuery]
+    private string? RemoteError { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
+        if (RemoteError is not null)
+        {
+            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+            RedirectManager.RedirectToCurrentPageWithStatus(ExternalLoginCopy.RemoteErrorMessage(RemoteError), HttpContext);
+        }
+
         _user = await UserAccessor.GetRequiredUserAsync(HttpContext);
         _currentLogins = await UserManager.GetLoginsAsync(_user);
         _otherLogins = (await SignInManager.GetExternalAuthenticationSchemesAsync())
@@ -126,6 +136,12 @@
         if (info is null)
         {
             RedirectManager.RedirectToCurrentPageWithStatus("Error: No se pudo cargar la información de inicio de sesión externo.", HttpContext);
+        }
+
+        if (!ExternalLoginPolicy.EmailsMatch(_user.Email, ExternalLoginPolicy.ReadEmail(info.Principal)))
+        {
+            await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
+            RedirectManager.RedirectToCurrentPageWithStatus(ExternalLoginCopy.EmailMismatch, HttpContext);
         }
 
         var result = await UserManager.AddLoginAsync(_user, info);
