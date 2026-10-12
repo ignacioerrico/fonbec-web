@@ -6,6 +6,7 @@ using Fonbec.Web.DataAccess.DataModels.Users.Output;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Authorization;
 using Fonbec.Web.Logic.Constants;
+using Fonbec.Web.Logic.Models.Users.Input;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Logic.Util;
 using NSubstitute;
@@ -429,6 +430,135 @@ public class UserServiceTests
         result.IsSuccess.Should().BeTrue();
         await userRepo.Received().SetUserClaim("7", FonbecAuth.ClaimType, "PageA");
     }
+
+    [Fact]
+    public async Task DisableUserAsync_ManagerDisablesReviewerInSameChapter()
+    {
+        var userRepo = Substitute.For<IUserRepository>();
+        userRepo.GetUserAsync(7).Returns(Reviewer(chapterId: 5));
+        userRepo.DisableUserAsync(Arg.Any<DisableUserInputDataModel>()).Returns([]);
+        var userService = new UserService(userRepo, null!, null!, DummyPages);
+
+        var errors = await userService.DisableUserAsync(
+            new DisableUserInputModel(7, DisableUser: true, ModifiedByUserId: 3),
+            FonbecRole.Manager,
+            actorChapterId: 5);
+
+        errors.Should().BeEmpty();
+        await userRepo.Received(1).DisableUserAsync(Arg.Is<DisableUserInputDataModel>(model =>
+            model.UserIdToDisable == "7" && model.DisableUser && model.ModifiedByUserId == 3));
+    }
+
+    [Fact]
+    public async Task DisableUserAsync_ManagerDisablesMediatorWithoutStudents()
+    {
+        var userRepo = Substitute.For<IUserRepository>();
+        userRepo.GetUserAsync(7).Returns(User(FonbecRole.Uploader, chapterId: 5));
+        userRepo.GetUserIdsWithLinkedStudentsAsync(Arg.Any<IEnumerable<int>>()).Returns(new HashSet<int>());
+        userRepo.DisableUserAsync(Arg.Any<DisableUserInputDataModel>()).Returns([]);
+        var userService = new UserService(userRepo, null!, null!, DummyPages);
+
+        var errors = await userService.DisableUserAsync(
+            new DisableUserInputModel(7, DisableUser: true, ModifiedByUserId: 3),
+            FonbecRole.Manager,
+            actorChapterId: 5);
+
+        errors.Should().BeEmpty();
+        await userRepo.Received(1).DisableUserAsync(Arg.Any<DisableUserInputDataModel>());
+    }
+
+    [Fact]
+    public async Task DisableUserAsync_ManagerCannotDisableMediatorWithStudents()
+    {
+        var userRepo = Substitute.For<IUserRepository>();
+        userRepo.GetUserAsync(7).Returns(User(FonbecRole.Uploader, chapterId: 5));
+        userRepo.GetUserIdsWithLinkedStudentsAsync(Arg.Any<IEnumerable<int>>()).Returns(new HashSet<int> { 7 });
+        var userService = new UserService(userRepo, null!, null!, DummyPages);
+
+        var errors = await userService.DisableUserAsync(
+            new DisableUserInputModel(7, DisableUser: true, ModifiedByUserId: 3),
+            FonbecRole.Manager,
+            actorChapterId: 5);
+
+        errors.Should().Contain(UserMessages.CannotDisableFacilitatorWithStudents);
+        await userRepo.DidNotReceive().DisableUserAsync(Arg.Any<DisableUserInputDataModel>());
+    }
+
+    [Fact]
+    public async Task DisableUserAsync_ManagerCannotDisableUserInAnotherChapter()
+    {
+        var userRepo = Substitute.For<IUserRepository>();
+        userRepo.GetUserAsync(7).Returns(User(FonbecRole.Uploader, chapterId: 7));
+        var userService = new UserService(userRepo, null!, null!, DummyPages);
+
+        var errors = await userService.DisableUserAsync(
+            new DisableUserInputModel(7, DisableUser: true, ModifiedByUserId: 3),
+            FonbecRole.Manager,
+            actorChapterId: 5);
+
+        errors.Should().Contain(UserMessages.CannotDisableUserOutsideChapter);
+        await userRepo.DidNotReceive().DisableUserAsync(Arg.Any<DisableUserInputDataModel>());
+    }
+
+    [Fact]
+    public async Task DisableUserAsync_ManagerCannotDisableUserOutsideMediatorAndReviewerRoles()
+    {
+        var userRepo = Substitute.For<IUserRepository>();
+        userRepo.GetUserAsync(7).Returns(User(FonbecRole.Manager, chapterId: 5));
+        var userService = new UserService(userRepo, null!, null!, DummyPages);
+
+        var errors = await userService.DisableUserAsync(
+            new DisableUserInputModel(7, DisableUser: true, ModifiedByUserId: 3),
+            FonbecRole.Manager,
+            actorChapterId: 5);
+
+        errors.Should().Contain(UserMessages.CannotDisableRole);
+        await userRepo.DidNotReceive().DisableUserAsync(Arg.Any<DisableUserInputDataModel>());
+    }
+
+    [Fact]
+    public async Task DisableUserAsync_ReenablingMediatorWithStudentsSucceeds()
+    {
+        var userRepo = Substitute.For<IUserRepository>();
+        userRepo.GetUserAsync(7).Returns(User(FonbecRole.Uploader, chapterId: 5));
+        userRepo.GetUserIdsWithLinkedStudentsAsync(Arg.Any<IEnumerable<int>>()).Returns(new HashSet<int> { 7 });
+        userRepo.DisableUserAsync(Arg.Any<DisableUserInputDataModel>()).Returns([]);
+        var userService = new UserService(userRepo, null!, null!, DummyPages);
+
+        var errors = await userService.DisableUserAsync(
+            new DisableUserInputModel(7, DisableUser: false, ModifiedByUserId: 3),
+            FonbecRole.Manager,
+            actorChapterId: 5);
+
+        errors.Should().BeEmpty();
+        await userRepo.Received(1).DisableUserAsync(Arg.Is<DisableUserInputDataModel>(model => !model.DisableUser));
+        await userRepo.DidNotReceive().GetUserIdsWithLinkedStudentsAsync(Arg.Any<IEnumerable<int>>());
+    }
+
+    [Fact]
+    public async Task DisableUserAsync_AdminCannotDisableMediatorWithStudents()
+    {
+        var userRepo = Substitute.For<IUserRepository>();
+        userRepo.GetUserAsync(7).Returns(User(FonbecRole.Uploader, chapterId: 5));
+        userRepo.GetUserIdsWithLinkedStudentsAsync(Arg.Any<IEnumerable<int>>()).Returns(new HashSet<int> { 7 });
+        var userService = new UserService(userRepo, null!, null!, DummyPages);
+
+        var errors = await userService.DisableUserAsync(
+            new DisableUserInputModel(7, DisableUser: true, ModifiedByUserId: 1),
+            FonbecRole.Admin,
+            actorChapterId: null);
+
+        errors.Should().Contain(UserMessages.CannotDisableFacilitatorWithStudents);
+        await userRepo.DidNotReceive().DisableUserAsync(Arg.Any<DisableUserInputDataModel>());
+    }
+
+    private static GetUserOutputDataModel User(string role, int? chapterId) =>
+        new()
+        {
+            ChapterId = chapterId,
+            UserFullName = "Test User",
+            UserRole = role,
+        };
 
     private static GetUserOutputDataModel Reviewer(int chapterId) =>
         new()

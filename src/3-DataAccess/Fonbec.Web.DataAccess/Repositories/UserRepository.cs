@@ -17,7 +17,12 @@ public interface IUserRepository
     Task<(bool isPasswordValid, List<string> errors)> ValidatePasswordAsync(string password);
     Task<AllUsersDataModel> GetAllUsersAsync(int? chapterId);
     Task<IEnumerable<SelectableDataModel<int>>> GetAllUsersInRoleForSelectionAsync(string role, int? chapterId = null);
+    /// <summary>
+    /// Users in <paramref name="role"/> who can sign in. Locked-out accounts are excluded.
+    /// <paramref name="chapterId"/> null counts every chapter.
+    /// </summary>
     Task<int> CountUsersInRoleAsync(string role, int? chapterId);
+    Task<IReadOnlySet<int>> GetUserIdsWithLinkedStudentsAsync(IEnumerable<int> userIds);
     Task<IReadOnlyList<ChapterManagerContactDataModel>> GetChapterManagerContactsAsync(int chapterId);
     Task<GetUserOutputDataModel?> GetUserAsync(int userId);
     Task<(int userId, List<string> errors)> CreateUserAsync(CreateUserInputDataModel model);
@@ -152,14 +157,39 @@ public class UserRepository(
     {
         await using var db = await dbContext.CreateDbContextAsync();
 
+        var now = DateTimeOffset.UtcNow;
+
         return await (
             from user in db.Users.AsNoTracking()
             join userRole in db.UserRoles on user.Id equals userRole.UserId
             join identityRole in db.Roles on userRole.RoleId equals identityRole.Id
             where identityRole.Name == role
                   && (chapterId == null || user.ChapterId == chapterId)
+                  && (!user.LockoutEnabled
+                      || user.LockoutEnd == null
+                      || user.LockoutEnd <= now)
             select user.Id
         ).CountAsync();
+    }
+
+    public async Task<IReadOnlySet<int>> GetUserIdsWithLinkedStudentsAsync(IEnumerable<int> userIds)
+    {
+        var ids = userIds.Distinct().ToList();
+        if (ids.Count == 0)
+        {
+            return new HashSet<int>();
+        }
+
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var linked = await db.Students
+            .AsNoTracking()
+            .Where(student => ids.Contains(student.FacilitatorId))
+            .Select(student => student.FacilitatorId)
+            .Distinct()
+            .ToListAsync();
+
+        return linked.ToHashSet();
     }
 
     public async Task<IReadOnlyList<ChapterManagerContactDataModel>> GetChapterManagerContactsAsync(int chapterId)

@@ -27,7 +27,8 @@ public interface IUserService
     Task SetIsDarkModeAsync(int userId, bool isDarkMode);
     Task<(int userId, List<string> errors)> CreateUserAsync(CreateUserInputModel model);
     Task<bool> UpdateUserAsync(UpdateUserInputModel model);
-    Task<List<string>> DisableUserAsync(DisableUserInputModel model);
+    Task<List<string>> DisableUserAsync(DisableUserInputModel model, string actorRole, int? actorChapterId);
+    Task<IReadOnlySet<int>> GetUserIdsWithLinkedStudentsAsync(IEnumerable<int> userIds);
     Task<IdentityResult> DeleteForeverAsync(int userId);
     Task<IdentityResult> ResetPasswordAsync(int userId, string userEmail);
     string? GetFonbecAuthClaim(ClaimsPrincipal principal);
@@ -150,10 +151,51 @@ public class UserService(
         return await userRepository.UpdateUserAsync(updateUserInputDataModel);
     }
 
-    public async Task<List<string>> DisableUserAsync(DisableUserInputModel model)
+    public async Task<List<string>> DisableUserAsync(
+        DisableUserInputModel model,
+        string actorRole,
+        int? actorChapterId)
     {
+        var target = await userRepository.GetUserAsync(model.UserIdToDisable);
+        if (target is null || string.IsNullOrEmpty(target.UserRole))
+        {
+            return [UserMessages.UserNotFound];
+        }
+
+        var actorIsAdmin = actorRole == FonbecRole.Admin;
+        var actorIsSameChapterManager = actorRole == FonbecRole.Manager
+                                        && actorChapterId is not null
+                                        && actorChapterId == target.ChapterId;
+
+        if (!actorIsAdmin && actorIsSameChapterManager
+            && target.UserRole is not (FonbecRole.Uploader or FonbecRole.Reviewer))
+        {
+            return [UserMessages.CannotDisableRole];
+        }
+
+        if (!actorIsAdmin && !actorIsSameChapterManager)
+        {
+            return actorRole == FonbecRole.Manager
+                ? [UserMessages.CannotDisableUserOutsideChapter]
+                : [UserMessages.NotAuthorizedToDisableUser];
+        }
+
+        if (model.DisableUser && target.UserRole == FonbecRole.Uploader)
+        {
+            var linked = await userRepository.GetUserIdsWithLinkedStudentsAsync([model.UserIdToDisable]);
+            if (linked.Contains(model.UserIdToDisable))
+            {
+                return [UserMessages.CannotDisableFacilitatorWithStudents];
+            }
+        }
+
         var disableUserInputDataModel = model.Adapt<DisableUserInputDataModel>();
         return await userRepository.DisableUserAsync(disableUserInputDataModel);
+    }
+
+    public async Task<IReadOnlySet<int>> GetUserIdsWithLinkedStudentsAsync(IEnumerable<int> userIds)
+    {
+        return await userRepository.GetUserIdsWithLinkedStudentsAsync(userIds);
     }
 
     public async Task<IdentityResult> DeleteForeverAsync(int userId)

@@ -1,3 +1,4 @@
+using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models.Users;
 using Fonbec.Web.Logic.Models.Users.Input;
@@ -10,6 +11,8 @@ namespace Fonbec.Web.Ui.Components.Pages.Users;
 public partial class RoleUsersList : AuthenticationRequiredComponentBase
 {
     private List<UsersListViewModel> _viewModel = [];
+
+    private HashSet<int> _userIdsWithLinkedStudents = [];
 
     private UsersListViewModel _originalViewModel = new();
 
@@ -53,8 +56,27 @@ public partial class RoleUsersList : AuthenticationRequiredComponentBase
         var users = await UserService.GetAllUsersAsync(FonbecClaim.ChapterId);
         _viewModel = users.Where(user => user.UserRole == Role).ToList();
 
+        if (Role == FonbecRole.Uploader)
+        {
+            var linked = await UserService.GetUserIdsWithLinkedStudentsAsync(_viewModel.Select(user => user.UserId));
+            _userIdsWithLinkedStudents = linked.ToHashSet();
+        }
+
         Loading = false;
     }
+
+    private bool HasLinkedStudents(UsersListViewModel viewModel) =>
+        Role == FonbecRole.Uploader && _userIdsWithLinkedStudents.Contains(viewModel.UserId);
+
+    private bool CanDisable(UsersListViewModel viewModel) =>
+        !HasLinkedStudents(viewModel)
+        && viewModel.UserId != FonbecClaim.UserId
+        && viewModel.CanUserBeLockedOut;
+
+    private string DisableTooltip(UsersListViewModel viewModel) =>
+        HasLinkedStudents(viewModel)
+            ? UserMessages.CannotDisableFacilitatorWithStudents
+            : "Deshabilitar";
 
     private bool Filter(UsersListViewModel viewModel) =>
         string.IsNullOrWhiteSpace(_searchString)
@@ -182,5 +204,73 @@ public partial class RoleUsersList : AuthenticationRequiredComponentBase
                 ? "Se le dio el permiso para mejorar imágenes."
                 : "Se le sacó el permiso para mejorar imágenes.",
             Severity.Success);
+    }
+
+    private async Task DisableUserAsync(UsersListViewModel? viewModel)
+    {
+        if (viewModel is null || !CanDisable(viewModel))
+        {
+            return;
+        }
+
+        Loading = true;
+
+        var message = $"¿Estás seguro de que querés deshabilitar al usuario {viewModel.UserFirstName} {viewModel.UserLastName}?";
+        var dialogResult = await DialogService.ShowMessageBox(
+            "¡Atención!",
+            message,
+            yesText: "Sí",
+            cancelText: "Cancelar");
+
+        if (dialogResult is null)
+        {
+            Loading = false;
+            return;
+        }
+
+        var disableUserInputModel = new DisableUserInputModel(viewModel.UserId, DisableUser: true, FonbecClaim.UserId);
+        var errors = await UserService.DisableUserAsync(disableUserInputModel, UserRole, FonbecClaim.ChapterId);
+
+        Loading = false;
+
+        if (errors.Count > 0)
+        {
+            foreach (var error in errors)
+            {
+                Snackbar.Add(error, Severity.Error);
+            }
+
+            return;
+        }
+
+        viewModel.IsUserActive = false;
+    }
+
+    private async Task ReenableUserAsync(UsersListViewModel? viewModel)
+    {
+        if (viewModel is null)
+        {
+            return;
+        }
+
+        var disableUserInputModel = new DisableUserInputModel(viewModel.UserId, DisableUser: false, FonbecClaim.UserId);
+
+        Loading = true;
+
+        var errors = await UserService.DisableUserAsync(disableUserInputModel, UserRole, FonbecClaim.ChapterId);
+
+        Loading = false;
+
+        if (errors.Count > 0)
+        {
+            foreach (var error in errors)
+            {
+                Snackbar.Add(error, Severity.Error);
+            }
+
+            return;
+        }
+
+        viewModel.IsUserActive = true;
     }
 }

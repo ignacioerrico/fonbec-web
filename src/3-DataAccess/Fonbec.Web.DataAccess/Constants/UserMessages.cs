@@ -15,4 +15,16 @@ public static class UserMessages
 
     public const string CannotGrantDigitalImprovementOutsideChapter =
         "No podés modificar este permiso para usuarios de otra filial.";
+
+    public const string NotAuthorizedToDisableUser =
+        "No estás autorizado para deshabilitar o habilitar este usuario.";
+
+    public const string CannotDisableRole =
+        "Solo podés deshabilitar o habilitar mediadores y revisores.";
+
+    public const string CannotDisableUserOutsideChapter =
+        "No podés deshabilitar o habilitar usuarios de otra filial.";
+
+    public const string CannotDisableFacilitatorWithStudents =
+        "No se puede deshabilitar un mediador que tiene becarios asignados.";
 }

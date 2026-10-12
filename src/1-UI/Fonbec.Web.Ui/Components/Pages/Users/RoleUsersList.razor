@@ -118,6 +118,21 @@
                         <MudIconButton OnClick="@context.Actions.StartEditingItemAsync"
                                        Icon="@Icons.Material.Outlined.Edit" Size="@Size.Small" Color="Color.Primary" />
                     </MudTooltip>
+                    @if (context.Item.IsUserActive)
+                    {
+                        <MudTooltip Text="@DisableTooltip(context.Item)" Arrow="true" Placement="Placement.Bottom" Color="Color.Warning" Delay="500">
+                            <MudIconButton OnClick="@(async _ => await DisableUserAsync(context.Item))"
+                                           Icon="@Icons.Material.Outlined.Delete" Size="@Size.Small" Color="Color.Warning"
+                                           Disabled="@(!CanDisable(context.Item))" />
+                        </MudTooltip>
+                    }
+                    else
+                    {
+                        <MudTooltip Text="Habilitar" Arrow="true" Placement="Placement.Bottom" Color="Color.Success" Delay="500">
+                            <MudIconButton OnClick="@(async _ => await ReenableUserAsync(context.Item))"
+                                           Icon="@Icons.Material.Outlined.RestoreFromTrash" Size="@Size.Small" Color="Color.Success" />
+                        </MudTooltip>
+                    }
                     <AuthorizeView Policy="@CustomAccess.ResetPassword" Context="innerContext">
                         <MudTooltip Text="Restablecer contraseña" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
                             <MudIconButton OnClick="@(async _ => await ResetPasswordAsync(context.Item))"

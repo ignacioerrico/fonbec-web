@@ -130,7 +130,7 @@ public partial class UsersList : AuthenticationRequiredComponentBase
 
         var disableUserInputModel = new DisableUserInputModel(viewModel.UserId, DisableUser: true, FonbecClaim.UserId);
 
-        var errors = await UserService.DisableUserAsync(disableUserInputModel);
+        var errors = await UserService.DisableUserAsync(disableUserInputModel, UserRole, FonbecClaim.ChapterId);
 
         Loading = false;
 
@@ -158,7 +158,7 @@ public partial class UsersList : AuthenticationRequiredComponentBase
 
         Loading = true;
 
-        var errors = await UserService.DisableUserAsync(disableUserInputModel);
+        var errors = await UserService.DisableUserAsync(disableUserInputModel, UserRole, FonbecClaim.ChapterId);
 
         Loading = false;
 

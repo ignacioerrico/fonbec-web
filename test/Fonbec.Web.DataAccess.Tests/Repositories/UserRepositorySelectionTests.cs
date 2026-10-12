@@ -41,10 +41,51 @@ public class UserRepositorySelectionTests
             .Which.Key.Should().Be(chapterOneFacilitator.Id);
     }
 
-    private static async Task<FonbecWebUser> CreateFacilitatorAsync(
+    [Fact]
+    public async Task CountUsersInRoleAsync_ExcludesLockedOutUsers()
+    {
+        var databaseName = Guid.NewGuid().ToString();
+
+        var services = new ServiceCollection();
+        services.AddDbContext<FonbecWebDbContext>(options =>
+            options.UseInMemoryDatabase(databaseName));
+        services.AddIdentityCore<FonbecWebUser>()
+            .AddRoles<FonbecWebRole>()
+            .AddEntityFrameworkStores<FonbecWebDbContext>();
+
+        using var provider = services.BuildServiceProvider();
+        var userManager = provider.GetRequiredService<UserManager<FonbecWebUser>>();
+        var roleManager = provider.GetRequiredService<RoleManager<FonbecWebRole>>();
+        var userStore = provider.GetRequiredService<IUserStore<FonbecWebUser>>();
+        var repository = new UserRepository(userManager, userStore, new TestDbContextFactory(databaseName));
+
+        (await roleManager.CreateAsync(new FonbecWebRole { Name = FonbecRole.Uploader }))
+            .Succeeded.Should().BeTrue();
+        (await roleManager.CreateAsync(new FonbecWebRole { Name = FonbecRole.Reviewer }))
+            .Succeeded.Should().BeTrue();
+
+        await CreateFacilitatorAsync(userManager, "active@test.com", chapterId: 1);
+        var disabled = await CreateFacilitatorAsync(userManager, "disabled@test.com", chapterId: 1);
+        (await userManager.SetLockoutEnabledAsync(disabled, true)).Succeeded.Should().BeTrue();
+        (await userManager.SetLockoutEndDateAsync(disabled, DateTimeOffset.MaxValue)).Succeeded.Should().BeTrue();
+        await CreateUserInRoleAsync(userManager, "reviewer@test.com", chapterId: 1, FonbecRole.Reviewer);
+
+        var mediators = await repository.CountUsersInRoleAsync(FonbecRole.Uploader, chapterId: 1);
+
+        mediators.Should().Be(1);
+    }
+
+    private static Task<FonbecWebUser> CreateFacilitatorAsync(
         UserManager<FonbecWebUser> userManager,
         string email,
-        int chapterId)
+        int chapterId) =>
+        CreateUserInRoleAsync(userManager, email, chapterId, FonbecRole.Uploader);
+
+    private static async Task<FonbecWebUser> CreateUserInRoleAsync(
+        UserManager<FonbecWebUser> userManager,
+        string email,
+        int chapterId,
+        string role)
     {
         var user = new FonbecWebUser
         {
@@ -56,7 +97,7 @@ public class UserRepositorySelectionTests
         };
 
         (await userManager.CreateAsync(user)).Succeeded.Should().BeTrue();
-        (await userManager.AddToRoleAsync(user, FonbecRole.Uploader)).Succeeded.Should().BeTrue();
+        (await userManager.AddToRoleAsync(user, role)).Succeeded.Should().BeTrue();
         return user;
     }
 
