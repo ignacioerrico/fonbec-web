@@ -146,6 +146,28 @@ public class FacilitatorUploadServiceTests
     }
 
     [Fact]
+    public async Task GetUploadContext_LetterWithSponsorNotSponsoringStudent_ReturnsNull()
+    {
+        _facilitatorRepository.GetUploadContextAsync(StudentId, PlanId, SponsorId, null)
+            .Returns(StudentContext(planStartsOn: new DateTime(2026, 3, 1)));
+
+        var result = await _service.GetUploadContextAsync(FacilitatorId, StudentId, "carta", SponsorId, null, PlanId);
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetUploadContext_LetterWithPlanNotOpenForStudent_ReturnsNull()
+    {
+        _facilitatorRepository.GetUploadContextAsync(StudentId, PlanId, SponsorId, null)
+            .Returns(StudentContext());
+
+        var result = await _service.GetUploadContextAsync(FacilitatorId, StudentId, "carta", SponsorId, null, PlanId);
+
+        result.Should().BeNull();
+    }
+
+    [Fact]
     public async Task GetUploadContext_LetterWithCompany_ReturnsContextWithCompanyRecipient()
     {
         _facilitatorRepository.GetUploadContextAsync(StudentId, PlanId, null, CompanyId)

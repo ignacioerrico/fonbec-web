@@ -12,7 +12,7 @@ public interface IFacilitatorRepository
     Task<CurrentPlanDataModel?> GetCurrentPlanForFacilitatorAsync(int facilitatorId);
 
     Task<FacilitatorUploadContextDataModel?> GetUploadContextAsync(
-        int facilitatorId, int studentId, int? planId, int? sponsorId, int? companyId);
+        int studentId, int? planId, int? sponsorId, int? companyId);
 
     Task<List<SponsorLetterStatusDataModel>> GetCurrentLetterStatusesAsync(int planId, List<int> studentIds);
 
@@ -103,13 +103,13 @@ public class FacilitatorRepository(
     }
 
     public async Task<FacilitatorUploadContextDataModel?> GetUploadContextAsync(
-          int facilitatorId, int studentId, int? planId, int? sponsorId, int? companyId)
+        int studentId, int? planId, int? sponsorId, int? companyId)
     {
         await using var db = await dbContext.CreateDbContextAsync();
 
         var student = await db.Students
             .AsNoTracking()
-            .Where(s => s.Id == studentId && !s.IsDeleted && s.FacilitatorId == facilitatorId)
+            .Where(s => s.Id == studentId && !s.IsDeleted)
             .Select(s => new
             {
                 s.Id,
@@ -128,63 +128,43 @@ public class FacilitatorRepository(
             return null;
         }
 
+        // Resolve the plan and recipient with the same rules the letter upload enforces, so tampered
+        // query parameters leave them null and the page refuses to render instead of failing on submit.
         DateTime? planStartsOn = null;
         if (planId.HasValue)
         {
-            var plan = await CampaignQueries.OpenForChapter(db.PlannedDeliveries.AsNoTracking(), student.ChapterId)
-                .Where(p => p.Id == planId.Value)
-                .Select(p => (DateTime?)p.StartsOn)
-                .FirstOrDefaultAsync();
-
-            if (plan is null)
-            {
-                return null;
-            }
-
-            planStartsOn = plan;
-        }
-        if (planId.HasValue && (sponsorId.HasValue || companyId.HasValue))
-        {
-            if (planStartsOn is null)
-            {
-                return null;
-            }
-
-            var hasValidSponsorship = await db.Set<Sponsorship>()
-                .AsNoTracking()
-                .AnyAsync(sp => sp.StudentId == studentId &&
-                                sp.StartDate <= planStartsOn.Value &&
-                                (sp.EndDate == null || sp.EndDate >= planStartsOn.Value) &&
-                                (sponsorId.HasValue && sp.SponsorId == sponsorId.Value ||
-                                 companyId.HasValue && sp.CompanyId == companyId.Value));
-
-            if (!hasValidSponsorship)
-            {
-                return null;
-            }
+            planStartsOn = await CampaignQueries.SelectStartsOnAsync(
+                CampaignQueries.Open(db.PlannedDeliveries.AsNoTracking())
+                    .Where(p => p.Id == planId.Value
+                                && (p.ChapterId == null || p.ChapterId == student.ChapterId)));
         }
 
         string? sponsorFirstName = null;
         string? sponsorLastName = null;
-        if (sponsorId.HasValue)
-        {
-            var sponsor = await db.Sponsors
-                .AsNoTracking()
-                .Where(s => s.Id == sponsorId.Value && !s.IsDeleted)
-                .Select(s => new { s.FirstName, s.LastName })
-                .FirstOrDefaultAsync();
-            sponsorFirstName = sponsor?.FirstName;
-            sponsorLastName = sponsor?.LastName;
-        }
-
         string? companyName = null;
-        if (companyId.HasValue)
+        if (planStartsOn.HasValue)
         {
-            companyName = await db.Companies
-                .AsNoTracking()
-                .Where(c => c.Id == companyId.Value)
-                .Select(c => c.Name)
-                .FirstOrDefaultAsync();
+            if (sponsorId.HasValue)
+            {
+                var sponsor = await db.Sponsorships
+                    .AsNoTracking()
+                    .Where(CampaignQueries.Covers(planStartsOn.Value))
+                    .Where(sp => sp.StudentId == studentId && sp.SponsorId == sponsorId.Value)
+                    .Select(sp => new { sp.Sponsor!.FirstName, sp.Sponsor.LastName })
+                    .FirstOrDefaultAsync();
+                sponsorFirstName = sponsor?.FirstName;
+                sponsorLastName = sponsor?.LastName;
+            }
+
+            if (companyId.HasValue)
+            {
+                companyName = await db.Sponsorships
+                    .AsNoTracking()
+                    .Where(CampaignQueries.Covers(planStartsOn.Value))
+                    .Where(sp => sp.StudentId == studentId && sp.CompanyId == companyId.Value)
+                    .Select(sp => sp.Company!.Name)
+                    .FirstOrDefaultAsync();
+            }
         }
 
         return new FacilitatorUploadContextDataModel
@@ -203,6 +183,7 @@ public class FacilitatorRepository(
             CompanyName = companyName,
         };
     }
+
     public async Task<List<SponsorLetterStatusDataModel>> GetCurrentLetterStatusesAsync(int planId, List<int> studentIds)
     {
         await using var db = await dbContext.CreateDbContextAsync();
