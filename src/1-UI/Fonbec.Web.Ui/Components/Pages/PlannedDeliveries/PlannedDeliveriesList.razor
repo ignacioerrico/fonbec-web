@@ -32,6 +32,14 @@
                 <LetterPlanAchievement PlanLabel="@_latestCompletedPlan.PlannedDeliveryStartsOnText"
                                        LettersDelivered="@_latestCompletedProgress.Summary.Approved"
                                        ExemptStudents="@LatestCompletedExemptStudents" />
+                <div class="d-flex justify-center">
+                    <MudButton Variant="Variant.Outlined"
+                               Color="Color.Primary"
+                               StartIcon="@Icons.Material.Outlined.QueryStats"
+                               Href="@NavRoutes.LetterPlanStatistics(_latestCompletedPlan.PlannedDeliveryId)">
+                        Estadísticas
+                    </MudButton>
+                </div>
             </div>
         }
         else
@@ -144,6 +152,10 @@
                             <MudTooltip Text="Ver detalle" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
                                 <MudIconButton Href="@NavRoutes.LetterPlanProgress(context.Item.PlannedDeliveryId)"
                                                Icon="@Icons.Material.Outlined.Assessment" Size="@Size.Small" Color="Color.Primary" />
+                            </MudTooltip>
+                            <MudTooltip Text="Estadísticas" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
+                                <MudIconButton Href="@NavRoutes.LetterPlanStatistics(context.Item.PlannedDeliveryId)"
+                                               Icon="@Icons.Material.Outlined.QueryStats" Size="@Size.Small" Color="Color.Primary" />
                             </MudTooltip>
                         </CellTemplate>
                     </TemplateColumn>

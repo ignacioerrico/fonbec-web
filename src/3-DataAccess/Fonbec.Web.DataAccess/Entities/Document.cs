@@ -38,6 +38,15 @@ public abstract class Document
 
     public DateTime? ImprovementLockedAt { get; set; }
 
+    /// <summary>First time someone locked this document for digital improvement. Not cleared when the lock is released.</summary>
+    public DateTime? ImprovementFirstLockedOn { get; set; }
+
+    /// <summary>Start of the improvement lock that ended in a submission.</summary>
+    public DateTime? DecisionImprovementLockedOn { get; set; }
+
+    /// <summary>When digital improvement was submitted and the document became ready for review.</summary>
+    public DateTime? ImprovementCompletedOn { get; set; }
+
     public DateTime UploadedOn { get; set; }
 
     public int UploadedById { get; set; }
@@ -45,7 +54,16 @@ public abstract class Document
 
     public DateTime? ApprovedOn { get; set; }
 
+    /// <summary>First time a reviewer locked this document. Not cleared when the lock is released.</summary>
+    public DateTime? ReviewFirstLockedOn { get; set; }
+
+    /// <summary>Start of the review lock that ended in approval or rejection.</summary>
+    public DateTime? DecisionReviewLockedOn { get; set; }
+
     public DateTime? RejectedOn { get; set; }
+
+    public int? RejectedById { get; set; }
+    public FonbecWebUser? RejectedBy { get; set; }
 
     public int? RejectedReasonId { get; set; }
     public RejectedReason? RejectedReason { get; set; }
