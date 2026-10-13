@@ -31,4 +31,14 @@ public class LetterPlanProgressRowDataModel
     public DateTime? ApprovedOn { get; init; }
     public LetterFollowUpTaskDataModel? RedFlag { get; init; }
     public LetterFollowUpTaskDataModel? GreenFlag { get; init; }
+
+    public DateTime? ConfirmedWrittenDate { get; init; }
+    public DateTime? AddresseeNotificationSentOn { get; init; }
+    public int? SpellingScore { get; init; }
+    public int? PenmanshipScore { get; init; }
+    public int? ContentScore { get; init; }
+    public DateTime? UploadedOn { get; init; }
+    public DateTime? ImprovementCompletedOn { get; init; }
+    public DateTime? ReviewFirstLockedOn { get; init; }
+    public DigitalImprovementStatus? DigitalImprovementStatus { get; init; }
 }

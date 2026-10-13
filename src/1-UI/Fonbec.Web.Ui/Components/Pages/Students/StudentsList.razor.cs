@@ -31,6 +31,8 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
 
     private RelatedCount _sponsorCountFilter = RelatedCount.Any;
 
+    private bool ShowLetterAssessments => _viewModels.Any(vm => vm.HasLetterAssessment);
+
     [Inject]
     public IStudentService StudentService { get; set; } = null!;
 
@@ -141,6 +143,13 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
             _viewModels[index] = _originalViewModel.DeepClone();
         }
     }
+
+    private static List<ChartSeries> AssessmentSeries(LetterAssessmentSummaryViewModel assessment) =>
+    [
+        new() { Name = "Ortografía", Data = assessment.SpellingByPlan },
+        new() { Name = "Legibilidad", Data = assessment.PenmanshipByPlan },
+        new() { Name = "Contenido", Data = assessment.ContentByPlan },
+    ];
 
     private string StudentFullName(StudentsListViewModel viewModel) =>
         _sortByLastName

@@ -87,6 +87,7 @@ public class LetterPlanProgressRepository(
                 .ThenInclude(review => review!.Assessment)
             .Include(l => l.Review)
                 .ThenInclude(review => review!.ReviewedBy)
+            .Include(l => l.Shares)
             .Where(l => l.PlanId == planId && l.ChapterId == chapterId)
             .ToListAsync();
 
@@ -108,6 +109,15 @@ public class LetterPlanProgressRepository(
             DateTime? approvedOn = null;
             LetterFollowUpTaskDataModel? redFlag = null;
             LetterFollowUpTaskDataModel? greenFlag = null;
+            DateTime? confirmedWrittenDate = null;
+            DateTime? notificationSentOn = null;
+            int? spellingScore = null;
+            int? penmanshipScore = null;
+            int? contentScore = null;
+            DateTime? uploadedOn = null;
+            DateTime? improvementCompletedOn = null;
+            DateTime? reviewFirstLockedOn = null;
+            DigitalImprovementStatus? digitalImprovementStatus = null;
 
             if (!isExempt
                 && currentLettersBySlot.TryGetValue((slot.Id, slot.SponsorId, slot.CompanyId), out var letter))
@@ -120,6 +130,17 @@ public class LetterPlanProgressRepository(
                 if (letter.Status == DocumentStatus.Approved && letter.Review is { } review)
                 {
                     var assessment = review.Assessment;
+                    confirmedWrittenDate = review.ConfirmedWrittenDate;
+                    spellingScore = assessment.SpellingScore;
+                    penmanshipScore = assessment.PenmanshipScore;
+                    contentScore = assessment.ContentScore;
+                    uploadedOn = letter.UploadedOn;
+                    improvementCompletedOn = letter.ImprovementCompletedOn;
+                    reviewFirstLockedOn = letter.ReviewFirstLockedOn;
+                    digitalImprovementStatus = letter.DigitalImprovementStatus;
+                    notificationSentOn = letter.SponsorId is int sponsorId
+                        ? letter.Shares.FirstOrDefault(share => share.SponsorId == sponsorId)?.NotificationSentOn
+                        : letter.Shares.FirstOrDefault(share => share.CompanyId == letter.CompanyId)?.NotificationSentOn;
                     if (assessment.HasRedFlags && !assessment.IsRedFlagResolved)
                     {
                         redFlag = CreateFlagTask(
@@ -170,6 +191,15 @@ public class LetterPlanProgressRepository(
                 ApprovedOn = approvedOn,
                 RedFlag = redFlag,
                 GreenFlag = greenFlag,
+                ConfirmedWrittenDate = confirmedWrittenDate,
+                AddresseeNotificationSentOn = notificationSentOn,
+                SpellingScore = spellingScore,
+                PenmanshipScore = penmanshipScore,
+                ContentScore = contentScore,
+                UploadedOn = uploadedOn,
+                ImprovementCompletedOn = improvementCompletedOn,
+                ReviewFirstLockedOn = reviewFirstLockedOn,
+                DigitalImprovementStatus = digitalImprovementStatus,
             };
         }).ToList();
 

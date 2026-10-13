@@ -3,6 +3,7 @@ using Fonbec.Web.DataAccess.DataModels.LetterFollowUp;
 using Fonbec.Web.DataAccess.DataModels.LetterPlanProgress;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Repositories;
+using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models.LetterPlanProgress;
 using Fonbec.Web.Logic.Services;
 using NSubstitute;
@@ -114,6 +115,100 @@ public class LetterPlanProgressServiceTests
             && mapped.RedFlag.Comment == "Necesita seguimiento"
             && mapped.RedFlag.ReviewerFullName == "Rita Revisora"
             && mapped.GreenFlag == null);
+    }
+
+    [Fact]
+    public async Task GetProgressAsync_Maps_Review_Evaluation_For_Approved_Letter()
+    {
+        var written = new DateTime(2026, 3, 10);
+        var notified = new DateTime(2026, 3, 16, 15, 0, 0, DateTimeKind.Utc);
+        var uploaded = new DateTime(2026, 3, 12, 10, 0, 0, DateTimeKind.Utc);
+
+        _progressRepository.GetProgressAsync(PlanId, ChapterId).Returns(new LetterPlanProgressQueryResultDataModel
+        {
+            PlanStartsOn = new DateTime(2026, 3, 1),
+            Rows = [ReviewedRow(written, notified, uploaded, uploaded.AddHours(3))],
+        });
+
+        var result = await _service.GetProgressAsync(PlanId, ChapterId);
+
+        var evaluation = result!.Rows.Should().ContainSingle().Subject.ReviewEvaluation;
+        evaluation.Should().NotBeNull();
+        evaluation!.WrittenOnText.Should().Be(written.ToSpanishShortDate());
+        evaluation.NotificationSentOnText.Should().Be(notified.Date.ToSpanishShortDate());
+        evaluation.DelayText.Should().Be("6 días");
+        evaluation.QueueWaitText.Should().Be("3 h");
+        evaluation.SpellingScore.Should().Be(5);
+        evaluation.PenmanshipScore.Should().Be(4);
+        evaluation.ContentScore.Should().Be(3);
+    }
+
+    [Fact]
+    public async Task GetProgressAsync_Measures_Image_Queue_Wait_From_Improvement()
+    {
+        var uploaded = new DateTime(2026, 3, 12, 10, 0, 0, DateTimeKind.Utc);
+        var improvementCompleted = uploaded.AddHours(4);
+        var reviewLock = improvementCompleted.AddMinutes(20);
+
+        _progressRepository.GetProgressAsync(PlanId, ChapterId).Returns(new LetterPlanProgressQueryResultDataModel
+        {
+            PlanStartsOn = new DateTime(2026, 3, 1),
+            Rows =
+            [
+                ReviewedRow(
+                    new DateTime(2026, 3, 10),
+                    new DateTime(2026, 3, 11),
+                    uploaded,
+                    reviewLock,
+                    DigitalImprovementStatus.Complete,
+                    improvementCompleted),
+            ],
+        });
+
+        var result = await _service.GetProgressAsync(PlanId, ChapterId);
+
+        var evaluation = result!.Rows.Single().ReviewEvaluation;
+        evaluation!.DelayText.Should().Be("1 día");
+        evaluation.QueueWaitText.Should().Be("20 min");
+    }
+
+    [Fact]
+    public async Task GetProgressAsync_Omits_Delay_And_Queue_Wait_When_Timestamps_Are_Missing()
+    {
+        _progressRepository.GetProgressAsync(PlanId, ChapterId).Returns(new LetterPlanProgressQueryResultDataModel
+        {
+            PlanStartsOn = new DateTime(2026, 3, 1),
+            Rows =
+            [
+                ReviewedRow(
+                    new DateTime(2026, 3, 10),
+                    notificationSentOn: null,
+                    uploadedOn: new DateTime(2026, 3, 12),
+                    reviewFirstLockedOn: null),
+            ],
+        });
+
+        var result = await _service.GetProgressAsync(PlanId, ChapterId);
+
+        var evaluation = result!.Rows.Single().ReviewEvaluation;
+        evaluation.Should().NotBeNull();
+        evaluation!.NotificationSentOnText.Should().BeNull();
+        evaluation.DelayText.Should().BeNull();
+        evaluation.QueueWaitText.Should().Be("Sin dato");
+    }
+
+    [Fact]
+    public async Task GetProgressAsync_Omits_Review_Evaluation_When_Letter_Has_No_Review()
+    {
+        _progressRepository.GetProgressAsync(PlanId, ChapterId).Returns(new LetterPlanProgressQueryResultDataModel
+        {
+            PlanStartsOn = new DateTime(2026, 3, 1),
+            Rows = [Row(StudentId, DocumentStatus.Approved)],
+        });
+
+        var result = await _service.GetProgressAsync(PlanId, ChapterId);
+
+        result!.Rows.Single().ReviewEvaluation.Should().BeNull();
     }
 
     [Fact]
@@ -326,6 +421,35 @@ public class LetterPlanProgressServiceTests
             RecipientName = "María López",
             LetterStatus = status,
             RedFlag = redFlag,
+        };
+
+    private static LetterPlanProgressRowDataModel ReviewedRow(
+        DateTime writtenOn,
+        DateTime? notificationSentOn,
+        DateTime uploadedOn,
+        DateTime? reviewFirstLockedOn,
+        DigitalImprovementStatus improvementStatus = DigitalImprovementStatus.NotApplicable,
+        DateTime? improvementCompletedOn = null) =>
+        new()
+        {
+            StudentId = StudentId,
+            StudentFirstName = "Juan",
+            StudentLastName = "García",
+            FacilitatorFirstName = "Ana",
+            FacilitatorLastName = "Pérez",
+            SponsorshipId = 30,
+            SponsorId = 20,
+            RecipientName = "María López",
+            LetterStatus = DocumentStatus.Approved,
+            ConfirmedWrittenDate = writtenOn,
+            AddresseeNotificationSentOn = notificationSentOn,
+            SpellingScore = 5,
+            PenmanshipScore = 4,
+            ContentScore = 3,
+            UploadedOn = uploadedOn,
+            ImprovementCompletedOn = improvementCompletedOn,
+            ReviewFirstLockedOn = reviewFirstLockedOn,
+            DigitalImprovementStatus = improvementStatus,
         };
 
     private static LetterPlanProgressRowDataModel ExemptRow(int studentId) =>

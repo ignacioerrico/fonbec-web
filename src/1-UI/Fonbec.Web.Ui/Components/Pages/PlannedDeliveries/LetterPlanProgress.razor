@@ -63,6 +63,9 @@ else if (_viewModel is not null)
                               Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
             </ToolBarContent>
             <Columns>
+                <HierarchyColumn T="LetterPlanProgressRowViewModel"
+                                 ButtonDisabledFunc="@(vm => vm.ReviewEvaluation is null)"
+                                 EnableHeaderToggle="false" />
                 <PropertyColumn Property="@(vm => _sortByLastName ? vm.StudentLastName : vm.StudentFirstName)" Title="Becario">
                     <CellTemplate>
                         <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="0">
@@ -169,9 +172,49 @@ else if (_viewModel is not null)
                     </CellTemplate>
                 </TemplateColumn>
             </Columns>
+            <ChildRowContent>
+                @if (context.Item.ReviewEvaluation is { } evaluation)
+                {
+                    <MudPaper Class="pa-4" Elevation="0">
+                        <MudGrid Spacing="2">
+                            <MudItem xs="12" md="6">
+                                <MudStack Spacing="1">
+                                    <MudText Typo="Typo.body2">Escrita: @evaluation.WrittenOnText</MudText>
+                                    <MudText Typo="Typo.body2">
+                                        Aviso al padrino: @(evaluation.NotificationSentOnText ?? "Sin aviso")
+                                    </MudText>
+                                    @if (evaluation.DelayText is not null)
+                                    {
+                                        <MudText Typo="Typo.body2">Demora: @evaluation.DelayText</MudText>
+                                    }
+                                    <MudText Typo="Typo.body2">Espera en cola: @evaluation.QueueWaitText</MudText>
+                                </MudStack>
+                            </MudItem>
+                            <MudItem xs="12" md="6">
+                                <MudStack Spacing="1">
+                                    @RatingLine("Ortografía", evaluation.SpellingScore)
+                                    @RatingLine("Legibilidad", evaluation.PenmanshipScore)
+                                    @RatingLine("Contenido", evaluation.ContentScore)
+                                </MudStack>
+                            </MudItem>
+                        </MudGrid>
+                    </MudPaper>
+                }
+            </ChildRowContent>
             <PagerContent>
                 <MudDataGridPager T="LetterPlanProgressRowViewModel" RowsPerPageString="Filas por página:" InfoFormat="{first_item}-{last_item} of {all_items}" />
             </PagerContent>
         </MudDataGrid>
     }
+}
+
+@code {
+    private static RenderFragment RatingLine(string label, int score) => __builder =>
+    {
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2">
+            <MudText Typo="Typo.body2" Style="min-width: 7.5rem">@label</MudText>
+            <MudRating ReadOnly="true" SelectedValue="@score" MaxValue="5" Size="Size.Small" />
+            <MudText Typo="Typo.body2">@score</MudText>
+        </MudStack>
+    };
 }

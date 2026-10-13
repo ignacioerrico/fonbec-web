@@ -3,6 +3,7 @@ using Fonbec.Web.DataAccess.DataModels.Review;
 using Fonbec.Web.DataAccess.DataModels.Students;
 using Fonbec.Web.DataAccess.DataModels.Students.Input;
 using Fonbec.Web.DataAccess.Entities;
+using Fonbec.Web.DataAccess.Entities.Enums;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
 
@@ -11,6 +12,11 @@ namespace Fonbec.Web.DataAccess.Repositories;
 public interface IStudentRepository
 {
     Task<List<AllStudentsDataModel>> GetAllStudentsAsync(int? chapterId);
+
+    /// <summary>
+    /// Scores of approved letters. <paramref name="chapterId"/> null includes every chapter.
+    /// </summary>
+    Task<List<StudentLetterScoreDataModel>> GetApprovedLetterScoresAsync(int? chapterId);
 
     /// <summary>
     /// Active students visible on the students list. <paramref name="chapterId"/> null counts every chapter.
@@ -101,6 +107,26 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext,
             .ToListAsync();
 
         return allStudents;
+    }
+
+    public async Task<List<StudentLetterScoreDataModel>> GetApprovedLetterScoresAsync(int? chapterId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        return await db.Set<Letter>()
+            .AsNoTracking()
+            .Where(letter => letter.Status == DocumentStatus.Approved && letter.Review != null)
+            .Where(letter => chapterId == null || letter.ChapterId == chapterId)
+            .Select(letter => new StudentLetterScoreDataModel
+            {
+                StudentId = letter.StudentId,
+                PlanId = letter.PlanId,
+                PlanStartsOn = letter.Plan.StartsOn,
+                SpellingScore = letter.Review!.Assessment.SpellingScore,
+                PenmanshipScore = letter.Review.Assessment.PenmanshipScore,
+                ContentScore = letter.Review.Assessment.ContentScore,
+            })
+            .ToListAsync();
     }
 
     public async Task<int> CountStudentsAsync(int? chapterId)
