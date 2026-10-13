@@ -1,5 +1,6 @@
 ﻿using System.Security.Claims;
 using Fonbec.Web.DataAccess.Constants;
+using Fonbec.Web.DataAccess.DataModels.Users;
 using Fonbec.Web.DataAccess.DataModels.Users.Input;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Authorization;
@@ -29,6 +30,7 @@ public interface IUserService
     Task<bool> UpdateUserAsync(UpdateUserInputModel model);
     Task<List<string>> DisableUserAsync(DisableUserInputModel model, string actorRole, int? actorChapterId);
     Task<IReadOnlySet<int>> GetUserIdsWithLinkedStudentsAsync(IEnumerable<int> userIds);
+    Task<IReadOnlyList<FacilitatorStudentDataModel>> GetFacilitatorStudentsAsync(IEnumerable<int> facilitatorIds);
     Task<IdentityResult> DeleteForeverAsync(int userId);
     Task<IdentityResult> ResetPasswordAsync(int userId, string userEmail);
     string? GetFonbecAuthClaim(ClaimsPrincipal principal);
@@ -196,6 +198,11 @@ public class UserService(
     public async Task<IReadOnlySet<int>> GetUserIdsWithLinkedStudentsAsync(IEnumerable<int> userIds)
     {
         return await userRepository.GetUserIdsWithLinkedStudentsAsync(userIds);
+    }
+
+    public async Task<IReadOnlyList<FacilitatorStudentDataModel>> GetFacilitatorStudentsAsync(IEnumerable<int> facilitatorIds)
+    {
+        return await userRepository.GetFacilitatorStudentsAsync(facilitatorIds);
     }
 
     public async Task<IdentityResult> DeleteForeverAsync(int userId)

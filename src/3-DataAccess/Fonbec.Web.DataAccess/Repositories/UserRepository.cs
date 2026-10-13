@@ -23,6 +23,7 @@ public interface IUserRepository
     /// </summary>
     Task<int> CountUsersInRoleAsync(string role, int? chapterId);
     Task<IReadOnlySet<int>> GetUserIdsWithLinkedStudentsAsync(IEnumerable<int> userIds);
+    Task<IReadOnlyList<FacilitatorStudentDataModel>> GetFacilitatorStudentsAsync(IEnumerable<int> facilitatorIds);
     Task<IReadOnlyList<ChapterManagerContactDataModel>> GetChapterManagerContactsAsync(int chapterId);
     Task<GetUserOutputDataModel?> GetUserAsync(int userId);
     Task<(int userId, List<string> errors)> CreateUserAsync(CreateUserInputDataModel model);
@@ -190,6 +191,28 @@ public class UserRepository(
             .ToListAsync();
 
         return linked.ToHashSet();
+    }
+
+    public async Task<IReadOnlyList<FacilitatorStudentDataModel>> GetFacilitatorStudentsAsync(IEnumerable<int> facilitatorIds)
+    {
+        var ids = facilitatorIds.Distinct().ToList();
+        if (ids.Count == 0)
+        {
+            return [];
+        }
+
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        return await db.Students
+            .AsNoTracking()
+            .Where(student => ids.Contains(student.FacilitatorId) && !student.IsDeleted)
+            .Select(student => new FacilitatorStudentDataModel
+            {
+                FacilitatorId = student.FacilitatorId,
+                FirstName = student.FirstName,
+                LastName = student.LastName,
+            })
+            .ToListAsync();
     }
 
     public async Task<IReadOnlyList<ChapterManagerContactDataModel>> GetChapterManagerContactsAsync(int chapterId)

@@ -1,4 +1,6 @@
+using System.Globalization;
 using Fonbec.Web.DataAccess.Constants;
+using Fonbec.Web.DataAccess.DataModels.Users;
 using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models.Users;
 using Fonbec.Web.Logic.Models.Users.Input;
@@ -13,6 +15,10 @@ public partial class RoleUsersList : AuthenticationRequiredComponentBase
     private List<UsersListViewModel> _viewModel = [];
 
     private HashSet<int> _userIdsWithLinkedStudents = [];
+
+    private Dictionary<int, List<FacilitatorStudentDataModel>> _studentsByFacilitator = [];
+
+    private static readonly CompareInfo SpanishCompare = CultureInfo.GetCultureInfo("es-AR").CompareInfo;
 
     private UsersListViewModel _originalViewModel = new();
 
@@ -41,6 +47,9 @@ public partial class RoleUsersList : AuthenticationRequiredComponentBase
     [Parameter]
     public bool ShowDigitalImprovement { get; set; }
 
+    [Parameter]
+    public bool ShowStudents { get; set; }
+
     [Inject]
     public IUserService UserService { get; set; } = null!;
 
@@ -56,17 +65,48 @@ public partial class RoleUsersList : AuthenticationRequiredComponentBase
         var users = await UserService.GetAllUsersAsync(FonbecClaim.ChapterId);
         _viewModel = users.Where(user => user.UserRole == Role).ToList();
 
-        if (Role == FonbecRole.Uploader)
+        if (ShowStudents)
         {
-            var linked = await UserService.GetUserIdsWithLinkedStudentsAsync(_viewModel.Select(user => user.UserId));
+            var facilitatorIds = _viewModel.Select(user => user.UserId).ToList();
+            var linked = await UserService.GetUserIdsWithLinkedStudentsAsync(facilitatorIds);
             _userIdsWithLinkedStudents = linked.ToHashSet();
+
+            var students = await UserService.GetFacilitatorStudentsAsync(facilitatorIds);
+            _studentsByFacilitator = students
+                .GroupBy(student => student.FacilitatorId)
+                .ToDictionary(group => group.Key, group => group.ToList());
+
+            foreach (var user in _viewModel)
+            {
+                user.LinkedStudentCount = _studentsByFacilitator.TryGetValue(user.UserId, out var linkedStudents)
+                    ? linkedStudents.Count
+                    : 0;
+            }
         }
 
         Loading = false;
     }
 
     private bool HasLinkedStudents(UsersListViewModel viewModel) =>
-        Role == FonbecRole.Uploader && _userIdsWithLinkedStudents.Contains(viewModel.UserId);
+        ShowStudents && _userIdsWithLinkedStudents.Contains(viewModel.UserId);
+
+    private List<string> StudentChipLabels(UsersListViewModel viewModel)
+    {
+        if (!_studentsByFacilitator.TryGetValue(viewModel.UserId, out var students))
+        {
+            return [];
+        }
+
+        return students
+            .Select(student => _isLastNameFirst
+                ? $"{student.LastName}, {student.FirstName}"
+                : $"{student.FirstName} {student.LastName}")
+            .OrderBy(name => name, Comparer<string>.Create(CompareStudentNames))
+            .ToList();
+    }
+
+    private static int CompareStudentNames(string left, string right) =>
+        SpanishCompare.Compare(left, right, CompareOptions.IgnoreCase | CompareOptions.IgnoreNonSpace);
 
     private bool CanDisable(UsersListViewModel viewModel) =>
         !HasLinkedStudents(viewModel)

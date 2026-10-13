@@ -51,6 +51,10 @@
                           Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
         </ToolBarContent>
         <Columns>
+            @if (ShowStudents)
+            {
+                <HierarchyColumn T="UsersListViewModel" ButtonDisabledFunc="@(_ => false)" EnableHeaderToggle="true" />
+            }
             <PropertyColumn Property="@(vm => $"{vm.UserFirstName} {vm.UserLastName} {vm.UserNickName} {vm.UserLastName}")" Title="Nombre">
                 <CellTemplate>
                     <AuditableUserDisplay UsersListViewModel="context.Item"
@@ -68,6 +72,15 @@
                                   MaxLength="MaxLength.FonbecWebUser.LastName" />
                 </EditTemplate>
             </PropertyColumn>
+            @if (ShowStudents)
+            {
+                <PropertyColumn Property="vm => vm.LinkedStudentCount" Title="Becarios" Editable="false" Filterable="false">
+                    <CellTemplate>
+                        @context.Item.LinkedStudentCount
+                    </CellTemplate>
+                    <EditTemplate />
+                </PropertyColumn>
+            }
             <PropertyColumn Property="vm => vm.UserNickName" Title="Apodo" Hidden="true" Required="false">
                 <EditTemplate>
                     <MudTextField T="string" @bind-Value="@context.Item.UserNickName" Immediate="true"
@@ -158,6 +171,32 @@
                 </CellTemplate>
             </TemplateColumn>
         </Columns>
+        <ChildRowContent>
+            @if (ShowStudents)
+            {
+                <MudPaper Class="pa-4" Elevation="0">
+                    @{
+                        var students = StudentChipLabels(context.Item);
+                    }
+                    @if (students.Count == 0)
+                    {
+                        <MudText Typo="Typo.body2">Sin becarios.</MudText>
+                    }
+                    else
+                    {
+                        <div class="d-flex flex-wrap align-center gap-1">
+                            @foreach (var student in students)
+                            {
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Primary"
+                                         Icon="@Icons.Material.Filled.Person">
+                                    @student
+                                </MudChip>
+                            }
+                        </div>
+                    }
+                </MudPaper>
+            }
+        </ChildRowContent>
         <PagerContent>
             <MudDataGridPager T="UsersListViewModel" RowsPerPageString="Filas por página:" InfoFormat="{first_item}-{last_item} of {all_items}" />
         </PagerContent>

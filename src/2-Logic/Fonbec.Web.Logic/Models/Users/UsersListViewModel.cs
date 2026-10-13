@@ -33,6 +33,8 @@ public class UsersListViewModel : IDetectChanges<UsersListViewModel>
 
     public bool HasDigitalImprovementGrant { get; set; }
 
+    public int LinkedStudentCount { get; set; }
+
     public string? CreatedByFullName { get; set; }
     public DateTime CreatedOnUtc { get; set; }
 
