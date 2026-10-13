@@ -401,13 +401,15 @@ public class DocumentRepository(
 
             queueItem.ReviewLockedById = userId;
             queueItem.ReviewLockedAt = utcNow;
+            queueItem.Document.ReviewFirstLockedOn ??= utcNow;
             queueItem.DequeueCount++;
             cursor.LastServedChapterId = nextChapter;
 
             if (isExpiredRetake)
             {
-                // Status is already ReviewOngoing, so nothing on the document changes; force a
-                // guarded update so its RowVersion still arbitrates concurrent re-takes.
+                // Status is already ReviewOngoing. Force a guarded update so its RowVersion
+                // still arbitrates concurrent re-takes, including when the first-lock timestamp
+                // was already stored.
                 db.Entry(queueItem.Document).State = EntityState.Modified;
             }
             else
@@ -589,6 +591,7 @@ public class DocumentRepository(
 
             document.ImprovementLockedById = userId;
             document.ImprovementLockedAt = utcNow;
+            document.ImprovementFirstLockedOn ??= utcNow;
             document.DigitalImprovementStatus = DigitalImprovementStatus.InProgress;
             document.Status = DocumentStatus.DigitalImprovementOngoing;
 
@@ -716,6 +719,9 @@ public class DocumentRepository(
             pages[i].ImprovedBlobPathId = improvedBlob.BlobPathId;
         }
 
+        var completedOn = timeProvider.GetUtcNow().UtcDateTime;
+        document.DecisionImprovementLockedOn = document.ImprovementLockedAt;
+        document.ImprovementCompletedOn = completedOn;
         document.DigitalImprovementStatus = DigitalImprovementStatus.Complete;
         document.Status = DocumentStatus.ReviewPending;
         document.ImprovementLockedById = null;
@@ -1889,6 +1895,7 @@ public class DocumentRepository(
         var utcNow = DateTime.UtcNow;
         document.Status = DocumentStatus.Approved;
         document.ApprovedOn = utcNow;
+        document.DecisionReviewLockedOn = document.QueueItem?.ReviewLockedAt;
 
         if (document.QueueItem is not null)
         {
@@ -1961,8 +1968,10 @@ public class DocumentRepository(
 
         document.Status = DocumentStatus.Rejected;
         document.RejectedOn = DateTime.UtcNow;
+        document.RejectedById = reviewerId;
         document.RejectedReasonId = rejectedReasonId;
         document.RejectionNotes = rejectionNotes;
+        document.DecisionReviewLockedOn = document.QueueItem?.ReviewLockedAt;
 
         if (document.QueueItem is not null)
         {

@@ -254,6 +254,12 @@ namespace Fonbec.Web.DataAccess.Migrations
                     b.Property<int>("ChapterId")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("DecisionImprovementLockedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("DecisionReviewLockedOn")
+                        .HasColumnType("datetime2");
+
                     b.Property<byte>("DigitalImprovementStatus")
                         .HasColumnType("tinyint");
 
@@ -263,10 +269,19 @@ namespace Fonbec.Web.DataAccess.Migrations
                     b.Property<byte>("FileKind")
                         .HasColumnType("tinyint");
 
+                    b.Property<DateTime?>("ImprovementCompletedOn")
+                        .HasColumnType("datetime2");
+
+                    b.Property<DateTime?>("ImprovementFirstLockedOn")
+                        .HasColumnType("datetime2");
+
                     b.Property<DateTime?>("ImprovementLockedAt")
                         .HasColumnType("datetime2");
 
                     b.Property<int?>("ImprovementLockedById")
+                        .HasColumnType("int");
+
+                    b.Property<int?>("RejectedById")
                         .HasColumnType("int");
 
                     b.Property<DateTime?>("RejectedOn")
@@ -278,6 +293,9 @@ namespace Fonbec.Web.DataAccess.Migrations
                     b.Property<string>("RejectionNotes")
                         .HasMaxLength(512)
                         .HasColumnType("nvarchar(512)");
+
+                    b.Property<DateTime?>("ReviewFirstLockedOn")
+                        .HasColumnType("datetime2");
 
                     b.Property<byte[]>("RowVersion")
                         .IsConcurrencyToken()
@@ -315,6 +333,8 @@ namespace Fonbec.Web.DataAccess.Migrations
                     b.HasKey("DocumentId");
 
                     b.HasIndex("ImprovementLockedById");
+
+                    b.HasIndex("RejectedById");
 
                     b.HasIndex("RejectedReasonId");
 
@@ -1879,6 +1899,11 @@ namespace Fonbec.Web.DataAccess.Migrations
                         .HasForeignKey("ImprovementLockedById")
                         .OnDelete(DeleteBehavior.NoAction);
 
+                    b.HasOne("Fonbec.Web.DataAccess.Entities.FonbecWebUser", "RejectedBy")
+                        .WithMany()
+                        .HasForeignKey("RejectedById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("Fonbec.Web.DataAccess.Entities.RejectedReason", "RejectedReason")
                         .WithMany()
                         .HasForeignKey("RejectedReasonId")
@@ -1904,6 +1929,8 @@ namespace Fonbec.Web.DataAccess.Migrations
                     b.Navigation("Chapter");
 
                     b.Navigation("ImprovementLockedBy");
+
+                    b.Navigation("RejectedBy");
 
                     b.Navigation("RejectedReason");
 

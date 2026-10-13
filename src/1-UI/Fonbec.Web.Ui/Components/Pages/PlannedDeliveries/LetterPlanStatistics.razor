@@ -1,0 +1,186 @@
+@attribute [Route(NavRoutes.LetterPlanStatisticsRouteTemplate)]
+@attribute [Authorize(Policy = nameof(LetterPlanStatistics))]
+@inherits AuthenticationRequiredComponentBase
+
+@using Fonbec.Web.Logic.Models.LetterPlanStatistics
+
+<PageHeader Title="@_pageTitle" />
+
+<LoadingIndicator Loading="Loading" />
+
+@if (!Loading)
+{
+    @if (_accessDenied)
+    {
+        <MudAlert Severity="Severity.Error" Class="mt-4">
+            No tenés acceso a esta planificación.
+        </MudAlert>
+    }
+    else if (_viewModel is not null)
+    {
+        <MudButton Href="@NavRoutes.PlannedDeliveries"
+                   StartIcon="@Icons.Material.Filled.ArrowBack"
+                   Variant="Variant.Text"
+                   Color="Color.Default"
+                   Class="mt-2">
+            Volver
+        </MudButton>
+
+        <MudGrid Class="mt-2" Spacing="3">
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudText Typo="Typo.h6">Escrita hasta el aviso al padrino</MudText>
+                    @DurationBars(_viewModel.WrittenToNotification)
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudText Typo="Typo.h6">Espera hasta la mejora digital</MudText>
+                    @DurationBars(_viewModel.WaitForImprovement)
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudText Typo="Typo.h6">Espera hasta que un revisor la toma</MudText>
+                    @DurationBars(_viewModel.WaitForReview)
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudText Typo="Typo.h6">Tiempo de mejora digital</MudText>
+                    @DurationBars(_viewModel.ImprovementDuration)
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudText Typo="Typo.h6">Tiempo de revisión</MudText>
+                    @DurationBars(_viewModel.ReviewDuration)
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudText Typo="Typo.h6">Rechazos por revisor</MudText>
+                    @if (_viewModel.RejectionsByReviewer.HasData)
+                    {
+                        <MudChart ChartType="ChartType.Bar"
+                                  ChartSeries="@SingleSeries(_viewModel.RejectionsByReviewer.Counts)"
+                                  XAxisLabels="@_viewModel.RejectionsByReviewer.Labels"
+                                  Width="100%"
+                                  Height="280px" />
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Class="mt-4 mud-text-secondary">Sin datos para este gráfico.</MudText>
+                    }
+                    @if (_viewModel.RejectionsByReviewer.Note is not null)
+                    {
+                        <MudText Typo="Typo.caption" Class="mt-2 mud-text-secondary">@_viewModel.RejectionsByReviewer.Note</MudText>
+                    }
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudText Typo="Typo.h6">Actividad de revisores</MudText>
+                    @if (_viewModel.ReviewerActivity.HasData)
+                    {
+                        <MudChart ChartType="ChartType.StackedBar"
+                                  ChartSeries="@ActivitySeries(_viewModel.ReviewerActivity)"
+                                  XAxisLabels="@_viewModel.ReviewerActivity.Labels"
+                                  Width="100%"
+                                  Height="280px" />
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Class="mt-4 mud-text-secondary">Sin datos para este gráfico.</MudText>
+                    }
+                    @if (_viewModel.ReviewerActivity.Note is not null)
+                    {
+                        <MudText Typo="Typo.caption" Class="mt-2 mud-text-secondary">@_viewModel.ReviewerActivity.Note</MudText>
+                    }
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudText Typo="Typo.h6">Motivos de rechazo</MudText>
+                    @Donut(_viewModel.RejectionReasons)
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudText Typo="Typo.h6">Resultado</MudText>
+                    @Donut(_viewModel.Outcomes)
+                </MudPaper>
+            </MudItem>
+            <MudItem xs="12" md="6">
+                <MudPaper Class="pa-4" Elevation="1">
+                    <MudText Typo="Typo.h6">Puntajes</MudText>
+                    @if (_viewModel.Scores.HasData)
+                    {
+                        <MudChart ChartType="ChartType.Bar"
+                                  ChartSeries="@ScoreSeries(_viewModel.Scores)"
+                                  XAxisLabels="@_viewModel.Scores.Labels"
+                                  Width="100%"
+                                  Height="280px" />
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2" Class="mt-4 mud-text-secondary">Sin datos para este gráfico.</MudText>
+                    }
+                </MudPaper>
+            </MudItem>
+        </MudGrid>
+    }
+}
+
+@code {
+    private RenderFragment DurationBars(DurationChartViewModel chart) => __builder =>
+    {
+        if (chart.HasData)
+        {
+            <MudChart ChartType="ChartType.Bar"
+                      ChartSeries="@SingleSeries(chart.Counts)"
+                      XAxisLabels="@chart.Labels"
+                      Width="100%"
+                      Height="280px" />
+            if (chart.MedianText is not null)
+            {
+                <MudStack Row="true" Spacing="3" Wrap="Wrap.Wrap" Class="mt-2">
+                    <MudText Typo="Typo.body2">@chart.MedianText</MudText>
+                    <MudText Typo="Typo.body2">@chart.AverageText</MudText>
+                    <MudText Typo="Typo.body2">@chart.MinText</MudText>
+                    <MudText Typo="Typo.body2">@chart.MaxText</MudText>
+                </MudStack>
+            }
+        }
+        else
+        {
+            <MudText Typo="Typo.body2" Class="mt-4 mud-text-secondary">Sin datos para este gráfico.</MudText>
+        }
+
+        if (chart.Note is not null)
+        {
+            <MudText Typo="Typo.caption" Class="mt-2 mud-text-secondary">@chart.Note</MudText>
+        }
+    };
+
+    private RenderFragment Donut(CountChartViewModel chart) => __builder =>
+    {
+        if (chart.HasData)
+        {
+            <MudChart ChartType="ChartType.Donut"
+                      InputData="@chart.Counts"
+                      InputLabels="@chart.Labels"
+                      Width="100%"
+                      Height="280px" />
+        }
+        else
+        {
+            <MudText Typo="Typo.body2" Class="mt-4 mud-text-secondary">Sin datos para este gráfico.</MudText>
+        }
+
+        if (chart.Note is not null)
+        {
+            <MudText Typo="Typo.caption" Class="mt-2 mud-text-secondary">@chart.Note</MudText>
+        }
+    };
+}

@@ -32,6 +32,10 @@ public static class NavRoutes
 
     public const string LetterPlanProgressRouteTemplate = $"{PlannedDeliveries}/{{PlanId:int}}/cartas";
 
+    public static string LetterPlanStatistics(int planId) => $"{PlannedDeliveries}/{planId}/estadisticas";
+
+    public const string LetterPlanStatisticsRouteTemplate = $"{PlannedDeliveries}/{{PlanId:int}}/estadisticas";
+
     public const string Students = "/becarios";
 
     public const string StudentCreate = $"{Students}/alta";

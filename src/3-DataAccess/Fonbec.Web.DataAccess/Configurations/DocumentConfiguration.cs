@@ -61,6 +61,11 @@ internal class DocumentConfiguration : IEntityTypeConfiguration<Document>
             .HasForeignKey(d => d.ImprovementLockedById)
             .OnDelete(DeleteBehavior.NoAction);
 
+        builder.HasOne(d => d.RejectedBy)
+            .WithMany()
+            .HasForeignKey(d => d.RejectedById)
+            .OnDelete(DeleteBehavior.NoAction);
+
         builder.HasOne(d => d.RejectedReason)
             .WithMany()
             .HasForeignKey(d => d.RejectedReasonId)
