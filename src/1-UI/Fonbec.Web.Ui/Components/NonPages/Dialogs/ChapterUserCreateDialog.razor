@@ -1,0 +1,40 @@
+@using Fonbec.Web.DataAccess.Constants
+@using Fonbec.Web.DataAccess.Entities.Enums
+@using Fonbec.Web.Logic.Util
+
+<MudDialog>
+    <DialogContent>
+        <MudForm @bind-IsValid="@_formValidationSucceeded">
+            <MudTextField T="string" Label="Nombre" @bind-Value="_bindModel.UserFirstName" Immediate="true" AutoFocus="true"
+                          Required="true" RequiredError="Este es un campo obligatorio."
+                          MaxLength="MaxLength.FonbecWebUser.FirstName" />
+
+            <MudTextField T="string" Label="Apellido" @bind-Value="_bindModel.UserLastName" Immediate="true"
+                          Required="true" RequiredError="Este es un campo obligatorio."
+                          MaxLength="MaxLength.FonbecWebUser.LastName" />
+
+            <MudTextField T="string" Label="Apodo" @bind-Value="_bindModel.UserNickName" Immediate="true"
+                          MaxLength="MaxLength.FonbecWebUser.NickName" />
+
+            <GenderSelector @bind-SelectedGender="_bindModel.UserGender" />
+
+            <MudTextField T="string" Label="Correo electrónico" @bind-Value="_bindModel.UserEmail" Immediate="true"
+                          Required="true" RequiredError="Este es un campo obligatorio."
+                          MaxLength="MaxLength.FonbecWebUser.Email"
+                          Validation="@(new Func<string, string?>(ContactFieldValidator.ValidateEmail))" />
+
+            <MudTextField T="string" Label="Teléfono" @bind-Value="_bindModel.UserPhoneNumber" Immediate="true"
+                          MaxLength="MaxLength.FonbecWebUser.PhoneNumber"
+                          Validation="@(new Func<string, string?>(ContactFieldValidator.ValidatePhone))" />
+
+            <MudTextField T="string" Label="Información adicional" @bind-Value="_bindModel.UserNotes" Immediate="true"
+                          MaxLength="MaxLength.Auditable.Notes" />
+        </MudForm>
+    </DialogContent>
+    <DialogActions>
+        <MudButton OnClick="Cancel" Disabled="_saving">Cancelar</MudButton>
+        <MudButton Color="Color.Primary" Variant="Variant.Filled" OnClick="SaveAsync" Disabled="SaveButtonDisabled">
+            Crear
+        </MudButton>
+    </DialogActions>
+</MudDialog>

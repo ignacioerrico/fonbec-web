@@ -1,4 +1,6 @@
-﻿using Fonbec.Web.DataAccess.DataModels.Chapters.Input;
+﻿using Fonbec.Web.DataAccess.Constants;
+using Fonbec.Web.DataAccess.DataModels.Chapters;
+using Fonbec.Web.DataAccess.DataModels.Chapters.Input;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Models;
 using Fonbec.Web.Logic.Models.Chapters;
@@ -12,6 +14,7 @@ public interface IChapterService
 {
     Task<string?> GetChapterNameAsync(int chapterId);
     Task<List<ChaptersListViewModel>> GetAllChaptersAsync();
+    Task<List<ChaptersListViewModel>> GetChaptersForAdminListAsync();
     Task<List<SelectableModel<int>>> GetAllChaptersForSelectionAsync();
     Task<CrudResult> CreateChapterAsync(CreateChapterInputModel inputModel);
     Task<CrudResult> UpdateChapterAsync(UpdateChapterInputModel inputModel);
@@ -29,6 +32,27 @@ public class ChapterService(IChapterRepository chapterRepository) : IChapterServ
         var allChaptersDataModel = await chapterRepository.GetAllChaptersAsync();
         var chaptersListViewModel = allChaptersDataModel.Adapt<List<ChaptersListViewModel>>();
         return chaptersListViewModel;
+    }
+
+    public async Task<List<ChaptersListViewModel>> GetChaptersForAdminListAsync()
+    {
+        var chapters = await GetAllChaptersAsync();
+        var directory = await chapterRepository.GetChapterDirectoryAsync();
+        var staffByChapter = directory.Staff
+            .GroupBy(member => member.ChapterId)
+            .ToDictionary(group => group.Key, group => group.ToList());
+
+        foreach (var chapter in chapters)
+        {
+            var staff = staffByChapter.GetValueOrDefault(chapter.ChapterId) ?? [];
+            chapter.Managers = People(staff, FonbecRole.Manager);
+            chapter.Facilitators = People(staff, FonbecRole.Uploader);
+            chapter.Reviewers = People(staff, FonbecRole.Reviewer);
+            chapter.StudentCount = directory.StudentCounts.GetValueOrDefault(chapter.ChapterId);
+            chapter.SponsorCount = directory.SponsorCounts.GetValueOrDefault(chapter.ChapterId);
+        }
+
+        return chapters;
     }
 
     public async Task<List<SelectableModel<int>>> GetAllChaptersForSelectionAsync()
@@ -50,4 +74,24 @@ public class ChapterService(IChapterRepository chapterRepository) : IChapterServ
         var affectedRows = await chapterRepository.UpdateChapterAsync(updateChapterInputDataModel);
         return new CrudResult(affectedRows);
     }
+
+    private static List<ChapterStaffMemberViewModel> People(
+        IEnumerable<ChapterStaffMemberDataModel> staff,
+        string role) =>
+        staff
+            .Where(member => member.Role == role)
+            .OrderBy(member => member.LastName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(member => member.FirstName, StringComparer.OrdinalIgnoreCase)
+            .Select(member => new ChapterStaffMemberViewModel
+            {
+                UserId = member.UserId,
+                FirstName = member.FirstName,
+                LastName = member.LastName,
+                Email = member.Email,
+                PhoneNumber = string.IsNullOrWhiteSpace(member.PhoneNumber) ? null : member.PhoneNumber,
+                IsActive = member.IsActive,
+                CanBeLockedOut = member.CanBeLockedOut,
+                HasLinkedStudents = member.HasLinkedStudents,
+            })
+            .ToList();
 }

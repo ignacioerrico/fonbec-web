@@ -1,6 +1,10 @@
 ﻿using FluentAssertions;
+using Fonbec.Web.DataAccess.Constants;
+using Fonbec.Web.DataAccess.DataModels.Chapters;
+using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Services;
+using Mapster;
 using NSubstitute;
 
 namespace Fonbec.Web.Logic.Tests.Services;
@@ -12,6 +16,7 @@ public class ChapterServiceTests
 
     public ChapterServiceTests()
     {
+        TypeAdapterConfig.GlobalSettings.Scan(typeof(ChapterService).Assembly);
         _chapterRepository = Substitute.For<IChapterRepository>();
         _chapterService = new ChapterService(_chapterRepository);
     }
@@ -44,4 +49,86 @@ public class ChapterServiceTests
         // Assert
         result.Should().BeNull();
     }
+
+    [Fact]
+    public async Task GetChaptersForAdminListAsync_GroupsStaffByRole_AndAttachesCounts()
+    {
+        var auditable = new Chapter
+        {
+            CreatedBy = new FonbecWebUser { FirstName = "Ada", LastName = "Lovelace" },
+            Notes = "nota",
+        };
+        _chapterRepository.GetAllChaptersAsync().Returns(
+        [
+            new AllChaptersDataModel(auditable)
+            {
+                ChapterId = 1,
+                ChapterName = "Norte",
+                IsChapterActive = true,
+            },
+            new AllChaptersDataModel(auditable)
+            {
+                ChapterId = 2,
+                ChapterName = "Sur",
+                IsChapterActive = true,
+            },
+        ]);
+        _chapterRepository.GetChapterDirectoryAsync().Returns(new ChapterDirectoryDataModel
+        {
+            Staff =
+            [
+                Member(1, 20, FonbecRole.Uploader, "Nico", "Bazan", "   ", hasLinkedStudents: true),
+                Member(1, 11, FonbecRole.Manager, "Ana", "Zapata", "111"),
+                Member(1, 10, FonbecRole.Manager, "Luis", "Alvarez", null),
+                Member(1, 40, FonbecRole.Reviewer, "Eva", "Ruiz", "555"),
+                Member(1, 99, FonbecRole.Admin, "No", "Mostrar", null),
+                Member(2, 16, FonbecRole.Manager, "Sur", "Jefe", "777"),
+            ],
+            StudentCounts = new Dictionary<int, int> { [1] = 4 },
+            SponsorCounts = new Dictionary<int, int> { [1] = 2, [2] = 1 },
+        });
+
+        var chapters = await _chapterService.GetChaptersForAdminListAsync();
+
+        var north = chapters.Single(chapter => chapter.ChapterId == 1);
+        north.Managers.Select(person => person.UserId).Should().Equal(10, 11);
+        north.Managers[0].PhoneNumber.Should().BeNull();
+        north.Managers[1].PhoneNumber.Should().Be("111");
+        north.Facilitators.Should().ContainSingle();
+        north.Facilitators[0].UserId.Should().Be(20);
+        north.Facilitators[0].PhoneNumber.Should().BeNull();
+        north.Facilitators[0].HasLinkedStudents.Should().BeTrue();
+        north.Reviewers.Should().ContainSingle().Which.UserId.Should().Be(40);
+        north.StudentCount.Should().Be(4);
+        north.SponsorCount.Should().Be(2);
+
+        var south = chapters.Single(chapter => chapter.ChapterId == 2);
+        south.Managers.Should().ContainSingle().Which.UserId.Should().Be(16);
+        south.Facilitators.Should().BeEmpty();
+        south.Reviewers.Should().BeEmpty();
+        south.StudentCount.Should().Be(0);
+        south.SponsorCount.Should().Be(1);
+    }
+
+    private static ChapterStaffMemberDataModel Member(
+        int chapterId,
+        int userId,
+        string role,
+        string firstName,
+        string lastName,
+        string? phone,
+        bool hasLinkedStudents = false) =>
+        new()
+        {
+            ChapterId = chapterId,
+            UserId = userId,
+            Role = role,
+            FirstName = firstName,
+            LastName = lastName,
+            Email = $"{firstName}@fonbec.org",
+            PhoneNumber = phone,
+            IsActive = true,
+            CanBeLockedOut = true,
+            HasLinkedStudents = hasLinkedStudents,
+        };
 }

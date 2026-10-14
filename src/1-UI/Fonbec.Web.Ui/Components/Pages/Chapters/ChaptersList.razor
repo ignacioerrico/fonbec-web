@@ -43,6 +43,7 @@
 			              Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium"/>
 		</ToolBarContent>
 		<Columns>
+			<HierarchyColumn T="ChaptersListViewModel" ButtonDisabledFunc="@(_ => false)" />
 			<PropertyColumn Property="vm => vm.ChapterName" Title="Nombre">
 				<CellTemplate>
 					<AuditableItemDisplay Id="@context.Item.ChapterId"
@@ -64,6 +65,92 @@
 				</CellTemplate>
 			</TemplateColumn>
 		</Columns>
+		<ChildRowContent>
+			@{
+				var chapter = context.Item;
+			}
+			<MudPaper Class="pa-4" Elevation="0">
+				<MudGrid Spacing="3">
+					@foreach (var group in StaffGroups(chapter))
+					{
+						<MudItem xs="12" md="4">
+							<MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween" Class="mb-2">
+								<MudText Typo="Typo.h6">@group.Title</MudText>
+								<MudButton Variant="Variant.Text"
+								           Color="Color.Primary"
+								           Size="Size.Small"
+								           StartIcon="@Icons.Material.Filled.PersonAdd"
+								           OnClick="@(() => AddUserAsync(chapter, group.Role))">
+									Agregar
+								</MudButton>
+							</MudStack>
+							@if (group.People.Count == 0)
+							{
+								<MudText Typo="Typo.body2">@group.EmptyMessage</MudText>
+							}
+							else
+							{
+								<MudStack Spacing="2">
+									@foreach (var person in group.People)
+									{
+										<MudPaper Outlined="true" Elevation="0" Class="pa-2">
+											<MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+												<div>
+													<MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+														<MudText Typo="Typo.body2">
+															<strong>@person.FirstName @person.LastName</strong>
+														</MudText>
+														@if (!person.IsActive)
+														{
+															<MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Warning">
+																Deshabilitado
+															</MudChip>
+														}
+													</MudStack>
+													@if (!string.IsNullOrWhiteSpace(person.Email))
+													{
+														<MudLink Href="@($"mailto:{person.Email}")" Typo="Typo.caption">
+															@person.Email
+														</MudLink>
+													}
+													@if (!string.IsNullOrWhiteSpace(person.PhoneNumber))
+													{
+														<MudText Typo="Typo.caption">@person.PhoneNumber</MudText>
+													}
+												</div>
+												@if (person.IsActive)
+												{
+													<MudTooltip Text="@DisableTooltip(person)" Arrow="true" Placement="Placement.Bottom" Color="Color.Warning">
+														<MudIconButton OnClick="@(() => DisableUserAsync(chapter, person))"
+														               Icon="@Icons.Material.Outlined.Delete"
+														               Size="Size.Small"
+														               Color="Color.Warning"
+														               Disabled="@(!CanDisable(person))" />
+													</MudTooltip>
+												}
+												else
+												{
+													<MudTooltip Text="Habilitar" Arrow="true" Placement="Placement.Bottom" Color="Color.Success">
+														<MudIconButton OnClick="@(() => ReenableUserAsync(chapter, person))"
+														               Icon="@Icons.Material.Outlined.RestoreFromTrash"
+														               Size="Size.Small"
+														               Color="Color.Success" />
+													</MudTooltip>
+												}
+											</MudStack>
+										</MudPaper>
+									}
+								</MudStack>
+							}
+						</MudItem>
+					}
+				</MudGrid>
+				<MudStack Row="true" Spacing="4" Class="mt-4">
+					<MudText Typo="Typo.body1"><strong>Becarios:</strong> @chapter.StudentCount</MudText>
+					<MudText Typo="Typo.body1"><strong>Padrinos:</strong> @chapter.SponsorCount</MudText>
+				</MudStack>
+			</MudPaper>
+		</ChildRowContent>
 		<PagerContent>
 			<MudDataGridPager T="ChaptersListViewModel" RowsPerPageString="Filas por página:" InfoFormat="{first_item}-{last_item} of {all_items}" />
 		</PagerContent>

@@ -11,9 +11,38 @@ public class ChaptersListViewModel : AuditableViewModel, IDetectChanges<Chapters
     public string ChapterName { get; init; } = string.Empty;
     public bool IsChapterActive { get; set; }
 
+    public List<ChapterStaffMemberViewModel> Managers { get; set; } = [];
+
+    public List<ChapterStaffMemberViewModel> Facilitators { get; set; } = [];
+
+    public List<ChapterStaffMemberViewModel> Reviewers { get; set; } = [];
+
+    public int StudentCount { get; set; }
+
+    public int SponsorCount { get; set; }
+
     public bool IsIdenticalTo(ChaptersListViewModel other) =>
         ChapterName == other.ChapterName.NormalizeText()
         && Notes == other.Notes.NullOrTrimmed();
+}
+
+public class ChapterStaffMemberViewModel
+{
+    public int UserId { get; set; }
+
+    public string FirstName { get; set; } = string.Empty;
+
+    public string LastName { get; set; } = string.Empty;
+
+    public string Email { get; set; } = string.Empty;
+
+    public string? PhoneNumber { get; set; }
+
+    public bool IsActive { get; set; }
+
+    public bool CanBeLockedOut { get; set; }
+
+    public bool HasLinkedStudents { get; set; }
 }
 
 public class ChaptersListViewModelMappingDefinitions : IRegister

@@ -2,7 +2,9 @@
 using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models.Chapters;
 using Fonbec.Web.Logic.Models.Chapters.Input;
+using Fonbec.Web.Logic.Models.Users.Input;
 using Fonbec.Web.Logic.Services;
+using Fonbec.Web.Ui.Components.NonPages.Dialogs;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
@@ -20,16 +22,160 @@ public partial class ChaptersList : AuthenticationRequiredComponentBase
     [Inject]
     public IChapterService ChapterService { get; set; } = null!;
 
+    [Inject]
+    public IUserService UserService { get; set; } = null!;
+
+    [Inject]
+    public IDialogService DialogService { get; set; } = null!;
+
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
 
         Loading = true;
 
-        _viewModels = await ChapterService.GetAllChaptersAsync();
+        _viewModels = await ChapterService.GetChaptersForAdminListAsync();
 
         Loading = false;
     }
+
+    private static IReadOnlyList<StaffGroup> StaffGroups(ChaptersListViewModel chapter) =>
+    [
+        new(FonbecRole.Manager, "Coordinadores", "Sin coordinadores.", chapter.Managers),
+        new(FonbecRole.Uploader, "Mediadores", "Sin mediadores.", chapter.Facilitators),
+        new(FonbecRole.Reviewer, "Revisores", "Sin revisores.", chapter.Reviewers),
+    ];
+
+    private bool CanDisable(ChapterStaffMemberViewModel person) =>
+        person.UserId != FonbecClaim.UserId
+        && person.CanBeLockedOut
+        && !person.HasLinkedStudents;
+
+    private static string DisableTooltip(ChapterStaffMemberViewModel person) =>
+        person.HasLinkedStudents
+            ? UserMessages.CannotDisableFacilitatorWithStudents
+            : "Deshabilitar";
+
+    private async Task AddUserAsync(ChaptersListViewModel chapter, string role)
+    {
+        var parameters = new DialogParameters<ChapterUserCreateDialog>
+        {
+            { dialog => dialog.ChapterId, chapter.ChapterId },
+            { dialog => dialog.Role, role },
+            { dialog => dialog.CreatedById, FonbecClaim.UserId },
+        };
+
+        var dialog = await DialogService.ShowAsync<ChapterUserCreateDialog>(AddTitle(role), parameters);
+        var result = await dialog.Result;
+        if (result is null || result.Canceled)
+        {
+            return;
+        }
+
+        await ReloadChapterAsync(chapter.ChapterId);
+    }
+
+    private async Task DisableUserAsync(ChaptersListViewModel chapter, ChapterStaffMemberViewModel person)
+    {
+        if (!CanDisable(person))
+        {
+            return;
+        }
+
+        var message = $"¿Estás seguro de que querés deshabilitar al usuario {person.FirstName} {person.LastName}?";
+        var dialogResult = await DialogService.ShowMessageBox(
+            "¡Atención!",
+            message,
+            yesText: "Sí",
+            cancelText: "Cancelar");
+
+        if (dialogResult is null)
+        {
+            return;
+        }
+
+        Loading = true;
+
+        var errors = await UserService.DisableUserAsync(
+            new DisableUserInputModel(person.UserId, DisableUser: true, FonbecClaim.UserId),
+            UserRole,
+            FonbecClaim.ChapterId);
+
+        Loading = false;
+
+        if (errors.Count > 0)
+        {
+            foreach (var error in errors)
+            {
+                Snackbar.Add(error, Severity.Error);
+            }
+
+            return;
+        }
+
+        await ReloadChapterAsync(chapter.ChapterId);
+    }
+
+    private async Task ReenableUserAsync(ChaptersListViewModel chapter, ChapterStaffMemberViewModel person)
+    {
+        Loading = true;
+
+        var errors = await UserService.DisableUserAsync(
+            new DisableUserInputModel(person.UserId, DisableUser: false, FonbecClaim.UserId),
+            UserRole,
+            FonbecClaim.ChapterId);
+
+        Loading = false;
+
+        if (errors.Count > 0)
+        {
+            foreach (var error in errors)
+            {
+                Snackbar.Add(error, Severity.Error);
+            }
+
+            return;
+        }
+
+        await ReloadChapterAsync(chapter.ChapterId);
+    }
+
+    private async Task ReloadChapterAsync(int chapterId)
+    {
+        Loading = true;
+
+        var refreshed = await ChapterService.GetChaptersForAdminListAsync();
+        var updated = refreshed.SingleOrDefault(chapter => chapter.ChapterId == chapterId);
+        var current = _viewModels.SingleOrDefault(chapter => chapter.ChapterId == chapterId);
+
+        Loading = false;
+
+        if (updated is null || current is null)
+        {
+            _viewModels = refreshed;
+            return;
+        }
+
+        current.Managers = updated.Managers;
+        current.Facilitators = updated.Facilitators;
+        current.Reviewers = updated.Reviewers;
+        current.StudentCount = updated.StudentCount;
+        current.SponsorCount = updated.SponsorCount;
+    }
+
+    private static string AddTitle(string role) => role switch
+    {
+        FonbecRole.Manager => "Agregar coordinador",
+        FonbecRole.Uploader => "Agregar mediador",
+        FonbecRole.Reviewer => "Agregar revisor",
+        _ => "Agregar usuario",
+    };
+
+    private sealed record StaffGroup(
+        string Role,
+        string Title,
+        string EmptyMessage,
+        IReadOnlyList<ChapterStaffMemberViewModel> People);
 
     /// <summary>
     /// Called by MudTable to determine if a row should be displayed
