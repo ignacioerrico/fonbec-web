@@ -7,6 +7,7 @@
 @using Fonbec.Web.Ui.Components.Pages.Review
 @using Fonbec.Web.Ui.Components.Pages.Sponsors
 @using Fonbec.Web.Ui.Components.Pages.Facilitators
+@using Fonbec.Web.Ui.Components.Pages.Import
 @using Fonbec.Web.Ui.Components.Pages.StudentMessages
 @using Fonbec.Web.Ui.Components.Pages.Students
 @using Fonbec.Web.Ui.Components.Pages.Users
@@ -107,6 +108,12 @@
                                         <span class="nav-count__note">@NavMenuFormatting.CountNote(companies)</span>
                                     }
                                 </span>
+                            </MudNavLink>
+                        </AuthorizeView>
+
+                        <AuthorizeView Policy="@nameof(ChapterImport)" Context="importContext">
+                            <MudNavLink Href="@NavRoutes.ChapterImport" Match="NavLinkMatch.Prefix">
+                                Importar
                             </MudNavLink>
                         </AuthorizeView>
                     </MudNavGroup>

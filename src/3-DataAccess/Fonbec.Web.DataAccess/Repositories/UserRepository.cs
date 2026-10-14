@@ -1,5 +1,6 @@
 ﻿using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.DataModels;
+using Fonbec.Web.DataAccess.DataModels.Import;
 using Fonbec.Web.DataAccess.DataModels.Users;
 using Fonbec.Web.DataAccess.DataModels.Users.Input;
 using Fonbec.Web.DataAccess.Entities;
@@ -22,6 +23,11 @@ public interface IUserRepository
     /// <paramref name="chapterId"/> null counts every chapter.
     /// </summary>
     Task<int> CountUsersInRoleAsync(string role, int? chapterId);
+
+    /// <summary>
+    /// Active facilitators (role Uploader) in the chapter, with id and email. Locked-out accounts are excluded.
+    /// </summary>
+    Task<List<FacilitatorImportDataModel>> GetActiveFacilitatorsAsync(int chapterId);
     Task<IReadOnlySet<int>> GetUserIdsWithLinkedStudentsAsync(IEnumerable<int> userIds);
     Task<IReadOnlyList<FacilitatorStudentDataModel>> GetFacilitatorStudentsAsync(IEnumerable<int> facilitatorIds);
     Task<IReadOnlyList<ChapterManagerContactDataModel>> GetChapterManagerContactsAsync(int chapterId);
@@ -171,6 +177,29 @@ public class UserRepository(
                       || user.LockoutEnd <= now)
             select user.Id
         ).CountAsync();
+    }
+
+    public async Task<List<FacilitatorImportDataModel>> GetActiveFacilitatorsAsync(int chapterId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var now = DateTimeOffset.UtcNow;
+
+        return await (
+            from user in db.Users.AsNoTracking()
+            join userRole in db.UserRoles on user.Id equals userRole.UserId
+            join identityRole in db.Roles on userRole.RoleId equals identityRole.Id
+            where identityRole.Name == FonbecRole.Uploader
+                  && user.ChapterId == chapterId
+                  && (!user.LockoutEnabled
+                      || user.LockoutEnd == null
+                      || user.LockoutEnd <= now)
+            select new FacilitatorImportDataModel
+            {
+                Id = user.Id,
+                Email = user.Email ?? string.Empty,
+            }
+        ).ToListAsync();
     }
 
     public async Task<IReadOnlySet<int>> GetUserIdsWithLinkedStudentsAsync(IEnumerable<int> userIds)
