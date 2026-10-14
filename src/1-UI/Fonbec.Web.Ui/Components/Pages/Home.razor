@@ -1,22 +1,129 @@
 ﻿@page "/"
 @attribute [Authorize]
+@inherits AuthenticationRequiredComponentBase
 
-@using System.Security.Claims
+@using Fonbec.Web.Ui.Components.NonPages.Buttons
 
-<PageTitle>Home</PageTitle>
+<PageTitle>Inicio</PageTitle>
 
-<AuthorizeView>
-    <MudAlert Severity="Severity.Info" Class="mb-8">This page is only for developers and QA. It will <strong>not</strong> be used in production.</MudAlert>
+@if (!_resolved)
+{
+    <LoadingIndicator Loading="true" />
+}
+else if (_missingChapter)
+{
+    <MudAlert Severity="Severity.Error">
+        Esta página requiere un usuario que pertenezca a una filial.
+    </MudAlert>
+}
+else if (_home is not null)
+{
+    <MudText Typo="Typo.h3" GutterBottom="true">Hola, @FonbecClaim.FirstName.</MudText>
+    <MudText Typo="Typo.h6" Class="mb-6">Estás coordinando la filial @FonbecClaim.ChapterName.</MudText>
 
-    <MudText Typo="Typo.h3" GutterBottom="true">Welcome, @context.User.FindFirstValue(FonbecWebUserCustomClaim.FirstName).</MudText>
-    <MudText Typo="Typo.body1">Your role: <strong>@context.User.FindFirstValue(ClaimTypes.Role)</strong></MudText>
+    <MudGrid Spacing="3">
+        <MudItem xs="12" sm="6">
+            <MudPaper Class="pa-4" Elevation="2">
+                <MudLink Href="@NavRoutes.Students" Underline="Underline.None">
+                    <MudText Typo="Typo.subtitle1">Becarios</MudText>
+                    <MudText Typo="Typo.h3" Color="Color.Primary">@_home.StudentCount</MudText>
+                </MudLink>
+            </MudPaper>
+        </MudItem>
+        <MudItem xs="12" sm="6">
+            <MudPaper Class="pa-4" Elevation="2">
+                <MudLink Href="@NavRoutes.Sponsors" Underline="Underline.None">
+                    <MudText Typo="Typo.subtitle1">Padrinos</MudText>
+                    <MudText Typo="Typo.h3" Color="Color.Primary">@_home.SponsorCount</MudText>
+                </MudLink>
+            </MudPaper>
+        </MudItem>
+    </MudGrid>
 
-    <MudButton Href="/user-claims"
-               Variant="Variant.Filled" Color="Color.Primary"
-               Class="mt-4">
-        See my user claims
-    </MudButton>
+    <MudText Typo="Typo.h5" Class="mt-8 mb-3">Campaña</MudText>
+    @if (_home.Campaign is null)
+    {
+        <MudText Typo="Typo.h6">No hay una campaña activa.</MudText>
+    }
+    else
+    {
+        <LetterPlanProgressSummary Summary="_home.Campaign.Summary"
+                                   Title="@_home.Campaign.Label" />
+        <MudButton Variant="Variant.Filled"
+                   Color="Color.Primary"
+                   Class="mt-4"
+                   StartIcon="@Icons.Material.Outlined.Assessment"
+                   Href="@NavRoutes.LetterPlanProgress(_home.Campaign.PlanId)">
+            Ver detalle
+        </MudButton>
+    }
 
-    <MudText Typo="Typo.body2" Class="mt-8">What debugging information would you like to see in this page?</MudText>
-    <MudText Typo="Typo.body2">Share your thoughts and ideas!</MudText>
-</AuthorizeView>
+    <MudText Typo="Typo.h5" Class="mt-8 mb-3">Equipo</MudText>
+    <MudGrid Spacing="3">
+        @foreach (var team in Teams)
+        {
+            <MudItem xs="12" md="4">
+                <MudPaper Class="pa-4" Elevation="1">
+                    @if (team.Href is null)
+                    {
+                        <MudText Typo="Typo.h6" Class="mb-3">@team.Title</MudText>
+                    }
+                    else
+                    {
+                        <MudLink Href="@team.Href" Typo="Typo.h6" Class="mb-3">@team.Title</MudLink>
+                    }
+
+                    @if (team.People.Count == 0)
+                    {
+                        <MudText Typo="Typo.body2">@team.EmptyMessage</MudText>
+                    }
+                    else
+                    {
+                        <MudStack Spacing="2" Class="mt-3">
+                            @foreach (var person in team.People)
+                            {
+                                <MudPaper Outlined="true"
+                                          Elevation="0"
+                                          Class="pa-3"
+                                          Style="@(person.IsCurrentUser ? "border-color: var(--mud-palette-primary);" : null)">
+                                    <MudStack Row="true"
+                                              AlignItems="AlignItems.Center"
+                                              Justify="Justify.SpaceBetween">
+                                        <div>
+                                            <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                                                <MudText Typo="Typo.body1">
+                                                    <strong>@person.FirstName @person.LastName</strong>
+                                                </MudText>
+                                                @if (person.IsCurrentUser)
+                                                {
+                                                    <MudChip T="string"
+                                                             Variant="Variant.Filled"
+                                                             Color="Color.Primary"
+                                                             Size="Size.Small">
+                                                        YO
+                                                    </MudChip>
+                                                }
+                                            </MudStack>
+                                            @if (!string.IsNullOrWhiteSpace(person.NickName))
+                                            {
+                                                <MudText Typo="Typo.caption">@person.NickName</MudText>
+                                            }
+                                        </div>
+                                        <MudStack Row="true" Spacing="0">
+                                            <EmailIconButton EmailAddress="@person.Email" />
+                                            <PhoneIconButton PhoneNumber="@person.PhoneNumber" />
+                                        </MudStack>
+                                    </MudStack>
+                                </MudPaper>
+                            }
+                        </MudStack>
+                    }
+                </MudPaper>
+            </MudItem>
+        }
+    </MudGrid>
+}
+else
+{
+    <MudText Typo="Typo.h5">No tenés permiso para ver esta página.</MudText>
+}
