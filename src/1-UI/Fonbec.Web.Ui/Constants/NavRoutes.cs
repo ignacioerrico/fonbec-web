@@ -145,6 +145,21 @@ public static class NavRoutes
     public static string ManagerUploadOther(int studentId) =>
         $"{ManagerUploadDocument(studentId)}?tipo=otro";
 
+    public const string ManagerStudentDocumentHistoryTemplate =
+        $"{Students}/{{studentId:int}}/documentos";
+
+    public static string ManagerStudentDocumentHistory(int studentId) =>
+        $"{Students}/{studentId}/documentos";
+
+    public const string ManagerStudentDocumentPageTemplate =
+        $"{Students}/{{studentId:int}}/documentos/{{documentId:long}}/paginas/{{pageNumber:int}}";
+
+    public static string ManagerStudentDocumentPage(int studentId, long documentId, int pageNumber, bool download = false)
+    {
+        var url = $"{ManagerStudentDocumentHistory(studentId)}/{documentId}/paginas/{pageNumber}";
+        return download ? $"{url}?descargar=true" : url;
+    }
+
     public static string Sponsorships(int studentId) => $"/becarios/{studentId}/padrinos";
 
     public static string SponsorshipCreate(int studentId) => $"{Sponsorships(studentId)}/alta";

@@ -176,6 +176,29 @@ app.MapGet(NavRoutes.ReviewDocumentPageRouteTemplate,
     })
     .RequireAuthorization();
 
+// Manager history: the document must belong to a non-deleted student of the manager's chapter.
+app.MapGet(NavRoutes.ManagerStudentDocumentPageTemplate,
+    async (int studentId, long documentId, int pageNumber, bool? descargar, ClaimsPrincipal user, IDocumentService documentService) =>
+    {
+        var userIdString = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdString, out var userId))
+        {
+            return Results.Unauthorized();
+        }
+
+        var blob = await documentService.DownloadManagerStudentDocumentBlobAsync(
+            userId, studentId, documentId, pageNumber);
+        if (blob is null)
+        {
+            return Results.NotFound();
+        }
+
+        return descargar == true
+            ? Results.File(blob.Content, blob.MimeType, fileDownloadName: blob.FileName)
+            : Results.File(blob.Content, blob.MimeType);
+    })
+    .RequireAuthorization();
+
 // Facilitator history: the student must belong to the signed-in facilitator (same as not found).
 app.MapGet(NavRoutes.FacilitatorOtherDocumentPageTemplate,
     async (int studentId, long documentId, int pageNumber, bool? descargar, ClaimsPrincipal user, IDocumentService documentService) =>

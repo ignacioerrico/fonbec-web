@@ -100,6 +100,20 @@ public interface IDocumentRepository
     /// </summary>
     Task<DocumentBlobContextDataModel?> GetFacilitatorOtherDocumentBlobContextAsync(
         int facilitatorId, int studentId, long documentId);
+
+    /// <summary>
+    /// Every document for a student in <paramref name="chapterId"/> who is not deleted,
+    /// newest first. Includes inactive students. Null when the student is missing, deleted,
+    /// or in another chapter.
+    /// </summary>
+    Task<StudentDocumentHistoryDataModel?> GetStudentDocumentHistoryAsync(int chapterId, int studentId);
+
+    /// <summary>
+    /// Blob context when the document belongs to a non-deleted student of <paramref name="chapterId"/>.
+    /// Null on any authorization failure.
+    /// </summary>
+    Task<DocumentBlobContextDataModel?> GetManagerStudentDocumentBlobContextAsync(
+        int chapterId, int studentId, long documentId);
     Task<List<int>> GetActiveSponsorIdsForStudentAsync(int studentId);
     Task<List<DocumentDescriptionOptionDataModel>> GetDescriptionOptionsAsync(int chapterId, DocumentType documentType);
     Task<List<RejectedReasonDataModel>> GetApplicableRejectedReasonsAsync(DocumentType documentType);
@@ -1756,6 +1770,122 @@ public class DocumentRepository(
 
         return await GetDocumentBlobContextAsync(documentId);
     }
+
+    public async Task<StudentDocumentHistoryDataModel?> GetStudentDocumentHistoryAsync(int chapterId, int studentId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var studentName = await db.Students
+            .AsNoTracking()
+            .Where(s => s.Id == studentId
+                        && s.ChapterId == chapterId
+                        && !s.IsDeleted)
+            .Select(s => s.FirstName + " " + s.LastName)
+            .FirstOrDefaultAsync();
+
+        if (studentName is null)
+        {
+            return null;
+        }
+
+        var letters = await db.Set<Letter>()
+            .AsNoTracking()
+            .Include(d => d.Company)
+            .Include(d => d.Sponsor)
+            .Include(d => d.RejectedReason)
+            .Include(d => d.Pages)
+            .Where(d => d.StudentId == studentId)
+            .ToListAsync();
+
+        var reportCards = await db.Set<ReportCard>()
+            .AsNoTracking()
+            .Include(d => d.RejectedReason)
+            .Include(d => d.Pages)
+            .Where(d => d.StudentId == studentId)
+            .ToListAsync();
+
+        var others = await db.Set<OtherDocument>()
+            .AsNoTracking()
+            .Include(d => d.RejectedReason)
+            .Include(d => d.Pages)
+            .Where(d => d.StudentId == studentId)
+            .ToListAsync();
+
+        var items = letters
+            .Select(d => ToHistoryItem(
+                d,
+                description: null,
+                reportCardPeriod: null,
+                recipientName: d.Company?.Name
+                    ?? (d.Sponsor is null ? null : d.Sponsor.FirstName + " " + d.Sponsor.LastName)))
+            .Concat(reportCards.Select(d => ToHistoryItem(
+                d,
+                d.Description,
+                d.Period,
+                recipientName: null)))
+            .Concat(others.Select(d => ToHistoryItem(
+                d,
+                d.Description,
+                reportCardPeriod: null,
+                recipientName: null)))
+            .OrderByDescending(d => d.UploadedOn)
+            .ThenByDescending(d => d.DocumentId)
+            .ToList();
+
+        return new StudentDocumentHistoryDataModel
+        {
+            StudentId = studentId,
+            StudentName = studentName,
+            Items = items,
+        };
+    }
+
+    public async Task<DocumentBlobContextDataModel?> GetManagerStudentDocumentBlobContextAsync(
+        int chapterId, int studentId, long documentId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var studentExists = await db.Students
+            .AsNoTracking()
+            .AnyAsync(s => s.Id == studentId
+                           && s.ChapterId == chapterId
+                           && !s.IsDeleted);
+
+        if (!studentExists)
+        {
+            return null;
+        }
+
+        var context = await GetDocumentBlobContextAsync(documentId);
+        return context is null || context.StudentId != studentId
+            ? null
+            : context;
+    }
+
+    private static StudentDocumentHistoryItemDataModel ToHistoryItem(
+        Document document,
+        string? description,
+        DateOnly? reportCardPeriod,
+        string? recipientName) =>
+        new()
+        {
+            DocumentId = document.DocumentId,
+            DocumentType = document.DocumentType,
+            UploadedOn = document.UploadedOn,
+            Description = description,
+            ReportCardPeriod = reportCardPeriod,
+            RecipientName = recipientName,
+            FileKind = document.FileKind,
+            Status = document.Status,
+            RejectionReason = document.RejectedReason is null
+                ? document.RejectionNotes
+                : string.IsNullOrEmpty(document.RejectionNotes)
+                    ? document.RejectedReason.Description
+                    : document.RejectedReason.Description + ": " + document.RejectionNotes,
+            TextContent = document.TextContent,
+            YouTubeVideoId = document.YouTubeVideoId,
+            PageCount = document.Pages.Count,
+        };
 
     private static BlobPathDataModel? ToBlobPathDataModel(BlobPath? blobPath) =>
         blobPath is null

@@ -212,3 +212,40 @@ public class RejectedReasonViewModel
     public string Description { get; init; } = string.Empty;
     public bool RequiresNotes { get; init; }
 }
+
+public class StudentDocumentHistoryViewModel
+{
+    public int StudentId { get; init; }
+
+    public string StudentName { get; init; } = null!;
+
+    public List<StudentDocumentHistoryItemViewModel> Items { get; init; } = [];
+}
+
+public class StudentDocumentHistoryItemViewModel
+{
+    public long DocumentId { get; init; }
+
+    public DocumentType DocumentType { get; init; }
+
+    public DateOnly Date { get; init; }
+
+    /// <summary>
+    /// Letter addressee, or the report-card period and description, or the other-document description.
+    /// </summary>
+    public string Detail { get; init; } = string.Empty;
+
+    public FileKind FileKind { get; init; }
+
+    public DocumentStatus Status { get; init; }
+
+    public string? RejectionReason { get; init; }
+
+    public bool CanDownload { get; init; }
+
+    public string? TextContent { get; init; }
+
+    public string? YouTubeVideoId { get; init; }
+
+    public int PageCount { get; init; }
+}
