@@ -241,11 +241,22 @@ public class UserRepository(
             return null;
         }
 
+        var now = DateTimeOffset.Now;
         var outputDataModel = new GetUserOutputDataModel
         {
             ChapterId = fonbecUserDb.ChapterId,
             UserFullName = fonbecUserDb.FullName(),
+            FirstName = fonbecUserDb.FirstName,
+            LastName = fonbecUserDb.LastName,
             UserNickName = fonbecUserDb.NickName,
+            Gender = fonbecUserDb.Gender,
+            Email = fonbecUserDb.Email ?? string.Empty,
+            PhoneNumber = string.IsNullOrWhiteSpace(fonbecUserDb.PhoneNumber) ? null : fonbecUserDb.PhoneNumber,
+            Notes = fonbecUserDb.Notes,
+            CanBeLockedOut = fonbecUserDb.LockoutEnabled,
+            IsActive = !fonbecUserDb.LockoutEnabled
+                       || fonbecUserDb.LockoutEnd == null
+                       || fonbecUserDb.LockoutEnd < now,
         };
 
         var roles = await userManager.GetRolesAsync(fonbecUserDb);

@@ -43,6 +43,8 @@ public class ChapterStaffMemberViewModel
     public bool CanBeLockedOut { get; set; }
 
     public bool HasLinkedStudents { get; set; }
+
+    public bool CanImproveImages { get; set; }
 }
 
 public class ChaptersListViewModelMappingDefinitions : IRegister

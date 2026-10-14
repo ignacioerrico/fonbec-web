@@ -2,7 +2,6 @@
 using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models.Chapters;
 using Fonbec.Web.Logic.Models.Chapters.Input;
-using Fonbec.Web.Logic.Models.Users.Input;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Ui.Components.NonPages.Dialogs;
 using Microsoft.AspNetCore.Components;
@@ -21,9 +20,6 @@ public partial class ChaptersList : AuthenticationRequiredComponentBase
 
     [Inject]
     public IChapterService ChapterService { get; set; } = null!;
-
-    [Inject]
-    public IUserService UserService { get; set; } = null!;
 
     [Inject]
     public IDialogService DialogService { get; set; } = null!;
@@ -46,16 +42,6 @@ public partial class ChaptersList : AuthenticationRequiredComponentBase
         new(FonbecRole.Reviewer, "Revisores", "Sin revisores.", chapter.Reviewers),
     ];
 
-    private bool CanDisable(ChapterStaffMemberViewModel person) =>
-        person.UserId != FonbecClaim.UserId
-        && person.CanBeLockedOut
-        && !person.HasLinkedStudents;
-
-    private static string DisableTooltip(ChapterStaffMemberViewModel person) =>
-        person.HasLinkedStudents
-            ? UserMessages.CannotDisableFacilitatorWithStudents
-            : "Deshabilitar";
-
     private async Task AddUserAsync(ChaptersListViewModel chapter, string role)
     {
         var parameters = new DialogParameters<ChapterUserCreateDialog>
@@ -69,71 +55,6 @@ public partial class ChaptersList : AuthenticationRequiredComponentBase
         var result = await dialog.Result;
         if (result is null || result.Canceled)
         {
-            return;
-        }
-
-        await ReloadChapterAsync(chapter.ChapterId);
-    }
-
-    private async Task DisableUserAsync(ChaptersListViewModel chapter, ChapterStaffMemberViewModel person)
-    {
-        if (!CanDisable(person))
-        {
-            return;
-        }
-
-        var message = $"¿Estás seguro de que querés deshabilitar al usuario {person.FirstName} {person.LastName}?";
-        var dialogResult = await DialogService.ShowMessageBox(
-            "¡Atención!",
-            message,
-            yesText: "Sí",
-            cancelText: "Cancelar");
-
-        if (dialogResult is null)
-        {
-            return;
-        }
-
-        Loading = true;
-
-        var errors = await UserService.DisableUserAsync(
-            new DisableUserInputModel(person.UserId, DisableUser: true, FonbecClaim.UserId),
-            UserRole,
-            FonbecClaim.ChapterId);
-
-        Loading = false;
-
-        if (errors.Count > 0)
-        {
-            foreach (var error in errors)
-            {
-                Snackbar.Add(error, Severity.Error);
-            }
-
-            return;
-        }
-
-        await ReloadChapterAsync(chapter.ChapterId);
-    }
-
-    private async Task ReenableUserAsync(ChaptersListViewModel chapter, ChapterStaffMemberViewModel person)
-    {
-        Loading = true;
-
-        var errors = await UserService.DisableUserAsync(
-            new DisableUserInputModel(person.UserId, DisableUser: false, FonbecClaim.UserId),
-            UserRole,
-            FonbecClaim.ChapterId);
-
-        Loading = false;
-
-        if (errors.Count > 0)
-        {
-            foreach (var error in errors)
-            {
-                Snackbar.Add(error, Severity.Error);
-            }
-
             return;
         }
 

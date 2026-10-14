@@ -100,6 +100,14 @@
 														<MudText Typo="Typo.body2">
 															<strong>@person.FirstName @person.LastName</strong>
 														</MudText>
+														@if (person.CanImproveImages)
+														{
+															<MudTooltip Text="Mejora imágenes" Arrow="true" Placement="Placement.Bottom">
+																<MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Info"
+																         Icon="@Icons.Material.Outlined.AutoFixHigh"
+																         aria-label="Mejora imágenes" />
+															</MudTooltip>
+														}
 														@if (!person.IsActive)
 														{
 															<MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Warning">
@@ -118,33 +126,13 @@
 														<MudText Typo="Typo.caption">@person.PhoneNumber</MudText>
 													}
 												</div>
-												<MudStack Row="true" Spacing="0">
-													<MudTooltip Text="Permisos" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary">
-														<MudIconButton Href="@NavRoutes.UsersUserIdPermissions(person.UserId)"
-														               Icon="@Icons.Material.Outlined.Checklist"
-														               Size="Size.Small"
-														               Color="Color.Primary" />
-													</MudTooltip>
-													@if (person.IsActive)
-													{
-														<MudTooltip Text="@DisableTooltip(person)" Arrow="true" Placement="Placement.Bottom" Color="Color.Warning">
-															<MudIconButton OnClick="@(() => DisableUserAsync(chapter, person))"
-															               Icon="@Icons.Material.Outlined.Delete"
-															               Size="Size.Small"
-															               Color="Color.Warning"
-															               Disabled="@(!CanDisable(person))" />
-														</MudTooltip>
-													}
-													else
-													{
-														<MudTooltip Text="Habilitar" Arrow="true" Placement="Placement.Bottom" Color="Color.Success">
-															<MudIconButton OnClick="@(() => ReenableUserAsync(chapter, person))"
-															               Icon="@Icons.Material.Outlined.RestoreFromTrash"
-															               Size="Size.Small"
-															               Color="Color.Success" />
-														</MudTooltip>
-													}
-												</MudStack>
+												<MudTooltip Text="Administrar" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary">
+													<MudIconButton Href="@NavRoutes.ManageUser(person.UserId)"
+													               Icon="@Icons.Material.Filled.MoreVert"
+													               aria-label="Administrar"
+													               Size="Size.Small"
+													               Color="Color.Primary" />
+												</MudTooltip>
 											</MudStack>
 										</MudPaper>
 									}

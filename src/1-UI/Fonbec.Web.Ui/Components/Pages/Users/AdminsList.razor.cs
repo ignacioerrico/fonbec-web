@@ -1,6 +1,5 @@
 using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.Logic.Models.Users;
-using Fonbec.Web.Logic.Models.Users.Input;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Ui.Components.NonPages.Dialogs;
 using Microsoft.AspNetCore.Components;
@@ -45,53 +44,6 @@ public partial class AdminsList : AuthenticationRequiredComponentBase
         var result = await dialog.Result;
         if (result is null || result.Canceled)
         {
-            return;
-        }
-
-        await LoadAsync();
-    }
-
-    private async Task DisableAdminAsync(UsersListViewModel admin)
-    {
-        if (admin.UserId == FonbecClaim.UserId || !admin.CanUserBeLockedOut)
-        {
-            return;
-        }
-
-        var dialogResult = await DialogService.ShowMessageBox(
-            "¡Atención!",
-            $"¿Estás seguro de que querés deshabilitar al usuario {admin.UserFirstName} {admin.UserLastName}?",
-            yesText: "Sí",
-            cancelText: "Cancelar");
-
-        if (dialogResult is null)
-        {
-            return;
-        }
-
-        await SetActiveAsync(admin, disable: true);
-    }
-
-    private Task ReenableAdminAsync(UsersListViewModel admin) => SetActiveAsync(admin, disable: false);
-
-    private async Task SetActiveAsync(UsersListViewModel admin, bool disable)
-    {
-        Loading = true;
-
-        var errors = await UserService.DisableUserAsync(
-            new DisableUserInputModel(admin.UserId, disable, FonbecClaim.UserId),
-            UserRole,
-            FonbecClaim.ChapterId);
-
-        Loading = false;
-
-        if (errors.Count > 0)
-        {
-            foreach (var error in errors)
-            {
-                Snackbar.Add(error, Severity.Error);
-            }
-
             return;
         }
 

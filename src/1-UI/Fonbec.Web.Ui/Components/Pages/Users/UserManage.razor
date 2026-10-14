@@ -1,0 +1,132 @@
+@attribute [Route(NavRoutes.ManageUserRouteTemplate)]
+@attribute [Authorize(Policy = nameof(UserManage))]
+@inherits AuthenticationRequiredComponentBase
+
+@using Fonbec.Web.DataAccess.Constants
+@using Fonbec.Web.Logic.Util
+
+<PageHeader Title="Administrar usuario" />
+
+<LoadingIndicator Loading="Loading" />
+
+@if (_missing)
+{
+    <MudAlert Severity="Severity.Error">No se encontró el usuario.</MudAlert>
+    <MudButton Href="@NavRoutes.Chapters" Variant="Variant.Filled" Color="Color.Default" Class="mt-4">
+        Volver
+    </MudButton>
+}
+else if (_user is not null)
+{
+    <MudPaper Outlined="true" Class="pa-3 mb-4">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+            <MudText Typo="Typo.h6">@_user.UserFullName</MudText>
+            @if (UserId == FonbecClaim.UserId)
+            {
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary">YO</MudChip>
+            }
+            @if (!_user.IsActive)
+            {
+                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Warning">
+                    Deshabilitado
+                </MudChip>
+            }
+        </MudStack>
+        <MudText Typo="Typo.body2"><strong>Rol</strong>: @_user.UserRoleTranslated</MudText>
+        @if (!string.IsNullOrWhiteSpace(_user.Email))
+        {
+            <MudLink Href="@($"mailto:{_user.Email}")" Typo="Typo.body2">@_user.Email</MudLink>
+        }
+    </MudPaper>
+
+    <MudText Typo="Typo.h6" Class="mb-2">Datos</MudText>
+    <MudForm @ref="_form" @bind-IsValid="@_formIsValid">
+        <MudTextField T="string" Label="Nombre" @bind-Value="_firstName" Immediate="true"
+                      Required="true" RequiredError="Este es un campo obligatorio."
+                      MaxLength="MaxLength.FonbecWebUser.FirstName" />
+        <MudTextField T="string" Label="Apellido" @bind-Value="_lastName" Immediate="true"
+                      Required="true" RequiredError="Este es un campo obligatorio."
+                      MaxLength="MaxLength.FonbecWebUser.LastName" />
+        <MudTextField T="string" Label="Apodo" @bind-Value="_nickName" Immediate="true"
+                      MaxLength="MaxLength.FonbecWebUser.NickName" />
+        <GenderSelector @bind-SelectedGender="_gender" />
+        <MudTextField T="string" Label="Correo electrónico" @bind-Value="_email" Immediate="true"
+                      Required="true" RequiredError="Este es un campo obligatorio."
+                      MaxLength="MaxLength.FonbecWebUser.Email"
+                      Validation="@(new Func<string, string?>(ContactFieldValidator.ValidateEmail))" />
+        <MudTextField T="string" Label="Teléfono" @bind-Value="_phoneNumber" Immediate="true"
+                      MaxLength="MaxLength.FonbecWebUser.PhoneNumber"
+                      Validation="@(new Func<string, string?>(ContactFieldValidator.ValidatePhone))" />
+        <MudTextField T="string" Label="Información adicional" @bind-Value="_notes" Immediate="true" Lines="3"
+                      MaxLength="MaxLength.Auditable.Notes" />
+    </MudForm>
+    <MudStack Row="true" Class="mt-2">
+        <MudButton OnClick="SaveProfileAsync" Disabled="@_saving"
+                   Variant="Variant.Filled" Color="Color.Primary">
+            Guardar datos
+        </MudButton>
+    </MudStack>
+
+    <MudText Typo="Typo.h6" Class="mt-6 mb-2">Cuenta</MudText>
+    <MudStack Row="true">
+        @if (_user.IsActive)
+        {
+            <MudTooltip Text="@DisableTooltip">
+                <MudButton OnClick="DisableAsync"
+                           Variant="Variant.Filled" Color="Color.Warning"
+                           Disabled="@(!CanDisable)"
+                           StartIcon="@Icons.Material.Outlined.PersonOff">
+                    Deshabilitar
+                </MudButton>
+            </MudTooltip>
+        }
+        else
+        {
+            <MudButton OnClick="ReenableAsync"
+                       Variant="Variant.Filled" Color="Color.Success"
+                       StartIcon="@Icons.Material.Outlined.Person">
+                Habilitar
+            </MudButton>
+        }
+        <MudTooltip Text="@(IsSelf ? "No podés restablecer tu propia contraseña." : "El usuario recibe la nueva contraseña por correo.")">
+            <MudButton OnClick="ResetPasswordAsync"
+                       Variant="Variant.Outlined" Color="Color.Primary"
+                       Disabled="@IsSelf"
+                       StartIcon="@Icons.Material.Outlined.Password">
+                Restablecer contraseña
+            </MudButton>
+        </MudTooltip>
+    </MudStack>
+
+    @if (SupportsImageImprovement)
+    {
+        <MudText Typo="Typo.h6" Class="mt-6 mb-2">Mejora de imágenes</MudText>
+        <MudSwitch T="bool" Value="_canImproveImages" ValueChanged="SetImageImprovementAsync"
+                   Color="Color.Primary" Label="Puede mejorar imágenes" />
+    }
+
+    <MudText Typo="Typo.h6" Class="mt-6 mb-2">Permisos</MudText>
+    <MudStack Row="true" Class="mb-2">
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => SetAllPermissions(true))">
+            Todos
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="@(() => SetAllPermissions(false))">
+            Ninguno
+        </MudButton>
+        <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="ResetPermissions">
+            Deshacer cambios
+        </MudButton>
+    </MudStack>
+    @foreach (var claim in _permissions)
+    {
+        <MudCheckBox T="bool" @bind-Value="claim.IsChecked" Label="@claim.Description" />
+    }
+    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mt-4">
+        <MudButton OnClick="SavePermissionsAsync" Variant="Variant.Filled" Color="Color.Primary">
+            Guardar permisos
+        </MudButton>
+        <MudButton Href="@BackRoute" Variant="Variant.Filled" Color="Color.Default" Class="ms-4">
+            Volver
+        </MudButton>
+    </MudStack>
+}

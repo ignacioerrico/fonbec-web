@@ -48,33 +48,13 @@
                             <MudText Typo="Typo.caption">@admin.UserPhoneNumber</MudText>
                         }
                     </div>
-                    <MudStack Row="true" Spacing="0">
-                        <MudTooltip Text="Permisos" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary">
-                            <MudIconButton Href="@NavRoutes.UsersUserIdPermissions(admin.UserId)"
-                                           Icon="@Icons.Material.Outlined.Checklist"
-                                           Size="Size.Small"
-                                           Color="Color.Primary" />
-                        </MudTooltip>
-                        @if (admin.IsUserActive)
-                        {
-                            <MudTooltip Text="Deshabilitar" Arrow="true" Placement="Placement.Bottom" Color="Color.Warning">
-                                <MudIconButton OnClick="@(() => DisableAdminAsync(admin))"
-                                               Icon="@Icons.Material.Outlined.Delete"
-                                               Size="Size.Small"
-                                               Color="Color.Warning"
-                                               Disabled="@(admin.UserId == FonbecClaim.UserId || !admin.CanUserBeLockedOut)" />
-                            </MudTooltip>
-                        }
-                        else
-                        {
-                            <MudTooltip Text="Habilitar" Arrow="true" Placement="Placement.Bottom" Color="Color.Success">
-                                <MudIconButton OnClick="@(() => ReenableAdminAsync(admin))"
-                                               Icon="@Icons.Material.Outlined.RestoreFromTrash"
-                                               Size="Size.Small"
-                                               Color="Color.Success" />
-                            </MudTooltip>
-                        }
-                    </MudStack>
+                    <MudTooltip Text="Administrar" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary">
+                        <MudIconButton Href="@NavRoutes.ManageUser(admin.UserId)"
+                                       Icon="@Icons.Material.Filled.MoreVert"
+                                       aria-label="Administrar"
+                                       Size="Size.Small"
+                                       Color="Color.Primary" />
+                    </MudTooltip>
                 </MudStack>
             </MudPaper>
         }

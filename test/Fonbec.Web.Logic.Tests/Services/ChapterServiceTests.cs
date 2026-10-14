@@ -3,6 +3,7 @@ using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.DataModels.Chapters;
 using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.DataAccess.Repositories;
+using Fonbec.Web.Logic.Constants;
 using Fonbec.Web.Logic.Services;
 using Mapster;
 using NSubstitute;
@@ -18,7 +19,10 @@ public class ChapterServiceTests
     {
         TypeAdapterConfig.GlobalSettings.Scan(typeof(ChapterService).Assembly);
         _chapterRepository = Substitute.For<IChapterRepository>();
-        _chapterService = new ChapterService(_chapterRepository);
+        var userRepository = Substitute.For<IUserRepository>();
+        userRepository.GetUserClaimsOfTypeAsync(Arg.Any<string>())
+            .Returns(new Dictionary<int, string>());
+        _chapterService = new ChapterService(_chapterRepository, userRepository);
     }
 
     [Fact]
@@ -87,18 +91,29 @@ public class ChapterServiceTests
             StudentCounts = new Dictionary<int, int> { [1] = 4 },
             SponsorCounts = new Dictionary<int, int> { [1] = 2, [2] = 1 },
         });
+        var userRepository = Substitute.For<IUserRepository>();
+        userRepository.GetUserClaimsOfTypeAsync(FonbecGrants.ClaimType).Returns(new Dictionary<int, string>
+        {
+            [10] = DocumentPermission.DigitalImprovement,
+            [20] = DocumentPermission.DigitalImprovement,
+        });
+        var chapterService = new ChapterService(_chapterRepository, userRepository);
 
-        var chapters = await _chapterService.GetChaptersForAdminListAsync();
+        var chapters = await chapterService.GetChaptersForAdminListAsync();
 
         var north = chapters.Single(chapter => chapter.ChapterId == 1);
         north.Managers.Select(person => person.UserId).Should().Equal(10, 11);
+        north.Managers[0].CanImproveImages.Should().BeTrue();
+        north.Managers[1].CanImproveImages.Should().BeFalse();
         north.Managers[0].PhoneNumber.Should().BeNull();
         north.Managers[1].PhoneNumber.Should().Be("111");
         north.Facilitators.Should().ContainSingle();
         north.Facilitators[0].UserId.Should().Be(20);
         north.Facilitators[0].PhoneNumber.Should().BeNull();
         north.Facilitators[0].HasLinkedStudents.Should().BeTrue();
+        north.Facilitators[0].CanImproveImages.Should().BeFalse();
         north.Reviewers.Should().ContainSingle().Which.UserId.Should().Be(40);
+        north.Reviewers[0].CanImproveImages.Should().BeFalse();
         north.StudentCount.Should().Be(4);
         north.SponsorCount.Should().Be(2);
 

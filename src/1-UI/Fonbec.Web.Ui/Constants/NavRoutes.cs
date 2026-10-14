@@ -12,6 +12,10 @@ public static class NavRoutes
 
     public const string Admins = "/administradores";
 
+    public static string ManageUser(int userId) => $"{Users}/{userId}/administrar";
+
+    public const string ManageUserRouteTemplate = $"{Users}/{{UserId:int}}/administrar";
+
     public const string Mediators = $"{Users}/mediadores";
 
     public const string MediatorCreate = $"{Mediators}/alta";
