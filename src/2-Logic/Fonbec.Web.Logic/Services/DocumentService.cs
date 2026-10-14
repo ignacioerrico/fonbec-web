@@ -51,6 +51,20 @@ public interface IDocumentService
     Task<CrudResult> SubmitDigitalImprovementWithBlobAsync(SubmitDigitalImprovementWithBlobInputModel input);
     Task<DocumentQueueItemViewModel?> TakeNextForReviewAsync(int userId, string userRole);
 
+    /// <summary>Review queue rows for a manager. Empty for every other role.</summary>
+    Task<List<ManagerQueueEntryViewModel>> ListManagerReviewQueueAsync(int userId, string userRole);
+
+    /// <summary>
+    /// Image-improvement queue rows for a manager who has the digital-improvement grant.
+    /// Empty for every other caller.
+    /// </summary>
+    Task<List<ManagerQueueEntryViewModel>> ListManagerImprovementQueueAsync(int userId, string userRole);
+
+    /// <summary>
+    /// Locks a chosen review document for a manager. Does not advance the fair-dequeue cursor.
+    /// </summary>
+    Task<TakeSelectedReviewViewModel> TakeSelectedForReviewAsync(long documentId, int userId, string userRole);
+
     /// <summary>
     /// Returns the id of the document the reviewer currently holds a valid lock on, or <c>null</c>.
     /// Used to enforce one active review at a time and to resume an in-progress document.
@@ -588,6 +602,49 @@ public class DocumentService(
 
         var item = await documentRepository.TakeNextForReviewAsync(userId);
         return item?.Adapt<DocumentQueueItemViewModel>();
+    }
+
+    public async Task<List<ManagerQueueEntryViewModel>> ListManagerReviewQueueAsync(int userId, string userRole)
+    {
+        if (userRole != FonbecRole.Manager)
+        {
+            return [];
+        }
+
+        var items = await documentRepository.ListReviewQueueAsync();
+        return items.Select(item => MapReviewQueueEntry(item, userId)).ToList();
+    }
+
+    public async Task<List<ManagerQueueEntryViewModel>> ListManagerImprovementQueueAsync(int userId, string userRole)
+    {
+        if (userRole != FonbecRole.Manager || !await CanImproveDigitallyAsync(userId, userRole))
+        {
+            return [];
+        }
+
+        var items = await documentRepository.ListImprovementQueueAsync();
+        return items.Select(MapImprovementQueueEntry).ToList();
+    }
+
+    public async Task<TakeSelectedReviewViewModel> TakeSelectedForReviewAsync(
+        long documentId, int userId, string userRole)
+    {
+        if (userRole != FonbecRole.Manager)
+        {
+            return new TakeSelectedReviewViewModel { Outcome = TakeSelectedReviewOutcome.Unavailable };
+        }
+
+        var result = await documentRepository.TryTakeReviewLockAsync(documentId, userId);
+        return new TakeSelectedReviewViewModel
+        {
+            Outcome = result.Outcome switch
+            {
+                TakeReviewLockOutcome.Locked => TakeSelectedReviewOutcome.Locked,
+                TakeReviewLockOutcome.AlreadyReviewingAnother => TakeSelectedReviewOutcome.AlreadyReviewingAnother,
+                _ => TakeSelectedReviewOutcome.Unavailable,
+            },
+            DocumentId = result.DocumentId,
+        };
     }
 
     public async Task<long?> GetActiveReviewLockAsync(int userId, string userRole)
@@ -1236,6 +1293,43 @@ public class DocumentService(
 
     private static bool CanReview(string userRole) =>
         userRole is FonbecRole.Reviewer or FonbecRole.Manager;
+
+    private static ManagerQueueEntryViewModel MapReviewQueueEntry(ManagerQueueEntryDataModel item, int userId)
+    {
+        var mine = item.IsLocked && item.LockedById == userId;
+        var availability = !item.IsLocked
+            ? "Disponible"
+            : mine || string.IsNullOrWhiteSpace(item.LockedByName)
+                ? "En revisión"
+                : $"En revisión por {item.LockedByName}";
+
+        return new ManagerQueueEntryViewModel
+        {
+            DocumentId = item.DocumentId,
+            DocumentType = item.DocumentType,
+            StudentName = item.StudentName,
+            ChapterName = item.ChapterName,
+            EnqueuedAt = item.EnqueuedAt,
+            Availability = availability,
+            CanSelect = !item.IsLocked || mine,
+        };
+    }
+
+    private static ManagerQueueEntryViewModel MapImprovementQueueEntry(ManagerQueueEntryDataModel item) =>
+        new()
+        {
+            DocumentId = item.DocumentId,
+            DocumentType = item.DocumentType,
+            StudentName = item.StudentName,
+            ChapterName = item.ChapterName,
+            EnqueuedAt = item.EnqueuedAt,
+            Availability = !item.IsLocked
+                ? "Pendiente"
+                : string.IsNullOrWhiteSpace(item.LockedByName)
+                    ? "En mejora"
+                    : $"En mejora por {item.LockedByName}",
+            CanSelect = false,
+        };
 
     private async Task<bool> CanImproveDigitallyAsync(int userId, string userRole)
     {

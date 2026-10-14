@@ -4,6 +4,7 @@ using Fonbec.Web.DataAccess.DataModels.Documents;
 using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Repositories;
+using Fonbec.Web.Logic.Constants;
 using Fonbec.Web.Logic.Models.Documents;
 using Fonbec.Web.Logic.Models.Documents.Input;
 using Fonbec.Web.Logic.Options;
@@ -163,6 +164,158 @@ public class DocumentServiceReviewTests
 
         result.Should().BeNull();
         await _repository.DidNotReceive().TakeNextForReviewAsync(Arg.Any<int>());
+    }
+
+    [Fact]
+    public async Task ListManagerReviewQueue_Manager_MapsAvailability()
+    {
+        _repository.ListReviewQueueAsync().Returns(
+        [
+            new ManagerQueueEntryDataModel
+            {
+                DocumentId = DocumentId,
+                DocumentType = DocumentType.Letter,
+                StudentName = "Maria Garcia",
+                ChapterName = "Norte",
+                EnqueuedAt = new DateTime(2026, 3, 1, 12, 0, 0, DateTimeKind.Utc),
+            },
+            new ManagerQueueEntryDataModel
+            {
+                DocumentId = DocumentId + 1,
+                DocumentType = DocumentType.Other,
+                StudentName = "Ana Lopez",
+                ChapterName = "Sur",
+                EnqueuedAt = new DateTime(2026, 3, 2, 12, 0, 0, DateTimeKind.Utc),
+                IsLocked = true,
+                LockedById = ReviewerId + 1,
+                LockedByName = "Luis Perez",
+            },
+            new ManagerQueueEntryDataModel
+            {
+                DocumentId = DocumentId + 2,
+                DocumentType = DocumentType.ReportCard,
+                StudentName = "Pedro Diaz",
+                ChapterName = "Norte",
+                EnqueuedAt = new DateTime(2026, 3, 3, 12, 0, 0, DateTimeKind.Utc),
+                IsLocked = true,
+                LockedById = ReviewerId,
+                LockedByName = "Yo",
+            },
+        ]);
+
+        var service = CreateService();
+
+        var result = await service.ListManagerReviewQueueAsync(ReviewerId, FonbecRole.Manager);
+
+        result.Should().HaveCount(3);
+        result[0].Availability.Should().Be("Disponible");
+        result[0].CanSelect.Should().BeTrue();
+        result[0].StudentName.Should().Be("Maria Garcia");
+        result[1].Availability.Should().Be("En revisión por Luis Perez");
+        result[1].CanSelect.Should().BeFalse();
+        result[2].Availability.Should().Be("En revisión");
+        result[2].CanSelect.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task ListManagerReviewQueue_Reviewer_ReturnsEmptyWithoutQuerying()
+    {
+        var service = CreateService();
+
+        var result = await service.ListManagerReviewQueueAsync(ReviewerId, FonbecRole.Reviewer);
+
+        result.Should().BeEmpty();
+        await _repository.DidNotReceive().ListReviewQueueAsync();
+    }
+
+    [Fact]
+    public async Task ListManagerImprovementQueue_ManagerWithoutGrant_ReturnsEmptyWithoutQuerying()
+    {
+        _userService.GetFonbecGrantsClaim(Arg.Any<int>()).Returns(string.Empty);
+        _userService.HasPermission(Arg.Any<string?>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string?>())
+            .Returns(false);
+
+        var service = CreateService();
+
+        var result = await service.ListManagerImprovementQueueAsync(ReviewerId, FonbecRole.Manager);
+
+        result.Should().BeEmpty();
+        await _repository.DidNotReceive().ListImprovementQueueAsync();
+    }
+
+    [Fact]
+    public async Task ListManagerImprovementQueue_ManagerWithGrant_MapsLockedRowAsNotSelectable()
+    {
+        _userService.GetFonbecGrantsClaim(Arg.Any<int>()).Returns(DocumentPermission.DigitalImprovement);
+        _userService.HasPermission(Arg.Any<string?>(), Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string?>())
+            .Returns(true);
+        _repository.ListImprovementQueueAsync().Returns(
+        [
+            new ManagerQueueEntryDataModel
+            {
+                DocumentId = DocumentId,
+                DocumentType = DocumentType.Letter,
+                StudentName = "Maria Garcia",
+                ChapterName = "Norte",
+                EnqueuedAt = new DateTime(2026, 3, 1, 12, 0, 0, DateTimeKind.Utc),
+                IsLocked = true,
+                LockedById = 9,
+                LockedByName = "Ana Ruiz",
+            },
+        ]);
+
+        var service = CreateService();
+
+        var result = await service.ListManagerImprovementQueueAsync(ReviewerId, FonbecRole.Manager);
+
+        result.Should().ContainSingle();
+        result[0].Availability.Should().Be("En mejora por Ana Ruiz");
+        result[0].CanSelect.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task TakeSelectedForReview_Manager_MapsLocked()
+    {
+        _repository.TryTakeReviewLockAsync(DocumentId, ReviewerId).Returns(new TakeReviewLockDataModel
+        {
+            Outcome = TakeReviewLockOutcome.Locked,
+            DocumentId = DocumentId,
+        });
+
+        var service = CreateService();
+
+        var result = await service.TakeSelectedForReviewAsync(DocumentId, ReviewerId, FonbecRole.Manager);
+
+        result.Outcome.Should().Be(TakeSelectedReviewOutcome.Locked);
+        result.DocumentId.Should().Be(DocumentId);
+    }
+
+    [Fact]
+    public async Task TakeSelectedForReview_Reviewer_ReturnsUnavailableWithoutQuerying()
+    {
+        var service = CreateService();
+
+        var result = await service.TakeSelectedForReviewAsync(DocumentId, ReviewerId, FonbecRole.Reviewer);
+
+        result.Outcome.Should().Be(TakeSelectedReviewOutcome.Unavailable);
+        await _repository.DidNotReceive().TryTakeReviewLockAsync(Arg.Any<long>(), Arg.Any<int>());
+    }
+
+    [Fact]
+    public async Task TakeSelectedForReview_Manager_MapsAlreadyReviewingAnother()
+    {
+        _repository.TryTakeReviewLockAsync(DocumentId, ReviewerId).Returns(new TakeReviewLockDataModel
+        {
+            Outcome = TakeReviewLockOutcome.AlreadyReviewingAnother,
+            DocumentId = DocumentId + 4,
+        });
+
+        var service = CreateService();
+
+        var result = await service.TakeSelectedForReviewAsync(DocumentId, ReviewerId, FonbecRole.Manager);
+
+        result.Outcome.Should().Be(TakeSelectedReviewOutcome.AlreadyReviewingAnother);
+        result.DocumentId.Should().Be(DocumentId + 4);
     }
 
     [Fact]

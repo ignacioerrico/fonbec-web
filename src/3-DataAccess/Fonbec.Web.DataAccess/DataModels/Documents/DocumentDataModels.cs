@@ -13,6 +13,34 @@ public class DocumentQueueItemDataModel
     public byte[] RowVersion { get; init; } = null!;
 }
 
+public enum TakeReviewLockOutcome
+{
+    Locked,
+    AlreadyReviewingAnother,
+    Unavailable,
+}
+
+public class TakeReviewLockDataModel
+{
+    public TakeReviewLockOutcome Outcome { get; init; }
+
+    /// <summary>The document now locked, or the other document this user already holds.</summary>
+    public long? DocumentId { get; init; }
+}
+
+/// <summary>One document currently waiting in a queue, including one held by an active lock.</summary>
+public class ManagerQueueEntryDataModel
+{
+    public long DocumentId { get; init; }
+    public DocumentType DocumentType { get; init; }
+    public string StudentName { get; init; } = string.Empty;
+    public string ChapterName { get; init; } = string.Empty;
+    public DateTime EnqueuedAt { get; init; }
+    public int? LockedById { get; init; }
+    public string? LockedByName { get; init; }
+    public bool IsLocked { get; init; }
+}
+
 public class SharedDocumentDataModel
 {
     public long DocumentId { get; init; }

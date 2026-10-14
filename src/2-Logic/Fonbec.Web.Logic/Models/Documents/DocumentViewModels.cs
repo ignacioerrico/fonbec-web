@@ -190,6 +190,30 @@ public class ReviewProgressViewModel
     public int Processing { get; init; }
 }
 
+public enum TakeSelectedReviewOutcome
+{
+    Locked,
+    AlreadyReviewingAnother,
+    Unavailable,
+}
+
+public class ManagerQueueEntryViewModel
+{
+    public long DocumentId { get; init; }
+    public DocumentType DocumentType { get; init; }
+    public string StudentName { get; init; } = string.Empty;
+    public string ChapterName { get; init; } = string.Empty;
+    public DateTime EnqueuedAt { get; init; }
+    public string Availability { get; init; } = string.Empty;
+    public bool CanSelect { get; init; }
+}
+
+public class TakeSelectedReviewViewModel
+{
+    public TakeSelectedReviewOutcome Outcome { get; init; }
+    public long? DocumentId { get; init; }
+}
+
 public class LetterPlanProgressViewModel
 {
     public int TotalLetters { get; init; }
