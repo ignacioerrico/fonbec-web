@@ -23,6 +23,16 @@ public class StudentService(IStudentRepository studentRepository) : IStudentServ
     {
         var allStudentsDataModel = await studentRepository.GetAllStudentsAsync(chapterId);
         var studentsListViewModel = allStudentsDataModel.Adapt<List<StudentsListViewModel>>();
+        var scores = await studentRepository.GetApprovedLetterScoresAsync(chapterId) ?? [];
+        var summaries = LetterAssessmentSummaries.FromScores(scores);
+        foreach (var student in studentsListViewModel)
+        {
+            if (summaries.TryGetValue(student.StudentId, out var summary))
+            {
+                student.LetterAssessment = summary;
+            }
+        }
+
         return studentsListViewModel;
     }
 

@@ -46,6 +46,18 @@ public class LetterPlanProgressRowViewModel
     public bool IsStudentExempt { get; set; }
     public LetterFollowUpTaskViewModel? RedFlag { get; set; }
     public LetterFollowUpTaskViewModel? GreenFlag { get; set; }
+    public LetterReviewEvaluationViewModel? ReviewEvaluation { get; set; }
+}
+
+public class LetterReviewEvaluationViewModel
+{
+    public string WrittenOnText { get; init; } = null!;
+    public string? NotificationSentOnText { get; init; }
+    public string? DelayText { get; init; }
+    public string QueueWaitText { get; init; } = null!;
+    public int SpellingScore { get; init; }
+    public int PenmanshipScore { get; init; }
+    public int ContentScore { get; init; }
 }
 
 public static class LetterPlanProgressFormatting

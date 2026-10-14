@@ -1,7 +1,9 @@
+using System.Globalization;
 using Fonbec.Web.DataAccess.DataModels.LetterPlanProgress;
 using Fonbec.Web.DataAccess.DataModels.LetterFollowUp;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Repositories;
+using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models.LetterPlanProgress;
 using Fonbec.Web.Logic.Models.LetterFollowUp;
 
@@ -24,6 +26,7 @@ public class LetterPlanProgressService(
     IStudentRepository studentRepository,
     TimeProvider timeProvider) : ILetterPlanProgressService
 {
+    private static readonly CultureInfo EsAr = CultureInfo.GetCultureInfo("es-AR");
     public async Task<LetterPlanProgressViewModel?> GetProgressAsync(int planId, int managerChapterId)
     {
         var result = await letterPlanProgressRepository.GetProgressAsync(planId, managerChapterId);
@@ -133,6 +136,7 @@ public class LetterPlanProgressService(
                 IsStudentExempt = row.IsExempt,
                 RedFlag = MapFlag(row.RedFlag, LetterFollowUpTaskKind.RedFlag),
                 GreenFlag = MapFlag(row.GreenFlag, LetterFollowUpTaskKind.GreenFlag),
+                ReviewEvaluation = MapReviewEvaluation(row),
             };
         }).ToList();
 
@@ -158,6 +162,99 @@ public class LetterPlanProgressService(
         }
 
         return $"{reasonDescription}: {rejectionNotes.Trim()}";
+    }
+
+    private static LetterReviewEvaluationViewModel? MapReviewEvaluation(LetterPlanProgressRowDataModel row)
+    {
+        if (row.LetterStatus != DocumentStatus.Approved
+            || row.SpellingScore is not int spelling
+            || row.PenmanshipScore is not int penmanship
+            || row.ContentScore is not int content
+            || row.ConfirmedWrittenDate is not DateTime written)
+        {
+            return null;
+        }
+
+        string? delay = null;
+        if (row.AddresseeNotificationSentOn is DateTime notified)
+        {
+            var days = Math.Max(0, (notified.Date - written.Date).Days);
+            delay = FormatCalendarDays(days);
+        }
+
+        return new LetterReviewEvaluationViewModel
+        {
+            WrittenOnText = written.ToSpanishShortDate(),
+            NotificationSentOnText = row.AddresseeNotificationSentOn?.Date.ToSpanishShortDate(),
+            DelayText = delay,
+            QueueWaitText = FormatQueueWait(row),
+            SpellingScore = spelling,
+            PenmanshipScore = penmanship,
+            ContentScore = content,
+        };
+    }
+
+    private static string FormatQueueWait(LetterPlanProgressRowDataModel row)
+    {
+        var isImage = row.DigitalImprovementStatus != DigitalImprovementStatus.NotApplicable;
+        var start = isImage ? row.ImprovementCompletedOn : row.UploadedOn;
+        if (start is null || row.ReviewFirstLockedOn is null)
+        {
+            return "Sin dato";
+        }
+
+        var duration = row.ReviewFirstLockedOn.Value - start.Value;
+        if (duration < TimeSpan.Zero)
+        {
+            duration = TimeSpan.Zero;
+        }
+
+        return FormatElapsed(duration);
+    }
+
+    private static string FormatCalendarDays(int days)
+    {
+        if (days < 1)
+        {
+            return "menos de 1 día";
+        }
+
+        if (days == 1)
+        {
+            return "1 día";
+        }
+
+        return $"{days.ToString("0.#", EsAr)} días";
+    }
+
+    private static string FormatElapsed(TimeSpan duration)
+    {
+        if (duration.TotalDays >= 1)
+        {
+            var days = duration.TotalDays;
+            if (days < 1.05)
+            {
+                return "1 día";
+            }
+
+            return $"{days.ToString("0.#", EsAr)} días";
+        }
+
+        if (duration.TotalHours >= 1)
+        {
+            var hours = (int)duration.TotalHours;
+            var minutes = duration.Minutes;
+            return minutes == 0
+                ? $"{hours} h"
+                : $"{hours} h {minutes} min";
+        }
+
+        if (duration.TotalMinutes < 1)
+        {
+            return "menos de 1 min";
+        }
+
+        return $"{Math.Round(duration.TotalMinutes).ToString("0", EsAr)} min";
     }
 
     private static LetterFollowUpTaskViewModel? MapFlag(

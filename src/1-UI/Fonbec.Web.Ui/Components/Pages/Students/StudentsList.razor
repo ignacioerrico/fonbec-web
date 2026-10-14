@@ -59,6 +59,12 @@
                           Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
         </ToolBarContent>
         <Columns>
+            @if (ShowLetterAssessments)
+            {
+                <HierarchyColumn T="StudentsListViewModel"
+                                 ButtonDisabledFunc="@(vm => !vm.HasLetterAssessment)"
+                                 EnableHeaderToggle="false" />
+            }
             <PropertyColumn Property="@(vm => $"{vm.StudentFirstName} {vm.StudentLastName} {vm.StudentNickName} {vm.StudentLastName}")" Title="Nombre">
                 <CellTemplate>
                     <AuditableItemDisplay Id="@context.Item.StudentId"
@@ -123,6 +129,22 @@
                                   FilterBy="@(vm => vm.StudentCurrentEducationLevel)" />
                 </FilterTemplate>
             </PropertyColumn>
+
+            @if (ShowLetterAssessments)
+            {
+                <TemplateColumn Title="Evaluación"
+                                Filterable="false"
+                                SortBy="@(vm => vm.LetterAssessmentSortKey)">
+                    <CellTemplate>
+                        @if (context.Item.LetterAssessment is { } assessment)
+                        {
+                            <MudTooltip Text="Promedio de ortografía, legibilidad y contenido" Arrow="true">
+                                <MudText Typo="Typo.body2">@assessment.OverallText</MudText>
+                            </MudTooltip>
+                        }
+                    </CellTemplate>
+                </TemplateColumn>
+            }
 
             <PropertyColumn Property="@(vm => string.Join(", ", vm.ActiveSponsors.Select(s => s.Name)))"
                             Title="Padrinos" Editable="false" Sortable="false">
@@ -198,6 +220,30 @@
                 </CellTemplate>
             </TemplateColumn>
         </Columns>
+        <ChildRowContent>
+            @if (context.Item.LetterAssessment is { } assessment)
+            {
+                <MudPaper Class="pa-4" Elevation="0">
+                    <MudStack Spacing="2">
+                        <MudText Typo="Typo.subtitle2">Promedio</MudText>
+                        <MudStack Row="true" Spacing="4" Wrap="Wrap.Wrap">
+                            <MudText Typo="Typo.body2">Ortografía: @assessment.SpellingText</MudText>
+                            <MudText Typo="Typo.body2">Legibilidad: @assessment.PenmanshipText</MudText>
+                            <MudText Typo="Typo.body2">Contenido: @assessment.ContentText</MudText>
+                        </MudStack>
+                        @if (assessment.ShowTrend)
+                        {
+                            <MudText Typo="Typo.subtitle2">Evolución</MudText>
+                            <MudChart ChartType="ChartType.Line"
+                                      ChartSeries="@AssessmentSeries(assessment)"
+                                      XAxisLabels="@assessment.PlanLabels"
+                                      Width="100%"
+                                      Height="280px" />
+                        }
+                    </MudStack>
+                </MudPaper>
+            }
+        </ChildRowContent>
         <NoRecordsContent>
             <MudText Align="Align.Center" Class="pa-4 mud-text-secondary">No hay resultados.</MudText>
         </NoRecordsContent>

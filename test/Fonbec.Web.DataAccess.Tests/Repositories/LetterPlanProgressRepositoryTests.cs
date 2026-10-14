@@ -139,6 +139,28 @@ public class LetterPlanProgressRepositoryTests
     }
 
     [Fact]
+    public async Task GetProgressAsync_Maps_Review_Of_Approved_Company_Letter()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedBaseAsync(factory, useCompanySponsorship: true);
+        await SeedReviewedCompanyLetterAsync(factory);
+        var repository = CreateRepository(factory);
+
+        var result = await repository.GetProgressAsync(PlanId, ChapterId);
+
+        var row = result!.Rows.Should().ContainSingle().Subject;
+        row.SpellingScore.Should().Be(5);
+        row.PenmanshipScore.Should().Be(4);
+        row.ContentScore.Should().Be(3);
+        row.ConfirmedWrittenDate.Should().Be(new DateTime(2026, 3, 10));
+        row.AddresseeNotificationSentOn.Should().Be(UtcNow.AddDays(3));
+        row.DigitalImprovementStatus.Should().Be(DigitalImprovementStatus.Complete);
+        row.UploadedOn.Should().Be(UtcNow);
+        row.ImprovementCompletedOn.Should().Be(UtcNow.AddHours(2));
+        row.ReviewFirstLockedOn.Should().Be(UtcNow.AddHours(5));
+    }
+
+    [Fact]
     public async Task GetProgressAsync_Marks_Exempt_Student()
     {
         var factory = CreateDbContextFactory();
@@ -293,6 +315,67 @@ public class LetterPlanProgressRepositoryTests
             Reason = reason,
             CreatedByFonbecUserId = 1,
             CreatedOnUtc = UtcNow,
+        });
+
+        await db.SaveChangesAsync();
+    }
+
+    private static async Task SeedReviewedCompanyLetterAsync(TestDbContextFactory factory)
+    {
+        await using var db = await factory.CreateDbContextAsync();
+
+        var assessment = new Assessment
+        {
+            AssessmentId = 7,
+            SpellingScore = 5,
+            PenmanshipScore = 4,
+            ContentScore = 3,
+        };
+        db.Set<Assessment>().Add(assessment);
+        db.Set<Letter>().Add(new Letter
+        {
+            DocumentId = 1,
+            DocumentType = DocumentType.Letter,
+            ChapterId = ChapterId,
+            StudentId = StudentId,
+            CompanyId = CompanyId,
+            PlanId = PlanId,
+            FileKind = FileKind.Blob,
+            DigitalImprovementStatus = DigitalImprovementStatus.Complete,
+            UploadedOn = UtcNow,
+            ImprovementCompletedOn = UtcNow.AddHours(2),
+            ReviewFirstLockedOn = UtcNow.AddHours(5),
+            UploadedById = FacilitatorId,
+            Status = DocumentStatus.Approved,
+            ApprovedOn = UtcNow,
+            RowVersion = [1, 0, 0, 0, 0, 0, 0, 0],
+            Review = new LetterReview
+            {
+                LetterReviewId = 1,
+                AssessmentId = assessment.AssessmentId,
+                ConfirmedWrittenDate = new DateTime(2026, 3, 10),
+                ReviewedById = FacilitatorId,
+                ReviewedOn = UtcNow,
+            },
+            Shares =
+            [
+                new DocumentShare
+                {
+                    CompanyId = CompanyId,
+                    StudentId = StudentId,
+                    SharedOn = UtcNow,
+                    SharedById = FacilitatorId,
+                    NotificationSentOn = UtcNow.AddDays(3),
+                },
+                new DocumentShare
+                {
+                    SponsorId = SponsorId,
+                    StudentId = StudentId,
+                    SharedOn = UtcNow,
+                    SharedById = FacilitatorId,
+                    NotificationSentOn = UtcNow.AddDays(9),
+                },
+            ],
         });
 
         await db.SaveChangesAsync();

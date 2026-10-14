@@ -26,6 +26,13 @@ public class StudentsListViewModel : AuditableViewModel, IDetectChanges<Students
     public string StudentChapterName { get; set; } = string.Empty;
     public List<StudentActiveSponsorViewModel> ActiveSponsors { get; set; } = [];
 
+    public LetterAssessmentSummaryViewModel? LetterAssessment { get; set; }
+
+    public bool HasLetterAssessment => LetterAssessment is not null;
+
+    /// <summary>Becarios without scores sort after those who have one.</summary>
+    public double LetterAssessmentSortKey => LetterAssessment?.OverallAverage ?? double.PositiveInfinity;
+
     public bool HasActiveSponsors => ActiveSponsors.Any(s => s.IsCurrentlyActive);
 
     public bool IsIdenticalTo(StudentsListViewModel other) =>
