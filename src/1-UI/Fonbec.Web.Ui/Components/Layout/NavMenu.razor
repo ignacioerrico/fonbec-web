@@ -192,6 +192,12 @@
                                 </span>
                             </MudNavLink>
                         </AuthorizeView>
+
+                        <AuthorizeView Policy="@nameof(QueueContents)" Context="queueContentsContext">
+                            <MudNavLink Href="@NavRoutes.QueueContents" Match="NavLinkMatch.All">
+                                Colas
+                            </MudNavLink>
+                        </AuthorizeView>
                     </MudNavGroup>
                 </AuthorizeView>
             </Authorized>

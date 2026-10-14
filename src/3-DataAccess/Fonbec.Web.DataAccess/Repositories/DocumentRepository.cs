@@ -24,6 +24,24 @@ public interface IDocumentRepository
     Task<CreateDocumentResultDataModel> CreateOtherDocumentAsync(CreateOtherDocumentInputDataModel input);
     Task<DocumentQueueItemDataModel?> TakeNextForReviewAsync(int userId);
 
+    /// <summary>
+    /// Review queue contents: improvement is finished, and the document is pending or held by a valid lock.
+    /// Expired review locks are released first. Ordered oldest first.
+    /// </summary>
+    Task<List<ManagerQueueEntryDataModel>> ListReviewQueueAsync();
+
+    /// <summary>
+    /// Image-improvement queue contents, pending or in progress. Ordered oldest first.
+    /// An expired improvement lock is listed as not actively locked.
+    /// </summary>
+    Task<List<ManagerQueueEntryDataModel>> ListImprovementQueueAsync();
+
+    /// <summary>
+    /// Locks one review-eligible document for <paramref name="userId"/> without advancing the fair-dequeue cursor.
+    /// Fails when the user already holds another review lock, or the document is not free to take.
+    /// </summary>
+    Task<TakeReviewLockDataModel> TryTakeReviewLockAsync(long documentId, int userId);
+
     /// <summary>Document id the user currently holds a valid (non-expired) review lock on, or <c>null</c>.</summary>
     Task<long?> GetActiveReviewLockedDocumentIdAsync(int userId);
 
@@ -440,6 +458,136 @@ public class DocumentRepository(
             {
                 // Another reviewer took this document (or advanced the cursor) first; loop and
                 // pick the next free one.
+            }
+        }
+    }
+
+    public async Task<List<ManagerQueueEntryDataModel>> ListReviewQueueAsync()
+    {
+        await ReleaseExpiredReviewLocksAsync();
+
+        await using var db = await dbContext.CreateDbContextAsync();
+        var lockValidFrom = timeProvider.GetUtcNow().UtcDateTime - LockTimeout;
+
+        var rows = await db.DocumentQueueItems
+            .AsNoTracking()
+            .Where(q => (q.Document.DigitalImprovementStatus == DigitalImprovementStatus.NotApplicable
+                         || q.Document.DigitalImprovementStatus == DigitalImprovementStatus.Complete)
+                        && ((q.Document.Status == DocumentStatus.ReviewPending && q.ReviewLockedById == null)
+                            || (q.Document.Status == DocumentStatus.ReviewOngoing
+                                && q.ReviewLockedById != null
+                                && q.ReviewLockedAt != null
+                                && q.ReviewLockedAt >= lockValidFrom)))
+            .OrderBy(q => q.EnqueuedAt)
+            .ThenBy(q => q.DocumentId)
+            .Select(q => new QueueEntryRow
+            {
+                DocumentId = q.DocumentId,
+                DocumentType = q.Document.DocumentType,
+                StudentName = q.Document.Student.FirstName + " " + q.Document.Student.LastName,
+                ChapterName = q.Document.Chapter.Name,
+                EnqueuedAt = q.EnqueuedAt,
+                LockedById = q.ReviewLockedById,
+                LockedByName = q.ReviewLockedBy == null
+                    ? null
+                    : q.ReviewLockedBy.FirstName + " " + q.ReviewLockedBy.LastName,
+                LockedAt = q.ReviewLockedAt,
+            })
+            .ToListAsync();
+
+        return rows.Select(row => ToManagerQueueEntry(row, lockValidFrom)).ToList();
+    }
+
+    public async Task<List<ManagerQueueEntryDataModel>> ListImprovementQueueAsync()
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+        var lockValidFrom = timeProvider.GetUtcNow().UtcDateTime - LockTimeout;
+
+        var rows = await db.DocumentQueueItems
+            .AsNoTracking()
+            .Where(q => q.Document.Status == DocumentStatus.DigitalImprovementPending
+                        || q.Document.Status == DocumentStatus.DigitalImprovementOngoing)
+            .OrderBy(q => q.EnqueuedAt)
+            .ThenBy(q => q.DocumentId)
+            .Select(q => new QueueEntryRow
+            {
+                DocumentId = q.DocumentId,
+                DocumentType = q.Document.DocumentType,
+                StudentName = q.Document.Student.FirstName + " " + q.Document.Student.LastName,
+                ChapterName = q.Document.Chapter.Name,
+                EnqueuedAt = q.EnqueuedAt,
+                LockedById = q.Document.ImprovementLockedById,
+                LockedByName = q.Document.ImprovementLockedBy == null
+                    ? null
+                    : q.Document.ImprovementLockedBy.FirstName + " " + q.Document.ImprovementLockedBy.LastName,
+                LockedAt = q.Document.ImprovementLockedAt,
+            })
+            .ToListAsync();
+
+        return rows.Select(row => ToManagerQueueEntry(row, lockValidFrom)).ToList();
+    }
+
+    public async Task<TakeReviewLockDataModel> TryTakeReviewLockAsync(long documentId, int userId)
+    {
+        await ReleaseExpiredReviewLocksAsync();
+
+        var existingLock = await GetActiveReviewLockedQueueItemAsync(userId);
+        if (existingLock is not null)
+        {
+            return new TakeReviewLockDataModel
+            {
+                Outcome = existingLock.DocumentId == documentId
+                    ? TakeReviewLockOutcome.Locked
+                    : TakeReviewLockOutcome.AlreadyReviewingAnother,
+                DocumentId = existingLock.DocumentId,
+            };
+        }
+
+        while (true)
+        {
+            await using var db = await dbContext.CreateDbContextAsync();
+
+            var utcNow = timeProvider.GetUtcNow().UtcDateTime;
+            var lockExpiredBefore = utcNow - LockTimeout;
+
+            var queueItem = await db.DocumentQueueItems
+                .Include(q => q.Document)
+                .FirstOrDefaultAsync(q => q.DocumentId == documentId);
+
+            if (queueItem is null || !IsEligibleForSelectedReview(queueItem, lockExpiredBefore))
+            {
+                return new TakeReviewLockDataModel { Outcome = TakeReviewLockOutcome.Unavailable };
+            }
+
+            var isExpiredRetake = queueItem.Document.Status == DocumentStatus.ReviewOngoing;
+
+            queueItem.ReviewLockedById = userId;
+            queueItem.ReviewLockedAt = utcNow;
+            queueItem.Document.ReviewFirstLockedOn ??= utcNow;
+            queueItem.DequeueCount++;
+
+            if (isExpiredRetake)
+            {
+                db.Entry(queueItem.Document).State = EntityState.Modified;
+            }
+            else
+            {
+                queueItem.Document.Status = DocumentStatus.ReviewOngoing;
+            }
+
+            try
+            {
+                await db.SaveChangesAsync();
+                return new TakeReviewLockDataModel
+                {
+                    Outcome = TakeReviewLockOutcome.Locked,
+                    DocumentId = documentId,
+                };
+            }
+            catch (DbUpdateConcurrencyException)
+            {
+                // Another reviewer took this document first; loop and report it unavailable
+                // once the row is no longer eligible.
             }
         }
     }
@@ -2118,6 +2266,55 @@ public class DocumentRepository(
         {
             return [DocumentMessages.ConcurrencyConflict];
         }
+    }
+
+    private static bool IsEligibleForSelectedReview(DocumentQueueItem queueItem, DateTime lockExpiredBefore)
+    {
+        var improvementReady = queueItem.Document.DigitalImprovementStatus is DigitalImprovementStatus.NotApplicable
+            or DigitalImprovementStatus.Complete;
+        if (!improvementReady)
+        {
+            return false;
+        }
+
+        var unlockedPending = queueItem.ReviewLockedById is null
+            && queueItem.Document.Status == DocumentStatus.ReviewPending;
+        var expiredOngoing = queueItem.ReviewLockedById is not null
+            && queueItem.Document.Status == DocumentStatus.ReviewOngoing
+            && queueItem.ReviewLockedAt is not null
+            && queueItem.ReviewLockedAt < lockExpiredBefore;
+        return unlockedPending || expiredOngoing;
+    }
+
+    private static ManagerQueueEntryDataModel ToManagerQueueEntry(QueueEntryRow row, DateTime lockValidFrom)
+    {
+        var isLocked = row.LockedById is not null
+            && row.LockedAt is not null
+            && row.LockedAt >= lockValidFrom;
+
+        return new ManagerQueueEntryDataModel
+        {
+            DocumentId = row.DocumentId,
+            DocumentType = row.DocumentType,
+            StudentName = row.StudentName,
+            ChapterName = row.ChapterName,
+            EnqueuedAt = row.EnqueuedAt,
+            LockedById = isLocked ? row.LockedById : null,
+            LockedByName = isLocked ? row.LockedByName : null,
+            IsLocked = isLocked,
+        };
+    }
+
+    private sealed class QueueEntryRow
+    {
+        public long DocumentId { get; init; }
+        public DocumentType DocumentType { get; init; }
+        public string StudentName { get; init; } = string.Empty;
+        public string ChapterName { get; init; } = string.Empty;
+        public DateTime EnqueuedAt { get; init; }
+        public int? LockedById { get; init; }
+        public string? LockedByName { get; init; }
+        public DateTime? LockedAt { get; init; }
     }
 
     private static DocumentQueueItemDataModel MapQueueItem(DocumentQueueItem queueItem, Document? document = null)

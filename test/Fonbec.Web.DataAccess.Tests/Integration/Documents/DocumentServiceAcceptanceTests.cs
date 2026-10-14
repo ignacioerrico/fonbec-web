@@ -3,6 +3,7 @@ using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.Logic.Models;
+using Fonbec.Web.Logic.Models.Documents;
 using Fonbec.Web.Logic.Models.Documents.Input;
 using Microsoft.EntityFrameworkCore;
 using NSubstitute;
@@ -1487,6 +1488,186 @@ public class DocumentServiceAcceptanceTests
         reviewerResult!.DocumentId.Should().NotBe(managerResult!.DocumentId);
         ids.Should().Contain(reviewerResult.DocumentId);
         ids.Should().Contain(managerResult.DocumentId);
+    }
+
+    [Fact]
+    public async Task ManagerQueue_ListsReviewAndImprovementSeparately()
+    {
+        await _fixture.InitializeAsync();
+
+        var image = await _fixture.DocumentService.CreateLetterAsync(new CreateLetterInputModel(
+            _fixture.StudentId, _fixture.PlanId, _fixture.SponsorAId, _fixture.UploaderContext,
+            FileKind.Blob, Blob: new CreateBlobPathInputModel("a.jpg", "image/jpeg")));
+        var reportCard = await _fixture.DocumentService.CreateReportCardAsync(new CreateReportCardInputModel(
+            _fixture.StudentId, _fixture.UploaderContext,
+            FileKind.Blob, Period: new DateOnly(2026, 5, 1), Description: "Boletín 1º trimestre",
+            Blob: new CreateBlobPathInputModel("b.pdf", "application/pdf")));
+
+        var review = await _fixture.DocumentService.ListManagerReviewQueueAsync(_fixture.ManagerId, "Manager");
+        var improvement = await _fixture.DocumentService.ListManagerImprovementQueueAsync(_fixture.ManagerId, "Manager");
+
+        review.Should().ContainSingle();
+        review[0].DocumentId.Should().Be(reportCard.Value);
+        review[0].DocumentType.Should().Be(DocumentType.ReportCard);
+        review[0].StudentName.Should().Be("Maria Garcia");
+        review[0].ChapterName.Should().Be("Test Chapter");
+        review[0].Availability.Should().Be("Disponible");
+        review[0].CanSelect.Should().BeTrue();
+
+        improvement.Should().ContainSingle();
+        improvement[0].DocumentId.Should().Be(image.Value);
+        improvement[0].Availability.Should().Be("Pendiente");
+        improvement[0].CanSelect.Should().BeFalse();
+
+        await _fixture.DocumentService.TakeNextForDigitalImprovementAsync(_fixture.ReviewerId, "Reviewer");
+
+        var lockedImprovement = await _fixture.DocumentService.ListManagerImprovementQueueAsync(
+            _fixture.ManagerId, "Manager");
+        lockedImprovement.Should().ContainSingle();
+        lockedImprovement[0].Availability.Should().Be("En mejora por reviewer User");
+        lockedImprovement[0].CanSelect.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task ManagerQueue_ImprovementList_RequiresGrant()
+    {
+        await _fixture.InitializeAsync(grantDigitalImprovement: false);
+
+        await _fixture.DocumentService.CreateLetterAsync(new CreateLetterInputModel(
+            _fixture.StudentId, _fixture.PlanId, _fixture.SponsorAId, _fixture.UploaderContext,
+            FileKind.Blob, Blob: new CreateBlobPathInputModel("a.jpg", "image/jpeg")));
+
+        var improvement = await _fixture.DocumentService.ListManagerImprovementQueueAsync(_fixture.ManagerId, "Manager");
+        var review = await _fixture.DocumentService.ListManagerReviewQueueAsync(_fixture.ManagerId, "Manager");
+
+        improvement.Should().BeEmpty();
+        review.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task TakeSelectedForReview_LocksChosenDocument_WithoutAdvancingCursor()
+    {
+        await _fixture.InitializeAsync();
+        var earlier = await _fixture.EnqueuePendingOtherDocumentAsync(
+            _fixture.ChapterId, _fixture.StudentId, DateTime.UtcNow.AddHours(-2));
+        var later = await _fixture.EnqueuePendingOtherDocumentAsync(
+            _fixture.ChapterId, _fixture.StudentId, DateTime.UtcNow.AddHours(-1));
+
+        var taken = await _fixture.DocumentService.TakeSelectedForReviewAsync(later, _fixture.ManagerId, "Manager");
+
+        taken.Outcome.Should().Be(TakeSelectedReviewOutcome.Locked);
+        taken.DocumentId.Should().Be(later);
+        (await _fixture.GetLastServedChapterIdAsync()).Should().BeNull();
+
+        var laterDocument = await _fixture.GetDocumentAsync(later);
+        laterDocument.Status.Should().Be(DocumentStatus.ReviewOngoing);
+        (await _fixture.GetQueueItemAsync(later)).ReviewLockedById.Should().Be(_fixture.ManagerId);
+
+        var earlierDocument = await _fixture.GetDocumentAsync(earlier);
+        earlierDocument.Status.Should().Be(DocumentStatus.ReviewPending);
+
+        var review = await _fixture.DocumentService.ListManagerReviewQueueAsync(_fixture.ManagerId, "Manager");
+        review.Should().HaveCount(2);
+        review.Single(item => item.DocumentId == earlier).Availability.Should().Be("Disponible");
+        review.Single(item => item.DocumentId == later).Availability.Should().Be("En revisión");
+        review.Single(item => item.DocumentId == later).CanSelect.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task TakeSelectedForReview_UnavailableWhenLockedByAnother()
+    {
+        await _fixture.InitializeAsync();
+        var documentId = await _fixture.EnqueuePendingOtherDocumentAsync(
+            _fixture.ChapterId, _fixture.StudentId, DateTime.UtcNow.AddHours(-1));
+
+        var reviewerLock = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer");
+        reviewerLock!.DocumentId.Should().Be(documentId);
+
+        var taken = await _fixture.DocumentService.TakeSelectedForReviewAsync(documentId, _fixture.ManagerId, "Manager");
+
+        taken.Outcome.Should().Be(TakeSelectedReviewOutcome.Unavailable);
+        (await _fixture.GetQueueItemAsync(documentId)).ReviewLockedById.Should().Be(_fixture.ReviewerId);
+
+        var review = await _fixture.DocumentService.ListManagerReviewQueueAsync(_fixture.ManagerId, "Manager");
+        review.Should().ContainSingle();
+        review[0].Availability.Should().Be("En revisión por reviewer User");
+        review[0].CanSelect.Should().BeFalse();
+    }
+
+    [Fact]
+    public async Task TakeSelectedForReview_WhenCallerAlreadyHoldsAnother_DoesNotLockTheSelectedOne()
+    {
+        await _fixture.InitializeAsync();
+        var first = await _fixture.EnqueuePendingOtherDocumentAsync(
+            _fixture.ChapterId, _fixture.StudentId, DateTime.UtcNow.AddHours(-2));
+        var second = await _fixture.EnqueuePendingOtherDocumentAsync(
+            _fixture.ChapterId, _fixture.StudentId, DateTime.UtcNow.AddHours(-1));
+
+        var held = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ManagerId, "Manager");
+        held!.DocumentId.Should().Be(first);
+
+        var taken = await _fixture.DocumentService.TakeSelectedForReviewAsync(second, _fixture.ManagerId, "Manager");
+
+        taken.Outcome.Should().Be(TakeSelectedReviewOutcome.AlreadyReviewingAnother);
+        taken.DocumentId.Should().Be(first);
+        (await _fixture.GetDocumentAsync(second)).Status.Should().Be(DocumentStatus.ReviewPending);
+        (await _fixture.GetQueueItemAsync(second)).ReviewLockedById.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task TakeSelectedForReview_ExpiredLockCanBeTaken()
+    {
+        await _fixture.InitializeAsync();
+        var documentId = await _fixture.EnqueuePendingOtherDocumentAsync(
+            _fixture.ChapterId, _fixture.StudentId, DateTime.UtcNow.AddHours(-1));
+
+        await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer");
+        await _fixture.ExpireReviewLockAsync(documentId, TimeSpan.FromMinutes(41));
+
+        var before = await _fixture.DocumentService.ListManagerReviewQueueAsync(_fixture.ManagerId, "Manager");
+        before.Should().ContainSingle();
+        before[0].Availability.Should().Be("Disponible");
+        before[0].CanSelect.Should().BeTrue();
+
+        var taken = await _fixture.DocumentService.TakeSelectedForReviewAsync(documentId, _fixture.ManagerId, "Manager");
+
+        taken.Outcome.Should().Be(TakeSelectedReviewOutcome.Locked);
+        (await _fixture.GetQueueItemAsync(documentId)).ReviewLockedById.Should().Be(_fixture.ManagerId);
+        (await _fixture.GetDocumentAsync(documentId)).Status.Should().Be(DocumentStatus.ReviewOngoing);
+    }
+
+    [Fact]
+    public async Task TakeSelectedForReview_UnimprovedImage_IsUnavailable()
+    {
+        await _fixture.InitializeAsync();
+        var image = await _fixture.DocumentService.CreateLetterAsync(new CreateLetterInputModel(
+            _fixture.StudentId, _fixture.PlanId, _fixture.SponsorAId, _fixture.UploaderContext,
+            FileKind.Blob, Blob: new CreateBlobPathInputModel("a.jpg", "image/jpeg")));
+
+        var taken = await _fixture.DocumentService.TakeSelectedForReviewAsync(
+            image.Value!, _fixture.ManagerId, "Manager");
+
+        taken.Outcome.Should().Be(TakeSelectedReviewOutcome.Unavailable);
+        var document = await _fixture.GetDocumentAsync(image.Value!);
+        document.Status.Should().Be(DocumentStatus.DigitalImprovementPending);
+        (await _fixture.GetQueueItemAsync(image.Value!)).ReviewLockedById.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task TakeSelectedForReview_ConcurrentManagers_OnlyOneLocksTheDocument()
+    {
+        await _fixture.InitializeAsync();
+        var documentId = await _fixture.EnqueuePendingOtherDocumentAsync(
+            _fixture.ChapterId, _fixture.StudentId, DateTime.UtcNow.AddHours(-1));
+
+        var reviewerTask = _fixture.DocumentService.TakeSelectedForReviewAsync(documentId, _fixture.ReviewerId, "Manager");
+        var managerTask = _fixture.DocumentService.TakeSelectedForReviewAsync(documentId, _fixture.ManagerId, "Manager");
+        await Task.WhenAll(reviewerTask, managerTask);
+
+        var outcomes = new[] { (await reviewerTask).Outcome, (await managerTask).Outcome };
+        outcomes.Should().ContainSingle(outcome => outcome == TakeSelectedReviewOutcome.Locked);
+        outcomes.Should().ContainSingle(outcome => outcome == TakeSelectedReviewOutcome.Unavailable);
+        (await _fixture.GetDocumentAsync(documentId)).Status.Should().Be(DocumentStatus.ReviewOngoing);
     }
 
     private async Task<long> TakeAndCompleteAsync(int reviewerId)

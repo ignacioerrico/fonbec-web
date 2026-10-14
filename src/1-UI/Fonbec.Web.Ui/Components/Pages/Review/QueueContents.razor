@@ -1,0 +1,96 @@
+@attribute [Route(NavRoutes.QueueContents)]
+@attribute [Authorize(Policy = nameof(QueueContents))]
+@using Fonbec.Web.Logic.Models.Documents
+@inherits AuthenticationRequiredComponentBase
+
+<PageHeader Title="Colas" />
+
+<LoadingIndicator Loading="Loading" />
+
+@if (!Loading)
+{
+    <MudPaper Class="pa-4" Elevation="2">
+        <MudText Typo="Typo.h6" GutterBottom="true">Cola de revisión</MudText>
+        @if (_reviewQueue.Count == 0)
+        {
+            <MudText Class="mud-text-secondary">No hay documentos en esta cola.</MudText>
+        }
+        else
+        {
+            <MudTable T="ManagerQueueEntryViewModel"
+                      Items="_reviewQueue"
+                      Dense="true"
+                      Hover="true"
+                      Striped="true"
+                      Bordered="true"
+                      RowsPerPage="10">
+                <HeaderContent>
+                    <MudTh>Tipo</MudTh>
+                    <MudTh>Becario</MudTh>
+                    <MudTh>Filial</MudTh>
+                    <MudTh>En cola desde</MudTh>
+                    <MudTh>Estado</MudTh>
+                    <MudTh>Acciones</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Tipo">@DocumentTypeLabel(context.DocumentType)</MudTd>
+                    <MudTd DataLabel="Becario">@context.StudentName</MudTd>
+                    <MudTd DataLabel="Filial">@context.ChapterName</MudTd>
+                    <MudTd DataLabel="En cola desde">@FormatEnqueued(context.EnqueuedAt)</MudTd>
+                    <MudTd DataLabel="Estado">@context.Availability</MudTd>
+                    <MudTd DataLabel="Acciones">
+                        <MudButton Variant="Variant.Filled"
+                                   Color="Color.Primary"
+                                   Size="Size.Small"
+                                   Disabled="@(!context.CanSelect || _takingDocumentId is not null)"
+                                   OnClick="@(() => ReviewSelectedAsync(context.DocumentId))">
+                            Revisar
+                        </MudButton>
+                    </MudTd>
+                </RowTemplate>
+                <PagerContent>
+                    <MudTablePager RowsPerPageString="Filas por página:" />
+                </PagerContent>
+            </MudTable>
+        }
+    </MudPaper>
+
+    @if (_canImprove)
+    {
+        <MudPaper Class="pa-4 mt-6" Elevation="2">
+            <MudText Typo="Typo.h6" GutterBottom="true">Cola de mejora de imágenes</MudText>
+            @if (_improvementQueue.Count == 0)
+            {
+                <MudText Class="mud-text-secondary">No hay documentos en esta cola.</MudText>
+            }
+            else
+            {
+                <MudTable T="ManagerQueueEntryViewModel"
+                          Items="_improvementQueue"
+                          Dense="true"
+                          Hover="true"
+                          Striped="true"
+                          Bordered="true"
+                          RowsPerPage="10">
+                    <HeaderContent>
+                        <MudTh>Tipo</MudTh>
+                        <MudTh>Becario</MudTh>
+                        <MudTh>Filial</MudTh>
+                        <MudTh>En cola desde</MudTh>
+                        <MudTh>Estado</MudTh>
+                    </HeaderContent>
+                    <RowTemplate>
+                        <MudTd DataLabel="Tipo">@DocumentTypeLabel(context.DocumentType)</MudTd>
+                        <MudTd DataLabel="Becario">@context.StudentName</MudTd>
+                        <MudTd DataLabel="Filial">@context.ChapterName</MudTd>
+                        <MudTd DataLabel="En cola desde">@FormatEnqueued(context.EnqueuedAt)</MudTd>
+                        <MudTd DataLabel="Estado">@context.Availability</MudTd>
+                    </RowTemplate>
+                    <PagerContent>
+                        <MudTablePager RowsPerPageString="Filas por página:" />
+                    </PagerContent>
+                </MudTable>
+            }
+        </MudPaper>
+    }
+}

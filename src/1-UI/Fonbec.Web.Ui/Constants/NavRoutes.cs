@@ -186,6 +186,8 @@ public static class NavRoutes
 
     public const string ReviewQueue = "/revisar";
 
+    public const string QueueContents = "/colas";
+
     public static string ReviewDocument(long documentId) => $"{ReviewQueue}/{documentId}";
 
     public const string ReviewDocumentRouteTemplate = $"{ReviewQueue}/{{DocumentId:long}}";
