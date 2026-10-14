@@ -2,8 +2,8 @@ using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.Logic.Models.Documents;
 using Fonbec.Web.Logic.Models.Documents.Input;
+using Fonbec.Web.Logic.Models.Results;
 using Fonbec.Web.Logic.Services;
-using Fonbec.Web.Ui.Constants;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
@@ -41,14 +41,14 @@ public partial class OtherReviewPanel : ComponentBase
     [Parameter]
     public bool Expired { get; set; }
 
+    [Parameter]
+    public EventCallback OnCompleted { get; set; }
+
     [Inject]
     public IDocumentService DocumentService { get; set; } = null!;
 
     [Inject]
     public ISnackbar Snackbar { get; set; } = null!;
-
-    [Inject]
-    public NavigationManager NavigationManager { get; set; } = null!;
 
     private RejectedReasonViewModel? SelectedReason =>
         _reasons.SingleOrDefault(r => r.RejectedReasonId == _selectedReasonId);
@@ -77,16 +77,20 @@ public partial class OtherReviewPanel : ComponentBase
 
         _saving = true;
         StateHasChanged();
+        ReviewResult result;
         try
         {
-            var result = await DocumentService.ApproveOtherDocumentAsync(new ApproveOtherDocumentInputModel(
+            result = await DocumentService.ApproveOtherDocumentAsync(new ApproveOtherDocumentInputModel(
                 DocumentId, ReviewerId, ReviewerRole, RowVersion));
-
-            HandleResult(result, "Documento aprobado.");
         }
         finally
         {
             _saving = false;
+        }
+
+        if (ShowResult(result, "Documento aprobado."))
+        {
+            await OnCompleted.InvokeAsync();
         }
     }
 
@@ -99,20 +103,24 @@ public partial class OtherReviewPanel : ComponentBase
 
         _saving = true;
         StateHasChanged();
+        ReviewResult result;
         try
         {
-            var result = await DocumentService.RejectOtherDocumentAsync(new RejectOtherDocumentInputModel(
+            result = await DocumentService.RejectOtherDocumentAsync(new RejectOtherDocumentInputModel(
                 DocumentId, ReviewerId, ReviewerRole, RowVersion, _selectedReasonId, NormalizedNotes()));
-
-            HandleResult(result, "Documento rechazado.");
         }
         finally
         {
             _saving = false;
         }
+
+        if (ShowResult(result, "Documento rechazado."))
+        {
+            await OnCompleted.InvokeAsync();
+        }
     }
 
-    private void HandleResult(Fonbec.Web.Logic.Models.Results.ReviewResult result, string successMessage)
+    private bool ShowResult(ReviewResult result, string successMessage)
     {
         if (!result.IsSuccess)
         {
@@ -128,11 +136,11 @@ public partial class OtherReviewPanel : ComponentBase
                 }
             }
 
-            return;
+            return false;
         }
 
         Snackbar.Add(successMessage, Severity.Success);
-        NavigationManager.NavigateTo(NavRoutes.ReviewQueue);
+        return true;
     }
 
     private string? NormalizedNotes() =>

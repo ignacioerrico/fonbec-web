@@ -10,78 +10,81 @@
 
 @if (_workspace is not null)
 {
-    <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4 flex-wrap">
-        <MudText Typo="Typo.h4">Revisar documento</MudText>
-        <MudChip T="string" Color="Color.Primary" Variant="Variant.Filled">
-            Tipo: @DocumentTypeLabel(_workspace.DocumentType)
-        </MudChip>
-        <MudSpacer />
-        <ReviewLockCountdown ExpiresAtUtc="_workspace.LockExpiresAtUtc" OnExpired="OnCountdownExpired" />
-    </MudStack>
+    <div @key="_workspace.DocumentId">
+        <MudStack Row="true" AlignItems="AlignItems.Center" Class="mb-4 flex-wrap">
+            <MudText Typo="Typo.h4">Revisar documento</MudText>
+            <MudChip T="string" Color="Color.Primary" Variant="Variant.Filled">
+                Tipo: @DocumentTypeLabel(_workspace.DocumentType)
+            </MudChip>
+            <MudSpacer />
+            <ReviewLockCountdown ExpiresAtUtc="_workspace.LockExpiresAtUtc" OnExpired="OnCountdownExpired" />
+        </MudStack>
 
-    <MudGrid Spacing="3">
-        <MudItem xs="12" md="6">
-            <div class="review-doc-column">
-                <ReviewDocumentViewer DocumentId="_workspace.DocumentId"
-                                      FileKind="_workspace.FileKind"
-                                      TextContent="@_workspace.TextContent"
-                                      YouTubeVideoId="@_workspace.YouTubeVideoId"
-                                      Pages="_workspace.Pages"
-                                      UploaderNotes="@_workspace.UploaderNotes" />
-            </div>
-        </MudItem>
+        <MudGrid Spacing="3">
+            <MudItem xs="12" md="6">
+                <div class="review-doc-column">
+                    <ReviewDocumentViewer DocumentId="_workspace.DocumentId"
+                                          FileKind="_workspace.FileKind"
+                                          TextContent="@_workspace.TextContent"
+                                          YouTubeVideoId="@_workspace.YouTubeVideoId"
+                                          Pages="_workspace.Pages"
+                                          UploaderNotes="@_workspace.UploaderNotes" />
+                </div>
+            </MudItem>
 
-        <MudItem xs="12" md="6">
-            @switch (_workspace.DocumentType)
-            {
-                case DocumentType.Letter:
-                    <LetterReviewPanel DocumentId="_workspace.DocumentId"
-                                       RowVersion="_workspace.RowVersion"
-                                       StudentId="_workspace.StudentId"
-                                       SponsorId="_workspace.SponsorId"
-                                       CompanyId="_workspace.CompanyId"
-                                       PlanStartsOn="_workspace.PlanStartsOn"
-                                       ReviewerId="FonbecClaim.UserId"
-                                       ReviewerRole="@UserRole"
-                                       Disabled="_expired"
-                                       OnCompleted="OnReviewCompleted"
-                                       OnRelease="ReleaseAsync" />
-                    break;
-                case DocumentType.ReportCard:
-                    <ReportCardReviewPanel DocumentId="_workspace.DocumentId"
+            <MudItem xs="12" md="6">
+                @switch (_workspace.DocumentType)
+                {
+                    case DocumentType.Letter:
+                        <LetterReviewPanel DocumentId="_workspace.DocumentId"
                                            RowVersion="_workspace.RowVersion"
                                            StudentId="_workspace.StudentId"
-                                           Period="_workspace.ReportCardPeriod!.Value"
-                                           EducationLevel="_workspace.StudentEducationLevel"
+                                           SponsorId="_workspace.SponsorId"
+                                           CompanyId="_workspace.CompanyId"
+                                           PlanStartsOn="_workspace.PlanStartsOn"
                                            ReviewerId="FonbecClaim.UserId"
                                            ReviewerRole="@UserRole"
                                            Disabled="_expired"
                                            OnCompleted="OnReviewCompleted"
                                            OnRelease="ReleaseAsync" />
-                    break;
-                case DocumentType.Other:
-                    <OtherReviewPanel DocumentId="_workspace.DocumentId"
-                                      RowVersion="_workspace.RowVersion"
-                                      ReviewerId="FonbecClaim.UserId"
-                                      ReviewerRole="@UserRole"
-                                      Expired="_expired" />
-                    @* OtherReviewPanel has no action bar of its own, so the page keeps the release button. *@
-                    <MudStack Row="true" Class="mt-2">
-                        <MudButton Variant="Variant.Filled"
-                                   Color="Color.Default"
-                                   StartIcon="@Icons.Material.Filled.LockOpen"
-                                   Disabled="_expired"
-                                   OnClick="ReleaseAsync">
-                            Liberar
-                        </MudButton>
-                    </MudStack>
-                    break;
-                default:
-                    <PlaceholderReviewPanel DocumentType="_workspace.DocumentType"
-                                            Disabled="_expired"
-                                            OnRelease="ReleaseAsync" />
-                    break;
-            }
-        </MudItem>
-    </MudGrid>
+                        break;
+                    case DocumentType.ReportCard:
+                        <ReportCardReviewPanel DocumentId="_workspace.DocumentId"
+                                               RowVersion="_workspace.RowVersion"
+                                               StudentId="_workspace.StudentId"
+                                               Period="_workspace.ReportCardPeriod!.Value"
+                                               EducationLevel="_workspace.StudentEducationLevel"
+                                               ReviewerId="FonbecClaim.UserId"
+                                               ReviewerRole="@UserRole"
+                                               Disabled="_expired"
+                                               OnCompleted="OnReviewCompleted"
+                                               OnRelease="ReleaseAsync" />
+                        break;
+                    case DocumentType.Other:
+                        <OtherReviewPanel DocumentId="_workspace.DocumentId"
+                                          RowVersion="_workspace.RowVersion"
+                                          ReviewerId="FonbecClaim.UserId"
+                                          ReviewerRole="@UserRole"
+                                          Expired="_expired"
+                                          OnCompleted="OnReviewCompleted" />
+                        @* OtherReviewPanel has no action bar of its own, so the page keeps the release button. *@
+                        <MudStack Row="true" Class="mt-2">
+                            <MudButton Variant="Variant.Filled"
+                                       Color="Color.Default"
+                                       StartIcon="@Icons.Material.Filled.LockOpen"
+                                       Disabled="_expired"
+                                       OnClick="ReleaseAsync">
+                                Liberar
+                            </MudButton>
+                        </MudStack>
+                        break;
+                    default:
+                        <PlaceholderReviewPanel DocumentType="_workspace.DocumentType"
+                                                Disabled="_expired"
+                                                OnRelease="ReleaseAsync" />
+                        break;
+                }
+            </MudItem>
+        </MudGrid>
+    </div>
 }

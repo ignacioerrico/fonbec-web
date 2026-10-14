@@ -13,6 +13,8 @@ public partial class ReviewDocument : AuthenticationRequiredComponentBase
 {
     private ReviewWorkspaceViewModel? _workspace;
     private bool _expired;
+    private long? _loadedDocumentId;
+    private int _loadVersion;
 
     [Parameter]
     public long DocumentId { get; set; }
@@ -26,9 +28,37 @@ public partial class ReviewDocument : AuthenticationRequiredComponentBase
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
+        await LoadWorkspaceAsync();
+    }
 
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+
+        if (_loadedDocumentId != DocumentId)
+        {
+            await LoadWorkspaceAsync();
+        }
+    }
+
+    private async Task LoadWorkspaceAsync()
+    {
+        var documentId = DocumentId;
+        var version = ++_loadVersion;
+        _loadedDocumentId = documentId;
         Loading = true;
-        _workspace = await DocumentService.GetReviewWorkspaceAsync(DocumentId, FonbecClaim.UserId, UserRole);
+        _expired = false;
+        _workspace = null;
+        await InvokeAsync(StateHasChanged);
+
+        var workspace = await DocumentService.GetReviewWorkspaceAsync(documentId, FonbecClaim.UserId, UserRole);
+
+        if (version != _loadVersion)
+        {
+            return;
+        }
+
+        _workspace = workspace;
         Loading = false;
 
         if (_workspace is null)
@@ -45,10 +75,33 @@ public partial class ReviewDocument : AuthenticationRequiredComponentBase
         NavigationManager.NavigateTo(NavRoutes.ReviewQueue);
     }
 
-    private Task OnReviewCompleted()
+    private async Task OnReviewCompleted()
     {
+        var progress = await DocumentService.GetGlobalReviewProgressAsync(FonbecClaim.UserId, UserRole, null);
+        var pending = progress.PendingLetters + progress.PendingReportCards + progress.PendingOther;
+
+        if (pending > 0)
+        {
+            var continueReviewing = await DialogService.ShowMessageBox(
+                "Revisión completada",
+                "¿Querés revisar el siguiente documento de la cola?",
+                yesText: "Revisar siguiente",
+                cancelText: "Volver a la cola");
+
+            if (continueReviewing == true)
+            {
+                var next = await DocumentService.TakeNextForReviewAsync(FonbecClaim.UserId, UserRole);
+                if (next is not null)
+                {
+                    NavigationManager.NavigateTo(NavRoutes.ReviewDocument(next.DocumentId));
+                    return;
+                }
+
+                Snackbar.Add("No hay documentos pendientes.", Severity.Info);
+            }
+        }
+
         NavigationManager.NavigateTo(NavRoutes.ReviewQueue);
-        return Task.CompletedTask;
     }
 
     private async Task OnCountdownExpired()
