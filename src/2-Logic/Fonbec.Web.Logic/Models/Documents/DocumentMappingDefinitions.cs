@@ -61,6 +61,35 @@ public class DocumentMappingDefinitions : IRegister
         config.NewConfig<DocumentDescriptionOptionDataModel, DocumentDescriptionOptionViewModel>();
 
         config.NewConfig<RejectedReasonDataModel, RejectedReasonViewModel>();
+
+        config.NewConfig<StudentDocumentHistoryDataModel, StudentDocumentHistoryViewModel>();
+
+        config.NewConfig<StudentDocumentHistoryItemDataModel, StudentDocumentHistoryItemViewModel>()
+            .Map(dest => dest.Date, src => DateOnly.FromDateTime(src.UploadedOn))
+            .Map(dest => dest.CanDownload, src => src.FileKind == FileKind.Blob && src.PageCount > 0)
+            .Map(dest => dest.Detail, src => BuildStudentDocumentDetail(src));
+    }
+
+    private static string BuildStudentDocumentDetail(StudentDocumentHistoryItemDataModel src) =>
+        src.DocumentType switch
+        {
+            DocumentType.Letter => src.RecipientName ?? string.Empty,
+            DocumentType.ReportCard => JoinReportCardDetail(src.ReportCardPeriod, src.Description),
+            DocumentType.Other => src.Description ?? string.Empty,
+            _ => src.Description ?? string.Empty,
+        };
+
+    private static string JoinReportCardDetail(DateOnly? period, string? description)
+    {
+        var periodText = period?.ToDateTime(TimeOnly.MinValue).ToSpanishMonthYear();
+        if (string.IsNullOrWhiteSpace(periodText))
+        {
+            return description ?? string.Empty;
+        }
+
+        return string.IsNullOrWhiteSpace(description)
+            ? periodText
+            : $"{periodText} — {description}";
     }
 
     private static string BuildSharedDocumentTitle(SharedDocumentDataModel src) =>

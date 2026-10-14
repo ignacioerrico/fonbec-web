@@ -306,3 +306,42 @@ public class DocumentPageBlobDataModel
     /// <summary>The active file for this page (improved when available, otherwise the original).</summary>
     public BlobPathDataModel Active { get; init; } = null!;
 }
+
+public class StudentDocumentHistoryDataModel
+{
+    public int StudentId { get; init; }
+
+    public string StudentName { get; init; } = null!;
+
+    public List<StudentDocumentHistoryItemDataModel> Items { get; init; } = [];
+}
+
+public class StudentDocumentHistoryItemDataModel
+{
+    public long DocumentId { get; init; }
+
+    public DocumentType DocumentType { get; init; }
+
+    public DateTime UploadedOn { get; init; }
+
+    /// <summary>Report-card or other-document description. Null for letters.</summary>
+    public string? Description { get; init; }
+
+    /// <summary>Report-card period. Null for letters and other documents.</summary>
+    public DateOnly? ReportCardPeriod { get; init; }
+
+    /// <summary>Letter addressee: company name, or the sponsor's full name. Null otherwise.</summary>
+    public string? RecipientName { get; init; }
+
+    public FileKind FileKind { get; init; }
+
+    public DocumentStatus Status { get; init; }
+
+    public string? RejectionReason { get; init; }
+
+    public string? TextContent { get; init; }
+
+    public string? YouTubeVideoId { get; init; }
+
+    public int PageCount { get; init; }
+}

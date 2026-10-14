@@ -34,6 +34,19 @@ public interface IDocumentService
     /// </summary>
     Task<DownloadBlobResult?> DownloadFacilitatorOtherDocumentBlobAsync(
         int facilitatorId, int studentId, long documentId, int pageNumber);
+
+    /// <summary>
+    /// Documents of a non-deleted student in the manager's chapter, including inactive students.
+    /// Null when the student is missing, deleted, or in another chapter.
+    /// </summary>
+    Task<StudentDocumentHistoryViewModel?> GetStudentDocumentHistoryAsync(int chapterId, int studentId);
+
+    /// <summary>
+    /// Streams one page when the document belongs to a non-deleted student of the manager's chapter.
+    /// Returns <c>null</c> on any authorization failure (same as not found).
+    /// </summary>
+    Task<DownloadBlobResult?> DownloadManagerStudentDocumentBlobAsync(
+        int requestingUserId, int studentId, long documentId, int pageNumber);
     Task<DownloadBlobResult?> DownloadOriginalDocumentBlobAsync(long documentId, int pageNumber, int requestingUserId);
     Task<CrudResult> SubmitDigitalImprovementWithBlobAsync(SubmitDigitalImprovementWithBlobInputModel input);
     Task<DocumentQueueItemViewModel?> TakeNextForReviewAsync(int userId, string userRole);
@@ -371,6 +384,37 @@ public class DocumentService(
         var context = await documentRepository.GetFacilitatorOtherDocumentBlobContextAsync(
             facilitatorId, studentId, documentId);
         if (context is null)
+        {
+            return null;
+        }
+
+        var page = context.Pages.FirstOrDefault(p => p.PageNumber == pageNumber);
+        return await DownloadBlobAsync(page?.Active, documentId);
+    }
+
+    public async Task<StudentDocumentHistoryViewModel?> GetStudentDocumentHistoryAsync(int chapterId, int studentId)
+    {
+        var history = await documentRepository.GetStudentDocumentHistoryAsync(chapterId, studentId);
+        return history?.Adapt<StudentDocumentHistoryViewModel>();
+    }
+
+    public async Task<DownloadBlobResult?> DownloadManagerStudentDocumentBlobAsync(
+        int requestingUserId, int studentId, long documentId, int pageNumber)
+    {
+        var user = await GetUserAuthContextAsync(requestingUserId);
+        if (user is null || user.Value.ChapterId is not int chapterId)
+        {
+            return null;
+        }
+
+        var context = await documentRepository.GetManagerStudentDocumentBlobContextAsync(
+            chapterId, studentId, documentId);
+        if (context is null)
+        {
+            return null;
+        }
+
+        if (!IsAuthorizedForActiveDownload(user.Value, context, requestingUserId))
         {
             return null;
         }

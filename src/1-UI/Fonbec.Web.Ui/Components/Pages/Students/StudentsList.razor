@@ -205,6 +205,16 @@
                         </MudTooltip>
                     </AuthorizeView>
 
+                    <AuthorizeView Policy="@nameof(ManagerStudentDocumentHistory)" Context="historyContext">
+                        <MudTooltip Text="Historial de documentos"
+                                    Arrow="true" Placement="Placement.Bottom" Color="Color.Primary" Delay="500">
+                            <MudIconButton Href="@NavRoutes.ManagerStudentDocumentHistory(context.Item.StudentId)"
+                                           Icon="@Icons.Material.Outlined.History"
+                                           Size="@Size.Small"
+                                           Color="Color.Primary" />
+                        </MudTooltip>
+                    </AuthorizeView>
+
                     <AuthorizeView Policy="@nameof(ManagerUploadDocument)" Context="uploadContext">
                         @if (context.Item.HasActiveSponsors)
                         {
