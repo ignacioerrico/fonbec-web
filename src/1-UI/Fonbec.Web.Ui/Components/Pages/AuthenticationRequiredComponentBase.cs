@@ -14,6 +14,8 @@ public abstract class AuthenticationRequiredComponentBase : ComponentBase
 
     private protected FonbecClaimModel FonbecClaim { get; private set; } = null!;
 
+    private protected ClaimsPrincipal? Principal { get; private set; }
+
     private protected string UserRole { get; private set; } = string.Empty;
 
     [CascadingParameter]
@@ -49,6 +51,8 @@ public abstract class AuthenticationRequiredComponentBase : ComponentBase
             NavigationManager.NavigateTo(NavRoutes.Home);
             return;
         }
+
+        Principal = user;
 
         var userIdString = user.FindFirstValue(ClaimTypes.NameIdentifier)
                            ?? throw new NullReferenceException("UserId not found among user claims.");
