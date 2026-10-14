@@ -7,12 +7,22 @@ namespace Fonbec.Web.DataAccess.Repositories;
 public interface IRecipientMessageRepository
 {
     /// <summary>
-    /// Messages for students whose current facilitator is <paramref name="facilitatorUserId"/>.
-    /// A facilitator change moves the message with the student.
+    /// Pending messages for students whose current facilitator is <paramref name="facilitatorUserId"/>.
+    /// A facilitator change moves the message with the student. Oldest first.
     /// </summary>
-    Task<List<StudentMessageQueueItemDataModel>> GetForFacilitatorAsync(int facilitatorUserId);
+    Task<List<StudentMessageQueueItemDataModel>> GetPendingForFacilitatorAsync(int facilitatorUserId);
 
-    Task<List<StudentMessageQueueItemDataModel>> GetForChapterAsync(int chapterId);
+    /// <summary>Pending messages for students in the chapter. Oldest first.</summary>
+    Task<List<StudentMessageQueueItemDataModel>> GetPendingForChapterAsync(int chapterId);
+
+    /// <summary>
+    /// Already-shared messages for the facilitator's current students, newest first.
+    /// </summary>
+    Task<StudentMessageQueuePageDataModel> GetDeliveredForFacilitatorAsync(
+        int facilitatorUserId, int skip, int take);
+
+    /// <summary>Already-shared messages for students in the chapter, newest first.</summary>
+    Task<StudentMessageQueuePageDataModel> GetDeliveredForChapterAsync(int chapterId, int skip, int take);
 
     Task<int> CountPendingForFacilitatorAsync(int facilitatorUserId);
 
@@ -52,11 +62,24 @@ public interface IRecipientMessageRepository
 
 public class RecipientMessageRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : IRecipientMessageRepository
 {
-    public Task<List<StudentMessageQueueItemDataModel>> GetForFacilitatorAsync(int facilitatorUserId) =>
-        QueryAsync(messages => messages.Where(m => m.Student.FacilitatorId == facilitatorUserId));
+    public Task<List<StudentMessageQueueItemDataModel>> GetPendingForFacilitatorAsync(int facilitatorUserId) =>
+        QueryPendingAsync(messages => messages.Where(m => m.Student.FacilitatorId == facilitatorUserId));
 
-    public Task<List<StudentMessageQueueItemDataModel>> GetForChapterAsync(int chapterId) =>
-        QueryAsync(messages => messages.Where(m => m.Student.ChapterId == chapterId));
+    public Task<List<StudentMessageQueueItemDataModel>> GetPendingForChapterAsync(int chapterId) =>
+        QueryPendingAsync(messages => messages.Where(m => m.Student.ChapterId == chapterId));
+
+    public Task<StudentMessageQueuePageDataModel> GetDeliveredForFacilitatorAsync(
+        int facilitatorUserId, int skip, int take) =>
+        QueryDeliveredPageAsync(
+            messages => messages.Where(m => m.Student.FacilitatorId == facilitatorUserId),
+            skip,
+            take);
+
+    public Task<StudentMessageQueuePageDataModel> GetDeliveredForChapterAsync(int chapterId, int skip, int take) =>
+        QueryDeliveredPageAsync(
+            messages => messages.Where(m => m.Student.ChapterId == chapterId),
+            skip,
+            take);
 
     public Task<int> CountPendingForFacilitatorAsync(int facilitatorUserId) =>
         CountPendingAsync(messages => messages.Where(m =>
@@ -206,11 +229,55 @@ public class RecipientMessageRepository(IDbContextFactory<FonbecWebDbContext> db
         return await filter(db.RecipientMessages.AsNoTracking()).CountAsync();
     }
 
+    private Task<List<StudentMessageQueueItemDataModel>> QueryPendingAsync(
+        Func<IQueryable<RecipientMessage>, IQueryable<RecipientMessage>> filter) =>
+        QueryAsync(
+            messages => filter(messages).Where(m => m.SharedOn == null),
+            messages => messages.OrderBy(m => m.SentOn).ThenBy(m => m.RecipientMessageId));
+
+    private async Task<StudentMessageQueuePageDataModel> QueryDeliveredPageAsync(
+        Func<IQueryable<RecipientMessage>, IQueryable<RecipientMessage>> filter,
+        int skip,
+        int take)
+    {
+        if (take < 1)
+        {
+            return new StudentMessageQueuePageDataModel();
+        }
+
+        var rows = await QueryAsync(
+            messages => filter(messages).Where(m => m.SharedOn != null),
+            messages => messages
+                .OrderByDescending(m => m.SharedOn)
+                .ThenByDescending(m => m.RecipientMessageId),
+            Math.Max(0, skip),
+            take + 1);
+
+        var hasMore = rows.Count > take;
+        return new StudentMessageQueuePageDataModel
+        {
+            Items = hasMore ? rows.Take(take).ToList() : rows,
+            HasMore = hasMore,
+        };
+    }
+
     private async Task<List<StudentMessageQueueItemDataModel>> QueryAsync(
-        Func<IQueryable<RecipientMessage>, IQueryable<RecipientMessage>> filter)
+        Func<IQueryable<RecipientMessage>, IQueryable<RecipientMessage>> filter,
+        Func<IQueryable<RecipientMessage>, IOrderedQueryable<RecipientMessage>> order,
+        int? skip = null,
+        int? take = null)
     {
         await using var db = await dbContext.CreateDbContextAsync();
-        var messages = filter(db.RecipientMessages.AsNoTracking());
+        IQueryable<RecipientMessage> messages = order(filter(db.RecipientMessages.AsNoTracking()));
+        if (skip is > 0)
+        {
+            messages = messages.Skip(skip.Value);
+        }
+
+        if (take is not null)
+        {
+            messages = messages.Take(take.Value);
+        }
 
         return await messages
             .Select(m => new StudentMessageQueueItemDataModel

@@ -44,6 +44,16 @@ public class StudentMessageQueueItemDataModel
     public string? FacilitatorEmail { get; init; }
 }
 
+/// <summary>
+/// One page of already-shared messages. <see cref="HasMore"/> is true when another page exists.
+/// </summary>
+public class StudentMessageQueuePageDataModel
+{
+    public List<StudentMessageQueueItemDataModel> Items { get; init; } = [];
+
+    public bool HasMore { get; init; }
+}
+
 public class RecipientMessageShareStateDataModel
 {
     public DateTime? SharedOn { get; init; }

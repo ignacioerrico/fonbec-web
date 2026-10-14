@@ -40,13 +40,13 @@ public sealed class RecipientMessageQueueRepositoryTests : IDisposable
         await AddMessageAsync(
             studentId: 12, facilitatorId: 3, chapterId: 2, body: "otra filial");
 
-        var facilitator = await _repository.GetForFacilitatorAsync(1);
+        var facilitator = await _repository.GetPendingForFacilitatorAsync(1);
         facilitator.Should().ContainSingle(m => m.RecipientMessageId == mine && m.Body == "mío");
 
-        var chapter = await _repository.GetForChapterAsync(1);
+        var chapter = await _repository.GetPendingForChapterAsync(1);
         chapter.Select(m => m.Body).Should().BeEquivalentTo("mío", "otro mediador");
 
-        var otherChapter = await _repository.GetForChapterAsync(2);
+        var otherChapter = await _repository.GetPendingForChapterAsync(2);
         otherChapter.Should().ContainSingle(m => m.Body == "otra filial");
     }
 
@@ -56,8 +56,8 @@ public sealed class RecipientMessageQueueRepositoryTests : IDisposable
         var messageId = await AddMessageAsync(
             studentId: 10, facilitatorId: 1, chapterId: 1, body: "para el becario");
 
-        (await _repository.GetForFacilitatorAsync(1)).Should().ContainSingle(m => m.RecipientMessageId == messageId);
-        (await _repository.GetForFacilitatorAsync(2)).Should().BeEmpty();
+        (await _repository.GetPendingForFacilitatorAsync(1)).Should().ContainSingle(m => m.RecipientMessageId == messageId);
+        (await _repository.GetPendingForFacilitatorAsync(2)).Should().BeEmpty();
 
         await using (var db = await _factory.CreateDbContextAsync(TestContext.Current.CancellationToken))
         {
@@ -66,9 +66,9 @@ public sealed class RecipientMessageQueueRepositoryTests : IDisposable
             await db.SaveChangesAsync(TestContext.Current.CancellationToken);
         }
 
-        (await _repository.GetForFacilitatorAsync(2)).Should().ContainSingle(m => m.RecipientMessageId == messageId);
-        (await _repository.GetForFacilitatorAsync(1)).Should().BeEmpty();
-        (await _repository.GetForChapterAsync(1)).Should().ContainSingle(m => m.RecipientMessageId == messageId);
+        (await _repository.GetPendingForFacilitatorAsync(2)).Should().ContainSingle(m => m.RecipientMessageId == messageId);
+        (await _repository.GetPendingForFacilitatorAsync(1)).Should().BeEmpty();
+        (await _repository.GetPendingForChapterAsync(1)).Should().ContainSingle(m => m.RecipientMessageId == messageId);
     }
 
     [Fact]
@@ -102,9 +102,10 @@ public sealed class RecipientMessageQueueRepositoryTests : IDisposable
             sharedByFirst: "Luis",
             sharedByLast: "Gómez");
 
-        var rows = await _repository.GetForFacilitatorAsync(1);
+        var pending = await _repository.GetPendingForFacilitatorAsync(1);
+        var delivered = await _repository.GetDeliveredForFacilitatorAsync(1, skip: 0, take: 10);
 
-        var person = rows.Should().ContainSingle(m => m.Body == "del padrino").Subject;
+        var person = pending.Should().ContainSingle(m => m.Body == "del padrino").Subject;
         person.IsCompany.Should().BeFalse();
         person.StudentFullName.Should().Be("Juan García");
         person.StudentGender.Should().Be(Gender.Male);
@@ -113,7 +114,7 @@ public sealed class RecipientMessageQueueRepositoryTests : IDisposable
         person.SharedOn.Should().BeNull();
         person.SharedByFullName.Should().BeNull();
 
-        var company = rows.Should().ContainSingle(m => m.Body == "de la empresa").Subject;
+        var company = delivered.Items.Should().ContainSingle(m => m.Body == "de la empresa").Subject;
         company.IsCompany.Should().BeTrue();
         company.StudentFullName.Should().Be("María López");
         company.StudentGender.Should().Be(Gender.Female);
@@ -130,11 +131,47 @@ public sealed class RecipientMessageQueueRepositoryTests : IDisposable
         await AddMessageAsync(
             studentId: 10, facilitatorId: 1, chapterId: 1, body: "para el becario");
 
-        var rows = await _repository.GetForChapterAsync(1);
+        var rows = await _repository.GetPendingForChapterAsync(1);
 
         var row = rows.Should().ContainSingle().Subject;
         row.FacilitatorFullName.Should().Be("Marta Ruiz");
         row.FacilitatorEmail.Should().Be("marta@example.org");
+    }
+
+    [Fact]
+    public async Task DeliveredPage_OrdersNewestFirst_AndOmitsPending()
+    {
+        var day1 = new DateTime(2026, 3, 1, 12, 0, 0, DateTimeKind.Utc);
+        var day2 = day1.AddDays(1);
+        await AddMessageAsync(studentId: 10, facilitatorId: 1, chapterId: 1, body: "pendiente");
+        var older = await AddMessageAsync(
+            studentId: 11, facilitatorId: 1, chapterId: 1, body: "viejo",
+            sharedOn: day1, sharedById: 7);
+        var sameDayLowerId = await AddMessageAsync(
+            studentId: 12, facilitatorId: 1, chapterId: 1, body: "medio",
+            sharedOn: day2, sharedById: 7);
+        var sameDayHigherId = await AddMessageAsync(
+            studentId: 13, facilitatorId: 1, chapterId: 1, body: "medio-después",
+            sharedOn: day2, sharedById: 7);
+        await AddMessageAsync(
+            studentId: 14, facilitatorId: 3, chapterId: 2, body: "otra filial",
+            sharedOn: day2, sharedById: 7);
+
+        var first = await _repository.GetDeliveredForFacilitatorAsync(1, skip: 0, take: 2);
+        first.HasMore.Should().BeTrue();
+        first.Items.Select(m => m.RecipientMessageId).Should().Equal(sameDayHigherId, sameDayLowerId);
+        first.Items.Should().OnlyContain(m => m.Body != "pendiente");
+
+        var second = await _repository.GetDeliveredForFacilitatorAsync(1, skip: 2, take: 2);
+        second.HasMore.Should().BeFalse();
+        second.Items.Select(m => m.RecipientMessageId).Should().Equal(older);
+
+        var chapter = await _repository.GetDeliveredForChapterAsync(1, skip: 0, take: 10);
+        chapter.HasMore.Should().BeFalse();
+        chapter.Items.Select(m => m.RecipientMessageId).Should().Equal(sameDayHigherId, sameDayLowerId, older);
+
+        var otherChapter = await _repository.GetDeliveredForChapterAsync(2, skip: 0, take: 10);
+        otherChapter.Items.Should().ContainSingle(m => m.Body == "otra filial");
     }
 
     [Fact]
@@ -338,7 +375,7 @@ public sealed class RecipientMessageQueueRepositoryTests : IDisposable
         var row = await ReadAsync(messageId);
         row.FacilitatorNotifiedOn.Should().Be(when);
         row.SharedOn.Should().BeNull();
-        (await _repository.GetForFacilitatorAsync(2)).Should().ContainSingle(m => m.RecipientMessageId == messageId);
+        (await _repository.GetPendingForFacilitatorAsync(2)).Should().ContainSingle(m => m.RecipientMessageId == messageId);
 
         var notice = await _repository.GetFacilitatorNotificationAsync(messageId);
         notice!.FacilitatorEmail.Should().Be("nuevo@example.org");

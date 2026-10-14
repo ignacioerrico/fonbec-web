@@ -8,3 +8,7 @@
     overflow-wrap: anywhere;
     user-select: text;
 }
+
+.student-messages-sentinel {
+    height: 1px;
+}

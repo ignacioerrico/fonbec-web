@@ -5,6 +5,16 @@ public sealed class StudentMessagesViewModel
     public List<StudentMessageItemViewModel> Pending { get; init; } = [];
 
     public List<StudentMessageItemViewModel> Delivered { get; init; } = [];
+
+    /// <summary>True when <see cref="Delivered"/> is only the first page.</summary>
+    public bool HasMoreDelivered { get; init; }
+}
+
+public sealed class DeliveredStudentMessagesPage
+{
+    public List<StudentMessageItemViewModel> Items { get; init; } = [];
+
+    public bool HasMore { get; init; }
 }
 
 public sealed class StudentMessageItemViewModel

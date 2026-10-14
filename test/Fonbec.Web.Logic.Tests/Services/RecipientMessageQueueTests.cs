@@ -30,18 +30,24 @@ public class RecipientMessageQueueTests
         Actor(UploaderId, FonbecRole.Uploader, chapterId: 9);
         var older = new DateTime(2026, 3, 1, 12, 0, 0, DateTimeKind.Utc);
         var newer = new DateTime(2026, 4, 1, 12, 0, 0, DateTimeKind.Utc);
-        _repository.GetForFacilitatorAsync(UploaderId).Returns(
+        _repository.GetPendingForFacilitatorAsync(UploaderId).Returns(
         [
-            Item(2, newer, student: "María López", sender: "Ana Pérez"),
             Item(1, older, student: "Juan García", sender: "Acme SA", company: true, body: "Hola\ncómo estás"),
+            Item(2, newer, student: "María López", sender: "Ana Pérez"),
         ]);
+        _repository.GetDeliveredForFacilitatorAsync(UploaderId, 0, RecipientMessageService.DeliveredPageSize)
+            .Returns(new StudentMessageQueuePageDataModel());
 
         var result = await _service.GetForActorAsync(UploaderId);
 
-        await _repository.Received(1).GetForFacilitatorAsync(UploaderId);
-        await _repository.DidNotReceive().GetForChapterAsync(Arg.Any<int>());
+        await _repository.Received(1).GetPendingForFacilitatorAsync(UploaderId);
+        await _repository.Received(1).GetDeliveredForFacilitatorAsync(
+            UploaderId, 0, RecipientMessageService.DeliveredPageSize);
+        await _repository.DidNotReceive().GetPendingForChapterAsync(Arg.Any<int>());
+        await _repository.DidNotReceive().GetDeliveredForChapterAsync(Arg.Any<int>(), Arg.Any<int>(), Arg.Any<int>());
         result.Pending.Select(m => m.RecipientMessageId).Should().Equal(1, 2);
         result.Delivered.Should().BeEmpty();
+        result.HasMoreDelivered.Should().BeFalse();
         result.Pending[0].StudentFullName.Should().Be("Juan García");
         result.Pending[0].Body.Should().Be("Hola\ncómo estás");
     }
@@ -50,18 +56,24 @@ public class RecipientMessageQueueTests
     public async Task GetForActor_Manager_UsesTheChapterStoredForThatUser()
     {
         Actor(ManagerId, FonbecRole.Manager, chapterId: 4);
-        _repository.GetForChapterAsync(4).Returns(
+        _repository.GetPendingForChapterAsync(4).Returns(
         [
             Item(8, new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc), facilitator: "Marta Ruiz"),
         ]);
+        _repository.GetDeliveredForChapterAsync(4, 0, RecipientMessageService.DeliveredPageSize)
+            .Returns(new StudentMessageQueuePageDataModel());
 
         var result = await _service.GetForActorAsync(ManagerId);
 
         result.Pending.Should().ContainSingle(m => m.RecipientMessageId == 8);
         result.Pending[0].FacilitatorFullName.Should().Be("Marta Ruiz");
-        await _repository.Received(1).GetForChapterAsync(4);
-        await _repository.DidNotReceive().GetForFacilitatorAsync(Arg.Any<int>());
-        await _repository.DidNotReceive().GetForChapterAsync(Arg.Is<int>(id => id != 4));
+        await _repository.Received(1).GetPendingForChapterAsync(4);
+        await _repository.Received(1).GetDeliveredForChapterAsync(4, 0, RecipientMessageService.DeliveredPageSize);
+        await _repository.DidNotReceive().GetPendingForFacilitatorAsync(Arg.Any<int>());
+        await _repository.DidNotReceive().GetDeliveredForFacilitatorAsync(
+            Arg.Any<int>(), Arg.Any<int>(), Arg.Any<int>());
+        await _repository.DidNotReceive().GetDeliveredForChapterAsync(
+            Arg.Is<int>(id => id != 4), Arg.Any<int>(), Arg.Any<int>());
     }
 
     [Theory]
@@ -75,8 +87,13 @@ public class RecipientMessageQueueTests
 
         result.Pending.Should().BeEmpty();
         result.Delivered.Should().BeEmpty();
-        await _repository.DidNotReceive().GetForFacilitatorAsync(Arg.Any<int>());
-        await _repository.DidNotReceive().GetForChapterAsync(Arg.Any<int>());
+        result.HasMoreDelivered.Should().BeFalse();
+        await _repository.DidNotReceive().GetPendingForFacilitatorAsync(Arg.Any<int>());
+        await _repository.DidNotReceive().GetPendingForChapterAsync(Arg.Any<int>());
+        await _repository.DidNotReceive().GetDeliveredForFacilitatorAsync(
+            Arg.Any<int>(), Arg.Any<int>(), Arg.Any<int>());
+        await _repository.DidNotReceive().GetDeliveredForChapterAsync(
+            Arg.Any<int>(), Arg.Any<int>(), Arg.Any<int>());
     }
 
     [Fact]
@@ -87,7 +104,10 @@ public class RecipientMessageQueueTests
         var result = await _service.GetForActorAsync(ManagerId);
 
         result.Pending.Should().BeEmpty();
-        await _repository.DidNotReceive().GetForChapterAsync(Arg.Any<int>());
+        result.Delivered.Should().BeEmpty();
+        await _repository.DidNotReceive().GetPendingForChapterAsync(Arg.Any<int>());
+        await _repository.DidNotReceive().GetDeliveredForChapterAsync(
+            Arg.Any<int>(), Arg.Any<int>(), Arg.Any<int>());
     }
 
     [Fact]
@@ -98,14 +118,22 @@ public class RecipientMessageQueueTests
         var secondSent = new DateTime(2026, 1, 2, 15, 0, 0, DateTimeKind.Utc);
         var olderShared = new DateTime(2026, 3, 1, 10, 0, 0, DateTimeKind.Utc);
         var newerShared = new DateTime(2026, 3, 2, 10, 0, 0, DateTimeKind.Utc);
-        _repository.GetForFacilitatorAsync(UploaderId).Returns(
+        _repository.GetPendingForFacilitatorAsync(UploaderId).Returns(
         [
-            Item(20, secondSent, sender: "Ana Pérez", senderGender: Gender.Female, studentGender: Gender.Male),
             Item(10, firstSent, sender: "Acme SA", company: true, studentGender: Gender.Male),
-            Item(40, firstSent, sharedOn: olderShared, sharedBy: "Luis Gómez"),
-            Item(30, secondSent, sharedOn: newerShared, sharedBy: "Ana Mediadora"),
-            Item(50, secondSent, sharedOn: newerShared, sharedBy: "Ana Mediadora"),
+            Item(20, secondSent, sender: "Ana Pérez", senderGender: Gender.Female, studentGender: Gender.Male),
         ]);
+        _repository.GetDeliveredForFacilitatorAsync(UploaderId, 0, RecipientMessageService.DeliveredPageSize)
+            .Returns(new StudentMessageQueuePageDataModel
+            {
+                Items =
+                [
+                    Item(50, secondSent, sharedOn: newerShared, sharedBy: "Ana Mediadora"),
+                    Item(30, secondSent, sharedOn: newerShared, sharedBy: "Ana Mediadora"),
+                    Item(40, firstSent, sharedOn: olderShared, sharedBy: "Luis Gómez"),
+                ],
+                HasMore = true,
+            });
 
         var result = await _service.GetForActorAsync(UploaderId);
 
@@ -113,14 +141,70 @@ public class RecipientMessageQueueTests
         result.Pending[0].SenderKindLabel.Should().Be("empresa");
         result.Pending[0].StudentRoleLabel.Should().Be("becario");
         result.Pending[0].SenderName.Should().Be("Acme SA");
-        result.Pending[0].SentOnLabel.Should().Be(firstSent.ToLocalTime().ToSpanishShortDate());
+        result.Pending[0].SentOnLabel.Should().Be(firstSent.ToLocalTime().ToSpanishLongDate());
         result.Pending[1].SenderKindLabel.Should().Be("madrina");
         result.Pending[1].StudentRoleLabel.Should().Be("becario");
         result.Pending[1].SenderName.Should().Be("Ana Pérez");
 
         result.Delivered.Select(m => m.RecipientMessageId).Should().Equal(50, 30, 40);
-        result.Delivered[0].SharedOnLabel.Should().Be(newerShared.ToLocalTime().ToSpanishShortDate());
+        result.Delivered[0].SharedOnLabel.Should().Be(newerShared.ToLocalTime().ToSpanishLongDate());
         result.Delivered[0].SharedByFullName.Should().Be("Ana Mediadora");
+        result.HasMoreDelivered.Should().BeTrue();
+    }
+
+    [Fact]
+    public async Task GetMoreDelivered_Uploader_LoadsTheNextPageOfThatFacilitatorsStudents()
+    {
+        Actor(UploaderId, FonbecRole.Uploader, chapterId: 1);
+        var sharedOn = new DateTime(2026, 3, 1, 10, 0, 0, DateTimeKind.Utc);
+        _repository.GetDeliveredForFacilitatorAsync(UploaderId, 10, RecipientMessageService.DeliveredPageSize)
+            .Returns(new StudentMessageQueuePageDataModel
+            {
+                Items = [Item(4, sharedOn, sharedOn: sharedOn, sharedBy: "Luis Gómez")],
+                HasMore = false,
+            });
+
+        var page = await _service.GetMoreDeliveredAsync(UploaderId, skip: 10);
+
+        page.HasMore.Should().BeFalse();
+        page.Items.Should().ContainSingle(m => m.RecipientMessageId == 4 && m.SharedByFullName == "Luis Gómez");
+        await _repository.DidNotReceive().GetPendingForFacilitatorAsync(Arg.Any<int>());
+        await _repository.DidNotReceive().GetDeliveredForChapterAsync(
+            Arg.Any<int>(), Arg.Any<int>(), Arg.Any<int>());
+    }
+
+    [Fact]
+    public async Task GetMoreDelivered_Manager_UsesTheChapterStoredForThatUser()
+    {
+        Actor(ManagerId, FonbecRole.Manager, chapterId: 4);
+        _repository.GetDeliveredForChapterAsync(4, 20, RecipientMessageService.DeliveredPageSize)
+            .Returns(new StudentMessageQueuePageDataModel { HasMore = true, Items = [Item(9, DateTime.UtcNow)] });
+
+        var page = await _service.GetMoreDeliveredAsync(ManagerId, skip: 20);
+
+        page.HasMore.Should().BeTrue();
+        page.Items.Should().ContainSingle(m => m.RecipientMessageId == 9);
+        await _repository.DidNotReceive().GetDeliveredForFacilitatorAsync(
+            Arg.Any<int>(), Arg.Any<int>(), Arg.Any<int>());
+        await _repository.DidNotReceive().GetDeliveredForChapterAsync(
+            Arg.Is<int>(id => id != 4), Arg.Any<int>(), Arg.Any<int>());
+    }
+
+    [Theory]
+    [InlineData(FonbecRole.Admin)]
+    [InlineData(FonbecRole.Reviewer)]
+    public async Task GetMoreDelivered_OtherRoles_SeeNothing(string role)
+    {
+        Actor(5, role, chapterId: 1);
+
+        var page = await _service.GetMoreDeliveredAsync(5, skip: 0);
+
+        page.Items.Should().BeEmpty();
+        page.HasMore.Should().BeFalse();
+        await _repository.DidNotReceive().GetDeliveredForFacilitatorAsync(
+            Arg.Any<int>(), Arg.Any<int>(), Arg.Any<int>());
+        await _repository.DidNotReceive().GetDeliveredForChapterAsync(
+            Arg.Any<int>(), Arg.Any<int>(), Arg.Any<int>());
     }
 
     [Fact]

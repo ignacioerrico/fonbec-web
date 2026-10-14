@@ -22,7 +22,7 @@
         {
             <div>
                 <MudText Typo="Typo.h5" Class="mb-3">@messageSection.Title</MudText>
-                @if (messageSection.Items.Count == 0)
+                @if (messageSection.Items.Count == 0 && (messageSection.Pending || !_hasMoreDelivered))
                 {
                     <MudText Class="mud-text-secondary">@messageSection.EmptyText</MudText>
                 }
@@ -35,7 +35,7 @@
                                 Para @item.StudentRoleLabel: <strong>@item.StudentFullName</strong>
                             </MudText>
                             <MudText Typo="Typo.body2" Class="mud-text-secondary">
-                                De @item.SenderKindLabel: @item.SenderName · @item.SentOnLabel
+                                De @item.SenderKindLabel: @item.SenderName · Enviado el @item.SentOnLabel
                             </MudText>
                             @if (!CanShare)
                             {
@@ -55,13 +55,13 @@
                                     }
                                 </div>
                             }
-                            <div class="student-message-body mt-3">@item.Body</div>
                             @if (!messageSection.Pending)
                             {
-                                <MudText Typo="Typo.body2" Class="mt-2">
-                                    @DeliveredLine(item)
+                                <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                                    Entregado el @item.SharedOnLabel
                                 </MudText>
                             }
+                            <div class="student-message-body mt-3">@item.Body</div>
                             @if (CanShare)
                             {
                                 <div class="d-flex justify-end gap-2 mt-3">
@@ -96,6 +96,14 @@
                             }
                         </MudPaper>
                     }
+                }
+                @if (!messageSection.Pending && _hasMoreDelivered)
+                {
+                    <div @ref="_deliveredSentinel" class="student-messages-sentinel"></div>
+                }
+                @if (!messageSection.Pending && _loadingMore)
+                {
+                    <MudProgressLinear Indeterminate="true" Color="Color.Primary" Class="mt-2" />
                 }
             </div>
         }
