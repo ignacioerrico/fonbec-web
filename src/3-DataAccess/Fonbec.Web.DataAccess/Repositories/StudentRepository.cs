@@ -33,6 +33,12 @@ public interface IStudentRepository
     /// </summary>
     Task<string?> GetActiveStudentDisplayNameInChapterAsync(int studentId, int chapterId);
 
+    /// <summary>
+    /// Returns an active student and their chapter.
+    /// When <paramref name="chapterId"/> is set, the student must belong to that chapter.
+    /// </summary>
+    Task<ActiveStudentDataModel?> GetActiveStudentAsync(int studentId, int? chapterId);
+
     /// <summary>Get a single student's name, or <c>null</c> when the student does not exist.</summary>
     Task<CandidateNameDataModel?> GetStudentNameAsync(int studentId);
 
@@ -252,20 +258,30 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext,
 
     public async Task<string?> GetActiveStudentDisplayNameInChapterAsync(int studentId, int chapterId)
     {
+        var student = await GetActiveStudentAsync(studentId, chapterId);
+        return student?.DisplayName;
+    }
+
+    public async Task<ActiveStudentDataModel?> GetActiveStudentAsync(int studentId, int? chapterId)
+    {
         await using var db = await dbContext.CreateDbContextAsync();
 
         var student = await db.Students
             .AsNoTracking()
             .Where(s => s.Id == studentId
-                        && s.ChapterId == chapterId
                         && s.IsActive
-                        && !s.IsDeleted)
-            .Select(s => new { s.FirstName, s.LastName })
+                        && !s.IsDeleted
+                        && (chapterId == null || s.ChapterId == chapterId))
+            .Select(s => new { s.FirstName, s.LastName, s.ChapterId })
             .FirstOrDefaultAsync();
 
         return student is null
             ? null
-            : $"{student.FirstName} {student.LastName}";
+            : new ActiveStudentDataModel
+            {
+                DisplayName = $"{student.FirstName} {student.LastName}",
+                ChapterId = student.ChapterId,
+            };
     }
 
     public async Task<CandidateNameDataModel?> GetStudentNameAsync(int studentId)

@@ -7,7 +7,7 @@ using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.Pages.Sponsorships;
 
-[PageMetadata(nameof(SponsorshipsList), "Lista de padrinos de un becario", [FonbecRole.Manager])]
+[PageMetadata(nameof(SponsorshipsList), "Lista de padrinos de un becario", [FonbecRole.Admin, FonbecRole.Manager])]
 
 public partial class SponsorshipsList : AuthenticationRequiredComponentBase
 {

@@ -11,7 +11,7 @@ using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.Pages.Sponsorships;
 
-[PageMetadata(nameof(SponsorshipCreate), "Asignar padrino a becario", [FonbecRole.Manager])]
+[PageMetadata(nameof(SponsorshipCreate), "Asignar padrino a becario", [FonbecRole.Admin, FonbecRole.Manager])]
 public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
 {
     private readonly SponsorshipCreateBindModel _bindModel = new();
@@ -22,6 +22,7 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
     private bool _formValidationSucceeded;
     private bool _isEndDateKnown;
     private bool _studentNotFound;
+    private int? _studentChapterId;
     private bool _checkingPeriod;
     private int _periodCheckVersion;
     private string _studentDisplayName = string.Empty;
@@ -90,18 +91,19 @@ public partial class SponsorshipCreate : AuthenticationRequiredComponentBase
 
     private async Task<bool> LoadStudentAsync()
     {
-        if (FonbecClaim is not { ChapterId: int chapterId })
+        var student = await StudentService.GetActiveStudentAsync(StudentId, FonbecClaim?.ChapterId);
+        if (student is null)
         {
             _studentNotFound = true;
             _studentDisplayName = string.Empty;
+            _studentChapterId = null;
             return false;
         }
 
-        _studentDisplayName =
-            await StudentService.GetActiveStudentDisplayNameInChapterAsync(StudentId, chapterId)
-            ?? string.Empty;
-        _studentNotFound = string.IsNullOrEmpty(_studentDisplayName);
-        return !_studentNotFound;
+        _studentDisplayName = student.DisplayName;
+        _studentChapterId = student.ChapterId;
+        _studentNotFound = false;
+        return true;
     }
 
     private async Task NumberOfSponsorsLoaded(int sponsorsCount) =>

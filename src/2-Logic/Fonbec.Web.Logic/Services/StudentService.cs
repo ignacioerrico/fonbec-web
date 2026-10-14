@@ -13,6 +13,7 @@ public interface IStudentService
     Task<List<StudentsListViewModel>> GetAllStudentsAsync(int? chapterId);
     Task<List<SelectableModel<int>>> GetAllStudentsForSelectionAsync(int? chapterId);
     Task<string?> GetActiveStudentDisplayNameInChapterAsync(int studentId, int chapterId);
+    Task<ActiveStudentModel?> GetActiveStudentAsync(int studentId, int? chapterId);
     Task<CrudResult> CreateStudentAsync(CreateStudentInputModel inputModel);
     Task<CrudResult> UpdateStudentAsync(UpdateStudentInputModel inputModel);
 }
@@ -44,6 +45,14 @@ public class StudentService(IStudentRepository studentRepository) : IStudentServ
 
     public Task<string?> GetActiveStudentDisplayNameInChapterAsync(int studentId, int chapterId) =>
         studentRepository.GetActiveStudentDisplayNameInChapterAsync(studentId, chapterId);
+
+    public async Task<ActiveStudentModel?> GetActiveStudentAsync(int studentId, int? chapterId)
+    {
+        var student = await studentRepository.GetActiveStudentAsync(studentId, chapterId);
+        return student is null
+            ? null
+            : new ActiveStudentModel(student.DisplayName, student.ChapterId);
+    }
 
     public async Task<CrudResult> CreateStudentAsync(CreateStudentInputModel inputModel)
     {

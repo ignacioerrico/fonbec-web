@@ -117,7 +117,7 @@
                         <SponsorSelector SelectedSponsor="_bindModel.SelectedSponsor"
                                          SelectedSponsorChanged="OnSponsorChanged"
                                          IsRequired="true"
-                                         ChapterId="FonbecClaim?.ChapterId"
+                                         ChapterId="_studentChapterId"
                                          NumberOfSponsorsLoaded="NumberOfSponsorsLoaded" />
                     }
                     else if (_bindModel.SponsorshipType == SponsorshipType.Company)

@@ -232,6 +232,23 @@ public class StudentRepositoryTests
     }
 
     [Fact]
+    public async Task GetActiveStudentAsync_WithoutChapter_Returns_Student_From_Any_Chapter()
+    {
+        await using var fixture = await CreateFixtureAsync();
+        var studentId = await fixture.CreateStudentAsync(
+            fixture.CreateStudentInput(
+                fixture.OtherChapterFacilitatorId,
+                chapterId: 2,
+                createdById: fixture.AdminId));
+
+        var result = await fixture.Repository.GetActiveStudentAsync(studentId, chapterId: null);
+
+        result.Should().NotBeNull();
+        result!.DisplayName.Should().Be("Test Student");
+        result.ChapterId.Should().Be(2);
+    }
+
+    [Fact]
     public async Task GetActiveStudentDisplayNameInChapterAsync_Returns_Null_When_Student_Is_Inactive()
     {
         await using var fixture = await CreateFixtureAsync();

@@ -3,6 +3,7 @@ using Fonbec.Web.DataAccess.DataModels.Students;
 using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.DataAccess.Entities.Abstract;
 using Fonbec.Web.DataAccess.Repositories;
+using Fonbec.Web.Logic.Models.Students;
 using Fonbec.Web.Logic.Services;
 using Mapster;
 using NSubstitute;
@@ -55,6 +56,17 @@ public class StudentServiceTests
         var result = await _service.GetActiveStudentDisplayNameInChapterAsync(StudentId, ChapterId);
 
         result.Should().BeNull();
+    }
+
+    [Fact]
+    public async Task GetActiveStudentAsync_WithoutChapter_Returns_Student_From_Any_Chapter()
+    {
+        var student = new ActiveStudentDataModel { DisplayName = "Ana Pérez", ChapterId = 2 };
+        _studentRepository.GetActiveStudentAsync(StudentId, null).Returns(student);
+
+        var result = await _service.GetActiveStudentAsync(StudentId, null);
+
+        result.Should().Be(new ActiveStudentModel("Ana Pérez", 2));
     }
 
     [Fact]
