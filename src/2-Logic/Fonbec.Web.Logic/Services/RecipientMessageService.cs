@@ -21,15 +21,17 @@ public interface IRecipientMessageService
     Task<int> CountPendingForActorAsync(int actorUserId);
 
     /// <summary>
-    /// Records that <paramref name="actorUserId"/> shared the message. An already-shared
-    /// message keeps its original who and when. Returns false when the message is missing
-    /// or outside the actor's scope. Does not send email.
+    /// Records that the student's mediador shared the message. Only a mediador can do this.
+    /// A coordinador can see the message but cannot mark it. An already-shared message keeps
+    /// its original who and when. Returns false when the actor is not a mediador, or the
+    /// message is missing or outside their students. Does not send email.
     /// </summary>
     Task<bool> MarkSharedAsync(long recipientMessageId, int actorUserId);
 
     /// <summary>
-    /// Clears the shared mark. An already-pending message stays pending. Returns false when
-    /// the message is missing or outside the actor's scope. Does not send email.
+    /// Clears the shared mark. Only a mediador can do this. An already-pending message stays
+    /// pending. Returns false when the actor is not a mediador, or the message is missing or
+    /// outside their students. Does not send email.
     /// </summary>
     Task<bool> UndoSharedAsync(long recipientMessageId, int actorUserId);
 }
@@ -88,7 +90,7 @@ public sealed class RecipientMessageService(
     public async Task<bool> MarkSharedAsync(long recipientMessageId, int actorUserId)
     {
         var scope = await ResolveScopeAsync(actorUserId);
-        if (scope is null)
+        if (scope is not RecipientMessageScope.Facilitator)
         {
             return false;
         }
@@ -111,7 +113,7 @@ public sealed class RecipientMessageService(
     public async Task<bool> UndoSharedAsync(long recipientMessageId, int actorUserId)
     {
         var scope = await ResolveScopeAsync(actorUserId);
-        if (scope is null)
+        if (scope is not RecipientMessageScope.Facilitator)
         {
             return false;
         }
@@ -156,7 +158,10 @@ public sealed class RecipientMessageService(
         {
             RecipientMessageId = row.RecipientMessageId,
             StudentFullName = row.StudentFullName,
-            SenderKindLabel = row.IsCompany ? "Empresa" : "Padrino",
+            StudentRoleLabel = GenderWords.Becario(row.StudentGender),
+            SenderKindLabel = row.IsCompany ? "empresa" : GenderWords.Padrino(row.SenderGender),
+            FacilitatorFullName = row.FacilitatorFullName,
+            FacilitatorEmail = row.FacilitatorEmail,
             SenderName = row.SenderName,
             CopyText = StudentMessageCopy.Format(row),
             Body = row.Body,

@@ -229,6 +229,14 @@ public class RecipientMessageRepository(IDbContextFactory<FonbecWebDbContext> db
                 SharedByFullName = m.SharedById == null
                     ? null
                     : m.SharedBy!.FirstName + " " + m.SharedBy.LastName,
+                FacilitatorFullName = db.Users
+                    .Where(u => u.Id == m.Student.FacilitatorId)
+                    .Select(u => u.FirstName + " " + u.LastName)
+                    .FirstOrDefault(),
+                FacilitatorEmail = db.Users
+                    .Where(u => u.Id == m.Student.FacilitatorId)
+                    .Select(u => u.Email)
+                    .FirstOrDefault(),
             })
             .ToListAsync();
     }

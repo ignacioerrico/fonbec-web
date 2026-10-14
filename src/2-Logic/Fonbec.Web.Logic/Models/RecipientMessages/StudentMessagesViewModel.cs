@@ -13,8 +13,19 @@ public sealed class StudentMessageItemViewModel
 
     public string StudentFullName { get; init; } = string.Empty;
 
-    /// <summary>Padrino or Empresa.</summary>
+    /// <summary>becario, becaria, or becario/becaria.</summary>
+    public string StudentRoleLabel { get; init; } = string.Empty;
+
+    /// <summary>padrino, madrina, padrino/madrina, or empresa.</summary>
     public string SenderKindLabel { get; init; } = string.Empty;
+
+    /// <summary>
+    /// Current mediador responsible for passing the message to the student.
+    /// Null when that user record is missing.
+    /// </summary>
+    public string? FacilitatorFullName { get; init; }
+
+    public string? FacilitatorEmail { get; init; }
 
     /// <summary>Header, a blank line, then the message. Ready for the clipboard.</summary>
     public string CopyText { get; init; } = string.Empty;

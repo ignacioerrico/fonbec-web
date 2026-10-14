@@ -124,6 +124,20 @@ public sealed class RecipientMessageQueueRepositoryTests : IDisposable
     }
 
     [Fact]
+    public async Task Queue_ProjectsTheStudentsCurrentFacilitator()
+    {
+        await AddFacilitatorAsync(1, "marta@example.org", first: "Marta", last: "Ruiz");
+        await AddMessageAsync(
+            studentId: 10, facilitatorId: 1, chapterId: 1, body: "para el becario");
+
+        var rows = await _repository.GetForChapterAsync(1);
+
+        var row = rows.Should().ContainSingle().Subject;
+        row.FacilitatorFullName.Should().Be("Marta Ruiz");
+        row.FacilitatorEmail.Should().Be("marta@example.org");
+    }
+
+    [Fact]
     public async Task SetShared_PersistsWhoAndWhen_AndDoesNotOverwrite()
     {
         var messageId = await AddMessageAsync(studentId: 10, facilitatorId: 1, chapterId: 1, body: "hola");
@@ -333,7 +347,7 @@ public sealed class RecipientMessageQueueRepositoryTests : IDisposable
 
     public void Dispose() => _connection.Dispose();
 
-    private async Task AddFacilitatorAsync(int userId, string email)
+    private async Task AddFacilitatorAsync(int userId, string email, string first = "Marta", string last = "Ruiz")
     {
         await using var db = await _factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
         if (await db.Users.AnyAsync(u => u.Id == userId, TestContext.Current.CancellationToken))
@@ -344,8 +358,8 @@ public sealed class RecipientMessageQueueRepositoryTests : IDisposable
         db.Users.Add(new FonbecWebUser
         {
             Id = userId,
-            FirstName = "Marta",
-            LastName = "Ruiz",
+            FirstName = first,
+            LastName = last,
             Email = email,
             UserName = email,
             CreatedOnUtc = new DateTime(2026, 1, 1, 0, 0, 0, DateTimeKind.Utc),

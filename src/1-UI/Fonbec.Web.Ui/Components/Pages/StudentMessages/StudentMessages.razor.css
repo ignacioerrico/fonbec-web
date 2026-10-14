@@ -1,4 +1,9 @@
 .student-message-body {
+    padding: 0.75rem 1rem;
+    border-left: 4px solid var(--mud-palette-primary);
+    border-radius: var(--mud-default-borderradius);
+    background-color: color-mix(in srgb, var(--mud-palette-primary) 6%, var(--mud-palette-surface));
+    line-height: 1.6;
     white-space: pre-wrap;
     overflow-wrap: anywhere;
     user-select: text;

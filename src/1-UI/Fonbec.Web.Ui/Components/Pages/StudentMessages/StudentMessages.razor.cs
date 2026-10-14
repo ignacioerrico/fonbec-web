@@ -25,6 +25,8 @@ public partial class StudentMessages : AuthenticationRequiredComponentBase
     [Inject]
     public IJSRuntime JsRuntime { get; set; } = null!;
 
+    private bool CanShare => UserRole == FonbecRole.Uploader;
+
     private IReadOnlyList<MessageSection> Sections =>
     [
         new("Pendientes", "No hay mensajes pendientes.", Pending: true, FilteredPending),
@@ -49,7 +51,9 @@ public partial class StudentMessages : AuthenticationRequiredComponentBase
     private bool MatchesSearch(StudentMessageItemViewModel item) =>
         string.IsNullOrWhiteSpace(_searchString)
         || item.StudentFullName.ContainsIgnoringAccents(_searchString)
-        || item.SenderName.ContainsIgnoringAccents(_searchString);
+        || item.SenderName.ContainsIgnoringAccents(_searchString)
+        || (item.FacilitatorFullName is not null
+            && item.FacilitatorFullName.ContainsIgnoringAccents(_searchString));
 
     private async Task CopyAsync(StudentMessageItemViewModel item)
     {
@@ -103,6 +107,11 @@ public partial class StudentMessages : AuthenticationRequiredComponentBase
     {
         _model = await RecipientMessageService.GetForActorAsync(FonbecClaim.UserId);
     }
+
+    private static string ResponsibleFacilitatorLine(StudentMessageItemViewModel item) =>
+        string.IsNullOrWhiteSpace(item.FacilitatorFullName)
+            ? "Sin mediador responsable de compartirlo."
+            : $"Mediador responsable de compartirlo: {item.FacilitatorFullName}";
 
     private static string DeliveredLine(StudentMessageItemViewModel item) =>
         string.IsNullOrWhiteSpace(item.SharedByFullName)

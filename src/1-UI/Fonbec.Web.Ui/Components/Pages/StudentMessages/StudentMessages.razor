@@ -32,47 +32,68 @@
                     {
                         <MudPaper Outlined="true" Class="pa-4 mb-3" @key="item.RecipientMessageId">
                             <MudText Typo="Typo.subtitle1" Color="Color.Primary">
-                                <strong>@item.StudentFullName</strong>
+                                Para @item.StudentRoleLabel: <strong>@item.StudentFullName</strong>
                             </MudText>
                             <MudText Typo="Typo.body2" Class="mud-text-secondary">
-                                @item.SenderKindLabel: @item.SenderName · @item.SentOnLabel
+                                De @item.SenderKindLabel: @item.SenderName · @item.SentOnLabel
                             </MudText>
-                            <div class="student-message-body mt-2">@item.Body</div>
+                            @if (!CanShare)
+                            {
+                                <div class="d-flex align-center gap-1">
+                                    <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                                        @ResponsibleFacilitatorLine(item)
+                                    </MudText>
+                                    @if (!string.IsNullOrWhiteSpace(item.FacilitatorEmail))
+                                    {
+                                        <MudTooltip Text="@($"Escribirle a {item.FacilitatorFullName}")">
+                                            <MudIconButton Icon="@Icons.Material.Outlined.Email"
+                                                           Size="Size.Small"
+                                                           Color="Color.Primary"
+                                                           Href="@($"mailto:{item.FacilitatorEmail}")"
+                                                           aria-label="@($"Escribirle a {item.FacilitatorFullName}")" />
+                                        </MudTooltip>
+                                    }
+                                </div>
+                            }
+                            <div class="student-message-body mt-3">@item.Body</div>
                             @if (!messageSection.Pending)
                             {
                                 <MudText Typo="Typo.body2" Class="mt-2">
                                     @DeliveredLine(item)
                                 </MudText>
                             }
-                            <div class="d-flex justify-end gap-2 mt-3">
-                                <MudButton Variant="Variant.Outlined"
-                                           Color="Color.Primary"
-                                           Size="Size.Small"
-                                           Disabled="_updating"
-                                           OnClick="@(() => CopyAsync(item))">
-                                    Copiar
-                                </MudButton>
-                                @if (messageSection.Pending)
-                                {
-                                    <MudButton Variant="Variant.Filled"
+                            @if (CanShare)
+                            {
+                                <div class="d-flex justify-end gap-2 mt-3">
+                                    <MudButton Variant="Variant.Outlined"
                                                Color="Color.Primary"
                                                Size="Size.Small"
                                                Disabled="_updating"
-                                               OnClick="@(() => MarkAsync(item))">
-                                        Ya lo compartí
+                                               OnClick="@(() => CopyAsync(item))">
+                                        Copiar
                                     </MudButton>
-                                }
-                                else
-                                {
-                                    <MudButton Variant="Variant.Outlined"
-                                               Color="Color.Default"
-                                               Size="Size.Small"
-                                               Disabled="_updating"
-                                               OnClick="@(() => UndoAsync(item))">
-                                        Deshacer
-                                    </MudButton>
-                                }
-                            </div>
+                                    @if (messageSection.Pending)
+                                    {
+                                        <MudButton Variant="Variant.Filled"
+                                                   Color="Color.Primary"
+                                                   Size="Size.Small"
+                                                   Disabled="_updating"
+                                                   OnClick="@(() => MarkAsync(item))">
+                                            Ya lo compartí
+                                        </MudButton>
+                                    }
+                                    else
+                                    {
+                                        <MudButton Variant="Variant.Outlined"
+                                                   Color="Color.Default"
+                                                   Size="Size.Small"
+                                                   Disabled="_updating"
+                                                   OnClick="@(() => UndoAsync(item))">
+                                            Deshacer
+                                        </MudButton>
+                                    }
+                                </div>
+                            }
                         </MudPaper>
                     }
                 }

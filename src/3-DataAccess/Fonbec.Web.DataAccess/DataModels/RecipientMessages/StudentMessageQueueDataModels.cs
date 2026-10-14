@@ -34,6 +34,14 @@ public class StudentMessageQueueItemDataModel
     public DateTime? SharedOn { get; init; }
 
     public string? SharedByFullName { get; init; }
+
+    /// <summary>
+    /// Current facilitator of the student. A facilitator change moves this with the student.
+    /// Null when that user record is missing.
+    /// </summary>
+    public string? FacilitatorFullName { get; init; }
+
+    public string? FacilitatorEmail { get; init; }
 }
 
 public class RecipientMessageShareStateDataModel

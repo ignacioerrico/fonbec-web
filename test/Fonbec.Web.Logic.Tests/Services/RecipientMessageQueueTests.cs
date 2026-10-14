@@ -1,6 +1,7 @@
 using FluentAssertions;
 using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.DataModels.RecipientMessages;
+using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models.RecipientMessages;
@@ -49,11 +50,15 @@ public class RecipientMessageQueueTests
     public async Task GetForActor_Manager_UsesTheChapterStoredForThatUser()
     {
         Actor(ManagerId, FonbecRole.Manager, chapterId: 4);
-        _repository.GetForChapterAsync(4).Returns([Item(8, new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc))]);
+        _repository.GetForChapterAsync(4).Returns(
+        [
+            Item(8, new DateTime(2026, 2, 1, 0, 0, 0, DateTimeKind.Utc), facilitator: "Marta Ruiz"),
+        ]);
 
         var result = await _service.GetForActorAsync(ManagerId);
 
         result.Pending.Should().ContainSingle(m => m.RecipientMessageId == 8);
+        result.Pending[0].FacilitatorFullName.Should().Be("Marta Ruiz");
         await _repository.Received(1).GetForChapterAsync(4);
         await _repository.DidNotReceive().GetForFacilitatorAsync(Arg.Any<int>());
         await _repository.DidNotReceive().GetForChapterAsync(Arg.Is<int>(id => id != 4));
@@ -95,8 +100,8 @@ public class RecipientMessageQueueTests
         var newerShared = new DateTime(2026, 3, 2, 10, 0, 0, DateTimeKind.Utc);
         _repository.GetForFacilitatorAsync(UploaderId).Returns(
         [
-            Item(20, secondSent, sender: "Ana Pérez"),
-            Item(10, firstSent, sender: "Acme SA", company: true),
+            Item(20, secondSent, sender: "Ana Pérez", senderGender: Gender.Female, studentGender: Gender.Male),
+            Item(10, firstSent, sender: "Acme SA", company: true, studentGender: Gender.Male),
             Item(40, firstSent, sharedOn: olderShared, sharedBy: "Luis Gómez"),
             Item(30, secondSent, sharedOn: newerShared, sharedBy: "Ana Mediadora"),
             Item(50, secondSent, sharedOn: newerShared, sharedBy: "Ana Mediadora"),
@@ -105,10 +110,12 @@ public class RecipientMessageQueueTests
         var result = await _service.GetForActorAsync(UploaderId);
 
         result.Pending.Select(m => m.RecipientMessageId).Should().Equal(10, 20);
-        result.Pending[0].SenderKindLabel.Should().Be("Empresa");
+        result.Pending[0].SenderKindLabel.Should().Be("empresa");
+        result.Pending[0].StudentRoleLabel.Should().Be("becario");
         result.Pending[0].SenderName.Should().Be("Acme SA");
         result.Pending[0].SentOnLabel.Should().Be(firstSent.ToLocalTime().ToSpanishShortDate());
-        result.Pending[1].SenderKindLabel.Should().Be("Padrino");
+        result.Pending[1].SenderKindLabel.Should().Be("madrina");
+        result.Pending[1].StudentRoleLabel.Should().Be("becario");
         result.Pending[1].SenderName.Should().Be("Ana Pérez");
 
         result.Delivered.Select(m => m.RecipientMessageId).Should().Equal(50, 30, 40);
@@ -144,15 +151,15 @@ public class RecipientMessageQueueTests
     [Fact]
     public async Task MarkShared_AlreadyShared_DoesNotChangeWhoOrWhen()
     {
-        Actor(ManagerId, FonbecRole.Manager, chapterId: 4);
-        _repository.GetInScopeAsync(8, Arg.Is<RecipientMessageScope.Chapter>(s => s.ChapterId == 4))
+        Actor(UploaderId, FonbecRole.Uploader, chapterId: 1);
+        _repository.GetInScopeAsync(8, Arg.Is<RecipientMessageScope.Facilitator>(s => s.UserId == UploaderId))
             .Returns(new RecipientMessageShareStateDataModel
             {
                 SharedOn = new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc),
                 SharedById = 99,
             });
 
-        var saved = await _service.MarkSharedAsync(8, ManagerId);
+        var saved = await _service.MarkSharedAsync(8, UploaderId);
 
         saved.Should().BeTrue();
         await _repository.DidNotReceive().SetSharedAsync(
@@ -160,23 +167,23 @@ public class RecipientMessageQueueTests
     }
 
     [Fact]
-    public async Task UndoShared_ClearsTheMark_ForEitherRole()
+    public async Task UndoShared_ClearsTheMark()
     {
-        Actor(ManagerId, FonbecRole.Manager, chapterId: 4);
-        _repository.GetInScopeAsync(8, Arg.Is<RecipientMessageScope.Chapter>(s => s.ChapterId == 4))
+        Actor(UploaderId, FonbecRole.Uploader, chapterId: 1);
+        _repository.GetInScopeAsync(8, Arg.Is<RecipientMessageScope.Facilitator>(s => s.UserId == UploaderId))
             .Returns(new RecipientMessageShareStateDataModel
             {
                 SharedOn = new DateTime(2026, 3, 1, 0, 0, 0, DateTimeKind.Utc),
                 SharedById = UploaderId,
             });
-        _repository.ClearSharedAsync(8, Arg.Is<RecipientMessageScope.Chapter>(s => s.ChapterId == 4))
+        _repository.ClearSharedAsync(8, Arg.Is<RecipientMessageScope.Facilitator>(s => s.UserId == UploaderId))
             .Returns(true);
 
-        var cleared = await _service.UndoSharedAsync(8, ManagerId);
+        var cleared = await _service.UndoSharedAsync(8, UploaderId);
 
         cleared.Should().BeTrue();
         await _repository.Received(1).ClearSharedAsync(
-            8, Arg.Is<RecipientMessageScope.Chapter>(s => s.ChapterId == 4));
+            8, Arg.Is<RecipientMessageScope.Facilitator>(s => s.UserId == UploaderId));
         await _repository.DidNotReceive().GetFacilitatorNotificationAsync(Arg.Any<long>());
         await _repository.DidNotReceive().MarkFacilitatorNotifiedAsync(Arg.Any<long>(), Arg.Any<DateTime>());
     }
@@ -208,6 +215,24 @@ public class RecipientMessageQueueTests
             : await _service.UndoSharedAsync(99, UploaderId);
 
         saved.Should().BeFalse();
+        await _repository.DidNotReceive().SetSharedAsync(
+            Arg.Any<long>(), Arg.Any<RecipientMessageScope>(), Arg.Any<int>(), Arg.Any<DateTime>());
+        await _repository.DidNotReceive().ClearSharedAsync(Arg.Any<long>(), Arg.Any<RecipientMessageScope>());
+    }
+
+    [Theory]
+    [InlineData(true)]
+    [InlineData(false)]
+    public async Task MarkAndUndo_Manager_AreDenied(bool mark)
+    {
+        Actor(ManagerId, FonbecRole.Manager, chapterId: 4);
+
+        var saved = mark
+            ? await _service.MarkSharedAsync(8, ManagerId)
+            : await _service.UndoSharedAsync(8, ManagerId);
+
+        saved.Should().BeFalse();
+        await _repository.DidNotReceive().GetInScopeAsync(Arg.Any<long>(), Arg.Any<RecipientMessageScope>());
         await _repository.DidNotReceive().SetSharedAsync(
             Arg.Any<long>(), Arg.Any<RecipientMessageScope>(), Arg.Any<int>(), Arg.Any<DateTime>());
         await _repository.DidNotReceive().ClearSharedAsync(Arg.Any<long>(), Arg.Any<RecipientMessageScope>());
@@ -291,17 +316,23 @@ public class RecipientMessageQueueTests
         bool company = false,
         string body = "Gracias",
         DateTime? sharedOn = null,
-        string? sharedBy = null) =>
+        string? sharedBy = null,
+        string? facilitator = null,
+        Gender studentGender = Gender.Unknown,
+        Gender? senderGender = null) =>
         new()
         {
             RecipientMessageId = id,
             StudentFullName = student,
+            StudentGender = studentGender,
             IsCompany = company,
+            SenderGender = senderGender,
             SenderName = sender,
             Body = body,
             SentOn = sentOn,
             SharedOn = sharedOn,
             SharedByFullName = sharedBy,
+            FacilitatorFullName = facilitator,
         };
 
     private sealed class FixedTimeProvider(DateTimeOffset utcNow) : TimeProvider
