@@ -52,6 +52,21 @@
         <LetterPlanProgressSummary Summary="_currentProgress.Summary"
                                    Title="@_currentPlan.PlannedDeliveryStartsOnText" />
 
+        @if (_currentProgress.IsReadyToComplete)
+        {
+            <MudAlert Severity="Severity.Success" Variant="Variant.Outlined" Class="mt-4"
+                      Icon="@Icons.Material.Filled.CheckCircle">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="2" Wrap="Wrap.Wrap">
+                    <MudText>Todas las cartas de esta campaña están cubiertas. Ya podés completarla.</MudText>
+                    <MudButton Variant="Variant.Filled" Color="Color.Success" Size="Size.Small"
+                               StartIcon="@Icons.Material.Filled.CheckCircle"
+                               Href="@NavRoutes.LetterPlanProgress(_currentPlan.PlannedDeliveryId)">
+                        Ir a completar campaña
+                    </MudButton>
+                </MudStack>
+            </MudAlert>
+        }
+
         <MudStack Row="true" Spacing="2" Class="mt-4" Wrap="Wrap.Wrap">
             <MudButton Variant="Variant.Filled" Color="Color.Primary"
                        StartIcon="@Icons.Material.Outlined.Assessment"

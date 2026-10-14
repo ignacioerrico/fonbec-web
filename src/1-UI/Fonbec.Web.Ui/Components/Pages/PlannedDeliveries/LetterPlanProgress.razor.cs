@@ -391,6 +391,6 @@ public partial class LetterPlanProgress
 
         Snackbar.Add("La campaña fue marcada como completada.", Severity.Success);
         NavMenuRefresh.NotifyChanged();
-        await ReloadAsync();
+        NavigationManager.NavigateTo(NavRoutes.PlannedDeliveries);
     }
 }
