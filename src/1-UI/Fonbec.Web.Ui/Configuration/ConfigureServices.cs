@@ -83,6 +83,7 @@ public static class ConfigureServices
         services.AddScoped<ILetterExemptionService, LetterExemptionService>();
         services.AddScoped<ISponsorService, SponsorService>();
         services.AddScoped<ISponsorshipService, SponsorshipService>();
+        services.AddScoped<IChapterImportService, ChapterImportService>();
         services.AddScoped<ICompanyService, CompanyService>();
         services.AddScoped<IDocumentService, DocumentService>();
         services.AddScoped<IRecipientMessageService, RecipientMessageService>();

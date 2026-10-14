@@ -44,6 +44,8 @@ public static class NavRoutes
 
     public const string StudentCreate = $"{Students}/alta";
 
+    public const string ChapterImport = "/importar";
+
     public const string Sponsors = "/padrinos";
 
     public const string SponsorCreate = $"{Sponsors}/alta";

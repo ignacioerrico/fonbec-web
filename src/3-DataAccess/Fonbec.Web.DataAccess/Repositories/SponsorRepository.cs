@@ -43,6 +43,11 @@ public interface ISponsorRepository
     /// Not chapter-restricted. The review picker samples this pool deterministically.
     /// </summary>
     Task<List<CandidateNameDataModel>> GetSponsorCandidateNamesAsync(int? excludeSponsorId);
+
+    /// <summary>
+    /// Emails of sponsors in the chapter who are not deleted, including inactive ones.
+    /// </summary>
+    Task<List<string>> GetImportEmailsAsync(int chapterId);
 }
 
 public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) : ISponsorRepository
@@ -304,6 +309,17 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
                 LastName = s.LastName,
                 IsCompany = false,
             })
+            .ToListAsync();
+    }
+
+    public async Task<List<string>> GetImportEmailsAsync(int chapterId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        return await db.Sponsors
+            .AsNoTracking()
+            .Where(sponsor => sponsor.ChapterId == chapterId && !sponsor.IsDeleted)
+            .Select(sponsor => sponsor.Email)
             .ToListAsync();
     }
 }

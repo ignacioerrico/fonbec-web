@@ -1,0 +1,141 @@
+@attribute [Route(NavRoutes.ChapterImport)]
+@attribute [Authorize(Policy = nameof(ChapterImport))]
+@inherits AuthenticationRequiredComponentBase
+
+@using Fonbec.Web.DataAccess.Constants
+
+<PageHeader Title="Importar" />
+
+@if (!_anyChapters)
+{
+    <MudAlert Severity="Severity.Error">No hay filiales. Para importar se requiere <MudLink Href="@NavRoutes.ChapterCreate" Typo="Typo.body2">al menos una filial</MudLink>.</MudAlert>
+}
+else if (NoFacilitatorsForCurrentChapter)
+{
+    <MudAlert Severity="Severity.Warning">No hay mediadores en esta filial. Podés importar padrinos. Para becarios se requiere <MudLink Href="@(UserRole == FonbecRole.Manager ? NavRoutes.MediatorCreate : NavRoutes.Chapters)" Typo="Typo.body2">al menos un mediador</MudLink>.</MudAlert>
+}
+
+<LoadingIndicator Loading="Loading" />
+
+<MudText Typo="Typo.body2" Class="mb-4">
+    Importá becarios y padrinos de una filial. Nada se guarda hasta que confirmás.
+</MudText>
+
+@if (FonbecClaim.ChapterId is null)
+{
+    <ChapterSelector SelectedChapterId="_chapterId"
+                     SelectedChapterIdChanged="OnChapterChanged"
+                     NumberOfChaptersLoaded="OnChaptersLoaded" />
+}
+
+<FacilitatorSelector SelectedFacilitatorId="_facilitatorId"
+                     SelectedFacilitatorIdChanged="OnFacilitatorChanged"
+                     ChapterId="EffectiveChapterId"
+                     NumberOfFacilitatorsLoaded="OnFacilitatorsLoaded" />
+<MudText Typo="Typo.caption" Class="mud-text-secondary mb-2">
+    Se usa para los becarios que no traen un mediador en el archivo.
+</MudText>
+
+<MudStack Row="true" Class="my-4" Wrap="Wrap.Wrap">
+    <MudButton Variant="Variant.Outlined" OnClick="DownloadExcelAsync" StartIcon="@Icons.Material.Filled.Download">
+        Descargar plantilla Excel
+    </MudButton>
+    <MudButton Variant="Variant.Outlined" OnClick="DownloadStudentsCsvAsync" StartIcon="@Icons.Material.Filled.Download">
+        Descargar CSV becarios
+    </MudButton>
+    <MudButton Variant="Variant.Outlined" OnClick="DownloadSponsorsCsvAsync" StartIcon="@Icons.Material.Filled.Download">
+        Descargar CSV padrinos
+    </MudButton>
+</MudStack>
+
+<MudStack Spacing="2">
+    <div>
+        <MudFileUpload T="IBrowserFile" Accept=".xlsx" FilesChanged="OnExcelSelected">
+            <ActivatorContent>
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.UploadFile">
+                    Excel (.xlsx)
+                </MudButton>
+            </ActivatorContent>
+        </MudFileUpload>
+        @if (_excelName is not null)
+        {
+            <MudChip T="string" Class="mt-1" OnClose="ClearExcel">@_excelName</MudChip>
+        }
+    </div>
+    <div>
+        <MudFileUpload T="IBrowserFile" Accept=".csv" FilesChanged="OnStudentsCsvSelected">
+            <ActivatorContent>
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.UploadFile">
+                    CSV de becarios
+                </MudButton>
+            </ActivatorContent>
+        </MudFileUpload>
+        @if (_studentsCsvName is not null)
+        {
+            <MudChip T="string" Class="mt-1" OnClose="ClearStudentsCsv">@_studentsCsvName</MudChip>
+        }
+    </div>
+    <div>
+        <MudFileUpload T="IBrowserFile" Accept=".csv" FilesChanged="OnSponsorsCsvSelected">
+            <ActivatorContent>
+                <MudButton Variant="Variant.Outlined" StartIcon="@Icons.Material.Filled.UploadFile">
+                    CSV de padrinos
+                </MudButton>
+            </ActivatorContent>
+        </MudFileUpload>
+        @if (_sponsorsCsvName is not null)
+        {
+            <MudChip T="string" Class="mt-1" OnClose="ClearSponsorsCsv">@_sponsorsCsvName</MudChip>
+        }
+    </div>
+</MudStack>
+
+<MudStack Row="true" Class="pt-4">
+    <MudButton OnClick="PreviewAsync" Disabled="PreviewDisabled"
+               Variant="Variant.Filled" Color="Color.Primary">
+        Previsualizar
+    </MudButton>
+    <MudButton OnClick="CommitAsync" Disabled="CommitDisabled"
+               Variant="Variant.Filled" Color="Color.Secondary">
+        Importar
+    </MudButton>
+</MudStack>
+
+<LoadingIndicator Loading="_working" LoadingText="@_workingText" />
+
+@if (_result is not null)
+{
+    @if (_result.FileErrors.Count > 0)
+    {
+        <MudAlert Severity="Severity.Error" Class="mt-4">
+            @foreach (var error in _result.FileErrors)
+            {
+                <div>@error</div>
+            }
+        </MudAlert>
+    }
+
+    <MudText Typo="Typo.body1" Class="mt-4">@Summary</MudText>
+
+    @if (_result.Rows.Count > 0)
+    {
+        <MudTable Items="_result.Rows" Hover="true" Dense="true" FixedHeader="true" Height="420px" Class="mt-2">
+            <HeaderContent>
+                <MudTh>Hoja</MudTh>
+                <MudTh>Fila</MudTh>
+                <MudTh>Nombre</MudTh>
+                <MudTh>Estado</MudTh>
+                <MudTh>Detalle</MudTh>
+            </HeaderContent>
+            <RowTemplate>
+                <MudTd DataLabel="Hoja">@context.Sheet</MudTd>
+                <MudTd DataLabel="Fila">@context.RowNumber</MudTd>
+                <MudTd DataLabel="Nombre">@context.Name</MudTd>
+                <MudTd DataLabel="Estado">
+                    <MudChip T="string" Size="Size.Small" Color="@StatusColor(context.Status)">@StatusText(context.Status)</MudChip>
+                </MudTd>
+                <MudTd DataLabel="Detalle">@context.Detail</MudTd>
+            </RowTemplate>
+        </MudTable>
+    }
+}

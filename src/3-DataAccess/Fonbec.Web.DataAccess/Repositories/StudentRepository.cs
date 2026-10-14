@@ -1,4 +1,5 @@
 ﻿using Fonbec.Web.DataAccess.Constants;
+using Fonbec.Web.DataAccess.DataModels.Import;
 using Fonbec.Web.DataAccess.DataModels.Review;
 using Fonbec.Web.DataAccess.DataModels.Students;
 using Fonbec.Web.DataAccess.DataModels.Students.Input;
@@ -47,6 +48,12 @@ public interface IStudentRepository
     /// Not chapter-restricted. The review picker samples this pool deterministically.
     /// </summary>
     Task<List<CandidateNameDataModel>> GetStudentCandidateNamesAsync(int excludeStudentId);
+
+    /// <summary>
+    /// Names of students in the chapter who are not deleted, including inactive ones.
+    /// Used to skip people who already exist when importing.
+    /// </summary>
+    Task<List<StudentImportMatchDataModel>> GetImportMatchKeysAsync(int chapterId);
 }
 
 public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext,
@@ -314,6 +321,22 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext,
                 FirstName = s.FirstName,
                 LastName = s.LastName,
                 IsCompany = false,
+            })
+            .ToListAsync();
+    }
+
+    public async Task<List<StudentImportMatchDataModel>> GetImportMatchKeysAsync(int chapterId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        return await db.Students
+            .AsNoTracking()
+            .Where(student => student.ChapterId == chapterId && !student.IsDeleted)
+            .Select(student => new StudentImportMatchDataModel
+            {
+                Id = student.Id,
+                FirstName = student.FirstName,
+                LastName = student.LastName,
             })
             .ToListAsync();
     }
