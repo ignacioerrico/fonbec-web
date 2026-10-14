@@ -38,12 +38,10 @@
                     </MudNavLink>
                 </AuthorizeView>
 
-                <AuthorizeView Policy="@nameof(UsersList)">
-                    <MudNavGroup Title="Usuarios" Icon="@Icons.Material.Filled.AccountBox" Expanded="true">
-                        <MudNavLink Href="@NavRoutes.Users" Match="NavLinkMatch.Prefix">
-                            Usuarios
-                        </MudNavLink>
-                    </MudNavGroup>
+                <AuthorizeView Policy="@nameof(AdminsList)">
+                    <MudNavLink Href="@NavRoutes.Admins" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AdminPanelSettings">
+                        Administradores
+                    </MudNavLink>
                 </AuthorizeView>
 
                 <AuthorizeView Roles="@FonbecRole.Manager">

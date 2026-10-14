@@ -260,9 +260,16 @@ public class UserRepository(
         var userId = 0;
         var errors = new List<string>();
 
+        var isAdmin = model.UserRole == FonbecRole.Admin;
+        if (!isAdmin && model.UserChapterId is not > 0)
+        {
+            errors.Add("La filial no es válida.");
+            return (userId, errors);
+        }
+
         var fonbecUser = new FonbecWebUser
         {
-            ChapterId = model.UserChapterId,
+            ChapterId = isAdmin ? null : model.UserChapterId,
             FirstName = model.UserFirstName,
             LastName = model.UserLastName,
             NickName = model.UserNickName,

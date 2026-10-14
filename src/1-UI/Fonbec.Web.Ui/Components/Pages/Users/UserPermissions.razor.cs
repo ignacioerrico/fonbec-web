@@ -72,6 +72,6 @@ public partial class UserPermissions : AuthenticationRequiredComponentBase
 
         await UserService.SetFonbecAuthClaim(UserId, deniedPages);
 
-        NavigationManager.NavigateTo(NavRoutes.Users);
+        NavigationManager.NavigateTo(_userData.UserRole == FonbecRole.Admin ? NavRoutes.Admins : NavRoutes.Chapters);
     }
 }

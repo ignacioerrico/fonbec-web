@@ -1,4 +1,5 @@
-﻿using Fonbec.Web.DataAccess.DataModels.Users.Input;
+﻿using Fonbec.Web.DataAccess.Constants;
+using Fonbec.Web.DataAccess.DataModels.Users.Input;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.Logic.ExtensionMethods;
 using Mapster;
@@ -6,7 +7,7 @@ using Mapster;
 namespace Fonbec.Web.Logic.Models.Users.Input;
 
 public record CreateUserInputModel(
-    int UserChapterId,
+    int? UserChapterId,
     string UserFirstName,
     string UserLastName,
     string UserNickName,
@@ -23,7 +24,7 @@ public class CreateUserInputModelMappingDefinitions : IRegister
     public void Register(TypeAdapterConfig config)
     {
         config.NewConfig<CreateUserInputModel, CreateUserInputDataModel>()
-            .Map(dest => dest.UserChapterId, src => src.UserChapterId)
+            .Map(dest => dest.UserChapterId, src => src.UserRole == FonbecRole.Admin ? null : src.UserChapterId)
             .Map(dest => dest.UserFirstName, src => src.UserFirstName.MustBeNonEmpty().NormalizeText())
             .Map(dest => dest.UserLastName, src => src.UserLastName.MustBeNonEmpty().NormalizeText())
             .Map(dest => dest.UserNickName, src => src.UserNickName.NormalizeText(),

@@ -1,3 +1,4 @@
+using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.Logic.Models.Users.Input;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Ui.Models.User;
@@ -28,7 +29,7 @@ public partial class ChapterUserCreateDialog
     public IMudDialogInstance MudDialog { get; set; } = null!;
 
     [Parameter]
-    public int ChapterId { get; set; }
+    public int? ChapterId { get; set; }
 
     [Parameter]
     public string Role { get; set; } = string.Empty;
@@ -49,7 +50,8 @@ public partial class ChapterUserCreateDialog
 
     private async Task SaveAsync()
     {
-        if (ChapterId <= 0 || string.IsNullOrWhiteSpace(Role))
+        var isAdmin = Role == FonbecRole.Admin;
+        if (!isAdmin && ChapterId is not > 0)
         {
             Snackbar.Add("La filial no es válida.", Severity.Error);
             return;
@@ -87,7 +89,7 @@ public partial class ChapterUserCreateDialog
         }
 
         var createUserInputModel = new CreateUserInputModel(
-            ChapterId,
+            isAdmin ? null : ChapterId,
             _bindModel.UserFirstName,
             _bindModel.UserLastName,
             _bindModel.UserNickName,

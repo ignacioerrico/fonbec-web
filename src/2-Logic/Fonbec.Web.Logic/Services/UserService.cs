@@ -22,6 +22,7 @@ public interface IUserService
     Task<ValidateUniqueEmailOutputModel> ValidateUniqueEmailAsync(string userEmail);
     Task<ValidateUniqueFullNameOutputModel> ValidateUniqueFullNameAsync(string firstName, string lastName);
     Task<List<UsersListViewModel>> GetAllUsersAsync(int? chapterId);
+    Task<List<UsersListViewModel>> GetAdminsAsync();
     Task<List<SelectableModel<int>>> GetAllUsersInRoleForSelectionAsync(string role, int? chapterId = null);
     Task<GetUserOutputModel> GetUserAsync(int userId);
     Task<bool> GetIsDarkModeAsync(int userId);
@@ -102,6 +103,16 @@ public class UserService(
         }
 
         return allUsers;
+    }
+
+    public async Task<List<UsersListViewModel>> GetAdminsAsync()
+    {
+        var users = await GetAllUsersAsync(null);
+        return users
+            .Where(user => user.UserRole == FonbecRole.Admin)
+            .OrderBy(user => user.UserLastName, StringComparer.OrdinalIgnoreCase)
+            .ThenBy(user => user.UserFirstName, StringComparer.OrdinalIgnoreCase)
+            .ToList();
     }
 
     public async Task<List<SelectableModel<int>>> GetAllUsersInRoleForSelectionAsync(string role, int? chapterId = null)

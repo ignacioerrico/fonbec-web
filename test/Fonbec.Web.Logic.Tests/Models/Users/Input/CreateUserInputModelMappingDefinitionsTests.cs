@@ -36,8 +36,31 @@ public class CreateUserInputModelMappingDefinitionsTests : MappingTestBase
         result.UserNotes.Should().Be("Some personal notes");
         result.UserRole.Should().Be("Admin");
         result.CreatedById.Should().Be(99);
-        result.UserChapterId.Should().Be(5);
+        result.UserChapterId.Should().BeNull();
         result.GeneratedPassword.Should().Be("secret");
+    }
+
+    [Fact]
+    public void Maps_Chapter_For_A_NonAdmin()
+    {
+        var input = new CreateUserInputModel(
+            UserFirstName: "John",
+            UserLastName: "Doe",
+            UserNickName: "JD",
+            UserGender: Gender.Male,
+            UserEmail: "john@email.com",
+            UserPhoneNumber: "555-1234",
+            UserNotes: "notes",
+            UserRole: "Manager",
+            CreatedById: 99,
+            UserChapterId: 5
+        );
+
+        var result = input.BuildAdapter(Config)
+            .AddParameters("generatedPassword", "secret")
+            .AdaptToType<CreateUserInputDataModel>();
+
+        result.UserChapterId.Should().Be(5);
     }
 
     [Fact]

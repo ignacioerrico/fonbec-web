@@ -2,6 +2,8 @@
 @attribute [Authorize(Policy = nameof(UserPermissions))]
 @inherits AuthenticationRequiredComponentBase
 
+@using Fonbec.Web.DataAccess.Constants
+
 <PageHeader Title="Permisos" />
 
 <LoadingIndicator Loading="Loading" />
@@ -47,7 +49,7 @@
 	           Variant="Variant.Filled" Color="Color.Primary">
 		Guardar
 	</MudButton>
-	<MudButton Href="@NavRoutes.Users"
+	<MudButton Href="@(_userData.UserRole == FonbecRole.Admin ? NavRoutes.Admins : NavRoutes.Chapters)"
 	           Variant="Variant.Filled" Color="Color.Default" Class="ml-2">
 		Cancelar
 	</MudButton>

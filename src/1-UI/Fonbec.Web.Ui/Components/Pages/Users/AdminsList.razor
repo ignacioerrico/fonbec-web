@@ -1,0 +1,82 @@
+@attribute [Route(NavRoutes.Admins)]
+@attribute [Authorize(Policy = nameof(AdminsList))]
+@inherits AuthenticationRequiredComponentBase
+
+<PageHeader Title="Administradores" />
+
+<MudTooltip Text="Alta de administrador"
+            Arrow="true" Placement="Placement.Right"
+            Color="Color.Primary">
+    <MudFab OnClick="AddAdminAsync"
+            StartIcon="@Icons.Material.Filled.Add"
+            Color="Color.Primary" />
+</MudTooltip>
+
+<LoadingIndicator Loading="Loading"
+                  If="!_admins.Any()"
+                  ThenDisplay="No hay administradores." />
+
+@if (_admins.Any())
+{
+    <MudStack Spacing="2" Class="mt-4">
+        @foreach (var admin in _admins)
+        {
+            <MudPaper Outlined="true" Class="pa-3">
+                <MudStack Row="true" AlignItems="AlignItems.Center" Justify="Justify.SpaceBetween">
+                    <div>
+                        <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
+                            <MudText Typo="Typo.body1">
+                                <strong>@admin.UserFirstName @admin.UserLastName</strong>
+                            </MudText>
+                            @if (admin.UserId == FonbecClaim.UserId)
+                            {
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Filled" Color="Color.Primary">YO</MudChip>
+                            }
+                            @if (!admin.IsUserActive)
+                            {
+                                <MudChip T="string" Size="Size.Small" Variant="Variant.Outlined" Color="Color.Warning">
+                                    Deshabilitado
+                                </MudChip>
+                            }
+                        </MudStack>
+                        @if (!string.IsNullOrWhiteSpace(admin.UserEmail))
+                        {
+                            <MudLink Href="@($"mailto:{admin.UserEmail}")" Typo="Typo.caption">@admin.UserEmail</MudLink>
+                        }
+                        @if (!string.IsNullOrWhiteSpace(admin.UserPhoneNumber))
+                        {
+                            <MudText Typo="Typo.caption">@admin.UserPhoneNumber</MudText>
+                        }
+                    </div>
+                    <MudStack Row="true" Spacing="0">
+                        <MudTooltip Text="Permisos" Arrow="true" Placement="Placement.Bottom" Color="Color.Primary">
+                            <MudIconButton Href="@NavRoutes.UsersUserIdPermissions(admin.UserId)"
+                                           Icon="@Icons.Material.Outlined.Checklist"
+                                           Size="Size.Small"
+                                           Color="Color.Primary" />
+                        </MudTooltip>
+                        @if (admin.IsUserActive)
+                        {
+                            <MudTooltip Text="Deshabilitar" Arrow="true" Placement="Placement.Bottom" Color="Color.Warning">
+                                <MudIconButton OnClick="@(() => DisableAdminAsync(admin))"
+                                               Icon="@Icons.Material.Outlined.Delete"
+                                               Size="Size.Small"
+                                               Color="Color.Warning"
+                                               Disabled="@(admin.UserId == FonbecClaim.UserId || !admin.CanUserBeLockedOut)" />
+                            </MudTooltip>
+                        }
+                        else
+                        {
+                            <MudTooltip Text="Habilitar" Arrow="true" Placement="Placement.Bottom" Color="Color.Success">
+                                <MudIconButton OnClick="@(() => ReenableAdminAsync(admin))"
+                                               Icon="@Icons.Material.Outlined.RestoreFromTrash"
+                                               Size="Size.Small"
+                                               Color="Color.Success" />
+                            </MudTooltip>
+                        }
+                    </MudStack>
+                </MudStack>
+            </MudPaper>
+        }
+    </MudStack>
+}
