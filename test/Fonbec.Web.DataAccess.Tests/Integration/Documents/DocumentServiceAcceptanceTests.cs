@@ -438,7 +438,7 @@ public class DocumentServiceAcceptanceTests
     }
 
     [Fact]
-    public async Task Scenario15_RejectedDocument_CreatesNoSharesOrEmails()
+    public async Task Scenario15_RejectedDocument_CreatesNoSharesAndOnlyNotifiesTheFacilitator()
     {
         await _fixture.InitializeAsync();
 
@@ -453,7 +453,8 @@ public class DocumentServiceAcceptanceTests
 
         await using var db = await _fixture.Factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
         (await db.Set<DocumentShare>().CountAsync(TestContext.Current.CancellationToken)).Should().Be(0);
-        await _fixture.EmailSender.DidNotReceive().SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await _fixture.EmailSender.Received(1).SendEmailAsync(
+            Arg.Any<string>(), "Documento rechazado", Arg.Any<string>());
         await _fixture.EmailSender.DidNotReceive().SendEmailAsync(
             Arg.Any<IReadOnlyList<Recipient>>(),
             Arg.Any<IReadOnlyList<Recipient>>(),
