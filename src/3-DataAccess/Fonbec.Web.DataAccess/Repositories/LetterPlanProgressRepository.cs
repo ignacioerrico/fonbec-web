@@ -19,7 +19,8 @@ public interface ILetterPlanProgressRepository
 }
 
 public class LetterPlanProgressRepository(
-    IDbContextFactory<FonbecWebDbContext> dbContext) : ILetterPlanProgressRepository
+    IDbContextFactory<FonbecWebDbContext> dbContext,
+    TimeProvider timeProvider) : ILetterPlanProgressRepository
 {
     public async Task<LetterPlanProgressQueryResultDataModel?> GetProgressAsync(int planId, int chapterId)
     {
@@ -43,6 +44,7 @@ public class LetterPlanProgressRepository(
 
         // Only sponsorships in effect at this point in time need to be considered.
         var planStartsOn = plan.StartsOn;
+        var utcNow = timeProvider.GetUtcNow().UtcDateTime;
 
         var exemptions = await db.LetterExemptions
             .AsNoTracking()
@@ -56,6 +58,7 @@ public class LetterPlanProgressRepository(
             .SelectMany(s => s.Sponsorships
                 .AsQueryable()
                 .Where(CampaignQueries.Covers(planStartsOn))
+                .Where(CampaignQueries.Covers(utcNow))
                 .Select(sp => new
                 {
                     s.Id,

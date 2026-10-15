@@ -82,6 +82,18 @@ public class LetterPlanProgressRepositoryTests
     }
 
     [Fact]
+    public async Task GetProgressAsync_Excludes_Sponsorship_That_Has_Since_Lapsed()
+    {
+        var factory = CreateDbContextFactory();
+        await SeedBaseAsync(factory, sponsorshipEnd: UtcNow.AddMonths(-1));
+        var repository = CreateRepository(factory);
+
+        var result = await repository.GetProgressAsync(PlanId, ChapterId);
+
+        result!.Rows.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task GetProgressAsync_Maps_Approved_Letter()
     {
         var factory = CreateDbContextFactory();
@@ -174,7 +186,7 @@ public class LetterPlanProgressRepositoryTests
     }
 
     private static LetterPlanProgressRepository CreateRepository(TestDbContextFactory factory) =>
-        new(factory);
+        new(factory, new FixedTimeProvider(new DateTimeOffset(UtcNow)));
 
     private static TestDbContextFactory CreateDbContextFactory() =>
         new(Guid.NewGuid().ToString());
@@ -258,7 +270,7 @@ public class LetterPlanProgressRepositoryTests
             SponsorId = useCompanySponsorship ? null : SponsorId,
             CompanyId = useCompanySponsorship ? CompanyId : null,
             StartDate = sponsorshipStart ?? PlanStartsOn.AddMonths(-1),
-            EndDate = sponsorshipEnd ?? PlanStartsOn.AddMonths(1),
+            EndDate = sponsorshipEnd ?? UtcNow.AddMonths(1),
             CreatedById = 1,
             CreatedOnUtc = UtcNow,
             IsActive = true,
@@ -405,6 +417,11 @@ public class LetterPlanProgressRepositoryTests
         });
 
         await db.SaveChangesAsync();
+    }
+
+    private sealed class FixedTimeProvider(DateTimeOffset utcNow) : TimeProvider
+    {
+        public override DateTimeOffset GetUtcNow() => utcNow;
     }
 
     private sealed class TestDbContextFactory(string databaseName) : IDbContextFactory<FonbecWebDbContext>

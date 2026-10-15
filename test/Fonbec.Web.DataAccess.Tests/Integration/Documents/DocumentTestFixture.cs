@@ -104,7 +104,7 @@ internal sealed class DocumentTestFixture
 
         PlannedDeliveryRepository = new PlannedDeliveryRepository(Factory, TimeProvider.System);
         var planCompletionService = new PlanCompletionService(
-            new LetterPlanProgressRepository(Factory),
+            new LetterPlanProgressRepository(Factory, TimeProvider.System),
             PlannedDeliveryRepository);
 
         DocumentService = new DocumentService(

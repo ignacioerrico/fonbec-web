@@ -16,6 +16,10 @@ public static class DateTimeExtensionMethods
     public static string ToSpanishShortDate(this DateTime dateTime) =>
         dateTime.ToString("d-MMM-yyyy", EsAr);
 
+    /// <summary>Short date and time from es-AR, for example <c>6-sept.-2026 a las 14:30</c>.</summary>
+    public static string ToSpanishShortDateTime(this DateTime dateTime) =>
+        dateTime.ToString(@"d-MMM-yyyy \a \l\a\s HH:mm", EsAr);
+
     /// <summary>Long date from es-AR, for example <c>9 de julio de 2026</c>.</summary>
     public static string ToSpanishLongDate(this DateTime dateTime) =>
         dateTime.ToString("d 'de' MMMM 'de' yyyy", EsAr);

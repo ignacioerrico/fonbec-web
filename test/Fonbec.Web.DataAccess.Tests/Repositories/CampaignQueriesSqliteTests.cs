@@ -38,7 +38,7 @@ public sealed class CampaignQueriesSqliteTests : IDisposable
     [Fact]
     public async Task Letter_Plan_Slot_Count_Translates()
     {
-        var repository = new LetterPlanProgressRepository(_factory);
+        var repository = new LetterPlanProgressRepository(_factory, TimeProvider.System);
 
         var count = await repository.CountRequiredSlotsAsync(1, new DateTime(2026, 11, 1));
 
