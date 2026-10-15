@@ -211,8 +211,16 @@ public partial class RejectedDocuments : AuthenticationRequiredComponentBase
         };
     }
 
-    private static string FormatRejectedOn(HeldRejectionItemViewModel item) =>
-        item.RejectedOn is null ? "—" : item.RejectedOn.Value.ToLocalTime().ToSpanishShortDateTime();
+    private static string FormatRejectedOn(HeldRejectionItemViewModel item)
+    {
+        if (item.RejectedOn is null)
+        {
+            return "—";
+        }
+
+        var local = item.RejectedOn.Value.ToLocalTime();
+        return $"{local.ToSpanishShortDate()} a las {local:HH:mm}";
+    }
 
     private string ViewUrl(HeldRejectionItemViewModel item, int pageNumber) =>
         NavRoutes.ManagerStudentDocumentPage(item.StudentId, item.DocumentId, pageNumber);
