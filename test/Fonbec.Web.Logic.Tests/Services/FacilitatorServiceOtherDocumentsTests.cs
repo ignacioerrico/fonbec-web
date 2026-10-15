@@ -125,6 +125,17 @@ public class FacilitatorServiceOtherDocumentsTests : MappingTestBase
                         Status = DocumentStatus.Approved,
                         PageCount = 0,
                     },
+                    new FacilitatorOtherDocumentItemDataModel
+                    {
+                        DocumentId = 6,
+                        UploadedOn = new DateTime(2026, 3, 22, 8, 0, 0, DateTimeKind.Utc),
+                        Description = "Documento en espera",
+                        FileKind = FileKind.Text,
+                        Status = DocumentStatus.PendingManagerDecision,
+                        RejectionReason = "Ilegible",
+                        TextContent = "Texto",
+                        PageCount = 0,
+                    },
                 ],
             });
 
@@ -133,7 +144,7 @@ public class FacilitatorServiceOtherDocumentsTests : MappingTestBase
         result.Should().NotBeNull();
         result!.StudentId.Should().Be(10);
         result.StudentName.Should().Be("María González");
-        result.Items.Select(i => i.DocumentId).Should().Equal(5, 4, 3, 2, 1);
+        result.Items.Select(i => i.DocumentId).Should().Equal(5, 4, 3, 2, 1, 6);
 
         var file = result.Items[0];
         file.Date.Should().Be(new DateOnly(2026, 6, 12));
@@ -159,6 +170,10 @@ public class FacilitatorServiceOtherDocumentsTests : MappingTestBase
         result.Items[3].CanDownload.Should().BeFalse();
 
         result.Items[4].CanDownload.Should().BeFalse();
+
+        var held = result.Items[5];
+        held.Status.Should().Be(DocumentStatus.PendingManagerDecision);
+        held.RejectionReason.Should().BeNull();
     }
 
     [Fact]

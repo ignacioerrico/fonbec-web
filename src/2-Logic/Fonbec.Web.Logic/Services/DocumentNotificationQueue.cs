@@ -7,8 +7,9 @@ using Microsoft.Extensions.Logging;
 namespace Fonbec.Web.Logic.Services;
 
 /// <summary>
-/// Sends document notifications off the request that approved the document.
-/// Sponsor shares left unmarked are picked up again the next time the process starts.
+/// Sends document notifications off the request that approved or returned a document.
+/// Sponsor shares, facilitator rejection emails, and manager decision emails left unmarked
+/// are picked up again the next time the process starts.
 /// </summary>
 public sealed class DocumentNotificationQueue(
     IServiceScopeFactory scopeFactory,
@@ -46,9 +47,33 @@ public sealed class DocumentNotificationQueue(
         return Task.CompletedTask;
     }
 
+    public Task EnqueueFacilitatorRejectionNotificationAsync(long documentId)
+    {
+        if (!_channel.Writer.TryWrite(new FacilitatorRejectionNotificationWork(documentId)))
+        {
+            logger.LogError(
+                "Failed to queue facilitator rejection notification for document {DocumentId}.",
+                documentId);
+        }
+
+        return Task.CompletedTask;
+    }
+
+    public Task EnqueueHeldRejectionManagerNotificationAsync(long documentId)
+    {
+        if (!_channel.Writer.TryWrite(new HeldRejectionManagerNotificationWork(documentId)))
+        {
+            logger.LogError(
+                "Failed to queue manager notification for held rejection {DocumentId}.",
+                documentId);
+        }
+
+        return Task.CompletedTask;
+    }
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await RecoverUnnotifiedSharesAsync(stoppingToken);
+        await RecoverUnnotifiedNotificationsAsync(stoppingToken);
 
         await foreach (var work in _channel.Reader.ReadAllAsync(stoppingToken))
         {
@@ -56,16 +81,28 @@ public sealed class DocumentNotificationQueue(
         }
     }
 
-    private async Task RecoverUnnotifiedSharesAsync(CancellationToken cancellationToken)
+    private async Task RecoverUnnotifiedNotificationsAsync(CancellationToken cancellationToken)
     {
         try
         {
             using var scope = scopeFactory.CreateScope();
             var repository = scope.ServiceProvider.GetRequiredService<IDocumentRepository>();
-            var documentIds = await repository.GetDocumentIdsWithUnnotifiedSharesAsync();
-            foreach (var documentId in documentIds)
+            var sharedDocumentIds = await repository.GetDocumentIdsWithUnnotifiedSharesAsync() ?? [];
+            foreach (var documentId in sharedDocumentIds)
             {
                 await EnqueueSponsorNotificationAsync(documentId);
+            }
+
+            var rejectedDocumentIds = await repository.GetDocumentIdsWithUnnotifiedFacilitatorRejectionsAsync() ?? [];
+            foreach (var documentId in rejectedDocumentIds)
+            {
+                await EnqueueFacilitatorRejectionNotificationAsync(documentId);
+            }
+
+            var heldDocumentIds = await repository.GetDocumentIdsWithUnnotifiedHeldRejectionsAsync() ?? [];
+            foreach (var documentId in heldDocumentIds)
+            {
+                await EnqueueHeldRejectionManagerNotificationAsync(documentId);
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -74,7 +111,7 @@ public sealed class DocumentNotificationQueue(
         }
         catch (Exception ex)
         {
-            logger.LogError(ex, "Failed to recover unnotified document shares.");
+            logger.LogError(ex, "Failed to recover unnotified document notifications.");
         }
     }
 
@@ -97,6 +134,16 @@ public sealed class DocumentNotificationQueue(
                         plan.PlanStartsOn,
                         cancellationToken);
                     break;
+                case FacilitatorRejectionNotificationWork rejection:
+                    await notifications.NotifyFacilitatorOfDocumentRejectionAsync(
+                        rejection.DocumentId,
+                        cancellationToken);
+                    break;
+                case HeldRejectionManagerNotificationWork held:
+                    await notifications.NotifyManagersOfHeldRejectionAsync(
+                        held.DocumentId,
+                        cancellationToken);
+                    break;
             }
         }
         catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -115,4 +162,8 @@ public sealed class DocumentNotificationQueue(
 
     private sealed record PlanReadyNotificationWork(int ChapterId, int PlanId, DateTime PlanStartsOn)
         : NotificationWork;
+
+    private sealed record FacilitatorRejectionNotificationWork(long DocumentId) : NotificationWork;
+
+    private sealed record HeldRejectionManagerNotificationWork(long DocumentId) : NotificationWork;
 }

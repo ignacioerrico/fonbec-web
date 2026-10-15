@@ -17,7 +17,7 @@ namespace Fonbec.Web.DataAccess.Migrations
         {
 #pragma warning disable 612, 618
             modelBuilder
-                .HasAnnotation("ProductVersion", "10.0.12")
+                .HasAnnotation("ProductVersion", "10.0.13")
                 .HasAnnotation("Relational:MaxIdentifierLength", 128);
 
             SqlServerModelBuilderExtensions.UseIdentityColumns(modelBuilder);
@@ -131,6 +131,11 @@ namespace Fonbec.Web.DataAccess.Migrations
 
                     b.Property<DateTime?>("DisabledOnUtc")
                         .HasColumnType("datetime2");
+
+                    b.Property<byte>("DocumentRejectionBehavior")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("tinyint")
+                        .HasDefaultValue((byte)0);
 
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
@@ -266,6 +271,9 @@ namespace Fonbec.Web.DataAccess.Migrations
                     b.Property<byte>("DocumentType")
                         .HasColumnType("tinyint");
 
+                    b.Property<DateTime?>("FacilitatorRejectionNotifiedOn")
+                        .HasColumnType("datetime2");
+
                     b.Property<byte>("FileKind")
                         .HasColumnType("tinyint");
 
@@ -281,6 +289,9 @@ namespace Fonbec.Web.DataAccess.Migrations
                     b.Property<int?>("ImprovementLockedById")
                         .HasColumnType("int");
 
+                    b.Property<DateTime?>("ManagersNotifiedOfHeldRejectionOn")
+                        .HasColumnType("datetime2");
+
                     b.Property<int?>("RejectedById")
                         .HasColumnType("int");
 
@@ -293,6 +304,12 @@ namespace Fonbec.Web.DataAccess.Migrations
                     b.Property<string>("RejectionNotes")
                         .HasMaxLength(512)
                         .HasColumnType("nvarchar(512)");
+
+                    b.Property<int?>("RejectionOverriddenById")
+                        .HasColumnType("int");
+
+                    b.Property<DateTime?>("RejectionOverriddenOn")
+                        .HasColumnType("datetime2");
 
                     b.Property<DateTime?>("ReviewFirstLockedOn")
                         .HasColumnType("datetime2");
@@ -338,6 +355,8 @@ namespace Fonbec.Web.DataAccess.Migrations
 
                     b.HasIndex("RejectedReasonId");
 
+                    b.HasIndex("RejectionOverriddenById");
+
                     b.HasIndex("SponsorId");
 
                     b.HasIndex("StudentId");
@@ -348,12 +367,14 @@ namespace Fonbec.Web.DataAccess.Migrations
 
                     b.HasIndex("DocumentType", "Status");
 
+                    b.HasIndex("Status", "FacilitatorRejectionNotifiedOn");
+
+                    b.HasIndex("Status", "ManagersNotifiedOfHeldRejectionOn");
+
                     b.HasIndex("Status", "UploadedOn");
 
                     b.ToTable("Documents", t =>
                         {
-                            t.HasCheckConstraint("CK_Document_ApprovedOrRejected", "[ApprovedOn] IS NULL OR [RejectedOn] IS NULL");
-
                             t.HasCheckConstraint("CK_Document_DescriptionRequired", "[DocumentType] = 1 OR [Description] IS NOT NULL");
                         });
 
@@ -1746,8 +1767,6 @@ namespace Fonbec.Web.DataAccess.Migrations
 
                     b.ToTable("Documents", t =>
                         {
-                            t.HasCheckConstraint("CK_Document_ApprovedOrRejected", "[ApprovedOn] IS NULL OR [RejectedOn] IS NULL");
-
                             t.HasCheckConstraint("CK_Document_DescriptionRequired", "[DocumentType] = 1 OR [Description] IS NOT NULL");
 
                             t.HasCheckConstraint("CK_Letter_RecipientRequired", "[DocumentType] <> 1 OR (([SponsorId] IS NOT NULL AND [CompanyId] IS NULL) OR ([SponsorId] IS NULL AND [CompanyId] IS NOT NULL))");
@@ -1769,8 +1788,6 @@ namespace Fonbec.Web.DataAccess.Migrations
 
                     b.ToTable("Documents", t =>
                         {
-                            t.HasCheckConstraint("CK_Document_ApprovedOrRejected", "[ApprovedOn] IS NULL OR [RejectedOn] IS NULL");
-
                             t.HasCheckConstraint("CK_Document_DescriptionRequired", "[DocumentType] = 1 OR [Description] IS NOT NULL");
 
                             t.HasCheckConstraint("CK_OtherDocument_CompanyNull", "[DocumentType] <> 3 OR [CompanyId] IS NULL");
@@ -1797,8 +1814,6 @@ namespace Fonbec.Web.DataAccess.Migrations
 
                     b.ToTable("Documents", t =>
                         {
-                            t.HasCheckConstraint("CK_Document_ApprovedOrRejected", "[ApprovedOn] IS NULL OR [RejectedOn] IS NULL");
-
                             t.HasCheckConstraint("CK_Document_DescriptionRequired", "[DocumentType] = 1 OR [Description] IS NOT NULL");
 
                             t.HasCheckConstraint("CK_ReportCard_CompanyNull", "[DocumentType] <> 2 OR [CompanyId] IS NULL");
@@ -1909,6 +1924,11 @@ namespace Fonbec.Web.DataAccess.Migrations
                         .HasForeignKey("RejectedReasonId")
                         .OnDelete(DeleteBehavior.NoAction);
 
+                    b.HasOne("Fonbec.Web.DataAccess.Entities.FonbecWebUser", "RejectionOverriddenBy")
+                        .WithMany()
+                        .HasForeignKey("RejectionOverriddenById")
+                        .OnDelete(DeleteBehavior.NoAction);
+
                     b.HasOne("Fonbec.Web.DataAccess.Entities.Sponsor", "Sponsor")
                         .WithMany()
                         .HasForeignKey("SponsorId")
@@ -1933,6 +1953,8 @@ namespace Fonbec.Web.DataAccess.Migrations
                     b.Navigation("RejectedBy");
 
                     b.Navigation("RejectedReason");
+
+                    b.Navigation("RejectionOverriddenBy");
 
                     b.Navigation("Sponsor");
 

@@ -95,9 +95,10 @@ public class LetterAggregationTests
     [Theory]
     [InlineData(LetterSlotStatus.InReview, true)]
     [InlineData(LetterSlotStatus.Approved, true)]
+    [InlineData(LetterSlotStatus.PendingManagerDecision, true)]
     [InlineData(LetterSlotStatus.None, false)]
     [InlineData(LetterSlotStatus.Rejected, false)]
-    public void IsSatisfied_Is_True_Only_For_InReview_Or_Approved(LetterSlotStatus status, bool expected)
+    public void IsSatisfied_Is_True_When_The_Letter_Does_Not_Need_Another_Upload(LetterSlotStatus status, bool expected)
     {
         LetterAggregation.IsSatisfied(status).Should().Be(expected);
     }
@@ -107,6 +108,7 @@ public class LetterAggregationTests
     [InlineData(LetterSlotStatus.Rejected, true)]
     [InlineData(LetterSlotStatus.InReview, false)]
     [InlineData(LetterSlotStatus.Approved, false)]
+    [InlineData(LetterSlotStatus.PendingManagerDecision, false)]
     public void NeedsUpload_Is_True_Only_For_Missing_Or_Rejected(LetterSlotStatus status, bool expected)
     {
         LetterAggregation.NeedsUpload(status).Should().Be(expected);
@@ -162,5 +164,15 @@ public class LetterAggregationTests
         var result = LetterAggregation.ToSlotStatus(DocumentStatus.Rejected);
 
         result.Should().Be(LetterSlotStatus.Rejected);
+    }
+
+    [Fact]
+    public void ToSlotStatus_Returns_PendingManagerDecision_Without_Asking_For_Another_Upload()
+    {
+        var status = LetterAggregation.ToSlotStatus(DocumentStatus.PendingManagerDecision);
+
+        status.Should().Be(LetterSlotStatus.PendingManagerDecision);
+        LetterAggregation.NeedsUpload(status).Should().BeFalse();
+        LetterAggregation.IsSatisfied(status).Should().BeTrue();
     }
 }

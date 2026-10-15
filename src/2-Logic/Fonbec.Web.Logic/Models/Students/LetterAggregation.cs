@@ -13,6 +13,7 @@ public static class LetterAggregation
         null => LetterSlotStatus.None,
         DocumentStatus.Approved => LetterSlotStatus.Approved,
         DocumentStatus.Rejected => LetterSlotStatus.Rejected,
+        DocumentStatus.PendingManagerDecision => LetterSlotStatus.PendingManagerDecision,
         _ => LetterSlotStatus.InReview, // DigitalImprovementPending, DigitalImprovementOngoing, ReviewPending, ReviewOngoing
     };
 
@@ -21,7 +22,9 @@ public static class LetterAggregation
     /// i.e. the letter is in review or approved. Missing and rejected letters are not satisfied.
     /// </summary>
     public static bool IsSatisfied(LetterSlotStatus status) =>
-        status is LetterSlotStatus.InReview or LetterSlotStatus.Approved;
+        status is LetterSlotStatus.InReview
+            or LetterSlotStatus.Approved
+            or LetterSlotStatus.PendingManagerDecision;
 
     /// <summary>A slot needs a (re)upload when no letter exists yet or the last one was rejected.</summary>
     public static bool NeedsUpload(LetterSlotStatus status) =>

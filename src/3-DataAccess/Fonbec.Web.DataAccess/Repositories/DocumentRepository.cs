@@ -135,6 +135,36 @@ public interface IDocumentRepository
     Task<List<int>> GetActiveSponsorIdsForStudentAsync(int studentId);
     Task<List<DocumentDescriptionOptionDataModel>> GetDescriptionOptionsAsync(int chapterId, DocumentType documentType);
     Task<List<RejectedReasonDataModel>> GetApplicableRejectedReasonsAsync(DocumentType documentType);
+
+    Task<DocumentRejectionBehavior?> GetChapterRejectionBehaviorAsync(int chapterId);
+
+    Task<bool> SetChapterRejectionBehaviorAsync(int chapterId, DocumentRejectionBehavior behavior, int updatedById);
+
+    Task<List<HeldRejectionDataModel>> ListHeldRejectionsAsync(int chapterId);
+
+    Task<int> CountHeldRejectionsAsync(int chapterId);
+
+    /// <summary>
+    /// Approves a document held after rejection, keeps the rejection audit, and creates the same shares as an approval.
+    /// </summary>
+    Task<List<string>> ShareHeldRejectionAsync(long documentId, int managerId, int chapterId, byte[] rowVersion);
+
+    /// <summary>Returns a held rejection to the facilitator. The rejection fields stay as the reviewer left them.</summary>
+    Task<List<string>> ReturnHeldRejectionAsync(long documentId, int chapterId, byte[] rowVersion);
+
+    Task<FacilitatorRejectionNotificationDataModel?> GetFacilitatorRejectionNotificationAsync(long documentId);
+
+    /// <summary>Rejected documents whose facilitator email has not been sent or skipped.</summary>
+    Task<List<long>> GetDocumentIdsWithUnnotifiedFacilitatorRejectionsAsync();
+
+    Task MarkFacilitatorRejectionNotifiedAsync(long documentId, DateTime notifiedOn);
+
+    Task<HeldRejectionManagerNotificationDataModel?> GetHeldRejectionManagerNotificationAsync(long documentId);
+
+    /// <summary>Held rejections whose manager email has not been sent or skipped.</summary>
+    Task<List<long>> GetDocumentIdsWithUnnotifiedHeldRejectionsAsync();
+
+    Task MarkManagersNotifiedOfHeldRejectionAsync(long documentId, DateTime notifiedOn);
 }
 
 public class DocumentRepository(
@@ -1776,7 +1806,8 @@ public class DocumentRepository(
                 .Where(c => c.Status is DocumentStatus.ReviewPending
                     or DocumentStatus.DigitalImprovementPending
                     or DocumentStatus.DigitalImprovementOngoing
-                    or DocumentStatus.ReviewOngoing)
+                    or DocumentStatus.ReviewOngoing
+                    or DocumentStatus.PendingManagerDecision)
                 .Sum(c => c.Count),
             RejectedLetters = counts
                 .Where(c => c.Status == DocumentStatus.Rejected)
@@ -1941,6 +1972,7 @@ public class DocumentRepository(
             .Include(d => d.Company)
             .Include(d => d.Sponsor)
             .Include(d => d.RejectedReason)
+            .Include(d => d.RejectionOverriddenBy)
             .Include(d => d.Pages)
             .Where(d => d.StudentId == studentId)
             .ToListAsync();
@@ -1948,6 +1980,7 @@ public class DocumentRepository(
         var reportCards = await db.Set<ReportCard>()
             .AsNoTracking()
             .Include(d => d.RejectedReason)
+            .Include(d => d.RejectionOverriddenBy)
             .Include(d => d.Pages)
             .Where(d => d.StudentId == studentId)
             .ToListAsync();
@@ -1955,6 +1988,7 @@ public class DocumentRepository(
         var others = await db.Set<OtherDocument>()
             .AsNoTracking()
             .Include(d => d.RejectedReason)
+            .Include(d => d.RejectionOverriddenBy)
             .Include(d => d.Pages)
             .Where(d => d.StudentId == studentId)
             .ToListAsync();
@@ -2025,11 +2059,11 @@ public class DocumentRepository(
             RecipientName = recipientName,
             FileKind = document.FileKind,
             Status = document.Status,
-            RejectionReason = document.RejectedReason is null
-                ? document.RejectionNotes
-                : string.IsNullOrEmpty(document.RejectionNotes)
-                    ? document.RejectedReason.Description
-                    : document.RejectedReason.Description + ": " + document.RejectionNotes,
+            RejectionReason = FormatRejectionReason(document.RejectedReason, document.RejectionNotes),
+            RejectionOverriddenOn = document.RejectionOverriddenOn,
+            RejectionOverriddenByName = document.RejectionOverriddenBy is null
+                ? null
+                : document.RejectionOverriddenBy.FirstName + " " + document.RejectionOverriddenBy.LastName,
             TextContent = document.TextContent,
             YouTubeVideoId = document.YouTubeVideoId,
             PageCount = document.Pages.Count,
@@ -2181,6 +2215,26 @@ public class DocumentRepository(
             document.QueueItem.ReviewLockedAt = null;
         }
 
+        AddDocumentShares(db, document, reviewerId, targets, utcNow);
+
+        try
+        {
+            await db.SaveChangesAsync();
+            return [];
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return [DocumentMessages.ConcurrencyConflict];
+        }
+    }
+
+    private static void AddDocumentShares(
+        FonbecWebDbContext db,
+        Document document,
+        int sharedById,
+        ShareTargets targets,
+        DateTime utcNow)
+    {
         foreach (var sponsorId in targets.SponsorIds)
         {
             db.DocumentShares.Add(new DocumentShare
@@ -2189,7 +2243,7 @@ public class DocumentRepository(
                 SponsorId = sponsorId,
                 StudentId = document.StudentId,
                 SharedOn = utcNow,
-                SharedById = reviewerId,
+                SharedById = sharedById,
             });
         }
 
@@ -2201,18 +2255,8 @@ public class DocumentRepository(
                 CompanyId = companyId,
                 StudentId = document.StudentId,
                 SharedOn = utcNow,
-                SharedById = reviewerId,
+                SharedById = sharedById,
             });
-        }
-
-        try
-        {
-            await db.SaveChangesAsync();
-            return [];
-        }
-        catch (DbUpdateConcurrencyException)
-        {
-            return [DocumentMessages.ConcurrencyConflict];
         }
     }
 
@@ -2244,7 +2288,14 @@ public class DocumentRepository(
 
         db.Entry(document).Property(d => d.RowVersion).OriginalValue = rowVersion;
 
-        document.Status = DocumentStatus.Rejected;
+        var holdForManager = await db.Chapters
+            .Where(c => c.Id == document.ChapterId)
+            .Select(c => c.DocumentRejectionBehavior)
+            .FirstOrDefaultAsync() == DocumentRejectionBehavior.HoldForManager;
+
+        document.Status = holdForManager
+            ? DocumentStatus.PendingManagerDecision
+            : DocumentStatus.Rejected;
         document.RejectedOn = DateTime.UtcNow;
         document.RejectedById = reviewerId;
         document.RejectedReasonId = rejectedReasonId;
@@ -2266,6 +2317,381 @@ public class DocumentRepository(
         {
             return [DocumentMessages.ConcurrencyConflict];
         }
+    }
+
+    public async Task<DocumentRejectionBehavior?> GetChapterRejectionBehaviorAsync(int chapterId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+        var chapter = await db.Chapters
+            .AsNoTracking()
+            .Where(c => c.Id == chapterId)
+            .Select(c => (DocumentRejectionBehavior?)c.DocumentRejectionBehavior)
+            .FirstOrDefaultAsync();
+        return chapter;
+    }
+
+    public async Task<bool> SetChapterRejectionBehaviorAsync(
+        int chapterId, DocumentRejectionBehavior behavior, int updatedById)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+        var chapter = await db.Chapters.FirstOrDefaultAsync(c => c.Id == chapterId && c.IsActive);
+        if (chapter is null)
+        {
+            return false;
+        }
+
+        chapter.DocumentRejectionBehavior = behavior;
+        chapter.LastUpdatedById = updatedById;
+        await db.SaveChangesAsync();
+        return true;
+    }
+
+    public async Task<List<HeldRejectionDataModel>> ListHeldRejectionsAsync(int chapterId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var documents = await db.Documents
+            .AsNoTracking()
+            .Include(d => d.Student)
+            .Include(d => d.Sponsor)
+            .Include(d => d.RejectedReason)
+            .Include(d => d.RejectedBy)
+            .Where(d => d.ChapterId == chapterId && d.Status == DocumentStatus.PendingManagerDecision)
+            .OrderBy(d => d.RejectedOn)
+            .ThenBy(d => d.DocumentId)
+            .ToListAsync();
+
+        var letterIds = documents.OfType<Letter>().Select(l => l.DocumentId).ToList();
+        var companyNames = letterIds.Count == 0
+            ? new Dictionary<long, string>()
+            : await db.Set<Letter>()
+                .AsNoTracking()
+                .Where(l => letterIds.Contains(l.DocumentId) && l.CompanyId != null)
+                .Select(l => new { l.DocumentId, Name = l.Company!.Name })
+                .ToDictionaryAsync(l => l.DocumentId, l => l.Name);
+
+        var documentIds = documents.Select(d => d.DocumentId).ToList();
+        var pageCounts = documentIds.Count == 0
+            ? new Dictionary<long, int>()
+            : await db.Set<DocumentPage>()
+                .AsNoTracking()
+                .Where(p => documentIds.Contains(p.DocumentId))
+                .GroupBy(p => p.DocumentId)
+                .Select(g => new { g.Key, Count = g.Count() })
+                .ToDictionaryAsync(x => x.Key, x => x.Count);
+
+        var studentIds = documents.Where(d => d is not Letter).Select(d => d.StudentId).Distinct().ToList();
+        var sponsorsByStudent = await LoadActiveSponsorLabelsAsync(db, studentIds);
+
+        return documents.Select(document => new HeldRejectionDataModel
+        {
+            DocumentId = document.DocumentId,
+            StudentId = document.StudentId,
+            StudentName = document.Student.FirstName + " " + document.Student.LastName,
+            DocumentType = document.DocumentType,
+            Detail = HeldRejectionDetail(document, companyNames),
+            RejectionReason = FormatRejectionReason(document.RejectedReason, document.RejectionNotes),
+            RejectedOn = document.RejectedOn,
+            RejectedByName = document.RejectedBy is null
+                ? null
+                : document.RejectedBy.FirstName + " " + document.RejectedBy.LastName,
+            Sponsors = document is Letter
+                ? LetterSponsorLabels(document, companyNames)
+                : sponsorsByStudent.GetValueOrDefault(document.StudentId) ?? [],
+            FileKind = document.FileKind,
+            PageCount = pageCounts.GetValueOrDefault(document.DocumentId),
+            TextContent = document.FileKind == FileKind.Text ? document.TextContent : null,
+            YouTubeVideoId = document.FileKind == FileKind.YouTube ? document.YouTubeVideoId : null,
+            RowVersion = document.RowVersion,
+        }).ToList();
+    }
+
+    public async Task<int> CountHeldRejectionsAsync(int chapterId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+        return await db.Documents
+            .AsNoTracking()
+            .CountAsync(d => d.ChapterId == chapterId && d.Status == DocumentStatus.PendingManagerDecision);
+    }
+
+    public async Task<List<string>> ShareHeldRejectionAsync(
+        long documentId, int managerId, int chapterId, byte[] rowVersion)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var document = await db.Documents
+            .FirstOrDefaultAsync(d => d.DocumentId == documentId
+                                      && d.Status == DocumentStatus.PendingManagerDecision
+                                      && d.ChapterId == chapterId);
+
+        if (document is null)
+        {
+            return [DocumentMessages.HeldRejectionNotFound];
+        }
+
+        db.Entry(document).Property(d => d.RowVersion).OriginalValue = rowVersion;
+
+        ShareTargets targets = document is Letter letter
+            ? await ResolveShareTargetsAsync(
+                db,
+                letter.SponsorId.HasValue ? [letter.SponsorId.Value] : [],
+                letter.CompanyId.HasValue ? [letter.CompanyId.Value] : [])
+            : await ResolveStudentShareTargetsAsync(db, document.StudentId);
+
+        var utcNow = DateTime.UtcNow;
+        document.Status = DocumentStatus.Approved;
+        document.ApprovedOn = utcNow;
+        document.RejectionOverriddenOn = utcNow;
+        document.RejectionOverriddenById = managerId;
+        AddDocumentShares(db, document, managerId, targets, utcNow);
+
+        try
+        {
+            await db.SaveChangesAsync();
+            return [];
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return [DocumentMessages.ConcurrencyConflict];
+        }
+    }
+
+    public async Task<List<string>> ReturnHeldRejectionAsync(long documentId, int chapterId, byte[] rowVersion)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var document = await db.Documents
+            .FirstOrDefaultAsync(d => d.DocumentId == documentId
+                                      && d.Status == DocumentStatus.PendingManagerDecision
+                                      && d.ChapterId == chapterId);
+
+        if (document is null)
+        {
+            return [DocumentMessages.HeldRejectionNotFound];
+        }
+
+        db.Entry(document).Property(d => d.RowVersion).OriginalValue = rowVersion;
+        document.Status = DocumentStatus.Rejected;
+
+        try
+        {
+            await db.SaveChangesAsync();
+            return [];
+        }
+        catch (DbUpdateConcurrencyException)
+        {
+            return [DocumentMessages.ConcurrencyConflict];
+        }
+    }
+
+    public async Task<FacilitatorRejectionNotificationDataModel?> GetFacilitatorRejectionNotificationAsync(
+        long documentId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        return await db.Documents
+            .AsNoTracking()
+            .Where(d => d.DocumentId == documentId)
+            .Select(d => new FacilitatorRejectionNotificationDataModel
+            {
+                Status = d.Status,
+                FacilitatorRejectionNotifiedOn = d.FacilitatorRejectionNotifiedOn,
+                FacilitatorEmail = d.Student.Facilitator.Email,
+                FacilitatorFirstName = d.Student.Facilitator.FirstName,
+                StudentFirstName = d.Student.FirstName,
+                StudentLastName = d.Student.LastName,
+                StudentNickName = d.Student.NickName,
+                DocumentType = d.DocumentType,
+                RejectionReasonDescription = d.RejectedReason != null ? d.RejectedReason.Description : null,
+                RejectionNotes = d.RejectionNotes,
+            })
+            .SingleOrDefaultAsync();
+    }
+
+    public async Task<List<long>> GetDocumentIdsWithUnnotifiedFacilitatorRejectionsAsync()
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        return await db.Documents
+            .AsNoTracking()
+            .Where(d => d.Status == DocumentStatus.Rejected && d.FacilitatorRejectionNotifiedOn == null)
+            .Select(d => d.DocumentId)
+            .ToListAsync();
+    }
+
+    public async Task MarkFacilitatorRejectionNotifiedAsync(long documentId, DateTime notifiedOn)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+        var document = await db.Documents.SingleOrDefaultAsync(d => d.DocumentId == documentId);
+        if (document is null || document.FacilitatorRejectionNotifiedOn is not null)
+        {
+            return;
+        }
+
+        document.FacilitatorRejectionNotifiedOn = notifiedOn;
+        await db.SaveChangesAsync();
+    }
+
+    public async Task<HeldRejectionManagerNotificationDataModel?> GetHeldRejectionManagerNotificationAsync(
+        long documentId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        return await db.Documents
+            .AsNoTracking()
+            .Where(d => d.DocumentId == documentId)
+            .Select(d => new HeldRejectionManagerNotificationDataModel
+            {
+                Status = d.Status,
+                ManagersNotifiedOfHeldRejectionOn = d.ManagersNotifiedOfHeldRejectionOn,
+                ChapterId = d.ChapterId,
+                StudentFirstName = d.Student.FirstName,
+                StudentLastName = d.Student.LastName,
+                StudentNickName = d.Student.NickName,
+                DocumentType = d.DocumentType,
+                RejectionReasonDescription = d.RejectedReason != null ? d.RejectedReason.Description : null,
+                RejectionNotes = d.RejectionNotes,
+            })
+            .SingleOrDefaultAsync();
+    }
+
+    public async Task<List<long>> GetDocumentIdsWithUnnotifiedHeldRejectionsAsync()
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        return await db.Documents
+            .AsNoTracking()
+            .Where(d => d.Status == DocumentStatus.PendingManagerDecision
+                        && d.ManagersNotifiedOfHeldRejectionOn == null)
+            .Select(d => d.DocumentId)
+            .ToListAsync();
+    }
+
+    public async Task MarkManagersNotifiedOfHeldRejectionAsync(long documentId, DateTime notifiedOn)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+        var document = await db.Documents.SingleOrDefaultAsync(d => d.DocumentId == documentId);
+        if (document is null || document.ManagersNotifiedOfHeldRejectionOn is not null)
+        {
+            return;
+        }
+
+        document.ManagersNotifiedOfHeldRejectionOn = notifiedOn;
+        await db.SaveChangesAsync();
+    }
+
+    private static List<HeldRejectionSponsorDataModel> LetterSponsorLabels(
+        Document document, IReadOnlyDictionary<long, string> companyNames)
+    {
+        if (document is not Letter letter)
+        {
+            return [];
+        }
+
+        if (letter.CompanyId is not null && companyNames.TryGetValue(letter.DocumentId, out var companyName))
+        {
+            return [new HeldRejectionSponsorDataModel { Name = companyName, IsCompany = true }];
+        }
+
+        if (letter.Sponsor is null)
+        {
+            return [];
+        }
+
+        return
+        [
+            new HeldRejectionSponsorDataModel
+            {
+                Name = letter.Sponsor.FirstName + " " + letter.Sponsor.LastName,
+                Gender = letter.Sponsor.Gender,
+            },
+        ];
+    }
+
+    private static async Task<Dictionary<int, List<HeldRejectionSponsorDataModel>>> LoadActiveSponsorLabelsAsync(
+        FonbecWebDbContext db, List<int> studentIds)
+    {
+        if (studentIds.Count == 0)
+        {
+            return [];
+        }
+
+        var utcNow = DateTime.UtcNow;
+        var sponsorships = await db.Sponsorships
+            .AsNoTracking()
+            .Where(sp => studentIds.Contains(sp.StudentId)
+                         && sp.IsActive
+                         && sp.StartDate <= utcNow
+                         && (sp.EndDate == null || sp.EndDate >= utcNow))
+            .Select(sp => new
+            {
+                sp.StudentId,
+                sp.SponsorId,
+                SponsorName = sp.Sponsor == null ? null : sp.Sponsor.FirstName + " " + sp.Sponsor.LastName,
+                SponsorGender = sp.Sponsor == null ? (Gender?)null : sp.Sponsor.Gender,
+                SponsorActive = sp.Sponsor != null && sp.Sponsor.IsActive && !sp.Sponsor.IsDeleted,
+                sp.CompanyId,
+                CompanyName = sp.Company == null ? null : sp.Company.Name,
+                CompanyActive = sp.Company != null && sp.Company.IsActive,
+            })
+            .ToListAsync();
+
+        return sponsorships
+            .GroupBy(sp => sp.StudentId)
+            .ToDictionary(
+                group => group.Key,
+                group => group.SelectMany(sp =>
+                {
+                    var labels = new List<HeldRejectionSponsorDataModel>();
+                    if (sp.SponsorId is not null && sp.SponsorActive && sp.SponsorName is not null)
+                    {
+                        labels.Add(new HeldRejectionSponsorDataModel
+                        {
+                            Name = sp.SponsorName,
+                            Gender = sp.SponsorGender,
+                        });
+                    }
+
+                    if (sp.CompanyId is not null && sp.CompanyActive && sp.CompanyName is not null)
+                    {
+                        labels.Add(new HeldRejectionSponsorDataModel
+                        {
+                            Name = sp.CompanyName,
+                            IsCompany = true,
+                        });
+                    }
+
+                    return labels;
+                }).ToList());
+    }
+
+    private static string? FormatRejectionReason(RejectedReason? reason, string? notes) =>
+        reason is null
+            ? notes
+            : string.IsNullOrEmpty(notes)
+                ? reason.Description
+                : reason.Description + ": " + notes;
+
+    private static string? HeldRejectionDetail(Document document, IReadOnlyDictionary<long, string> companyNames)
+    {
+        if (document is Letter letter)
+        {
+            if (letter.CompanyId is not null && companyNames.TryGetValue(letter.DocumentId, out var companyName))
+            {
+                return companyName;
+            }
+
+            return letter.Sponsor is null
+                ? null
+                : letter.Sponsor.FirstName + " " + letter.Sponsor.LastName;
+        }
+
+        return document switch
+        {
+            ReportCard reportCard => reportCard.Description,
+            OtherDocument other => other.Description,
+            _ => null,
+        };
     }
 
     private static bool IsEligibleForSelectedReview(DocumentQueueItem queueItem, DateTime lockExpiredBefore)

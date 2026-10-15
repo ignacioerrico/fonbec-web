@@ -1,8 +1,10 @@
 ﻿using FluentAssertions;
 using Fonbec.Web.DataAccess.DataModels.Facilitators;
+using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Logic.Tests.Models;
+using Mapster;
 using NSubstitute;
 
 namespace Fonbec.Web.Logic.Tests.Services;
@@ -26,6 +28,8 @@ public class FacilitatorServiceReportCardTests : MappingTestBase
             .GetLatestReportCardsAsync(
                  Arg.Any<List<int>>(),Arg.Any<int>())
                 .Returns([]);
+
+        TypeAdapterConfig.GlobalSettings.Scan(typeof(FacilitatorService).Assembly);
 
         _facilitatorService = new FacilitatorService(
             _facilitatorRepository,
@@ -112,6 +116,50 @@ public class FacilitatorServiceReportCardTests : MappingTestBase
 
         beto.ReportCards.Should().ContainSingle();
         beto.ReportCards.Single().Description.Should().Be("Beto report card");
+    }
+
+    [Fact]
+    public async Task GetStudentsDashboardAsync_Hides_The_Reason_Until_The_Report_Is_Returned()
+    {
+        _facilitatorRepository.GetActiveSponsoredStudentsAsync(2)
+            .Returns([
+                new FacilitatorStudentsDataModel(Auditable)
+                {
+                    StudentId = 10,
+                    StudentFirstName = "Ana",
+                    StudentLastName = "Becaria",
+                },
+            ]);
+
+        _facilitatorRepository.GetLatestReportCardsAsync(Arg.Any<List<int>>(), Arg.Any<int>())
+            .Returns([
+                new FacilitatorReportsDataModel
+                {
+                    StudentId = 10,
+                    ReportCardId = 1,
+                    Period = new DateOnly(2026, 6, 1),
+                    Description = "Boletín en espera",
+                    Status = DocumentStatus.PendingManagerDecision,
+                    RejectionReason = "Ilegible",
+                },
+                new FacilitatorReportsDataModel
+                {
+                    StudentId = 10,
+                    ReportCardId = 2,
+                    Period = new DateOnly(2026, 3, 1),
+                    Description = "Boletín devuelto",
+                    Status = DocumentStatus.Rejected,
+                    RejectionReason = "Ilegible",
+                },
+            ]);
+
+        var result = await _facilitatorService.GetStudentsDashboardAsync(2);
+
+        var reports = result.Students.Single().ReportCards;
+        reports.Should().ContainSingle(r => r.Status == DocumentStatus.PendingManagerDecision)
+            .Which.RejectionReason.Should().BeNull();
+        reports.Should().ContainSingle(r => r.Status == DocumentStatus.Rejected)
+            .Which.RejectionReason.Should().Be("Ilegible");
     }
 
     [Fact]

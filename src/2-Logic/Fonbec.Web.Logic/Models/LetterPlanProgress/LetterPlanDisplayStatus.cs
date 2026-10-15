@@ -10,4 +10,5 @@ public enum LetterPlanDisplayStatus
     Approved,
     Rejected,
     Exempt,
+    PendingManagerDecision,
 }

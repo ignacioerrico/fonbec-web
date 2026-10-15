@@ -1,6 +1,8 @@
 ﻿using Fonbec.Web.DataAccess.Configurations.Abstract;
 using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.Entities;
+using Fonbec.Web.DataAccess.Entities.Enums;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Metadata.Builders;
 
 namespace Fonbec.Web.DataAccess.Configurations;
@@ -14,6 +16,9 @@ internal class ChapterConfiguration : AuditableEntityTypeConfiguration<Chapter>
         builder.Property(ch => ch.Name)
             .IsRequired()
             .HasMaxLength(MaxLength.Chapter.Name);
+
+        builder.Property(ch => ch.DocumentRejectionBehavior)
+            .HasDefaultValue(DocumentRejectionBehavior.ReturnToFacilitator);
 
         base.Configure(builder);
     }

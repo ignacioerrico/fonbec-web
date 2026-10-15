@@ -125,3 +125,10 @@ public record RejectOtherDocumentInputModel(
     byte[] RowVersion,
     int? RejectedReasonId,
     string? RejectionNotes);
+
+public record HeldRejectionDecisionInputModel(
+    long DocumentId,
+    int ManagerId,
+    string ManagerRole,
+    int ChapterId,
+    byte[] RowVersion);

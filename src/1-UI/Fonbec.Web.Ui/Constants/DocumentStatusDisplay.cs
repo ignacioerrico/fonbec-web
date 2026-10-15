@@ -15,6 +15,7 @@ public static class DocumentStatusDisplay
             DocumentStatus.ReviewOngoing => "Procesando",
             DocumentStatus.Approved => "Aprobado",
             DocumentStatus.Rejected => "Rechazado",
+            DocumentStatus.PendingManagerDecision => "Pendiente del coordinador",
             _ => status.ToString()
         };
 
@@ -26,6 +27,7 @@ public static class DocumentStatusDisplay
             DocumentStatus.ReviewOngoing => Icons.Material.Filled.Autorenew,
             DocumentStatus.Approved => Icons.Material.Filled.CheckCircle,
             DocumentStatus.Rejected => Icons.Material.Filled.Cancel,
+            DocumentStatus.PendingManagerDecision => Icons.Material.Filled.HourglassTop,
             _ => Icons.Material.Filled.Remove,
         };
 
@@ -37,6 +39,7 @@ public static class DocumentStatusDisplay
             DocumentStatus.ReviewOngoing => MudBlazor.Color.Info,
             DocumentStatus.Approved => MudBlazor.Color.Success,
             DocumentStatus.Rejected => MudBlazor.Color.Error,
+            DocumentStatus.PendingManagerDecision => MudBlazor.Color.Warning,
             _ => MudBlazor.Color.Default,
         };
     }

@@ -49,6 +49,8 @@ public class OtherDocumentsViewModelMappingDefinitions : IRegister
     {
         config.NewConfig<FacilitatorOtherDocumentItemDataModel, OtherDocumentHistoryItemViewModel>()
             .Map(dest => dest.Date, src => DateOnly.FromDateTime(src.UploadedOn))
-            .Map(dest => dest.CanDownload, src => src.FileKind == FileKind.Blob && src.PageCount > 0);
+            .Map(dest => dest.CanDownload, src => src.FileKind == FileKind.Blob && src.PageCount > 0)
+            .Map(dest => dest.RejectionReason, src =>
+                src.Status == DocumentStatus.Rejected ? src.RejectionReason : null);
     }
 }

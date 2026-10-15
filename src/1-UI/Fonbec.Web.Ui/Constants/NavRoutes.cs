@@ -192,6 +192,10 @@ public static class NavRoutes
 
     public const string ReviewQueue = "/revisar";
 
+    public const string ChapterSettings = "/filial";
+
+    public const string RejectedDocuments = "/rechazados";
+
     public const string QueueContents = "/colas";
 
     public static string ReviewDocument(long documentId) => $"{ReviewQueue}/{documentId}";

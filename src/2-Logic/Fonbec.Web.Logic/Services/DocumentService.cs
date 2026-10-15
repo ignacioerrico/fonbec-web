@@ -102,6 +102,17 @@ public interface IDocumentService
     Task<ReviewResult> RejectReportCardAsync(RejectReportCardInputModel input);
     Task<ReviewResult> ApproveOtherDocumentAsync(ApproveOtherDocumentInputModel input);
     Task<ReviewResult> RejectOtherDocumentAsync(RejectOtherDocumentInputModel input);
+
+    Task<HeldRejectionsPageViewModel?> GetHeldRejectionsPageAsync(int chapterId, string userRole);
+
+    Task<DocumentRejectionBehavior?> GetChapterRejectionBehaviorAsync(int chapterId, string userRole);
+
+    Task<CrudResult> SetChapterRejectionBehaviorAsync(
+        int chapterId, string userRole, int userId, DocumentRejectionBehavior behavior);
+
+    Task<ReviewResult> ShareHeldRejectionAsync(HeldRejectionDecisionInputModel input);
+
+    Task<ReviewResult> ReturnHeldRejectionAsync(HeldRejectionDecisionInputModel input);
     Task<SponsorDocumentHistoryViewModel> GetSharedDocumentsAsync(Guid sponsorPublicAccessToken, int studentId);
     Task<SponsorDocumentHistoryViewModel> GetSharedDocumentsAsync(
         Guid sponsorPublicAccessToken, int studentId, int skip, int take);
@@ -846,9 +857,13 @@ public class DocumentService(
 
         var dataModel = input.Adapt<DataAccess.DataModels.Documents.Input.RejectLetterInputDataModel>();
         var errors = await documentRepository.RejectLetterAsync(dataModel);
-        return errors.Count == 0
-            ? new ReviewResult(true)
-            : new ReviewResult(false, errors);
+        if (errors.Count > 0)
+        {
+            return new ReviewResult(false, errors);
+        }
+
+        await EnqueueRejectionNotificationsAsync(input.DocumentId);
+        return new ReviewResult(true);
     }
 
     public async Task<ReviewResult> ApproveReportCardAsync(ApproveReportCardInputModel input)
@@ -927,9 +942,13 @@ public class DocumentService(
 
         var dataModel = input.Adapt<DataAccess.DataModels.Documents.Input.RejectReportCardInputDataModel>();
         var errors = await documentRepository.RejectReportCardAsync(dataModel);
-        return errors.Count == 0
-            ? new ReviewResult(true)
-            : new ReviewResult(false, errors);
+        if (errors.Count > 0)
+        {
+            return new ReviewResult(false, errors);
+        }
+
+        await EnqueueRejectionNotificationsAsync(input.DocumentId);
+        return new ReviewResult(true);
     }
 
     public async Task<ReviewResult> ApproveOtherDocumentAsync(ApproveOtherDocumentInputModel input)
@@ -994,10 +1013,179 @@ public class DocumentService(
 
         var dataModel = input.Adapt<DataAccess.DataModels.Documents.Input.RejectOtherDocumentInputDataModel>();
         var errors = await documentRepository.RejectOtherDocumentAsync(dataModel);
-        return errors.Count == 0
-            ? new ReviewResult(true)
-            : new ReviewResult(false, errors);
+        if (errors.Count > 0)
+        {
+            return new ReviewResult(false, errors);
+        }
+
+        await EnqueueRejectionNotificationsAsync(input.DocumentId);
+        return new ReviewResult(true);
     }
+
+    public async Task<HeldRejectionsPageViewModel?> GetHeldRejectionsPageAsync(int chapterId, string userRole)
+    {
+        if (!CanDecideRejection(userRole))
+        {
+            return null;
+        }
+
+        var behavior = await documentRepository.GetChapterRejectionBehaviorAsync(chapterId);
+        if (behavior is null)
+        {
+            return null;
+        }
+
+        var items = await documentRepository.ListHeldRejectionsAsync(chapterId);
+        return new HeldRejectionsPageViewModel
+        {
+            Behavior = behavior.Value,
+            Items = items.Select(item => new HeldRejectionItemViewModel
+            {
+                DocumentId = item.DocumentId,
+                StudentId = item.StudentId,
+                StudentName = item.StudentName,
+                DocumentType = item.DocumentType,
+                Detail = item.Detail,
+                RejectionReason = item.RejectionReason,
+                RejectedOn = item.RejectedOn,
+                RejectedByName = item.RejectedByName,
+                Sponsors = item.Sponsors.Select(sponsor => new HeldRejectionSponsorViewModel
+                {
+                    Name = sponsor.Name,
+                    Gender = sponsor.Gender,
+                    IsCompany = sponsor.IsCompany,
+                }).ToList(),
+                FileKind = item.FileKind,
+                PageCount = item.PageCount,
+                TextContent = item.TextContent,
+                YouTubeVideoId = item.YouTubeVideoId,
+                RowVersion = item.RowVersion,
+            }).ToList(),
+        };
+    }
+
+    public async Task<DocumentRejectionBehavior?> GetChapterRejectionBehaviorAsync(int chapterId, string userRole)
+    {
+        if (!CanDecideRejection(userRole))
+        {
+            return null;
+        }
+
+        return await documentRepository.GetChapterRejectionBehaviorAsync(chapterId);
+    }
+
+    public async Task<CrudResult> SetChapterRejectionBehaviorAsync(
+        int chapterId, string userRole, int userId, DocumentRejectionBehavior behavior)
+    {
+        if (!CanDecideRejection(userRole))
+        {
+            return new CrudResult(Errors: [DocumentMessages.NotAuthorizedToDecideRejection]);
+        }
+
+        if (!Enum.IsDefined(behavior))
+        {
+            return new CrudResult(Errors: [DocumentMessages.NotAuthorizedToDecideRejection]);
+        }
+
+        var updated = await documentRepository.SetChapterRejectionBehaviorAsync(chapterId, behavior, userId);
+        return updated
+            ? new CrudResult()
+            : new CrudResult(Errors: [DocumentMessages.ChapterNotFound]);
+    }
+
+    public async Task<ReviewResult> ShareHeldRejectionAsync(HeldRejectionDecisionInputModel input)
+    {
+        if (!CanDecideRejection(input.ManagerRole))
+        {
+            return new ReviewResult(false, [DocumentMessages.NotAuthorizedToDecideRejection]);
+        }
+
+        var document = await documentRepository.GetDocumentByIdAsync(input.DocumentId);
+        if (document is null
+            || document.ChapterId != input.ChapterId
+            || document.Status != DocumentStatus.PendingManagerDecision)
+        {
+            return new ReviewResult(false, [DocumentMessages.HeldRejectionNotFound]);
+        }
+
+        PlanReadinessResult? readinessBefore = null;
+        if (document is Letter letterBefore)
+        {
+            readinessBefore = await planCompletionService.GetReadinessAsync(
+                letterBefore.PlanId,
+                letterBefore.ChapterId);
+        }
+
+        var errors = await documentRepository.ShareHeldRejectionAsync(
+            input.DocumentId, input.ManagerId, input.ChapterId, input.RowVersion);
+        if (errors.Count > 0)
+        {
+            return new ReviewResult(false, errors);
+        }
+
+        await documentNotificationQueue.EnqueueSponsorNotificationAsync(input.DocumentId);
+
+        if (document is Letter letter)
+        {
+            try
+            {
+                var readinessAfter = await planCompletionService.GetReadinessAsync(
+                    letter.PlanId,
+                    letter.ChapterId);
+
+                if (readinessBefore is { IsCompleted: false, IsReadyToComplete: false }
+                    && readinessAfter.IsReadyToComplete)
+                {
+                    await documentNotificationQueue.EnqueuePlanReadyNotificationAsync(
+                        letter.ChapterId,
+                        letter.PlanId,
+                        readinessAfter.PlanStartsOn);
+                }
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex,
+                    "Failed to queue the plan-ready notification for plan {PlanId} in chapter {ChapterId} after sharing rejected letter {DocumentId}.",
+                    letter.PlanId, letter.ChapterId, input.DocumentId);
+            }
+        }
+
+        return new ReviewResult(true);
+    }
+
+    public async Task<ReviewResult> ReturnHeldRejectionAsync(HeldRejectionDecisionInputModel input)
+    {
+        if (!CanDecideRejection(input.ManagerRole))
+        {
+            return new ReviewResult(false, [DocumentMessages.NotAuthorizedToDecideRejection]);
+        }
+
+        var errors = await documentRepository.ReturnHeldRejectionAsync(
+            input.DocumentId, input.ChapterId, input.RowVersion);
+        if (errors.Count > 0)
+        {
+            return new ReviewResult(false, errors);
+        }
+
+        await documentNotificationQueue.EnqueueFacilitatorRejectionNotificationAsync(input.DocumentId);
+        return new ReviewResult(true);
+    }
+
+    private async Task EnqueueRejectionNotificationsAsync(long documentId)
+    {
+        var document = await documentRepository.GetDocumentByIdAsync(documentId);
+        if (document?.Status == DocumentStatus.Rejected)
+        {
+            await documentNotificationQueue.EnqueueFacilitatorRejectionNotificationAsync(documentId);
+        }
+        else if (document?.Status == DocumentStatus.PendingManagerDecision)
+        {
+            await documentNotificationQueue.EnqueueHeldRejectionManagerNotificationAsync(documentId);
+        }
+    }
+
+    private static bool CanDecideRejection(string userRole) =>
+        userRole == FonbecRole.Manager;
 
     public const int SharedDocumentHistoryPageSize = 10;
 

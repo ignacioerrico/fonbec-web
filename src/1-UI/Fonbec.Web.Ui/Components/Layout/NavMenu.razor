@@ -198,12 +198,36 @@
                             </MudNavLink>
                         </AuthorizeView>
 
+                        @if (_indicators.HoldsRejectionsForManager)
+                        {
+                            <AuthorizeView Policy="@nameof(RejectedDocuments)" Context="rejectedDocumentsContext">
+                                <MudNavLink Href="@NavRoutes.RejectedDocuments" Match="NavLinkMatch.All">
+                                    <span class="nav-count">
+                                        <span class="nav-count__label">Documentos rechazados</span>
+                                        @if (_indicators.PendingHeldRejections is int pendingHeldRejections
+                                             && PendingMessageBadge.Format(pendingHeldRejections) is string heldBadge)
+                                        {
+                                            <span class="nav-count__badge"
+                                                  title="@NavMenuFormatting.PendingChanges(pendingHeldRejections)"
+                                                  aria-label="@NavMenuFormatting.PendingChanges(pendingHeldRejections)">@heldBadge</span>
+                                        }
+                                    </span>
+                                </MudNavLink>
+                            </AuthorizeView>
+                        }
+
                         <AuthorizeView Policy="@nameof(QueueContents)" Context="queueContentsContext">
                             <MudNavLink Href="@NavRoutes.QueueContents" Match="NavLinkMatch.All">
                                 Colas
                             </MudNavLink>
                         </AuthorizeView>
                     </MudNavGroup>
+                </AuthorizeView>
+
+                <AuthorizeView Policy="@nameof(ChapterSettings)">
+                    <MudNavLink Href="@NavRoutes.ChapterSettings" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Tune">
+                        Configuración de la filial
+                    </MudNavLink>
                 </AuthorizeView>
             </Authorized>
         </AuthorizeView>

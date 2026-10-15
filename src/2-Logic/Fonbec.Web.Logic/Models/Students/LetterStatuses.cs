@@ -24,4 +24,5 @@ public enum LetterSlotStatus
     InReview = 1,
     Approved = 2,
     Rejected = 3,
+    PendingManagerDecision = 4,
 }

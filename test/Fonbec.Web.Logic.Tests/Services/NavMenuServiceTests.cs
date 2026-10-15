@@ -3,6 +3,7 @@ using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.DataModels.Documents;
 using Fonbec.Web.DataAccess.DataModels.LetterFollowUp;
 using Fonbec.Web.DataAccess.DataModels.PlannedDelivery;
+using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Models.LetterPlanProgress;
 using Fonbec.Web.Logic.Models.Navigation;
@@ -69,6 +70,9 @@ public class NavMenuServiceTests
             PendingOther = 0,
             PendingImprovement = 6,
         });
+        _documents.CountHeldRejectionsAsync(ChapterId).Returns(3);
+        _documents.GetChapterRejectionBehaviorAsync(ChapterId)
+            .Returns(DocumentRejectionBehavior.HoldForManager);
         var indicators = await _service.GetAsync(FonbecRole.Manager, ChapterId, canImproveImages: true);
 
         indicators.StudentCount.Should().Be(18);
@@ -81,6 +85,8 @@ public class NavMenuServiceTests
         indicators.GreenFlags.Should().Be(5);
         indicators.PendingReview.Should().Be(5);
         indicators.PendingImprovement.Should().Be(6);
+        indicators.PendingHeldRejections.Should().Be(3);
+        indicators.HoldsRejectionsForManager.Should().BeTrue();
     }
 
     [Fact]
@@ -106,6 +112,17 @@ public class NavMenuServiceTests
         var indicators = await _service.GetAsync(FonbecRole.Manager, ChapterId, canImproveImages: false);
 
         indicators.CampaignCompletionPercent.Should().Be(0);
+    }
+
+    [Fact]
+    public async Task GetAsync_Manager_Hides_Rejected_Documents_When_The_Filial_Returns_Them()
+    {
+        _documents.GetChapterRejectionBehaviorAsync(ChapterId)
+            .Returns(DocumentRejectionBehavior.ReturnToFacilitator);
+
+        var indicators = await _service.GetAsync(FonbecRole.Manager, ChapterId, canImproveImages: false);
+
+        indicators.HoldsRejectionsForManager.Should().BeFalse();
     }
 
     [Fact]

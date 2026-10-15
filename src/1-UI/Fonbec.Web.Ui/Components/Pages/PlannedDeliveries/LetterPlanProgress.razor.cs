@@ -117,6 +117,7 @@ public partial class LetterPlanProgress
         LetterPlanDisplayStatus.Approved => Color.Success,
         LetterPlanDisplayStatus.Rejected => Color.Error,
         LetterPlanDisplayStatus.Exempt => Color.Default,
+        LetterPlanDisplayStatus.PendingManagerDecision => Color.Warning,
         _ => Color.Default,
     };
 
@@ -125,6 +126,7 @@ public partial class LetterPlanProgress
         {
             LetterPlanDisplayStatus.Exempt when !string.IsNullOrWhiteSpace(row.ExemptionReason) => row.ExemptionReason,
             LetterPlanDisplayStatus.Rejected when !string.IsNullOrWhiteSpace(row.RejectionReason) => row.RejectionReason,
+            LetterPlanDisplayStatus.PendingManagerDecision when !string.IsNullOrWhiteSpace(row.RejectionReason) => row.RejectionReason,
             _ => null
         };
 

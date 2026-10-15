@@ -1,4 +1,5 @@
 using System.Security.Cryptography;
+using Fonbec.Web.DataAccess.DataModels.Users;
 using Fonbec.Web.DataAccess.DataModels.Users.Output;
 using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.DataAccess.Entities.Enums;
@@ -125,6 +126,11 @@ internal sealed class DocumentTestFixture
         ConfigureUser(ReviewerId, "Reviewer", chapterId: null);
         ConfigureUser(ManagerId, "Manager", ChapterId);
         ConfigureUser(OtherUploaderId, "Uploader", ChapterId);
+
+        userRepository.GetChapterManagerContactsAsync(Arg.Any<int>()).Returns(
+        [
+            new ChapterManagerContactDataModel("manager@fonbec.test", "manager User"),
+        ]);
 
         userRepository.GetUserClaim(Arg.Any<string>(), Arg.Any<string>())
             .Returns(callInfo =>
@@ -534,6 +540,12 @@ internal sealed class DocumentTestFixture
 
         public Task EnqueuePlanReadyNotificationAsync(int chapterId, int planId, DateTime planStartsOn) =>
             notifications.NotifyChapterManagersPlanReadyAsync(chapterId, planId, planStartsOn);
+
+        public Task EnqueueFacilitatorRejectionNotificationAsync(long documentId) =>
+            notifications.NotifyFacilitatorOfDocumentRejectionAsync(documentId);
+
+        public Task EnqueueHeldRejectionManagerNotificationAsync(long documentId) =>
+            notifications.NotifyManagersOfHeldRejectionAsync(documentId);
     }
 
     private IDbContextFactory<FonbecWebDbContext> CreateDbContextFactory() =>

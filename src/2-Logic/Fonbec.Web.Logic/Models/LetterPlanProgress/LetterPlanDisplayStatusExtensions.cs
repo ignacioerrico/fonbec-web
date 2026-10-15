@@ -24,6 +24,7 @@ public static class LetterPlanDisplayStatusExtensions
             DocumentStatus.ReviewOngoing => LetterPlanDisplayStatus.ProcessingReview,
             DocumentStatus.Approved => LetterPlanDisplayStatus.Approved,
             DocumentStatus.Rejected => LetterPlanDisplayStatus.Rejected,
+            DocumentStatus.PendingManagerDecision => LetterPlanDisplayStatus.PendingManagerDecision,
             _ => LetterPlanDisplayStatus.Missing,
         };
     }
@@ -38,6 +39,7 @@ public static class LetterPlanDisplayStatusExtensions
         LetterPlanDisplayStatus.Approved => "Aprobada",
         LetterPlanDisplayStatus.Rejected => "Rechazada",
         LetterPlanDisplayStatus.Exempt => "Eximido",
+        LetterPlanDisplayStatus.PendingManagerDecision => "Pendiente del coordinador",
         _ => string.Empty,
     };
 
@@ -48,7 +50,8 @@ public static class LetterPlanDisplayStatusExtensions
         status is LetterPlanDisplayStatus.PendingImprovement
             or LetterPlanDisplayStatus.ProcessingImprovement
             or LetterPlanDisplayStatus.PendingReview
-            or LetterPlanDisplayStatus.ProcessingReview;
+            or LetterPlanDisplayStatus.ProcessingReview
+            or LetterPlanDisplayStatus.PendingManagerDecision;
 
     public static bool CountsAsMissingOrRejected(this LetterPlanDisplayStatus status) =>
         status is LetterPlanDisplayStatus.Missing or LetterPlanDisplayStatus.Rejected;

@@ -265,6 +265,10 @@ public class StudentDocumentHistoryItemViewModel
 
     public string? RejectionReason { get; init; }
 
+    public DateTime? RejectionOverriddenOn { get; init; }
+
+    public string? RejectionOverriddenByName { get; init; }
+
     public bool CanDownload { get; init; }
 
     public string? TextContent { get; init; }
@@ -272,4 +276,53 @@ public class StudentDocumentHistoryItemViewModel
     public string? YouTubeVideoId { get; init; }
 
     public int PageCount { get; init; }
+}
+
+public class HeldRejectionsPageViewModel
+{
+    public DocumentRejectionBehavior Behavior { get; init; }
+
+    public List<HeldRejectionItemViewModel> Items { get; init; } = [];
+}
+
+public class HeldRejectionItemViewModel
+{
+    public long DocumentId { get; init; }
+
+    public int StudentId { get; init; }
+
+    public string StudentName { get; init; } = string.Empty;
+
+    public DocumentType DocumentType { get; init; }
+
+    public string? Detail { get; init; }
+
+    public string? RejectionReason { get; init; }
+
+    public DateTime? RejectedOn { get; init; }
+
+    public string? RejectedByName { get; init; }
+
+    public List<HeldRejectionSponsorViewModel> Sponsors { get; init; } = [];
+
+    public FileKind FileKind { get; init; }
+
+    public int PageCount { get; init; }
+
+    public string? TextContent { get; init; }
+
+    public string? YouTubeVideoId { get; init; }
+
+    public bool CanViewFile => FileKind == FileKind.Blob && PageCount > 0;
+
+    public byte[] RowVersion { get; init; } = [];
+}
+
+public class HeldRejectionSponsorViewModel
+{
+    public string Name { get; init; } = string.Empty;
+
+    public Gender? Gender { get; init; }
+
+    public bool IsCompany { get; init; }
 }

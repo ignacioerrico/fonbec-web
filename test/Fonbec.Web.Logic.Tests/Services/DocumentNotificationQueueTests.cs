@@ -15,6 +15,8 @@ public class DocumentNotificationQueueTests
         var notifications = Substitute.For<IDocumentNotificationService>();
         var repository = Substitute.For<IDocumentRepository>();
         repository.GetDocumentIdsWithUnnotifiedSharesAsync().Returns([]);
+        repository.GetDocumentIdsWithUnnotifiedFacilitatorRejectionsAsync().Returns([]);
+        repository.GetDocumentIdsWithUnnotifiedHeldRejectionsAsync().Returns([]);
 
         var sendStarted = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         var releaseSend = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
@@ -46,12 +48,28 @@ public class DocumentNotificationQueueTests
         var notifications = Substitute.For<IDocumentNotificationService>();
         var repository = Substitute.For<IDocumentRepository>();
         repository.GetDocumentIdsWithUnnotifiedSharesAsync().Returns([7L]);
+        repository.GetDocumentIdsWithUnnotifiedFacilitatorRejectionsAsync().Returns([9L]);
+        repository.GetDocumentIdsWithUnnotifiedHeldRejectionsAsync().Returns([11L]);
 
         var sent = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var rejectionSent = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var heldSent = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
         notifications.NotifySponsorsAsync(7, Arg.Any<CancellationToken>())
             .Returns(_ =>
             {
                 sent.TrySetResult();
+                return Task.CompletedTask;
+            });
+        notifications.NotifyFacilitatorOfDocumentRejectionAsync(9, Arg.Any<CancellationToken>())
+            .Returns(_ =>
+            {
+                rejectionSent.TrySetResult();
+                return Task.CompletedTask;
+            });
+        notifications.NotifyManagersOfHeldRejectionAsync(11, Arg.Any<CancellationToken>())
+            .Returns(_ =>
+            {
+                heldSent.TrySetResult();
                 return Task.CompletedTask;
             });
 
@@ -60,7 +78,11 @@ public class DocumentNotificationQueueTests
         try
         {
             await sent.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+            await rejectionSent.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
+            await heldSent.Task.WaitAsync(TimeSpan.FromSeconds(5), TestContext.Current.CancellationToken);
             await notifications.Received(1).NotifySponsorsAsync(7, Arg.Any<CancellationToken>());
+            await notifications.Received(1).NotifyFacilitatorOfDocumentRejectionAsync(9, Arg.Any<CancellationToken>());
+            await notifications.Received(1).NotifyManagersOfHeldRejectionAsync(11, Arg.Any<CancellationToken>());
         }
         finally
         {

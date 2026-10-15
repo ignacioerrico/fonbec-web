@@ -71,6 +71,11 @@ internal class DocumentConfiguration : IEntityTypeConfiguration<Document>
             .HasForeignKey(d => d.RejectedReasonId)
             .OnDelete(DeleteBehavior.NoAction);
 
+        builder.HasOne(d => d.RejectionOverriddenBy)
+            .WithMany()
+            .HasForeignKey(d => d.RejectionOverriddenById)
+            .OnDelete(DeleteBehavior.NoAction);
+
         builder.HasIndex(d => new { d.Status, d.UploadedOn });
 
         // Serves the server-side review-progress aggregation (GROUP BY DocumentType, Status).
@@ -79,12 +84,16 @@ internal class DocumentConfiguration : IEntityTypeConfiguration<Document>
         // Serves fair review dequeue (next chapter, then oldest document in that chapter).
         builder.HasIndex(d => new { d.ChapterId, d.Status });
 
+        // Serves startup recovery of facilitator rejection emails that were not sent.
+        builder.HasIndex(d => new { d.Status, d.FacilitatorRejectionNotifiedOn });
+
+        // Serves startup recovery of manager emails for rejections waiting on a decision.
+        builder.HasIndex(d => new { d.Status, d.ManagersNotifiedOfHeldRejectionOn });
+
+        // ApprovedOn and RejectedOn can both be set when a manager shares a rejected document.
+        // Status is what facilitators and sponsors follow.
         builder.ToTable(t =>
         {
-            t.HasCheckConstraint(
-                "CK_Document_ApprovedOrRejected",
-                "[ApprovedOn] IS NULL OR [RejectedOn] IS NULL");
-
             // Report cards and other documents require a description; letters never have one.
             t.HasCheckConstraint(
                 "CK_Document_DescriptionRequired",

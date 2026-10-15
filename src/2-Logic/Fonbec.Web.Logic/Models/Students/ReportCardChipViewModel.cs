@@ -24,6 +24,7 @@ public class ReportCardChipViewModelMappingDefinitions : IRegister
             .Map(dest => dest.PeriodLabel, src => src.Period.ToString("MMM/yy"))
             .Map(dest => dest.Description, src => src.Description)
             .Map(dest => dest.Status, src => src.Status)
-            .Map(dest => dest.RejectionReason, src => src.RejectionReason);
+            .Map(dest => dest.RejectionReason, src =>
+                src.Status == DocumentStatus.Rejected ? src.RejectionReason : null);
     }
 }

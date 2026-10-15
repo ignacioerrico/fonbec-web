@@ -8,4 +8,10 @@ public enum DocumentStatus : byte
     ReviewOngoing = 3,
     Approved = 4,
     Rejected = 5,
+
+    /// <summary>
+    /// A reviewer rejected the document, and the chapter holds it until a manager
+    /// shares it with the sponsor or returns it to the facilitator.
+    /// </summary>
+    PendingManagerDecision = 6,
 }

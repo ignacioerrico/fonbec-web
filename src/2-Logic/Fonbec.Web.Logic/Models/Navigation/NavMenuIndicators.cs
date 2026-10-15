@@ -26,6 +26,12 @@ public sealed class NavMenuIndicators
 
     /// <summary>Documents waiting for review, or null when the user cannot review.</summary>
     public int? PendingReview { get; init; }
+
+    /// <summary>Rejected documents waiting for a manager decision, or null when the user is not a manager.</summary>
+    public int? PendingHeldRejections { get; init; }
+
+    /// <summary>The filial holds rejected documents until a manager decides.</summary>
+    public bool HoldsRejectionsForManager { get; init; }
 }
 
 public static class NavMenuFormatting

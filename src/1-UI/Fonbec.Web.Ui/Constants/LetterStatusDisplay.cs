@@ -41,6 +41,7 @@ public static class LetterStatusDisplay
         LetterSlotStatus.InReview => Icons.Material.Filled.HourglassTop,
         LetterSlotStatus.Approved => Icons.Material.Filled.CheckCircle,
         LetterSlotStatus.Rejected => Icons.Material.Filled.Replay,
+        LetterSlotStatus.PendingManagerDecision => Icons.Material.Filled.HourglassTop,
         _ => Icons.Material.Filled.Remove,
     };
 
@@ -50,6 +51,7 @@ public static class LetterStatusDisplay
         LetterSlotStatus.InReview => MudBlazor.Color.Info,
         LetterSlotStatus.Approved => MudBlazor.Color.Success,
         LetterSlotStatus.Rejected => MudBlazor.Color.Error,
+        LetterSlotStatus.PendingManagerDecision => MudBlazor.Color.Warning,
         _ => MudBlazor.Color.Default,
     };
 
@@ -59,6 +61,7 @@ public static class LetterStatusDisplay
         LetterSlotStatus.InReview => "Esperando aprobación",
         LetterSlotStatus.Approved => "Aprobada",
         LetterSlotStatus.Rejected => "Rechazada",
+        LetterSlotStatus.PendingManagerDecision => "Pendiente del coordinador",
         _ => string.Empty,
     };
 }

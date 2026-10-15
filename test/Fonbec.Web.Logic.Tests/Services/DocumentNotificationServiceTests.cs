@@ -560,6 +560,150 @@ public class DocumentNotificationServiceTests
         await _documentRepository.Received(1).MarkShareNotifiedAsync(1, Arg.Any<DateTime>());
     }
 
+    [Fact]
+    public async Task NotifyFacilitatorOfDocumentRejection_Sends_The_Reason_And_Marks_The_Document()
+    {
+        _documentRepository.GetFacilitatorRejectionNotificationAsync(42).Returns(
+            new FacilitatorRejectionNotificationDataModel
+            {
+                Status = DocumentStatus.Rejected,
+                FacilitatorEmail = "mediador@test.com",
+                FacilitatorFirstName = "Ana",
+                StudentFirstName = "María",
+                StudentLastName = "García",
+                StudentNickName = "Mari",
+                DocumentType = DocumentType.Letter,
+                RejectionReasonDescription = "Ilegible",
+                RejectionNotes = "falta el sello",
+            });
+
+        await CreateService().NotifyFacilitatorOfDocumentRejectionAsync(42, TestContext.Current.CancellationToken);
+
+        await _emailMessageSender.Received(1).SendEmailAsync(
+            "mediador@test.com",
+            "Documento rechazado",
+            Arg.Is<string>(html =>
+                html.Contains("Hola, Ana:")
+                && html.Contains("Se rechazó la carta de Mari Garc")
+                && html.Contains("Motivo: Ilegible: falta el sello")
+                && html.Contains("https://fonbec.test/mediadores/mis-becarios")));
+        await _documentRepository.Received(1).MarkFacilitatorRejectionNotifiedAsync(42, Arg.Any<DateTime>());
+    }
+
+    [Fact]
+    public async Task NotifyFacilitatorOfDocumentRejection_Without_Email_Is_Skipped_And_Not_Retried()
+    {
+        _documentRepository.GetFacilitatorRejectionNotificationAsync(42).Returns(
+            new FacilitatorRejectionNotificationDataModel
+            {
+                Status = DocumentStatus.Rejected,
+                FacilitatorEmail = "  ",
+                DocumentType = DocumentType.ReportCard,
+                RejectionReasonDescription = "Ilegible",
+            });
+
+        await CreateService().NotifyFacilitatorOfDocumentRejectionAsync(42, TestContext.Current.CancellationToken);
+
+        await _emailMessageSender.DidNotReceive().SendEmailAsync(
+            Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await _documentRepository.Received(1).MarkFacilitatorRejectionNotifiedAsync(42, Arg.Any<DateTime>());
+    }
+
+    [Fact]
+    public async Task NotifyFacilitatorOfDocumentRejection_Ignores_A_Document_Still_Held_For_The_Manager()
+    {
+        _documentRepository.GetFacilitatorRejectionNotificationAsync(42).Returns(
+            new FacilitatorRejectionNotificationDataModel
+            {
+                Status = DocumentStatus.PendingManagerDecision,
+                FacilitatorEmail = "mediador@test.com",
+                DocumentType = DocumentType.Other,
+            });
+
+        await CreateService().NotifyFacilitatorOfDocumentRejectionAsync(42, TestContext.Current.CancellationToken);
+
+        await _emailMessageSender.DidNotReceive().SendEmailAsync(
+            Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await _documentRepository.DidNotReceive().MarkFacilitatorRejectionNotifiedAsync(
+            Arg.Any<long>(), Arg.Any<DateTime>());
+    }
+
+    [Fact]
+    public async Task NotifyManagersOfHeldRejection_Sends_The_Reason_And_Marks_The_Document()
+    {
+        _documentRepository.GetHeldRejectionManagerNotificationAsync(42).Returns(
+            new HeldRejectionManagerNotificationDataModel
+            {
+                Status = DocumentStatus.PendingManagerDecision,
+                ChapterId = 4,
+                StudentFirstName = "María",
+                StudentLastName = "García",
+                StudentNickName = "Mari",
+                DocumentType = DocumentType.Letter,
+                RejectionReasonDescription = "Ilegible",
+                RejectionNotes = "falta el sello",
+            });
+        _userRepository.GetChapterManagerContactsAsync(4).Returns(
+        [
+            new ChapterManagerContactDataModel("ana@fonbec.test", "Ana Perez"),
+            new ChapterManagerContactDataModel("luis@fonbec.test", "Luis Gomez"),
+        ]);
+
+        await CreateService().NotifyManagersOfHeldRejectionAsync(42, TestContext.Current.CancellationToken);
+
+        await _emailMessageSender.Received(1).SendEmailAsync(
+            "ana@fonbec.test",
+            "Documento rechazado para decidir",
+            Arg.Is<string>(html =>
+                html.Contains("Hola, Ana:")
+                && html.Contains("Se rechazó la carta de Mari Garc")
+                && html.Contains("está esperando tu decisión")
+                && html.Contains("Motivo: Ilegible: falta el sello")
+                && html.Contains("https://fonbec.test/rechazados")));
+        await _emailMessageSender.Received(1).SendEmailAsync(
+            "luis@fonbec.test",
+            "Documento rechazado para decidir",
+            Arg.Any<string>());
+        await _documentRepository.Received(1).MarkManagersNotifiedOfHeldRejectionAsync(42, Arg.Any<DateTime>());
+    }
+
+    [Fact]
+    public async Task NotifyManagersOfHeldRejection_Without_Managers_Is_Skipped_And_Not_Retried()
+    {
+        _documentRepository.GetHeldRejectionManagerNotificationAsync(42).Returns(
+            new HeldRejectionManagerNotificationDataModel
+            {
+                Status = DocumentStatus.PendingManagerDecision,
+                ChapterId = 4,
+                DocumentType = DocumentType.ReportCard,
+            });
+        _userRepository.GetChapterManagerContactsAsync(4).Returns([]);
+
+        await CreateService().NotifyManagersOfHeldRejectionAsync(42, TestContext.Current.CancellationToken);
+
+        await _emailMessageSender.DidNotReceive().SendEmailAsync(
+            Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await _documentRepository.Received(1).MarkManagersNotifiedOfHeldRejectionAsync(42, Arg.Any<DateTime>());
+    }
+
+    [Fact]
+    public async Task NotifyManagersOfHeldRejection_Ignores_A_Document_Already_Returned()
+    {
+        _documentRepository.GetHeldRejectionManagerNotificationAsync(42).Returns(
+            new HeldRejectionManagerNotificationDataModel
+            {
+                Status = DocumentStatus.Rejected,
+                ChapterId = 4,
+            });
+
+        await CreateService().NotifyManagersOfHeldRejectionAsync(42, TestContext.Current.CancellationToken);
+
+        await _emailMessageSender.DidNotReceive().SendEmailAsync(
+            Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+        await _documentRepository.DidNotReceive().MarkManagersNotifiedOfHeldRejectionAsync(
+            Arg.Any<long>(), Arg.Any<DateTime>());
+    }
+
     private static bool Matches(IReadOnlyList<Recipient> actual, params Recipient[] expected) =>
         actual.Count == expected.Length
         && actual.Zip(expected).All(pair =>

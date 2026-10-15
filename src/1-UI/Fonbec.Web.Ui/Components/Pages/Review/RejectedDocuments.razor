@@ -1,0 +1,141 @@
+@attribute [Route(NavRoutes.RejectedDocuments)]
+@attribute [Authorize(Policy = nameof(RejectedDocuments))]
+@using Fonbec.Web.DataAccess.Entities.Enums
+@using Fonbec.Web.Logic.Models.Documents
+@inherits AuthenticationRequiredComponentBase
+
+<PageHeader Title="Documentos rechazados" />
+
+<LoadingIndicator Loading="Loading" />
+
+@if (!Loading && _page is not null)
+{
+    <MudPaper Class="pa-4" Elevation="2">
+        <MudText Typo="Typo.h6" GutterBottom="true">Pendientes de decisión</MudText>
+        @if (_page.Items.Count == 0)
+        {
+            <MudText Class="mud-text-secondary">No hay documentos esperando una decisión.</MudText>
+        }
+        else
+        {
+            <MudTable T="HeldRejectionItemViewModel"
+                      Items="_page.Items"
+                      Dense="true"
+                      Hover="true"
+                      Striped="true"
+                      Bordered="true"
+                      RowsPerPage="10">
+                <HeaderContent>
+                    <MudTh>Para becario</MudTh>
+                    <MudTh>@SponsorColumnHeader</MudTh>
+                    <MudTh>Tipo de documento</MudTh>
+                    <MudTh>Rechazado el</MudTh>
+                    <MudTh>Rechazado por</MudTh>
+                    <MudTh>Motivo de rechazo</MudTh>
+                    <MudTh>Acciones</MudTh>
+                </HeaderContent>
+                <RowTemplate>
+                    <MudTd DataLabel="Para becario">@context.StudentName</MudTd>
+                    <MudTd DataLabel="@SponsorColumnLabel(context)">@SponsorNames(context)</MudTd>
+                    <MudTd DataLabel="Tipo de documento">@TypeLabel(context.DocumentType)</MudTd>
+                    <MudTd DataLabel="Rechazado el">@FormatRejectedOn(context)</MudTd>
+                    <MudTd DataLabel="Rechazado por">@(string.IsNullOrWhiteSpace(context.RejectedByName) ? "—" : context.RejectedByName)</MudTd>
+                    <MudTd DataLabel="Motivo de rechazo">@(string.IsNullOrWhiteSpace(context.RejectionReason) ? "—" : context.RejectionReason)</MudTd>
+                    <MudTd DataLabel="Acciones">
+                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                            <MudTooltip Text="@ApproveTooltip(context)">
+                                <MudButton Variant="Variant.Filled"
+                                           Color="Color.Success"
+                                           Size="Size.Small"
+                                           Disabled="_busyDocumentId is not null"
+                                           OnClick="@(() => ShareAsync(context))">
+                                    Aprobar
+                                </MudButton>
+                            </MudTooltip>
+                            <MudTooltip Text="Le indica al mediador que debe subir un nuevo documento">
+                                <MudButton Variant="Variant.Outlined"
+                                           Color="Color.Error"
+                                           Size="Size.Small"
+                                           Disabled="_busyDocumentId is not null"
+                                           OnClick="@(() => ReturnAsync(context))">
+                                    Rechazar
+                                </MudButton>
+                            </MudTooltip>
+                            @if (context.FileKind is FileKind.Text or FileKind.YouTube)
+                            {
+                                <MudButton Variant="Variant.Text"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           OnClick="@(() => TogglePreview(context.DocumentId))">
+                                    @(IsPreviewOpen(context.DocumentId) ? "Ocultar" : "Ver")
+                                </MudButton>
+                            }
+                            else if (context.CanViewFile && context.PageCount <= 1)
+                            {
+                                <MudButton Variant="Variant.Text"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           Href="@ViewUrl(context, 1)"
+                                           Target="_blank"
+                                           UserAttributes="NoEnhance">
+                                    Ver
+                                </MudButton>
+                            }
+                            else if (context.CanViewFile)
+                            {
+                                <MudMenu Dense="true">
+                                    <ActivatorContent>
+                                        <MudButton Variant="Variant.Text"
+                                                   Color="Color.Primary"
+                                                   Size="Size.Small"
+                                                   EndIcon="@Icons.Material.Filled.ArrowDropDown">
+                                            Ver
+                                        </MudButton>
+                                    </ActivatorContent>
+                                    <ChildContent>
+                                        @for (var page = 1; page <= context.PageCount; page++)
+                                        {
+                                            var pageNumber = page;
+                                            <MudMenuItem Href="@ViewUrl(context, pageNumber)"
+                                                         Target="_blank"
+                                                         UserAttributes="NoEnhance">
+                                                Página @pageNumber
+                                            </MudMenuItem>
+                                        }
+                                    </ChildContent>
+                                </MudMenu>
+                            }
+                        </MudStack>
+                        @if (IsPreviewOpen(context.DocumentId))
+                        {
+                            <MudPaper Class="pa-3 mt-2" Elevation="0" Outlined="true">
+                                @if (context.FileKind == FileKind.Text)
+                                {
+                                    <MudText Typo="Typo.body2" Style="white-space: pre-wrap;">
+                                        @(string.IsNullOrWhiteSpace(context.TextContent) ? "Contenido no disponible." : context.TextContent)
+                                    </MudText>
+                                }
+                                else if (context.FileKind == FileKind.YouTube && !string.IsNullOrWhiteSpace(context.YouTubeVideoId))
+                                {
+                                    <iframe src="@($"https://www.youtube.com/embed/{context.YouTubeVideoId}")"
+                                            title="@context.StudentName"
+                                            style="width: 100%; max-width: 480px; height: 270px; border: 0;"
+                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
+                                            allowfullscreen>
+                                    </iframe>
+                                }
+                                else
+                                {
+                                    <MudText Typo="Typo.body2">Contenido no disponible.</MudText>
+                                }
+                            </MudPaper>
+                        }
+                    </MudTd>
+                </RowTemplate>
+                <PagerContent>
+                    <MudTablePager />
+                </PagerContent>
+            </MudTable>
+        }
+    </MudPaper>
+}

@@ -78,6 +78,11 @@ public partial class FacilitatorOtherDocuments : AuthenticationRequiredComponent
 
     private static string StatusText(OtherDocumentHistoryItemViewModel item)
     {
+        if (item.Status == DocumentStatus.PendingManagerDecision)
+        {
+            return "Pendiente del coordinador";
+        }
+
         if (item.Status == DocumentStatus.Rejected)
         {
             return string.IsNullOrWhiteSpace(item.RejectionReason)

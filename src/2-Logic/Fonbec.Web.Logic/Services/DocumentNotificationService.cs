@@ -1,4 +1,5 @@
 using Fonbec.Web.DataAccess.DataModels.Documents;
+using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models;
@@ -17,6 +18,10 @@ public interface IDocumentNotificationService
         int planId,
         DateTime planStartsOn,
         CancellationToken cancellationToken = default);
+
+    Task NotifyFacilitatorOfDocumentRejectionAsync(long documentId, CancellationToken cancellationToken = default);
+
+    Task NotifyManagersOfHeldRejectionAsync(long documentId, CancellationToken cancellationToken = default);
 }
 
 public class DocumentNotificationService(
@@ -67,6 +72,239 @@ public class DocumentNotificationService(
             managers,
             manager => SendWithRetryAsync(manager.Email, subject, html, planId, cancellationToken),
             cancellationToken);
+    }
+
+    public async Task NotifyFacilitatorOfDocumentRejectionAsync(
+        long documentId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await NotifyFacilitatorOfDocumentRejectionCoreAsync(documentId, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(
+                ex,
+                "Facilitator rejection notification for document {DocumentId} failed",
+                documentId);
+        }
+    }
+
+    private async Task NotifyFacilitatorOfDocumentRejectionCoreAsync(
+        long documentId, CancellationToken cancellationToken)
+    {
+        var notice = await documentRepository.GetFacilitatorRejectionNotificationAsync(documentId);
+        if (notice is null)
+        {
+            logger.LogWarning(
+                "Document {DocumentId} was not found for the facilitator rejection notification",
+                documentId);
+            return;
+        }
+
+        if (notice.Status != DocumentStatus.Rejected || notice.FacilitatorRejectionNotifiedOn is not null)
+        {
+            return;
+        }
+
+        if (string.IsNullOrWhiteSpace(notice.FacilitatorEmail))
+        {
+            logger.LogWarning(
+                "Document {DocumentId} was rejected but the facilitator has no email, so no notification was sent",
+                documentId);
+            await documentRepository.MarkFacilitatorRejectionNotifiedAsync(documentId, DateTime.UtcNow);
+            return;
+        }
+
+        var baseUrl = configuration["App:BaseUrl"]?.Trim().TrimEnd('/');
+        if (string.IsNullOrEmpty(baseUrl))
+        {
+            logger.LogError(
+                "App:BaseUrl is not configured; facilitator rejection notification for document {DocumentId} was not sent",
+                documentId);
+            return;
+        }
+
+        var studentName = DocumentNotificationMessageFormatter.GetStudentDisplayName(
+            notice.StudentFirstName, notice.StudentLastName, notice.StudentNickName);
+        var reason = DocumentNotificationMessageFormatter.FormatRejectionReason(
+            notice.RejectionReasonDescription, notice.RejectionNotes);
+        var html = DocumentNotificationMessageFormatter.BuildFacilitatorRejectionHtml(
+            notice.FacilitatorFirstName,
+            studentName,
+            notice.DocumentType,
+            reason,
+            $"{baseUrl}/mediadores/mis-becarios");
+
+        for (var attempt = 1; attempt <= MaxSendAttempts; attempt++)
+        {
+            try
+            {
+                await emailMessageSender.SendEmailAsync(
+                    notice.FacilitatorEmail.Trim(),
+                    DocumentNotificationMessageFormatter.FacilitatorRejectionSubject,
+                    html);
+                await documentRepository.MarkFacilitatorRejectionNotifiedAsync(documentId, DateTime.UtcNow);
+                return;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex) when (attempt < MaxSendAttempts)
+            {
+                logger.LogWarning(
+                    ex,
+                    "Facilitator rejection notification for document {DocumentId} attempt {Attempt}/{MaxAttempts} failed",
+                    documentId,
+                    attempt,
+                    MaxSendAttempts);
+                await Task.Delay(TimeSpan.FromMilliseconds(500 * attempt), cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(
+                    ex,
+                    "Facilitator rejection notification for document {DocumentId} failed after {MaxAttempts} attempts; leaving unmarked for retry",
+                    documentId,
+                    MaxSendAttempts);
+            }
+        }
+    }
+
+    public async Task NotifyManagersOfHeldRejectionAsync(
+        long documentId, CancellationToken cancellationToken = default)
+    {
+        try
+        {
+            await NotifyManagersOfHeldRejectionCoreAsync(documentId, cancellationToken);
+        }
+        catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+        {
+            throw;
+        }
+        catch (Exception ex)
+        {
+            logger.LogError(
+                ex,
+                "Manager notification for held rejection {DocumentId} failed",
+                documentId);
+        }
+    }
+
+    private async Task NotifyManagersOfHeldRejectionCoreAsync(
+        long documentId, CancellationToken cancellationToken)
+    {
+        var notice = await documentRepository.GetHeldRejectionManagerNotificationAsync(documentId);
+        if (notice is null)
+        {
+            logger.LogWarning(
+                "Document {DocumentId} was not found for the held-rejection manager notification",
+                documentId);
+            return;
+        }
+
+        if (notice.Status != DocumentStatus.PendingManagerDecision
+            || notice.ManagersNotifiedOfHeldRejectionOn is not null)
+        {
+            return;
+        }
+
+        var baseUrl = configuration["App:BaseUrl"]?.Trim().TrimEnd('/');
+        if (string.IsNullOrEmpty(baseUrl))
+        {
+            logger.LogError(
+                "App:BaseUrl is not configured; manager notification for held rejection {DocumentId} was not sent",
+                documentId);
+            return;
+        }
+
+        var managers = await userRepository.GetChapterManagerContactsAsync(notice.ChapterId) ?? [];
+        if (managers.Count == 0)
+        {
+            logger.LogWarning(
+                "Document {DocumentId} is waiting for a manager decision but the chapter has no manager email, so no notification was sent",
+                documentId);
+            await documentRepository.MarkManagersNotifiedOfHeldRejectionAsync(documentId, DateTime.UtcNow);
+            return;
+        }
+
+        var studentName = DocumentNotificationMessageFormatter.GetStudentDisplayName(
+            notice.StudentFirstName, notice.StudentLastName, notice.StudentNickName);
+        var reason = DocumentNotificationMessageFormatter.FormatRejectionReason(
+            notice.RejectionReasonDescription, notice.RejectionNotes);
+        var rejectedDocumentsUrl = $"{baseUrl}/rechazados";
+        var allSent = true;
+
+        foreach (var manager in managers)
+        {
+            var firstName = manager.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()
+                            ?? manager.FullName;
+            var html = DocumentNotificationMessageFormatter.BuildHeldRejectionManagerHtml(
+                firstName,
+                studentName,
+                notice.DocumentType,
+                reason,
+                rejectedDocumentsUrl);
+            if (!await SendManagerHeldRejectionAsync(manager.Email, html, documentId, cancellationToken))
+            {
+                allSent = false;
+            }
+        }
+
+        if (allSent)
+        {
+            await documentRepository.MarkManagersNotifiedOfHeldRejectionAsync(documentId, DateTime.UtcNow);
+        }
+    }
+
+    private async Task<bool> SendManagerHeldRejectionAsync(
+        string email,
+        string html,
+        long documentId,
+        CancellationToken cancellationToken)
+    {
+        for (var attempt = 1; attempt <= MaxSendAttempts; attempt++)
+        {
+            try
+            {
+                await emailMessageSender.SendEmailAsync(
+                    email.Trim(),
+                    DocumentNotificationMessageFormatter.HeldRejectionManagerSubject,
+                    html);
+                return true;
+            }
+            catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
+            {
+                throw;
+            }
+            catch (Exception ex) when (attempt < MaxSendAttempts)
+            {
+                logger.LogWarning(
+                    ex,
+                    "Manager notification for held rejection {DocumentId} to {Email} attempt {Attempt}/{MaxAttempts} failed",
+                    documentId,
+                    email,
+                    attempt,
+                    MaxSendAttempts);
+                await Task.Delay(TimeSpan.FromMilliseconds(500 * attempt), cancellationToken);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(
+                    ex,
+                    "Manager notification for held rejection {DocumentId} to {Email} failed after {MaxAttempts} attempts; leaving unmarked for retry",
+                    documentId,
+                    email,
+                    MaxSendAttempts);
+            }
+        }
+
+        return false;
     }
 
     private static async Task ForEachWithConcurrencyAsync<T>(

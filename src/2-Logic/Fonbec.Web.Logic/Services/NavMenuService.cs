@@ -1,6 +1,7 @@
 using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.DataModels.Documents;
 using Fonbec.Web.DataAccess.DataModels.LetterFollowUp;
+using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Models.Navigation;
 
@@ -31,6 +32,8 @@ public sealed class NavMenuService(
         Task<int?>? campaignPercent = null;
         Task<OpenFlagCounts>? flags = null;
         Task<ReviewProgressDataModel>? progress = null;
+        Task<int>? heldRejections = null;
+        Task<DocumentRejectionBehavior?>? rejectionBehavior = null;
 
         var pending = new List<Task>();
 
@@ -56,8 +59,12 @@ public sealed class NavMenuService(
         {
             campaignPercent = GetCampaignCompletionPercentAsync(managerChapterId);
             flags = letterFollowUpRepository.CountOpenFlagsAsync(managerChapterId);
+            heldRejections = documentRepository.CountHeldRejectionsAsync(managerChapterId);
+            rejectionBehavior = documentRepository.GetChapterRejectionBehaviorAsync(managerChapterId);
             pending.Add(campaignPercent);
             pending.Add(flags);
+            pending.Add(heldRejections);
+            pending.Add(rejectionBehavior);
         }
 
         if (role is FonbecRole.Reviewer or FonbecRole.Manager)
@@ -99,6 +106,9 @@ public sealed class NavMenuService(
             GreenFlags = openFlags.GreenFlags,
             PendingImprovement = pendingImprovement,
             PendingReview = pendingReview,
+            PendingHeldRejections = heldRejections is null ? null : await heldRejections,
+            HoldsRejectionsForManager = rejectionBehavior is not null
+                && await rejectionBehavior == DocumentRejectionBehavior.HoldForManager,
         };
     }
 

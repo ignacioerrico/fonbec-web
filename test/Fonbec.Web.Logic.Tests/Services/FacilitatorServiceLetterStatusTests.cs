@@ -129,6 +129,34 @@ public class FacilitatorServiceLetterStatusTests : MappingTestBase
     }
 
     [Fact]
+    public async Task GetStudentsDashboardAsync_Hides_A_Held_Rejection_And_Does_Not_Ask_For_Another_Letter()
+    {
+        SetupStudentWithOneSponsor();
+        _facilitatorRepository.GetCurrentLetterStatusesAsync(PlanId, Arg.Any<List<int>>())
+            .Returns([
+                new SponsorLetterStatusDataModel
+                {
+                    StudentId = StudentId,
+                    SponsorId = SponsorId,
+                    Status = DocumentStatus.PendingManagerDecision,
+                    RejectionReason = "foto borrosa",
+                },
+            ]);
+
+        var result = await _facilitatorService.GetStudentsDashboardAsync(FacilitatorId);
+
+        var student = result.Students.Single();
+        student.LetterAggregate.Should().Be(LetterAggregateStatus.Complete);
+        student.SponsorsNeedingLetter.Should().BeEmpty();
+        var sponsorStatus = student.LetterStatuses.Single();
+        sponsorStatus.Status.Should().Be(LetterSlotStatus.PendingManagerDecision);
+        sponsorStatus.RejectionReason.Should().BeNull();
+
+        var pending = await _facilitatorService.CountPendingLettersAsync(FacilitatorId);
+        pending.Should().Be(0);
+    }
+
+    [Fact]
     public async Task GetStudentsDashboardAsync_Does_Not_Set_Rejection_Reason_When_Not_Rejected()
     {
         SetupStudentWithOneSponsor();

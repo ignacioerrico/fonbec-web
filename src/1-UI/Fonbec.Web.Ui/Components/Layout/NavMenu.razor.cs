@@ -64,6 +64,7 @@ public sealed partial class NavMenu : ComponentBase, IDisposable
         if (user.Identity is not { IsAuthenticated: true })
         {
             _indicators = NavMenuIndicators.Empty;
+            StateHasChanged();
             return;
         }
 
@@ -85,6 +86,7 @@ public sealed partial class NavMenu : ComponentBase, IDisposable
         }
 
         _indicators = indicators;
+        StateHasChanged();
     }
 
     public void Dispose()

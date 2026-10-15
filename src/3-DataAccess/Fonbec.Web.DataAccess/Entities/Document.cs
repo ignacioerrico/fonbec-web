@@ -70,6 +70,24 @@ public abstract class Document
 
     public string? RejectionNotes { get; set; }
 
+    /// <summary>
+    /// When the facilitator was emailed about this rejection, or when that email was skipped
+    /// because the facilitator has no address. Null while a returned rejection still needs mail.
+    /// </summary>
+    public DateTime? FacilitatorRejectionNotifiedOn { get; set; }
+
+    /// <summary>
+    /// When the chapter managers were emailed that this rejection is waiting for their decision,
+    /// or when that email was skipped because no manager has an address.
+    /// </summary>
+    public DateTime? ManagersNotifiedOfHeldRejectionOn { get; set; }
+
+    /// <summary>When a manager shared this rejected document with the sponsor anyway.</summary>
+    public DateTime? RejectionOverriddenOn { get; set; }
+
+    public int? RejectionOverriddenById { get; set; }
+    public FonbecWebUser? RejectionOverriddenBy { get; set; }
+
     public DocumentStatus Status { get; set; }
 
     public byte[] RowVersion { get; set; } = null!;

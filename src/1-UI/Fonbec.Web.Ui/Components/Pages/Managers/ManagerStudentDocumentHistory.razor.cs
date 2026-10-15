@@ -97,6 +97,24 @@ public partial class ManagerStudentDocumentHistory : AuthenticationRequiredCompo
 
     private static string StatusText(StudentDocumentHistoryItemViewModel item)
     {
+        if (item.Status == DocumentStatus.Approved && item.RejectionOverriddenOn is not null)
+        {
+            var reason = string.IsNullOrWhiteSpace(item.RejectionReason)
+                ? "sin motivo indicado"
+                : item.RejectionReason;
+            var who = string.IsNullOrWhiteSpace(item.RejectionOverriddenByName)
+                ? string.Empty
+                : $" por {item.RejectionOverriddenByName}";
+            return $"Aprobado (se compartió pese al rechazo{who}: {reason})";
+        }
+
+        if (item.Status == DocumentStatus.PendingManagerDecision)
+        {
+            return string.IsNullOrWhiteSpace(item.RejectionReason)
+                ? "Pendiente del coordinador"
+                : $"Pendiente del coordinador: {item.RejectionReason}";
+        }
+
         if (item.Status == DocumentStatus.Rejected)
         {
             return string.IsNullOrWhiteSpace(item.RejectionReason)

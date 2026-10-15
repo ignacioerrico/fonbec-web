@@ -367,9 +367,98 @@ public class StudentDocumentHistoryItemDataModel
 
     public string? RejectionReason { get; init; }
 
+    public DateTime? RejectionOverriddenOn { get; init; }
+
+    public string? RejectionOverriddenByName { get; init; }
+
     public string? TextContent { get; init; }
 
     public string? YouTubeVideoId { get; init; }
 
     public int PageCount { get; init; }
+}
+
+public class HeldRejectionDataModel
+{
+    public long DocumentId { get; init; }
+
+    public int StudentId { get; init; }
+
+    public string StudentName { get; init; } = string.Empty;
+
+    public DocumentType DocumentType { get; init; }
+
+    /// <summary>Letter addressee, or the report-card or other-document description.</summary>
+    public string? Detail { get; init; }
+
+    public string? RejectionReason { get; init; }
+
+    public DateTime? RejectedOn { get; init; }
+
+    public string? RejectedByName { get; init; }
+
+    public List<HeldRejectionSponsorDataModel> Sponsors { get; init; } = [];
+
+    public FileKind FileKind { get; init; }
+
+    public int PageCount { get; init; }
+
+    public string? TextContent { get; init; }
+
+    public string? YouTubeVideoId { get; init; }
+
+    public byte[] RowVersion { get; init; } = [];
+}
+
+public class HeldRejectionSponsorDataModel
+{
+    public string Name { get; init; } = string.Empty;
+
+    public Gender? Gender { get; init; }
+
+    public bool IsCompany { get; init; }
+}
+
+public class FacilitatorRejectionNotificationDataModel
+{
+    public DocumentStatus Status { get; init; }
+
+    public DateTime? FacilitatorRejectionNotifiedOn { get; init; }
+
+    public string? FacilitatorEmail { get; init; }
+
+    public string FacilitatorFirstName { get; init; } = string.Empty;
+
+    public string StudentFirstName { get; init; } = string.Empty;
+
+    public string StudentLastName { get; init; } = string.Empty;
+
+    public string? StudentNickName { get; init; }
+
+    public DocumentType DocumentType { get; init; }
+
+    public string? RejectionReasonDescription { get; init; }
+
+    public string? RejectionNotes { get; init; }
+}
+
+public class HeldRejectionManagerNotificationDataModel
+{
+    public DocumentStatus Status { get; init; }
+
+    public DateTime? ManagersNotifiedOfHeldRejectionOn { get; init; }
+
+    public int ChapterId { get; init; }
+
+    public string StudentFirstName { get; init; } = string.Empty;
+
+    public string StudentLastName { get; init; } = string.Empty;
+
+    public string? StudentNickName { get; init; }
+
+    public DocumentType DocumentType { get; init; }
+
+    public string? RejectionReasonDescription { get; init; }
+
+    public string? RejectionNotes { get; init; }
 }

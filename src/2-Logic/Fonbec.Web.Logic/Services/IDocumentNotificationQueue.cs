@@ -8,4 +8,8 @@ public interface IDocumentNotificationQueue
     Task EnqueueSponsorNotificationAsync(long documentId);
 
     Task EnqueuePlanReadyNotificationAsync(int chapterId, int planId, DateTime planStartsOn);
+
+    Task EnqueueFacilitatorRejectionNotificationAsync(long documentId);
+
+    Task EnqueueHeldRejectionManagerNotificationAsync(long documentId);
 }

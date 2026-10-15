@@ -114,4 +114,12 @@ public static class DocumentMessages
 
     public const string LetterExemptForPlan =
         "El becario está eximido de entregar carta para este plan.";
+
+    public const string NotAuthorizedToDecideRejection =
+        "No está autorizado para decidir sobre documentos rechazados.";
+
+    public const string HeldRejectionNotFound =
+        "El documento no está pendiente de decisión.";
+
+    public const string ChapterNotFound = "La filial no existe.";
 }
