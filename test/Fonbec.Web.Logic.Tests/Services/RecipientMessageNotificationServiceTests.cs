@@ -44,7 +44,9 @@ public class RecipientMessageNotificationServiceTests
         await CreateService().NotifyFacilitatorOfRecipientMessageAsync(MessageId, TestContext.Current.CancellationToken);
 
         await _emailMessageSender.Received(1).SendEmailAsync(
-            "mediador@test.com",
+            Arg.Is<Recipient>(recipient =>
+                recipient.EmailAddress == "<mediador@test.com>"
+                && recipient.DisplayName == "\"Mediador Test\""),
             "Nuevo mensaje para Camila Escobar",
             Arg.Is<string>(html =>
                 html.Contains($"para la becaria <strong>{WebUtility.HtmlEncode("Camila Escobar")}</strong> de su madrina <strong>{WebUtility.HtmlEncode("Claudia Romero")}</strong>:")
@@ -56,7 +58,7 @@ public class RecipientMessageNotificationServiceTests
                 && !html.Contains("/empresas")
                 && !html.Contains("<b>becario</b>")));
         await _emailMessageSender.DidNotReceive().SendEmailAsync(
-            Arg.Is<string>(email => email != "mediador@test.com"),
+            Arg.Is<Recipient>(recipient => recipient.EmailAddress != "<mediador@test.com>"),
             Arg.Any<string>(),
             Arg.Any<string>());
         await _emailMessageSender.DidNotReceive().SendEmailAsync(
@@ -82,7 +84,9 @@ public class RecipientMessageNotificationServiceTests
         await CreateService().NotifyFacilitatorOfRecipientMessageAsync(MessageId, TestContext.Current.CancellationToken);
 
         await _emailMessageSender.Received(1).SendEmailAsync(
-            "mediador@test.com",
+            Arg.Is<Recipient>(recipient =>
+                recipient.EmailAddress == "<mediador@test.com>"
+                && recipient.DisplayName == "\"Mediador Test\""),
             "Nuevo mensaje para María López",
             Arg.Is<string>(html =>
                 html.Contains($"para la becaria <strong>{WebUtility.HtmlEncode("María López")}</strong> de la empresa <strong>Acme SA</strong>:")
@@ -104,7 +108,7 @@ public class RecipientMessageNotificationServiceTests
         await CreateService().NotifyFacilitatorOfRecipientMessageAsync(MessageId, TestContext.Current.CancellationToken);
 
         await _emailMessageSender.DidNotReceive().SendEmailAsync(
-            Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+            Arg.Any<Recipient>(), Arg.Any<string>(), Arg.Any<string>());
         await _repository.DidNotReceive().MarkFacilitatorNotifiedAsync(Arg.Any<long>(), Arg.Any<DateTime>());
         _logger.Text.Should().NotContain("CUERPO-SECRETO");
         _logger.Text.Should().Contain(MessageId.ToString());
@@ -115,7 +119,7 @@ public class RecipientMessageNotificationServiceTests
     {
         Notice(isCompany: false, sender: "Ana Pérez", student: "Juan García");
         _emailMessageSender
-            .SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
+            .SendEmailAsync(Arg.Any<Recipient>(), Arg.Any<string>(), Arg.Any<string>())
             .ThrowsAsync(new InvalidOperationException("permanent"));
 
         var act = async () => await CreateService().NotifyFacilitatorOfRecipientMessageAsync(
@@ -123,7 +127,9 @@ public class RecipientMessageNotificationServiceTests
 
         await act.Should().NotThrowAsync();
         await _emailMessageSender.Received(3).SendEmailAsync(
-            "mediador@test.com", Arg.Any<string>(), Arg.Any<string>());
+            Arg.Is<Recipient>(recipient => recipient.EmailAddress == "<mediador@test.com>"),
+            Arg.Any<string>(),
+            Arg.Any<string>());
         await _repository.DidNotReceive().MarkFacilitatorNotifiedAsync(Arg.Any<long>(), Arg.Any<DateTime>());
         _logger.Text.Should().NotContain("CUERPO-SECRETO");
     }
@@ -133,7 +139,7 @@ public class RecipientMessageNotificationServiceTests
     {
         Notice(isCompany: false, sender: "Ana Pérez", student: "Juan García");
         _emailMessageSender
-            .SendEmailAsync(Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>())
+            .SendEmailAsync(Arg.Any<Recipient>(), Arg.Any<string>(), Arg.Any<string>())
             .Returns(
                 _ => throw new InvalidOperationException("transient"),
                 _ => Task.CompletedTask);
@@ -141,7 +147,9 @@ public class RecipientMessageNotificationServiceTests
         await CreateService().NotifyFacilitatorOfRecipientMessageAsync(MessageId, TestContext.Current.CancellationToken);
 
         await _emailMessageSender.Received(2).SendEmailAsync(
-            "mediador@test.com", Arg.Any<string>(), Arg.Any<string>());
+            Arg.Is<Recipient>(recipient => recipient.EmailAddress == "<mediador@test.com>"),
+            Arg.Any<string>(),
+            Arg.Any<string>());
         await _repository.Received(1).MarkFacilitatorNotifiedAsync(MessageId, UtcNow.UtcDateTime);
     }
 
@@ -157,7 +165,7 @@ public class RecipientMessageNotificationServiceTests
         await CreateService().NotifyFacilitatorOfRecipientMessageAsync(MessageId, TestContext.Current.CancellationToken);
 
         await _emailMessageSender.DidNotReceive().SendEmailAsync(
-            Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+            Arg.Any<Recipient>(), Arg.Any<string>(), Arg.Any<string>());
         await _repository.DidNotReceive().MarkFacilitatorNotifiedAsync(Arg.Any<long>(), Arg.Any<DateTime>());
     }
 
@@ -170,7 +178,7 @@ public class RecipientMessageNotificationServiceTests
         await CreateService().NotifyFacilitatorOfRecipientMessageAsync(MessageId, TestContext.Current.CancellationToken);
 
         await _emailMessageSender.DidNotReceive().SendEmailAsync(
-            Arg.Any<string>(), Arg.Any<string>(), Arg.Any<string>());
+            Arg.Any<Recipient>(), Arg.Any<string>(), Arg.Any<string>());
         await _repository.DidNotReceive().MarkFacilitatorNotifiedAsync(Arg.Any<long>(), Arg.Any<DateTime>());
     }
 
@@ -251,6 +259,7 @@ public class RecipientMessageNotificationServiceTests
             new RecipientMessageFacilitatorNotificationDataModel
             {
                 FacilitatorEmail = email,
+                FacilitatorFullName = "Mediador Test",
                 FacilitatorNotifiedOn = notifiedOn,
                 StudentFullName = student,
                 StudentFirstName = studentFirstName,

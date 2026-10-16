@@ -1,4 +1,5 @@
 using Fonbec.Web.DataAccess.Repositories;
+using Fonbec.Web.Logic.Models;
 using Fonbec.Web.Logic.Util;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging;
@@ -93,7 +94,10 @@ public class RecipientMessageNotificationService(
         {
             try
             {
-                await emailMessageSender.SendEmailAsync(notice.FacilitatorEmail.Trim(), subject, html);
+                await emailMessageSender.SendEmailAsync(
+                    new Recipient(notice.FacilitatorEmail.Trim(), notice.FacilitatorFullName),
+                    subject,
+                    html);
                 sent = true;
                 break;
             }

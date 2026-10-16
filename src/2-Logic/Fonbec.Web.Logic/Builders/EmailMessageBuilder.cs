@@ -21,10 +21,9 @@ public class EmailMessageBuilder
         if (replyToEmail is not null && !string.IsNullOrWhiteSpace(replyToEmail))
         {
             var replyToDisplayName = configuration.GetSection("Email:ReplyToDisplayName").Value;
-            var displayName = replyToDisplayName is null || string.IsNullOrWhiteSpace(replyToDisplayName)
-                ? replyToEmail
-                : replyToDisplayName;
-            ReplyTo = new Recipient(replyToEmail, displayName);
+            ReplyTo = replyToDisplayName is null || string.IsNullOrWhiteSpace(replyToDisplayName)
+                ? new Recipient(replyToEmail)
+                : new Recipient(replyToEmail, replyToDisplayName);
         }
 
         To = to;

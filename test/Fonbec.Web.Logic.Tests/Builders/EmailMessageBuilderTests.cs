@@ -114,7 +114,7 @@ public class EmailMessageBuilderTests
 
             emailMessage.ReplyTo.Should().ContainSingle();
             emailMessage.ReplyTo.Single().Address.Should().Be("<reply-to@email.com>");
-            emailMessage.ReplyTo.Single().DisplayName.Should().Be("reply-to@email.com");
+            emailMessage.ReplyTo.Single().DisplayName.Should().Be("\"reply-to@email.com\"");
 
             emailMessage.Content.Subject.Should().Be("Sample email");
 
@@ -229,11 +229,11 @@ public class EmailMessageBuilderTests
             emailMessage.Recipients.CC[0].Address.Should().Be("<first-cc@email.com>");
             emailMessage.Recipients.CC[0].DisplayName.Should().Be("\"First Cc\"");
             emailMessage.Recipients.CC[1].Address.Should().Be("<second-cc@email.com>");
-            emailMessage.Recipients.CC[1].DisplayName.Should().Be("second-cc@email.com");
+            emailMessage.Recipients.CC[1].DisplayName.Should().Be("\"second-cc@email.com\"");
 
             emailMessage.Recipients.BCC.Should().HaveCount(2);
             emailMessage.Recipients.BCC[0].Address.Should().Be("<first-bcc@email.com>");
-            emailMessage.Recipients.BCC[0].DisplayName.Should().Be("first-bcc@email.com");
+            emailMessage.Recipients.BCC[0].DisplayName.Should().Be("\"first-bcc@email.com\"");
             emailMessage.Recipients.BCC[1].Address.Should().Be("<second-bcc@email.com>");
             emailMessage.Recipients.BCC[1].DisplayName.Should().Be("\"Second Bcc\"");
 

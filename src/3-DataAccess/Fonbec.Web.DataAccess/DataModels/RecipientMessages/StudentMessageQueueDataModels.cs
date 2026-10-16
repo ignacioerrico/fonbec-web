@@ -77,6 +77,8 @@ public class RecipientMessageFacilitatorNotificationDataModel
 
     public string? FacilitatorEmail { get; init; }
 
+    public string FacilitatorFullName { get; init; } = string.Empty;
+
     public string StudentFullName { get; init; } = string.Empty;
 
     public string StudentFirstName { get; init; } = string.Empty;

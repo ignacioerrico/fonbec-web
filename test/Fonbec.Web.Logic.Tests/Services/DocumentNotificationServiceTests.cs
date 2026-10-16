@@ -38,6 +38,7 @@ public class DocumentNotificationServiceTests
                 DocumentShareId = 1,
                 RecipientEmail = "padrino@test.com",
                 RecipientName = "Juan",
+                RecipientFullName = "Juan Perez",
                 RecipientNickName = "Juancito",
                 PublicAccessToken = token,
                 StudentId = 7,
@@ -51,7 +52,8 @@ public class DocumentNotificationServiceTests
         await CreateService().NotifySponsorsAsync(42, TestContext.Current.CancellationToken);
 
         await _emailMessageSender.Received(1).SendEmailAsync(
-            Arg.Is<IReadOnlyList<Recipient>>(to => Matches(to, new Recipient("padrino@test.com"))),
+            Arg.Is<IReadOnlyList<Recipient>>(to =>
+                Matches(to, new Recipient("padrino@test.com", "Juan Perez"))),
             Arg.Is<IReadOnlyList<Recipient>>(cc => cc.Count == 0),
             Arg.Is<IReadOnlyList<Recipient>>(bcc => bcc.Count == 0),
             "Nuevo documento disponible",
@@ -75,6 +77,7 @@ public class DocumentNotificationServiceTests
                 IsCompany = true,
                 RecipientEmail = "empresa@test.com",
                 RecipientName = "Acme SA",
+                RecipientFullName = "Acme SA",
                 PublicAccessToken = token,
                 StudentId = 7,
                 StudentFirstName = "María",
@@ -87,7 +90,8 @@ public class DocumentNotificationServiceTests
         await CreateService().NotifySponsorsAsync(42, TestContext.Current.CancellationToken);
 
         await _emailMessageSender.Received(1).SendEmailAsync(
-            Arg.Is<IReadOnlyList<Recipient>>(to => Matches(to, new Recipient("empresa@test.com"))),
+            Arg.Is<IReadOnlyList<Recipient>>(to =>
+                Matches(to, new Recipient("empresa@test.com", "Acme SA"))),
             Arg.Is<IReadOnlyList<Recipient>>(cc => cc.Count == 0),
             Arg.Is<IReadOnlyList<Recipient>>(bcc => bcc.Count == 0),
             "Nuevo documento disponible",
@@ -274,7 +278,9 @@ public class DocumentNotificationServiceTests
             3, 88, new DateTime(2026, 9, 1), TestContext.Current.CancellationToken);
 
         await _emailMessageSender.Received(1).SendEmailAsync(
-            "coord@test.com",
+            Arg.Is<Recipient>(recipient =>
+                recipient.EmailAddress == "<coord@test.com>"
+                && recipient.DisplayName == "\"Ana Coordinadora\""),
             "Campaña lista para completar",
             Arg.Is<string>(html =>
                 html.Contains("septiembre de 2026")
@@ -291,7 +297,7 @@ public class DocumentNotificationServiceTests
             3, 88, new DateTime(2026, 9, 1), TestContext.Current.CancellationToken);
 
         await _emailMessageSender.DidNotReceiveWithAnyArgs()
-            .SendEmailAsync(default!, default!, default!);
+            .SendEmailAsync(Arg.Any<Recipient>(), default!, default!);
         await _emailMessageSender.DidNotReceiveWithAnyArgs()
             .SendEmailAsync(default!, default!, default!, default!, default!);
     }
@@ -569,6 +575,7 @@ public class DocumentNotificationServiceTests
                 Status = DocumentStatus.Rejected,
                 FacilitatorEmail = "mediador@test.com",
                 FacilitatorFirstName = "Ana",
+                FacilitatorFullName = "Ana Mediadora",
                 StudentFirstName = "María",
                 StudentLastName = "García",
                 StudentNickName = "Mari",
@@ -580,7 +587,9 @@ public class DocumentNotificationServiceTests
         await CreateService().NotifyFacilitatorOfDocumentRejectionAsync(42, TestContext.Current.CancellationToken);
 
         await _emailMessageSender.Received(1).SendEmailAsync(
-            "mediador@test.com",
+            Arg.Is<Recipient>(recipient =>
+                recipient.EmailAddress == "<mediador@test.com>"
+                && recipient.DisplayName == "\"Ana Mediadora\""),
             "Documento rechazado",
             Arg.Is<string>(html =>
                 html.Contains("Hola, Ana:")
@@ -652,7 +661,9 @@ public class DocumentNotificationServiceTests
         await CreateService().NotifyManagersOfHeldRejectionAsync(42, TestContext.Current.CancellationToken);
 
         await _emailMessageSender.Received(1).SendEmailAsync(
-            "ana@fonbec.test",
+            Arg.Is<Recipient>(recipient =>
+                recipient.EmailAddress == "<ana@fonbec.test>"
+                && recipient.DisplayName == "\"Ana Perez\""),
             "Documento rechazado para decidir",
             Arg.Is<string>(html =>
                 html.Contains("Hola, Ana:")
@@ -661,7 +672,9 @@ public class DocumentNotificationServiceTests
                 && html.Contains("Motivo: Ilegible: falta el sello")
                 && html.Contains("https://fonbec.test/rechazados")));
         await _emailMessageSender.Received(1).SendEmailAsync(
-            "luis@fonbec.test",
+            Arg.Is<Recipient>(recipient =>
+                recipient.EmailAddress == "<luis@fonbec.test>"
+                && recipient.DisplayName == "\"Luis Gomez\""),
             "Documento rechazado para decidir",
             Arg.Any<string>());
         await _documentRepository.Received(1).MarkManagersNotifiedOfHeldRejectionAsync(42, Arg.Any<DateTime>());

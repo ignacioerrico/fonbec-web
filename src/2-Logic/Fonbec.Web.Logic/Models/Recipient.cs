@@ -4,10 +4,7 @@ public class Recipient
 {
     public Recipient(string emailAddress, string? displayName = null)
     {
-        var displayNameToUse = displayName ?? emailAddress;
-        DisplayName = displayNameToUse.Contains(' ')
-            ? $"\"{displayNameToUse}\""
-            : displayNameToUse;
+        DisplayName = $"\"{(displayName ?? emailAddress).Replace("\"", string.Empty)}\"";
         EmailAddress = $"<{emailAddress}>";
     }
 

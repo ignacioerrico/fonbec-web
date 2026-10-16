@@ -23,6 +23,7 @@ public class DocumentRepositoryUnnotifiedSharesTests
         var person = shares.Should().ContainSingle(s => s.DocumentShareId == seeded.PersonShareId).Subject;
         person.IsCompany.Should().BeFalse();
         person.RecipientEmail.Should().Be("ana@ejemplo.com");
+        person.RecipientFullName.Should().Be("Ana Perez");
         person.AdditionalRecipients.Should().BeEquivalentTo(
         [
             new SendAlsoToNotificationDataModel
@@ -55,6 +56,7 @@ public class DocumentRepositoryUnnotifiedSharesTests
         var company = shares.Should().ContainSingle(s => s.DocumentShareId == seeded.CompanyShareId).Subject;
         company.IsCompany.Should().BeTrue();
         company.RecipientEmail.Should().Be("empresa@ejemplo.com");
+        company.RecipientFullName.Should().Be("Acme SA");
         company.AdditionalRecipients.Should().BeEmpty();
 
         var sponsorWithoutCopies = shares.Should().ContainSingle(s => s.DocumentShareId == seeded.PersonWithoutCopiesShareId).Subject;

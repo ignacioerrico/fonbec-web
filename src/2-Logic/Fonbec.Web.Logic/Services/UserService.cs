@@ -150,7 +150,10 @@ public class UserService(
         if (userId > 0 && errors.Count == 0)
         {
             // TODO: Use a nice email template
-            await emailMessageSender.SendEmailAsync(model.UserEmail,
+            await emailMessageSender.SendEmailAsync(
+                new Recipient(
+                    createUserInputDataModel.UserEmail,
+                    $"{createUserInputDataModel.UserFirstName} {createUserInputDataModel.UserLastName}"),
                 "FONBEC | Tu nueva cuenta",
                 $"<p>Usuario: {model.UserEmail}</p><p>Contraseña: {generatedPassword}</p>");
         }
@@ -235,8 +238,11 @@ public class UserService(
         var identityResult = await userRepository.ResetPasswordAsync(resetPasswordInputDataModel);
         if (identityResult.Succeeded)
         {
+            var user = await userRepository.GetUserAsync(userId);
+
             // TODO: Use a nice email template
-            await emailMessageSender.SendEmailAsync(userEmail,
+            await emailMessageSender.SendEmailAsync(
+                new Recipient(userEmail, user?.UserFullName),
                 "FONBEC | Tu nueva contraseña",
                 $"<p>Usuario: {userEmail}</p><p>Contraseña nueva: {generatedPassword}</p>");
         }

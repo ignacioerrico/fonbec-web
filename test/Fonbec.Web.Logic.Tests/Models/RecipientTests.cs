@@ -13,7 +13,7 @@ public class RecipientTests
 
         using (new AssertionScope())
         {
-            sut.DisplayName.Should().Be("john@doe.com");
+            sut.DisplayName.Should().Be("\"john@doe.com\"");
             sut.EmailAddress.Should().Be("<john@doe.com>");
         }
     }
@@ -28,5 +28,13 @@ public class RecipientTests
             sut.DisplayName.Should().Be("\"John Doe\"");
             sut.EmailAddress.Should().Be("<john@doe.com>");
         }
+    }
+
+    [Fact]
+    public void ShouldRemoveQuotationMarksFromDisplayName()
+    {
+        var sut = new Recipient("john@doe.com", "John \"Johnny\" Doe");
+
+        sut.DisplayName.Should().Be("\"John Johnny Doe\"");
     }
 }

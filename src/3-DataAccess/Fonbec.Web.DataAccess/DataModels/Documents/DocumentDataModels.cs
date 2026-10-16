@@ -233,8 +233,11 @@ public class DocumentShareNotificationDataModel
     /// <summary>Recipient email address. May be empty for a company that opted out of an address.</summary>
     public string RecipientEmail { get; init; } = string.Empty;
 
-    /// <summary>Sponsor first name or company name.</summary>
+    /// <summary>Sponsor first name or company name, used in the message body.</summary>
     public string RecipientName { get; init; } = string.Empty;
+
+    /// <summary>Sponsor full name or company name, used in the email header.</summary>
+    public string RecipientFullName { get; init; } = string.Empty;
 
     /// <summary>Sponsor nickname; always null for a company.</summary>
     public string? RecipientNickName { get; init; }
@@ -432,6 +435,8 @@ public class FacilitatorRejectionNotificationDataModel
     public string? FacilitatorEmail { get; init; }
 
     public string FacilitatorFirstName { get; init; } = string.Empty;
+
+    public string FacilitatorFullName { get; init; } = string.Empty;
 
     public string StudentFirstName { get; init; } = string.Empty;
 

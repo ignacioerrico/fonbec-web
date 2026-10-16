@@ -193,6 +193,8 @@ public class RecipientMessageRepository(IDbContextFactory<FonbecWebDbContext> db
             {
                 FacilitatorNotifiedOn = m.FacilitatorNotifiedOn,
                 FacilitatorEmail = m.Student.Facilitator.Email,
+                FacilitatorFullName =
+                    m.Student.Facilitator.FirstName + " " + m.Student.Facilitator.LastName,
                 StudentFullName = m.Student.FirstName + " " + m.Student.LastName,
                 StudentFirstName = m.Student.FirstName,
                 StudentNickName = m.Student.NickName,

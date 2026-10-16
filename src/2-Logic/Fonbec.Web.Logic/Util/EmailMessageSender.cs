@@ -11,6 +11,8 @@ public interface IEmailMessageSender
 {
     Task SendEmailAsync(string email, string subject, string htmlMessage);
 
+    Task SendEmailAsync(Recipient recipient, string subject, string htmlMessage);
+
     Task SendEmailAsync(
         IReadOnlyList<Recipient> to,
         IReadOnlyList<Recipient> cc,
@@ -27,6 +29,9 @@ public class EmailMessageSender(
 {
     public Task SendEmailAsync(string email, string subject, string htmlMessage) =>
         SendEmailAsync([new Recipient(email)], [], [], subject, htmlMessage);
+
+    public Task SendEmailAsync(Recipient recipient, string subject, string htmlMessage) =>
+        SendEmailAsync([recipient], [], [], subject, htmlMessage);
 
     public async Task SendEmailAsync(
         IReadOnlyList<Recipient> to,

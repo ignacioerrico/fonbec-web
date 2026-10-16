@@ -1830,6 +1830,9 @@ public class DocumentRepository(
                     ? (s.Company!.Email ?? string.Empty)
                     : s.Sponsor!.Email,
                 RecipientName = s.CompanyId != null ? s.Company!.Name : s.Sponsor!.FirstName,
+                RecipientFullName = s.CompanyId != null
+                    ? s.Company!.Name
+                    : s.Sponsor!.FirstName + " " + s.Sponsor.LastName,
                 RecipientNickName = s.CompanyId != null ? null : s.Sponsor!.NickName,
                 PublicAccessToken = s.CompanyId != null
                     ? s.Company!.PublicAccessToken
@@ -2494,6 +2497,8 @@ public class DocumentRepository(
                 FacilitatorRejectionNotifiedOn = d.FacilitatorRejectionNotifiedOn,
                 FacilitatorEmail = d.Student.Facilitator.Email,
                 FacilitatorFirstName = d.Student.Facilitator.FirstName,
+                FacilitatorFullName =
+                    d.Student.Facilitator.FirstName + " " + d.Student.Facilitator.LastName,
                 StudentFirstName = d.Student.FirstName,
                 StudentLastName = d.Student.LastName,
                 StudentNickName = d.Student.NickName,

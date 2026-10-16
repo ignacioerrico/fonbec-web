@@ -28,7 +28,9 @@ public class DocumentRejectionBehaviorTests
         document.RejectedReasonId.Should().Be(RejectedReasonIds.Unreadable);
         document.FacilitatorRejectionNotifiedOn.Should().NotBeNull();
         await fixture.EmailSender.Received(1).SendEmailAsync(
-            "uploader@fonbec.test",
+            Arg.Is<Recipient>(recipient =>
+                recipient.EmailAddress == "<uploader@fonbec.test>"
+                && recipient.DisplayName == "\"uploader User\""),
             "Documento rechazado",
             Arg.Is<string>(html =>
                 html.Contains($"Se rechazó {phrase} de Maria Garcia.")
@@ -56,9 +58,11 @@ public class DocumentRejectionBehaviorTests
         document.FacilitatorRejectionNotifiedOn.Should().BeNull();
         document.ManagersNotifiedOfHeldRejectionOn.Should().NotBeNull();
         await fixture.EmailSender.DidNotReceive().SendEmailAsync(
-            Arg.Any<string>(), "Documento rechazado", Arg.Any<string>());
+            Arg.Any<Recipient>(), "Documento rechazado", Arg.Any<string>());
         await fixture.EmailSender.Received(1).SendEmailAsync(
-            "manager@fonbec.test",
+            Arg.Is<Recipient>(recipient =>
+                recipient.EmailAddress == "<manager@fonbec.test>"
+                && recipient.DisplayName == "\"manager User\""),
             "Documento rechazado para decidir",
             Arg.Is<string>(html =>
                 html.Contains("está esperando tu decisión")
@@ -89,7 +93,9 @@ public class DocumentRejectionBehaviorTests
         returned.RejectedReasonId.Should().Be(RejectedReasonIds.Unreadable);
         returned.FacilitatorRejectionNotifiedOn.Should().NotBeNull();
         await fixture.EmailSender.Received(1).SendEmailAsync(
-            "uploader@fonbec.test",
+            Arg.Is<Recipient>(recipient =>
+                recipient.EmailAddress == "<uploader@fonbec.test>"
+                && recipient.DisplayName == "\"uploader User\""),
             "Documento rechazado",
             Arg.Is<string>(html => html.Contains("Se rechazó el otro documento de Maria Garcia.")));
     }

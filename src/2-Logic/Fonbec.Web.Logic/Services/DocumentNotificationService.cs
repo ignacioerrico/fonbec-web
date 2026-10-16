@@ -70,7 +70,12 @@ public class DocumentNotificationService(
 
         await ForEachWithConcurrencyAsync(
             managers,
-            manager => SendWithRetryAsync(manager.Email, subject, html, planId, cancellationToken),
+            manager => SendWithRetryAsync(
+                new Recipient(manager.Email, manager.FullName),
+                subject,
+                html,
+                planId,
+                cancellationToken),
             cancellationToken);
     }
 
@@ -145,7 +150,7 @@ public class DocumentNotificationService(
             try
             {
                 await emailMessageSender.SendEmailAsync(
-                    notice.FacilitatorEmail.Trim(),
+                    new Recipient(notice.FacilitatorEmail.Trim(), notice.FacilitatorFullName),
                     DocumentNotificationMessageFormatter.FacilitatorRejectionSubject,
                     html);
                 await documentRepository.MarkFacilitatorRejectionNotifiedAsync(documentId, DateTime.UtcNow);
@@ -250,7 +255,11 @@ public class DocumentNotificationService(
                 notice.DocumentType,
                 reason,
                 rejectedDocumentsUrl);
-            if (!await SendManagerHeldRejectionAsync(manager.Email, html, documentId, cancellationToken))
+            if (!await SendManagerHeldRejectionAsync(
+                    new Recipient(manager.Email.Trim(), manager.FullName),
+                    html,
+                    documentId,
+                    cancellationToken))
             {
                 allSent = false;
             }
@@ -263,7 +272,7 @@ public class DocumentNotificationService(
     }
 
     private async Task<bool> SendManagerHeldRejectionAsync(
-        string email,
+        Recipient recipient,
         string html,
         long documentId,
         CancellationToken cancellationToken)
@@ -273,7 +282,7 @@ public class DocumentNotificationService(
             try
             {
                 await emailMessageSender.SendEmailAsync(
-                    email.Trim(),
+                    recipient,
                     DocumentNotificationMessageFormatter.HeldRejectionManagerSubject,
                     html);
                 return true;
@@ -288,7 +297,7 @@ public class DocumentNotificationService(
                     ex,
                     "Manager notification for held rejection {DocumentId} to {Email} attempt {Attempt}/{MaxAttempts} failed",
                     documentId,
-                    email,
+                    recipient.EmailAddress,
                     attempt,
                     MaxSendAttempts);
                 await Task.Delay(TimeSpan.FromMilliseconds(500 * attempt), cancellationToken);
@@ -299,7 +308,7 @@ public class DocumentNotificationService(
                     ex,
                     "Manager notification for held rejection {DocumentId} to {Email} failed after {MaxAttempts} attempts; leaving unmarked for retry",
                     documentId,
-                    email,
+                    recipient.EmailAddress,
                     MaxSendAttempts);
             }
         }
@@ -385,7 +394,7 @@ public class DocumentNotificationService(
     }
 
     private async Task SendWithRetryAsync(
-        string email,
+        Recipient recipient,
         string subject,
         string html,
         int planId,
@@ -395,7 +404,7 @@ public class DocumentNotificationService(
         {
             try
             {
-                await emailMessageSender.SendEmailAsync(email, subject, html);
+                await emailMessageSender.SendEmailAsync(recipient, subject, html);
                 return;
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -407,7 +416,7 @@ public class DocumentNotificationService(
                 logger.LogWarning(
                     ex,
                     "Plan-ready notification to {Email} for plan {PlanId} attempt {Attempt}/{MaxAttempts} failed",
-                    email,
+                    recipient.EmailAddress,
                     planId,
                     attempt,
                     MaxSendAttempts);
@@ -419,7 +428,7 @@ public class DocumentNotificationService(
                 logger.LogError(
                     ex,
                     "Plan-ready notification to {Email} for plan {PlanId} failed after {MaxAttempts} attempts",
-                    email,
+                    recipient.EmailAddress,
                     planId,
                     MaxSendAttempts);
             }
@@ -429,7 +438,12 @@ public class DocumentNotificationService(
     private (IReadOnlyList<Recipient> To, IReadOnlyList<Recipient> Cc, IReadOnlyList<Recipient> Bcc) BuildRecipients(
         DocumentShareNotificationDataModel share)
     {
-        IReadOnlyList<Recipient> to = [new Recipient(share.RecipientEmail)];
+        IReadOnlyList<Recipient> to =
+        [
+            string.IsNullOrWhiteSpace(share.RecipientFullName)
+                ? new Recipient(share.RecipientEmail)
+                : new Recipient(share.RecipientEmail, share.RecipientFullName)
+        ];
         if (share.IsCompany || share.AdditionalRecipients.Count == 0)
         {
             return (to, [], []);
