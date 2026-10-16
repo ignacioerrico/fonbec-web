@@ -1,6 +1,7 @@
 @attribute [Route(NavRoutes.ChapterSettings)]
 @attribute [Authorize(Policy = nameof(ChapterSettings))]
 @using Fonbec.Web.DataAccess.Entities.Enums
+@using Fonbec.Web.Logic.Email
 @inherits AuthenticationRequiredComponentBase
 
 <PageHeader Title="Configuración de la filial" />
@@ -9,25 +10,95 @@
 
 @if (!Loading && _behavior is DocumentRejectionBehavior behavior)
 {
-    <MudPaper Class="pa-4" Elevation="2">
-        <MudText Typo="Typo.h6" GutterBottom="true">Cuando se rechaza un documento</MudText>
-        <MudRadioGroup T="DocumentRejectionBehavior" Value="behavior" ValueChanged="OnBehaviorChanged" Disabled="_saving">
-            <MudRadio Value="DocumentRejectionBehavior.ReturnToFacilitator" Color="Color.Primary">
-                <MudStack Spacing="1">
-                    <MudText>Devolver al mediador y avisarle por correo</MudText>
-                    <MudText Typo="Typo.body2" Class="mud-text-secondary">
-                        El mediador ve el motivo en Mis becarios y puede volver a subirlo.
-                    </MudText>
-                </MudStack>
-            </MudRadio>
-            <MudRadio Value="DocumentRejectionBehavior.HoldForManager" Color="Color.Primary">
-                <MudStack Spacing="1">
-                    <MudText>El coordinador decide si se comparte o se devuelve</MudText>
-                    <MudText Typo="Typo.body2" Class="mud-text-secondary">
-                        El documento queda en Documentos rechazados. El mediador no lo ve como rechazado hasta que se lo devuelvas.
-                    </MudText>
-                </MudStack>
-            </MudRadio>
-        </MudRadioGroup>
-    </MudPaper>
+    <MudStack Spacing="4">
+        <MudPaper Class="pa-4" Elevation="2">
+            <MudText Typo="Typo.h6" GutterBottom="true">Cuando se rechaza un documento</MudText>
+            <MudRadioGroup T="DocumentRejectionBehavior" Value="behavior" ValueChanged="OnBehaviorChanged" Disabled="_saving">
+                <MudRadio Value="DocumentRejectionBehavior.ReturnToFacilitator" Color="Color.Primary">
+                    <MudStack Spacing="1">
+                        <MudText>Devolver al mediador y avisarle por correo</MudText>
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                            El mediador ve el motivo en Mis becarios y puede volver a subirlo.
+                        </MudText>
+                    </MudStack>
+                </MudRadio>
+                <MudRadio Value="DocumentRejectionBehavior.HoldForManager" Color="Color.Primary">
+                    <MudStack Spacing="1">
+                        <MudText>El coordinador decide si se comparte o se devuelve</MudText>
+                        <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                            El documento queda en Documentos rechazados. El mediador no lo ve como rechazado hasta que se lo devuelvas.
+                        </MudText>
+                    </MudStack>
+                </MudRadio>
+            </MudRadioGroup>
+        </MudPaper>
+
+        @if (_emailSettings is not null)
+        {
+            <MudPaper Class="pa-4" Elevation="2">
+                <MudText Typo="Typo.h6" GutterBottom="true">Mensajes de correo</MudText>
+                <MudText Typo="Typo.body2" Class="mud-text-secondary mb-4">
+                    El texto del asunto se agrega, con un espacio, delante del asunto de todos los correos de la filial.
+                </MudText>
+                <MudTextField @bind-Value="_emailSettings.SubjectPrefix"
+                              Label="Texto del asunto"
+                              MaxLength="50"
+                              Counter="50"
+                              Immediate="true"
+                              Disabled="_savingMessages" />
+
+                <MudExpansionPanels Class="mt-4" MultiExpansion="true">
+                    @foreach (var message in _emailSettings.Messages)
+                    {
+                        <MudExpansionPanel Text="@message.Name" @key="message.Kind">
+                            <MudStack Spacing="2">
+                                <p class="mud-typography mud-typography-body2">
+                                    <strong>Cuando se envía:</strong> @message.WhenSent
+                                </p>
+                                <p class="mud-typography mud-typography-body2">
+                                    <strong>A quién:</strong> @message.Recipients
+                                </p>
+                                <MudText Typo="Typo.subtitle2">Marcadores</MudText>
+                                @foreach (var placeholder in message.Placeholders)
+                                {
+                                    <p class="mud-typography mud-typography-body2">
+                                        <code class="placeholder-token">@placeholder.Token</code> — @placeholder.Description
+                                    </p>
+                                }
+                                <MudTextField @bind-Value="message.Subject"
+                                              Label="Asunto"
+                                              MaxLength="200"
+                                              Counter="200"
+                                              Immediate="true"
+                                              Disabled="_savingMessages" />
+                                <div class="email-template-body">
+                                    <MudTextField @bind-Value="message.Body"
+                                                  Label="Cuerpo"
+                                                  Lines="10"
+                                                  MaxLength="4000"
+                                                  Counter="4000"
+                                                  Immediate="true"
+                                                  Disabled="_savingMessages" />
+                                </div>
+                                <MudButton Variant="Variant.Text"
+                                           Color="Color.Secondary"
+                                           Disabled="_savingMessages"
+                                           OnClick="@(() => RestoreDefault(message))">
+                                    Restaurar predeterminado
+                                </MudButton>
+                            </MudStack>
+                        </MudExpansionPanel>
+                    }
+                </MudExpansionPanels>
+
+                <MudButton Class="mt-4"
+                           Variant="Variant.Filled"
+                           Color="Color.Primary"
+                           Disabled="_savingMessages"
+                           OnClick="SaveMessagesAsync">
+                    Guardar mensajes
+                </MudButton>
+            </MudPaper>
+        }
+    </MudStack>
 }

@@ -137,6 +137,13 @@ namespace Fonbec.Web.DataAccess.Migrations
                         .HasColumnType("tinyint")
                         .HasDefaultValue((byte)0);
 
+                    b.Property<string>("EmailSubjectPrefix")
+                        .IsRequired()
+                        .ValueGeneratedOnAdd()
+                        .HasMaxLength(50)
+                        .HasColumnType("nvarchar(50)")
+                        .HasDefaultValue("FONBEC |");
+
                     b.Property<bool>("IsActive")
                         .HasColumnType("bit");
 
@@ -172,6 +179,38 @@ namespace Fonbec.Web.DataAccess.Migrations
                     b.HasIndex("ReenabledById");
 
                     b.ToTable("Chapters");
+                });
+
+            modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.ChapterEmailTemplate", b =>
+                {
+                    b.Property<int>("Id")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("int");
+
+                    SqlServerPropertyBuilderExtensions.UseIdentityColumn(b.Property<int>("Id"));
+
+                    b.Property<string>("Body")
+                        .IsRequired()
+                        .HasMaxLength(4000)
+                        .HasColumnType("nvarchar(4000)");
+
+                    b.Property<int>("ChapterId")
+                        .HasColumnType("int");
+
+                    b.Property<byte>("Kind")
+                        .HasColumnType("tinyint");
+
+                    b.Property<string>("Subject")
+                        .IsRequired()
+                        .HasMaxLength(200)
+                        .HasColumnType("nvarchar(200)");
+
+                    b.HasKey("Id");
+
+                    b.HasIndex("ChapterId", "Kind")
+                        .IsUnique();
+
+                    b.ToTable("ChapterEmailTemplates");
                 });
 
             modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.Company", b =>
@@ -1872,6 +1911,17 @@ namespace Fonbec.Web.DataAccess.Migrations
                     b.Navigation("ReenabledBy");
                 });
 
+            modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.ChapterEmailTemplate", b =>
+                {
+                    b.HasOne("Fonbec.Web.DataAccess.Entities.Chapter", "Chapter")
+                        .WithMany("EmailTemplates")
+                        .HasForeignKey("ChapterId")
+                        .OnDelete(DeleteBehavior.Cascade)
+                        .IsRequired();
+
+                    b.Navigation("Chapter");
+                });
+
             modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.Company", b =>
                 {
                     b.HasOne("Fonbec.Web.DataAccess.Entities.FonbecWebUser", "CreatedBy")
@@ -2562,6 +2612,11 @@ namespace Fonbec.Web.DataAccess.Migrations
             modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.Assessment", b =>
                 {
                     b.Navigation("LetterReview");
+                });
+
+            modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.Chapter", b =>
+                {
+                    b.Navigation("EmailTemplates");
                 });
 
             modelBuilder.Entity("Fonbec.Web.DataAccess.Entities.Company", b =>

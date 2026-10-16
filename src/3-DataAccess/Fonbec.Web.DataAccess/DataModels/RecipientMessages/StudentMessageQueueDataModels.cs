@@ -79,9 +79,19 @@ public class RecipientMessageFacilitatorNotificationDataModel
 
     public string FacilitatorFullName { get; init; } = string.Empty;
 
+    public string FacilitatorFirstName { get; init; } = string.Empty;
+
+    public string? FacilitatorNickName { get; init; }
+
+    public Gender FacilitatorGender { get; init; }
+
+    public int ChapterId { get; init; }
+
     public string StudentFullName { get; init; } = string.Empty;
 
     public string StudentFirstName { get; init; } = string.Empty;
+
+    public string StudentLastName { get; init; } = string.Empty;
 
     public string? StudentNickName { get; init; }
 
@@ -93,6 +103,12 @@ public class RecipientMessageFacilitatorNotificationDataModel
     public Gender? SenderGender { get; init; }
 
     public string SenderName { get; init; } = string.Empty;
+
+    public string SenderFirstName { get; init; } = string.Empty;
+
+    public string SenderLastName { get; init; } = string.Empty;
+
+    public string? SenderNickName { get; init; }
 
     public string Body { get; init; } = string.Empty;
 }

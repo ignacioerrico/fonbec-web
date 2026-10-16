@@ -12,11 +12,11 @@ namespace Fonbec.Web.DataAccess.Tests.Integration.Documents;
 public class DocumentRejectionBehaviorTests
 {
     [Theory]
-    [InlineData(DocumentType.Letter, "la carta")]
-    [InlineData(DocumentType.ReportCard, "el boletín")]
-    [InlineData(DocumentType.Other, "el otro documento")]
+    [InlineData(DocumentType.Letter, "la carta", "Carta rechazada")]
+    [InlineData(DocumentType.ReportCard, "el boletín", "Boletín rechazado")]
+    [InlineData(DocumentType.Other, "el documento", "Documento rechazado")]
     public async Task ReturnMode_Rejects_The_Document_And_Emails_The_Facilitator(
-        DocumentType documentType, string phrase)
+        DocumentType documentType, string phrase, string subject)
     {
         var fixture = new DocumentTestFixture();
         await fixture.InitializeAsync();
@@ -31,7 +31,7 @@ public class DocumentRejectionBehaviorTests
             Arg.Is<Recipient>(recipient =>
                 recipient.EmailAddress == "<uploader@fonbec.test>"
                 && recipient.DisplayName == "\"uploader User\""),
-            "Documento rechazado",
+            $"FONBEC | {subject}",
             Arg.Is<string>(html =>
                 html.Contains($"Se rechazó {phrase} de Maria Garcia.")
                 && html.Contains("Motivo: Ilegible")
@@ -39,10 +39,11 @@ public class DocumentRejectionBehaviorTests
     }
 
     [Theory]
-    [InlineData(DocumentType.Letter)]
-    [InlineData(DocumentType.ReportCard)]
-    [InlineData(DocumentType.Other)]
-    public async Task HoldMode_Keeps_The_Rejection_Until_The_Manager_Decides(DocumentType documentType)
+    [InlineData(DocumentType.Letter, "Carta rechazada", "la carta")]
+    [InlineData(DocumentType.ReportCard, "Boletín rechazado", "el boletín")]
+    [InlineData(DocumentType.Other, "Documento rechazado", "el documento")]
+    public async Task HoldMode_Keeps_The_Rejection_Until_The_Manager_Decides(
+        DocumentType documentType, string subject, string phrase)
     {
         var fixture = new DocumentTestFixture();
         await fixture.InitializeAsync();
@@ -58,14 +59,17 @@ public class DocumentRejectionBehaviorTests
         document.FacilitatorRejectionNotifiedOn.Should().BeNull();
         document.ManagersNotifiedOfHeldRejectionOn.Should().NotBeNull();
         await fixture.EmailSender.DidNotReceive().SendEmailAsync(
-            Arg.Any<Recipient>(), "Documento rechazado", Arg.Any<string>());
+            Arg.Is<Recipient>(recipient => recipient.EmailAddress == "<uploader@fonbec.test>"),
+            Arg.Any<string>(),
+            Arg.Any<string>());
         await fixture.EmailSender.Received(1).SendEmailAsync(
             Arg.Is<Recipient>(recipient =>
                 recipient.EmailAddress == "<manager@fonbec.test>"
                 && recipient.DisplayName == "\"manager User\""),
-            "Documento rechazado para decidir",
+            $"FONBEC | {subject} requiere la decisión de un coordinador",
             Arg.Is<string>(html =>
-                html.Contains("está esperando tu decisión")
+                html.Contains($"Se rechazó {phrase} de Maria Garcia.")
+                && html.Contains("Se requiere tu decisión.")
                 && html.Contains("/rechazados")));
 
         var stillHeld = await fixture.DocumentRepository.SetChapterRejectionBehaviorAsync(
@@ -96,8 +100,8 @@ public class DocumentRejectionBehaviorTests
             Arg.Is<Recipient>(recipient =>
                 recipient.EmailAddress == "<uploader@fonbec.test>"
                 && recipient.DisplayName == "\"uploader User\""),
-            "Documento rechazado",
-            Arg.Is<string>(html => html.Contains("Se rechazó el otro documento de Maria Garcia.")));
+            "FONBEC | Documento rechazado",
+            Arg.Is<string>(html => html.Contains("Se rechazó el documento de Maria Garcia.")));
     }
 
     [Fact]
@@ -128,12 +132,14 @@ public class DocumentRejectionBehaviorTests
         shares.Should().ContainSingle(s => s.SponsorId == fixture.SponsorAId);
 
         await fixture.EmailSender.DidNotReceive().SendEmailAsync(
-            Arg.Any<string>(), "Documento rechazado", Arg.Any<string>());
+            Arg.Is<Recipient>(recipient => recipient.EmailAddress == "<uploader@fonbec.test>"),
+            Arg.Any<string>(),
+            Arg.Any<string>());
         await fixture.EmailSender.Received(1).SendEmailAsync(
             Arg.Is<IReadOnlyList<Recipient>>(to => to.Any(r => r.EmailAddress.Contains("sponsor.a@test.com"))),
             Arg.Any<IReadOnlyList<Recipient>>(),
             Arg.Any<IReadOnlyList<Recipient>>(),
-            "Nuevo documento disponible",
+            "FONBEC | Nueva carta disponible",
             Arg.Any<string>());
     }
 

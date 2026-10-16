@@ -19,6 +19,13 @@ public static class MaxLength
     public static class Chapter
     {
         public const int Name = 30;
+        public const int EmailSubjectPrefix = 50;
+    }
+
+    public static class ChapterEmailTemplate
+    {
+        public const int Subject = 200;
+        public const int Body = 4000;
     }
 
     public static class Company

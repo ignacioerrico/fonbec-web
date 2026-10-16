@@ -20,6 +20,16 @@ internal class ChapterConfiguration : AuditableEntityTypeConfiguration<Chapter>
         builder.Property(ch => ch.DocumentRejectionBehavior)
             .HasDefaultValue(DocumentRejectionBehavior.ReturnToFacilitator);
 
+        builder.Property(ch => ch.EmailSubjectPrefix)
+            .IsRequired()
+            .HasMaxLength(MaxLength.Chapter.EmailSubjectPrefix)
+            .HasDefaultValue("FONBEC |");
+
+        builder.HasMany(ch => ch.EmailTemplates)
+            .WithOne(template => template.Chapter)
+            .HasForeignKey(template => template.ChapterId)
+            .OnDelete(DeleteBehavior.Cascade);
+
         base.Configure(builder);
     }
 }

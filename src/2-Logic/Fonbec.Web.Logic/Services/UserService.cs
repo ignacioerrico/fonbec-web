@@ -6,6 +6,8 @@ using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Authorization;
 using Fonbec.Web.Logic.Constants;
 using Fonbec.Web.Logic.ExtensionMethods;
+using Fonbec.Web.DataAccess.Entities.Enums;
+using Fonbec.Web.Logic.Email;
 using Fonbec.Web.Logic.Models;
 using Fonbec.Web.Logic.Models.Results;
 using Fonbec.Web.Logic.Models.Users;
@@ -58,9 +60,11 @@ public class UserService(
     IUserRepository userRepository,
     IPasswordGeneratorWrapper passwordGenerator,
     IEmailMessageSender emailMessageSender,
-    List<PageAccessInfo> allPages)
+    List<PageAccessInfo> allPages,
+    IEmailComposer? emailComposer = null)
     : IUserService
 {
+    private readonly IEmailComposer _emailComposer = emailComposer ?? EmailComposer.Defaults;
     public async Task<ValidateUniqueEmailOutputModel> ValidateUniqueEmailAsync(string userEmail)
     {
         var normalizedEmail = userEmail.Trim().ToLower();
@@ -149,13 +153,20 @@ public class UserService(
 
         if (userId > 0 && errors.Count == 0)
         {
-            // TODO: Use a nice email template
+            var accountEmail = await _emailComposer.ComposeAsync(
+                createUserInputDataModel.UserChapterId,
+                EmailMessageKind.NewAccount,
+                new Dictionary<string, string?>
+                {
+                    ["usuario"] = createUserInputDataModel.UserEmail,
+                    ["contraseña"] = generatedPassword,
+                });
             await emailMessageSender.SendEmailAsync(
                 new Recipient(
                     createUserInputDataModel.UserEmail,
                     $"{createUserInputDataModel.UserFirstName} {createUserInputDataModel.UserLastName}"),
-                "FONBEC | Tu nueva cuenta",
-                $"<p>Usuario: {model.UserEmail}</p><p>Contraseña: {generatedPassword}</p>");
+                accountEmail.Subject,
+                accountEmail.HtmlBody);
         }
 
         return (userId, errors);
@@ -239,12 +250,18 @@ public class UserService(
         if (identityResult.Succeeded)
         {
             var user = await userRepository.GetUserAsync(userId);
-
-            // TODO: Use a nice email template
+            var passwordEmail = await _emailComposer.ComposeAsync(
+                user?.ChapterId,
+                EmailMessageKind.NewPassword,
+                new Dictionary<string, string?>
+                {
+                    ["usuario"] = userEmail,
+                    ["contraseña"] = generatedPassword,
+                });
             await emailMessageSender.SendEmailAsync(
                 new Recipient(userEmail, user?.UserFullName),
-                "FONBEC | Tu nueva contraseña",
-                $"<p>Usuario: {userEmail}</p><p>Contraseña nueva: {generatedPassword}</p>");
+                passwordEmail.Subject,
+                passwordEmail.HtmlBody);
         }
 
         return identityResult;

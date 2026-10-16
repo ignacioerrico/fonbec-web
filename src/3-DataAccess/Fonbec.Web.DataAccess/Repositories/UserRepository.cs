@@ -254,7 +254,11 @@ public class UserRepository(
                            || user.LockoutEnd == null
                            || user.LockoutEnd <= DateTimeOffset.UtcNow)
             .Where(user => !string.IsNullOrWhiteSpace(user.Email))
-            .Select(user => new ChapterManagerContactDataModel(user.Email!, user.FullName()))
+            .Select(user => new ChapterManagerContactDataModel(user.Email!, user.FullName())
+            {
+                FirstName = user.FirstName,
+                NickName = user.NickName,
+            })
             .ToList();
     }
 

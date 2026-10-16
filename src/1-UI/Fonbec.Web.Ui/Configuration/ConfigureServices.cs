@@ -5,6 +5,7 @@ using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.DataAccess.Options;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Authorization;
+using Fonbec.Web.Logic.Email;
 using Fonbec.Web.Logic.Options;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Logic.Util;
@@ -91,6 +92,8 @@ public static class ConfigureServices
         services.AddScoped<StudentMessageNavCount>();
         services.AddScoped<NavMenuRefresh>();
         services.AddScoped<IDocumentNotificationService, DocumentNotificationService>();
+        services.AddScoped<IEmailComposer, EmailComposer>();
+        services.AddScoped<IChapterEmailSettingsService, ChapterEmailSettingsService>();
         services.AddScoped<INavMenuService, NavMenuService>();
         services.AddSingleton<DocumentNotificationQueue>();
         services.AddSingleton<IDocumentNotificationQueue>(sp => sp.GetRequiredService<DocumentNotificationQueue>());
@@ -113,6 +116,7 @@ public static class ConfigureServices
         services.AddScoped<ISponsorshipRepository, SponsorshipRepository>();
         services.AddScoped<ICompanyRepository, CompanyRepository>();
         services.AddScoped<IDocumentRepository, DocumentRepository>();
+        services.AddScoped<IChapterEmailSettingsRepository, ChapterEmailSettingsRepository>();
         services.AddScoped<IRecipientMessageRepository, RecipientMessageRepository>();
     }
 

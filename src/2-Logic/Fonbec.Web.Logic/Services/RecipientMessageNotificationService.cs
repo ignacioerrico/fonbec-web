@@ -1,4 +1,6 @@
+using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Repositories;
+using Fonbec.Web.Logic.Email;
 using Fonbec.Web.Logic.Models;
 using Fonbec.Web.Logic.Util;
 using Microsoft.Extensions.Configuration;
@@ -22,8 +24,10 @@ public class RecipientMessageNotificationService(
     IEmailMessageSender emailMessageSender,
     IConfiguration configuration,
     TimeProvider timeProvider,
-    ILogger<RecipientMessageNotificationService> logger) : IRecipientMessageNotificationService
+    ILogger<RecipientMessageNotificationService> logger,
+    IEmailComposer? emailComposer = null) : IRecipientMessageNotificationService
 {
+    private readonly IEmailComposer _emailComposer = emailComposer ?? EmailComposer.Defaults;
     private const int MaxSendAttempts = 3;
 
     public async Task NotifyFacilitatorOfRecipientMessageAsync(
@@ -77,17 +81,11 @@ public class RecipientMessageNotificationService(
         }
 
         var messagesUrl = $"{baseUrl}/mensajes-para-becarios";
-        var subject = RecipientMessageNotificationFormatter.BuildSubject(notice.StudentFullName);
-        var html = RecipientMessageNotificationFormatter.BuildHtml(
-            notice.StudentFullName,
-            notice.StudentGender,
-            notice.StudentFirstName,
-            notice.StudentNickName,
-            notice.IsCompany,
-            notice.SenderGender,
-            notice.SenderName,
-            notice.Body,
-            messagesUrl);
+        var message = await _emailComposer.ComposeAsync(
+            notice.ChapterId,
+            EmailMessageKind.RecipientMessage,
+            EmailNotificationValues.ForRecipientMessage(notice, messagesUrl),
+            cancellationToken);
         var sent = false;
 
         for (var attempt = 1; attempt <= MaxSendAttempts; attempt++)
@@ -96,8 +94,8 @@ public class RecipientMessageNotificationService(
             {
                 await emailMessageSender.SendEmailAsync(
                     new Recipient(notice.FacilitatorEmail.Trim(), notice.FacilitatorFullName),
-                    subject,
-                    html);
+                    message.Subject,
+                    message.HtmlBody);
                 sent = true;
                 break;
             }

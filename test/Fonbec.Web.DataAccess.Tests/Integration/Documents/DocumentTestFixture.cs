@@ -6,6 +6,7 @@ using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Options;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Authorization;
+using Fonbec.Web.Logic.Email;
 using Fonbec.Web.Logic.Constants;
 using Fonbec.Web.Logic.Models.Documents;
 using Fonbec.Web.Logic.Models.Documents.Input;
@@ -89,7 +90,8 @@ internal sealed class DocumentTestFixture
             userRepository,
             EmailSender,
             configuration,
-            NullLogger<DocumentNotificationService>.Instance);
+            NullLogger<DocumentNotificationService>.Instance,
+            new EmailComposer(new ChapterEmailSettingsRepository(Factory)));
         var userService = new UserService(
             userRepository,
             Substitute.For<IPasswordGeneratorWrapper>(),

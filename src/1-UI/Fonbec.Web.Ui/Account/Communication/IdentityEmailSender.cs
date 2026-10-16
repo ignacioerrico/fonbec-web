@@ -1,34 +1,46 @@
 ﻿using Fonbec.Web.DataAccess.Entities;
+using Fonbec.Web.DataAccess.Entities.Enums;
+using Fonbec.Web.Logic.Email;
+using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models;
 using Fonbec.Web.Logic.Util;
 using Microsoft.AspNetCore.Identity;
-using Microsoft.AspNetCore.Identity.UI.Services;
 
 namespace Fonbec.Web.Ui.Account.Communication;
 
-internal sealed class IdentityEmailSender(IEmailMessageSender emailSender) : IEmailSender<FonbecWebUser>
+internal sealed class IdentityEmailSender(
+    IEmailMessageSender emailMessageSender,
+    IServiceScopeFactory scopeFactory) : IEmailSender<FonbecWebUser>
 {
-    public async Task SendConfirmationLinkAsync(FonbecWebUser user, string email, string confirmationLink)
-    {
-        await emailSender.SendEmailAsync(
-            new Recipient(email, user.FullName()),
-            "Confirmá tu correo electrónico",
-            $"Confirmá tu correo electrónico <a href='{confirmationLink}'>haciendo clic acá</a>.");
-    }
+    public Task SendConfirmationLinkAsync(FonbecWebUser user, string email, string confirmationLink) =>
+        SendAsync(user, email, EmailMessageKind.ConfirmEmail, "enlace-confirmación-correo", confirmationLink);
 
-    public async Task SendPasswordResetLinkAsync(FonbecWebUser user, string email, string resetLink)
-    {
-        await emailSender.SendEmailAsync(
-            new Recipient(email, user.FullName()),
-            "Restablecé tu contraseña",
-            $"Restablecé tu contraseña <a href='{resetLink}'>haciendo clic acá</a>.");
-    }
+    public Task SendPasswordResetLinkAsync(FonbecWebUser user, string email, string resetLink) =>
+        SendAsync(user, email, EmailMessageKind.ResetPassword, "enlace-restablecer-contraseña", resetLink);
 
-    public async Task SendPasswordResetCodeAsync(FonbecWebUser user, string email, string resetCode)
+    public Task SendPasswordResetCodeAsync(FonbecWebUser user, string email, string resetCode) =>
+        SendAsync(user, email, EmailMessageKind.ResetPassword, "enlace-restablecer-contraseña", resetCode);
+
+    private async Task SendAsync(
+        FonbecWebUser user,
+        string email,
+        EmailMessageKind kind,
+        string linkToken,
+        string link)
     {
-        await emailSender.SendEmailAsync(
+        await using var scope = scopeFactory.CreateAsyncScope();
+        var composer = scope.ServiceProvider.GetRequiredService<IEmailComposer>();
+        var message = await composer.ComposeAsync(
+            user.ChapterId,
+            kind,
+            new Dictionary<string, string?>
+            {
+                ["usuario"] = email,
+                [linkToken] = link,
+            });
+        await emailMessageSender.SendEmailAsync(
             new Recipient(email, user.FullName()),
-            "Restablecé tu contraseña",
-            $"Restablecé tu contraseña usando este código: {resetCode}");
+            message.Subject,
+            message.HtmlBody);
     }
 }

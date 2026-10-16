@@ -56,10 +56,10 @@ public class DocumentNotificationServiceTests
                 Matches(to, new Recipient("padrino@test.com", "Juan Perez"))),
             Arg.Is<IReadOnlyList<Recipient>>(cc => cc.Count == 0),
             Arg.Is<IReadOnlyList<Recipient>>(bcc => bcc.Count == 0),
-            "Nuevo documento disponible",
+            "FONBEC | Nuevo documento disponible",
             Arg.Is<string>(html =>
                 html.Contains("Hola, Juancito:")
-                && html.Contains("de tu ahijada Mari García.")
+                && html.Contains("de tu ahijada Mari.")
                 && html.Contains($"https://fonbec.test/padrinos/{token}/7")));
 
         await _documentRepository.Received(1).MarkShareNotifiedAsync(1, Arg.Any<DateTime>());
@@ -94,7 +94,7 @@ public class DocumentNotificationServiceTests
                 Matches(to, new Recipient("empresa@test.com", "Acme SA"))),
             Arg.Is<IReadOnlyList<Recipient>>(cc => cc.Count == 0),
             Arg.Is<IReadOnlyList<Recipient>>(bcc => bcc.Count == 0),
-            "Nuevo documento disponible",
+            "FONBEC | Nuevo documento disponible",
             Arg.Is<string>(html =>
                 html.Contains("Hola, Acme SA:")
                 && html.Contains($"https://fonbec.test/empresas/{token}/7")));
@@ -281,9 +281,9 @@ public class DocumentNotificationServiceTests
             Arg.Is<Recipient>(recipient =>
                 recipient.EmailAddress == "<coord@test.com>"
                 && recipient.DisplayName == "\"Ana Coordinadora\""),
-            "Campaña lista para completar",
+            "FONBEC | Campaña de Septiembre de 2026 lista para completar",
             Arg.Is<string>(html =>
-                html.Contains("septiembre de 2026")
+                html.Contains("Septiembre de 2026")
                 && html.Contains("https://fonbec.test/planificaciones/88/cartas")));
     }
 
@@ -351,7 +351,7 @@ public class DocumentNotificationServiceTests
                 new Recipient("luis@ejemplo.com", "Luis Perez"),
                 new Recipient("pedro@ejemplo.com", "Pedro Diaz"))),
             Arg.Is<IReadOnlyList<Recipient>>(bcc => Matches(bcc, new Recipient("marta@ejemplo.com", "Marta Gomez"))),
-            "Nuevo documento disponible",
+            "FONBEC | Nuevo documento disponible",
             Arg.Is<string>(html =>
                 html.Contains($"https://fonbec.test/padrinos/{token}/7")
                 && !html.Contains("luis@ejemplo.com")
@@ -590,9 +590,9 @@ public class DocumentNotificationServiceTests
             Arg.Is<Recipient>(recipient =>
                 recipient.EmailAddress == "<mediador@test.com>"
                 && recipient.DisplayName == "\"Ana Mediadora\""),
-            "Documento rechazado",
+            "FONBEC | Carta rechazada",
             Arg.Is<string>(html =>
-                html.Contains("Hola, Ana:")
+                html.Contains("Hola, mediador/mediadora Ana:")
                 && html.Contains("Se rechazó la carta de Mari Garc")
                 && html.Contains("Motivo: Ilegible: falta el sello")
                 && html.Contains("https://fonbec.test/mediadores/mis-becarios")));
@@ -664,18 +664,18 @@ public class DocumentNotificationServiceTests
             Arg.Is<Recipient>(recipient =>
                 recipient.EmailAddress == "<ana@fonbec.test>"
                 && recipient.DisplayName == "\"Ana Perez\""),
-            "Documento rechazado para decidir",
+            "FONBEC | Carta rechazada requiere la decisión de un coordinador",
             Arg.Is<string>(html =>
                 html.Contains("Hola, Ana:")
                 && html.Contains("Se rechazó la carta de Mari Garc")
-                && html.Contains("está esperando tu decisión")
+                && html.Contains("Se requiere tu decisión.")
                 && html.Contains("Motivo: Ilegible: falta el sello")
                 && html.Contains("https://fonbec.test/rechazados")));
         await _emailMessageSender.Received(1).SendEmailAsync(
             Arg.Is<Recipient>(recipient =>
                 recipient.EmailAddress == "<luis@fonbec.test>"
                 && recipient.DisplayName == "\"Luis Gomez\""),
-            "Documento rechazado para decidir",
+            "FONBEC | Carta rechazada requiere la decisión de un coordinador",
             Arg.Any<string>());
         await _documentRepository.Received(1).MarkManagersNotifiedOfHeldRejectionAsync(42, Arg.Any<DateTime>());
     }

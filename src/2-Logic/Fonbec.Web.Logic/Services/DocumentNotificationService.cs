@@ -1,7 +1,7 @@
 using Fonbec.Web.DataAccess.DataModels.Documents;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Repositories;
-using Fonbec.Web.Logic.ExtensionMethods;
+using Fonbec.Web.Logic.Email;
 using Fonbec.Web.Logic.Models;
 using Fonbec.Web.Logic.Util;
 using Microsoft.Extensions.Configuration;
@@ -29,8 +29,10 @@ public class DocumentNotificationService(
     IUserRepository userRepository,
     IEmailMessageSender emailMessageSender,
     IConfiguration configuration,
-    ILogger<DocumentNotificationService> logger) : IDocumentNotificationService
+    ILogger<DocumentNotificationService> logger,
+    IEmailComposer? emailComposer = null) : IDocumentNotificationService
 {
+    private readonly IEmailComposer _emailComposer = emailComposer ?? EmailComposer.Defaults;
     private const int MaxSendAttempts = 3;
     private const int MaxConcurrentSends = 4;
 
@@ -40,11 +42,9 @@ public class DocumentNotificationService(
         var baseUrl = configuration["App:BaseUrl"]?.TrimEnd('/')
                       ?? throw new InvalidOperationException("App:BaseUrl is not configured.");
 
-        const string subject = "Nuevo documento disponible";
-
         await ForEachWithConcurrencyAsync(
             shares,
-            share => NotifyShareAsync(documentId, share, baseUrl, subject, cancellationToken),
+            share => NotifyShareAsync(documentId, share, baseUrl, cancellationToken),
             cancellationToken);
     }
 
@@ -63,17 +63,19 @@ public class DocumentNotificationService(
         var baseUrl = configuration["App:BaseUrl"]?.TrimEnd('/')
                       ?? throw new InvalidOperationException("App:BaseUrl is not configured.");
 
-        var planLabel = planStartsOn.ToSpanishMonthYear();
         var progressUrl = $"{baseUrl}/planificaciones/{planId}/cartas";
-        var subject = "Campaña lista para completar";
-        var html = DocumentNotificationMessageFormatter.BuildPlanReadyHtml(planLabel, progressUrl);
+        var message = await _emailComposer.ComposeAsync(
+            chapterId,
+            EmailMessageKind.PlanReady,
+            EmailNotificationValues.ForPlan(planStartsOn, progressUrl),
+            cancellationToken);
 
         await ForEachWithConcurrencyAsync(
             managers,
             manager => SendWithRetryAsync(
                 new Recipient(manager.Email, manager.FullName),
-                subject,
-                html,
+                message.Subject,
+                message.HtmlBody,
                 planId,
                 cancellationToken),
             cancellationToken);
@@ -134,16 +136,12 @@ public class DocumentNotificationService(
             return;
         }
 
-        var studentName = DocumentNotificationMessageFormatter.GetStudentDisplayName(
-            notice.StudentFirstName, notice.StudentLastName, notice.StudentNickName);
-        var reason = DocumentNotificationMessageFormatter.FormatRejectionReason(
-            notice.RejectionReasonDescription, notice.RejectionNotes);
-        var html = DocumentNotificationMessageFormatter.BuildFacilitatorRejectionHtml(
-            notice.FacilitatorFirstName,
-            studentName,
-            notice.DocumentType,
-            reason,
-            $"{baseUrl}/mediadores/mis-becarios");
+        var message = await _emailComposer.ComposeAsync(
+            notice.ChapterId,
+            EmailMessageKind.DocumentRejected,
+            EmailNotificationValues.ForFacilitatorRejection(
+                notice, $"{baseUrl}/mediadores/mis-becarios"),
+            cancellationToken);
 
         for (var attempt = 1; attempt <= MaxSendAttempts; attempt++)
         {
@@ -151,8 +149,8 @@ public class DocumentNotificationService(
             {
                 await emailMessageSender.SendEmailAsync(
                     new Recipient(notice.FacilitatorEmail.Trim(), notice.FacilitatorFullName),
-                    DocumentNotificationMessageFormatter.FacilitatorRejectionSubject,
-                    html);
+                    message.Subject,
+                    message.HtmlBody);
                 await documentRepository.MarkFacilitatorRejectionNotifiedAsync(documentId, DateTime.UtcNow);
                 return;
             }
@@ -238,26 +236,24 @@ public class DocumentNotificationService(
             return;
         }
 
-        var studentName = DocumentNotificationMessageFormatter.GetStudentDisplayName(
-            notice.StudentFirstName, notice.StudentLastName, notice.StudentNickName);
-        var reason = DocumentNotificationMessageFormatter.FormatRejectionReason(
-            notice.RejectionReasonDescription, notice.RejectionNotes);
         var rejectedDocumentsUrl = $"{baseUrl}/rechazados";
         var allSent = true;
 
         foreach (var manager in managers)
         {
-            var firstName = manager.FullName.Split(' ', StringSplitOptions.RemoveEmptyEntries).FirstOrDefault()
-                            ?? manager.FullName;
-            var html = DocumentNotificationMessageFormatter.BuildHeldRejectionManagerHtml(
-                firstName,
-                studentName,
-                notice.DocumentType,
-                reason,
-                rejectedDocumentsUrl);
+            var nickName = EmailNotificationValues.NickOrFirst(
+                manager.NickName,
+                string.IsNullOrWhiteSpace(manager.FirstName)
+                    ? EmailNotificationValues.FirstWord(manager.FullName)
+                    : manager.FirstName);
+            var message = await _emailComposer.ComposeAsync(
+                notice.ChapterId,
+                EmailMessageKind.HeldRejection,
+                EmailNotificationValues.ForHeldRejection(notice, nickName, rejectedDocumentsUrl),
+                cancellationToken);
             if (!await SendManagerHeldRejectionAsync(
                     new Recipient(manager.Email.Trim(), manager.FullName),
-                    html,
+                    message,
                     documentId,
                     cancellationToken))
             {
@@ -273,7 +269,7 @@ public class DocumentNotificationService(
 
     private async Task<bool> SendManagerHeldRejectionAsync(
         Recipient recipient,
-        string html,
+        ComposedEmail message,
         long documentId,
         CancellationToken cancellationToken)
     {
@@ -283,8 +279,8 @@ public class DocumentNotificationService(
             {
                 await emailMessageSender.SendEmailAsync(
                     recipient,
-                    DocumentNotificationMessageFormatter.HeldRejectionManagerSubject,
-                    html);
+                    message.Subject,
+                    message.HtmlBody);
                 return true;
             }
             catch (OperationCanceledException) when (cancellationToken.IsCancellationRequested)
@@ -342,7 +338,6 @@ public class DocumentNotificationService(
         long documentId,
         DocumentShareNotificationDataModel share,
         string baseUrl,
-        string subject,
         CancellationToken cancellationToken)
     {
         for (var attempt = 1; attempt <= MaxSendAttempts; attempt++)
@@ -356,10 +351,14 @@ public class DocumentNotificationService(
                 {
                     var segment = share.IsCompany ? "empresas" : "padrinos";
                     var historyUrl = $"{baseUrl}/{segment}/{share.PublicAccessToken}/{share.StudentId}";
-                    var html = DocumentNotificationMessageFormatter.BuildNotificationHtml(share, historyUrl);
+                    var message = await _emailComposer.ComposeAsync(
+                        share.ChapterId,
+                        EmailMessageKind.NewDocument,
+                        EmailNotificationValues.ForDocument(share, historyUrl),
+                        cancellationToken);
                     var (to, cc, bcc) = BuildRecipients(share);
 
-                    await emailMessageSender.SendEmailAsync(to, cc, bcc, subject, html);
+                    await emailMessageSender.SendEmailAsync(to, cc, bcc, message.Subject, message.HtmlBody);
                 }
 
                 await documentRepository.MarkShareNotifiedAsync(share.DocumentShareId, DateTime.UtcNow);

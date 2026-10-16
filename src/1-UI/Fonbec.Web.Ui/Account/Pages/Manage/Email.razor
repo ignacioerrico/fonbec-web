@@ -2,7 +2,6 @@
 
 @using System.ComponentModel.DataAnnotations
 @using System.Text
-@using System.Text.Encodings.Web
 @using Fonbec.Web.DataAccess.Entities
 @using Microsoft.AspNetCore.Identity
 @using Microsoft.AspNetCore.WebUtilities
@@ -97,7 +96,7 @@
             NavigationManager.ToAbsoluteUri("Account/ConfirmEmailChange").AbsoluteUri,
             new Dictionary<string, object?> { ["userId"] = userId, ["email"] = Input.NewEmail, ["code"] = code });
 
-        await EmailSender.SendConfirmationLinkAsync(_user, Input.NewEmail, HtmlEncoder.Default.Encode(callbackUrl));
+        await EmailSender.SendConfirmationLinkAsync(_user, Input.NewEmail, callbackUrl);
 
         _message = "Se envió el enlace de confirmación para cambiar el correo. Revisá tu correo.";
     }
@@ -116,7 +115,7 @@
             NavigationManager.ToAbsoluteUri("Account/ConfirmEmail").AbsoluteUri,
             new Dictionary<string, object?> { ["userId"] = userId, ["code"] = code });
 
-        await EmailSender.SendConfirmationLinkAsync(_user, _email, HtmlEncoder.Default.Encode(callbackUrl));
+        await EmailSender.SendConfirmationLinkAsync(_user, _email, callbackUrl);
 
         _message = "Se envió el correo de verificación. Revisá tu correo.";
     }

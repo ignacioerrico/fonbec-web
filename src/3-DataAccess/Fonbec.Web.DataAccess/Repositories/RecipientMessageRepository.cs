@@ -195,8 +195,13 @@ public class RecipientMessageRepository(IDbContextFactory<FonbecWebDbContext> db
                 FacilitatorEmail = m.Student.Facilitator.Email,
                 FacilitatorFullName =
                     m.Student.Facilitator.FirstName + " " + m.Student.Facilitator.LastName,
+                FacilitatorFirstName = m.Student.Facilitator.FirstName,
+                FacilitatorNickName = m.Student.Facilitator.NickName,
+                FacilitatorGender = m.Student.Facilitator.Gender,
+                ChapterId = m.Student.ChapterId,
                 StudentFullName = m.Student.FirstName + " " + m.Student.LastName,
                 StudentFirstName = m.Student.FirstName,
+                StudentLastName = m.Student.LastName,
                 StudentNickName = m.Student.NickName,
                 StudentGender = m.Student.Gender,
                 IsCompany = m.CompanyId != null,
@@ -204,6 +209,9 @@ public class RecipientMessageRepository(IDbContextFactory<FonbecWebDbContext> db
                 SenderName = m.CompanyId != null
                     ? m.Company!.Name
                     : m.Sponsor!.FirstName + " " + m.Sponsor.LastName,
+                SenderFirstName = m.CompanyId != null ? m.Company!.Name : m.Sponsor!.FirstName,
+                SenderLastName = m.CompanyId != null ? string.Empty : m.Sponsor!.LastName,
+                SenderNickName = m.CompanyId != null ? null : m.Sponsor!.NickName,
                 Body = m.Body,
             })
             .SingleOrDefaultAsync();

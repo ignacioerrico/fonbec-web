@@ -15,6 +15,7 @@ public sealed class FonbecWebDbContext : IdentityDbContext<FonbecWebUser, Fonbec
     }
 
     internal DbSet<Chapter> Chapters => Set<Chapter>();
+    internal DbSet<ChapterEmailTemplate> ChapterEmailTemplates => Set<ChapterEmailTemplate>();
 
     internal DbSet<PlannedDelivery> PlannedDeliveries => Set<PlannedDelivery>();
 

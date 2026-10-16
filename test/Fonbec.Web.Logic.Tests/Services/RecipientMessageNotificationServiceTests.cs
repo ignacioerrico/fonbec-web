@@ -1,4 +1,3 @@
-using System.Net;
 using FluentAssertions;
 using Fonbec.Web.DataAccess.DataModels.RecipientMessages;
 using Fonbec.Web.DataAccess.Entities.Enums;
@@ -47,10 +46,10 @@ public class RecipientMessageNotificationServiceTests
             Arg.Is<Recipient>(recipient =>
                 recipient.EmailAddress == "<mediador@test.com>"
                 && recipient.DisplayName == "\"Mediador Test\""),
-            "Nuevo mensaje para Camila Escobar",
+            "FONBEC | Nuevo mensaje para Cami Escobar",
             Arg.Is<string>(html =>
-                html.Contains($"para la becaria <strong>{WebUtility.HtmlEncode("Camila Escobar")}</strong> de su madrina <strong>{WebUtility.HtmlEncode("Claudia Romero")}</strong>:")
-                && html.Contains("Hacele llegar el mensaje a <strong>Cami</strong> y <strong>marcalo como compartido</strong>")
+                html.Contains("para la becaria Cami Escobar de su madrina Claudia:")
+                && html.Contains("Hacele llegar el mensaje a Cami y marcalo como compartido")
                 && html.Contains("CUERPO-SECRETO<br>hola &lt;b&gt;becario&lt;/b&gt;")
                 && html.Contains("https://fonbec.test/mensajes-para-becarios")
                 && html.Contains("Ver todos los mensajes para becarios")
@@ -87,10 +86,10 @@ public class RecipientMessageNotificationServiceTests
             Arg.Is<Recipient>(recipient =>
                 recipient.EmailAddress == "<mediador@test.com>"
                 && recipient.DisplayName == "\"Mediador Test\""),
-            "Nuevo mensaje para María López",
+            "FONBEC | Nuevo mensaje para María López",
             Arg.Is<string>(html =>
-                html.Contains($"para la becaria <strong>{WebUtility.HtmlEncode("María López")}</strong> de la empresa <strong>Acme SA</strong>:")
-                && html.Contains($"Hacele llegar el mensaje a <strong>{WebUtility.HtmlEncode("María")}</strong>")
+                html.Contains("para la becaria María López de la empresa Acme SA:")
+                && html.Contains("Hacele llegar el mensaje a María")
                 && !html.Contains("su padrino")
                 && !html.Contains("su madrina")
                 && html.Contains("https://fonbec.test/mensajes-para-becarios")));
@@ -182,65 +181,6 @@ public class RecipientMessageNotificationServiceTests
         await _repository.DidNotReceive().MarkFacilitatorNotifiedAsync(Arg.Any<long>(), Arg.Any<DateTime>());
     }
 
-    [Fact]
-    public void Html_EncodesNamesAndKeepsLineBreaks_OnTheStaffPageLink()
-    {
-        var html = RecipientMessageNotificationFormatter.BuildHtml(
-            "Juan <García>",
-            Gender.Male,
-            studentFirstName: "Juan",
-            studentNickName: "  ",
-            isCompany: false,
-            senderGender: Gender.Female,
-            senderName: "Ana & Pérez",
-            body: "línea 1\r\nlínea 2",
-            messagesUrl: "https://fonbec.test/mensajes-para-becarios");
-
-        var encodedLines = WebUtility.HtmlEncode("línea 1\r\nlínea 2")
-            .Replace("\r\n", "<br>", StringComparison.Ordinal);
-        html.Should().Contain($"para el becario <strong>{WebUtility.HtmlEncode("Juan <García>")}</strong> de su madrina <strong>{WebUtility.HtmlEncode("Ana & Pérez")}</strong>:");
-        html.Should().Contain("Hacele llegar el mensaje a <strong>Juan</strong>");
-        html.Should().Contain($"<blockquote>{encodedLines}</blockquote>");
-        html.Should().NotContain("Juan <García>");
-        html.Should().NotContain("Ana & Pérez");
-        html.Should().Contain(">Ver todos los mensajes para becarios</a>");
-        html.Should().Contain("href=\"https://fonbec.test/mensajes-para-becarios\"");
-        html.Should().NotContain("/padrinos");
-        html.Should().NotContain("/empresas");
-        RecipientMessageNotificationFormatter.BuildSubject("Juan\nGarcía")
-            .Should().Be("Nuevo mensaje para Juan García");
-    }
-
-    [Fact]
-    public void Html_UsesPadrinoAndBecario_AndFallsBackWhenGenderIsUnknown()
-    {
-        var male = RecipientMessageNotificationFormatter.BuildHtml(
-            "Juan García",
-            Gender.Male,
-            "Juan",
-            "Juancito",
-            isCompany: false,
-            senderGender: Gender.Male,
-            senderName: "Luis Gómez",
-            body: "hola",
-            messagesUrl: "https://fonbec.test/mensajes-para-becarios");
-        male.Should().Contain($"para el becario <strong>{WebUtility.HtmlEncode("Juan García")}</strong> de su padrino <strong>{WebUtility.HtmlEncode("Luis Gómez")}</strong>:");
-        male.Should().Contain("a <strong>Juancito</strong>");
-
-        var unknown = RecipientMessageNotificationFormatter.BuildHtml(
-            "Alex García",
-            Gender.Unknown,
-            "Alex",
-            null,
-            isCompany: false,
-            senderGender: null,
-            senderName: "Río",
-            body: "hola",
-            messagesUrl: "https://fonbec.test/mensajes-para-becarios");
-        unknown.Should().Contain($"para el becario/la becaria <strong>{WebUtility.HtmlEncode("Alex García")}</strong> de su padrino/su madrina <strong>{WebUtility.HtmlEncode("Río")}</strong>:");
-        unknown.Should().Contain("a <strong>Alex</strong>");
-    }
-
     private RecipientMessageNotificationService CreateService() =>
         new(_repository, _emailMessageSender, _configuration, new FixedTimeProvider(UtcNow), _logger);
 
@@ -263,13 +203,29 @@ public class RecipientMessageNotificationServiceTests
                 FacilitatorNotifiedOn = notifiedOn,
                 StudentFullName = student,
                 StudentFirstName = studentFirstName,
+                StudentLastName = LastWord(student),
                 StudentNickName = studentNickName,
                 StudentGender = studentGender,
+                FacilitatorFirstName = "Mediador",
                 IsCompany = isCompany,
                 SenderGender = isCompany ? null : senderGender,
                 SenderName = sender,
+                SenderFirstName = isCompany ? sender : FirstWord(sender),
+                SenderLastName = isCompany ? string.Empty : LastWord(sender),
                 Body = Body,
             });
+    }
+
+    private static string FirstWord(string value)
+    {
+        var space = value.IndexOf(' ');
+        return space < 0 ? value : value[..space];
+    }
+
+    private static string LastWord(string value)
+    {
+        var space = value.LastIndexOf(' ');
+        return space < 0 ? string.Empty : value[(space + 1)..];
     }
 
     private sealed class FixedTimeProvider(DateTimeOffset utcNow) : TimeProvider

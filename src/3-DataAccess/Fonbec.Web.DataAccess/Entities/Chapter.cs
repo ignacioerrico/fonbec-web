@@ -13,4 +13,11 @@ public class Chapter : Auditable
     /// Applies to every document type. Existing decisions are left as they are.
     /// </summary>
     public DocumentRejectionBehavior DocumentRejectionBehavior { get; set; }
+
+    /// <summary>
+    /// Text placed before every email subject for this chapter. A space is added before the subject.
+    /// </summary>
+    public string EmailSubjectPrefix { get; set; } = "FONBEC |";
+
+    public List<ChapterEmailTemplate> EmailTemplates { get; set; } = [];
 }

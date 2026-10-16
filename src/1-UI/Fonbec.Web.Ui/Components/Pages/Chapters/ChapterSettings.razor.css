@@ -1,0 +1,12 @@
+.placeholder-token {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+    font-size: 0.9em;
+    line-height: 1.4;
+    background-color: color-mix(in srgb, var(--mud-palette-text-primary) 10%, transparent);
+    padding: 1px 3px;
+    border-radius: 3px;
+}
+
+.email-template-body ::deep textarea.mud-input-root {
+    font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
+}

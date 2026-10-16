@@ -245,11 +245,23 @@ public class DocumentShareNotificationDataModel
     /// <summary>Token for the recipient's public document-history page.</summary>
     public Guid PublicAccessToken { get; init; }
 
+    public int ChapterId { get; init; }
+
+    public DocumentType DocumentType { get; init; }
+
+    public bool StudentIsAtUniversity { get; init; }
+
     public int StudentId { get; init; }
     public string StudentFirstName { get; init; } = string.Empty;
     public string StudentLastName { get; init; } = string.Empty;
     public string? StudentNickName { get; init; }
     public Gender StudentGender { get; init; }
+
+    /// <summary>Empty when the recipient is a company.</summary>
+    public string RecipientLastName { get; init; } = string.Empty;
+
+    /// <summary>Null when the recipient is a company.</summary>
+    public Gender? RecipientGender { get; init; }
 
     /// <summary>
     /// Extra recipients stored on the person-sponsor. Empty for a company share.
@@ -438,11 +450,21 @@ public class FacilitatorRejectionNotificationDataModel
 
     public string FacilitatorFullName { get; init; } = string.Empty;
 
+    public string? FacilitatorNickName { get; init; }
+
+    public Gender FacilitatorGender { get; init; }
+
+    public int ChapterId { get; init; }
+
+    public bool StudentIsAtUniversity { get; init; }
+
     public string StudentFirstName { get; init; } = string.Empty;
 
     public string StudentLastName { get; init; } = string.Empty;
 
     public string? StudentNickName { get; init; }
+
+    public Gender StudentGender { get; init; }
 
     public DocumentType DocumentType { get; init; }
 
@@ -464,6 +486,10 @@ public class HeldRejectionManagerNotificationDataModel
     public string StudentLastName { get; init; } = string.Empty;
 
     public string? StudentNickName { get; init; }
+
+    public Gender StudentGender { get; init; }
+
+    public bool StudentIsAtUniversity { get; init; }
 
     public DocumentType DocumentType { get; init; }
 

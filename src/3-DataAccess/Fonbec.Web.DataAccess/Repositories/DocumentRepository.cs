@@ -1819,6 +1819,7 @@ public class DocumentRepository(
     {
         await using var db = await dbContext.CreateDbContextAsync();
 
+        var now = DateTime.UtcNow;
         return await db.DocumentShares
             .AsNoTracking()
             .Where(s => s.DocumentId == documentId && s.NotificationSentOn == null)
@@ -1834,9 +1835,14 @@ public class DocumentRepository(
                     ? s.Company!.Name
                     : s.Sponsor!.FirstName + " " + s.Sponsor.LastName,
                 RecipientNickName = s.CompanyId != null ? null : s.Sponsor!.NickName,
+                RecipientLastName = s.CompanyId != null ? string.Empty : s.Sponsor!.LastName,
+                RecipientGender = s.CompanyId != null ? null : s.Sponsor!.Gender,
                 PublicAccessToken = s.CompanyId != null
                     ? s.Company!.PublicAccessToken
                     : s.Sponsor!.PublicAccessToken,
+                ChapterId = s.Document.ChapterId,
+                DocumentType = s.Document.DocumentType,
+                StudentIsAtUniversity = s.Student.UniversityStartYear != null && s.Student.UniversityStartYear <= now,
                 StudentId = s.StudentId,
                 StudentFirstName = s.Student.FirstName,
                 StudentLastName = s.Student.LastName,
@@ -2499,9 +2505,15 @@ public class DocumentRepository(
                 FacilitatorFirstName = d.Student.Facilitator.FirstName,
                 FacilitatorFullName =
                     d.Student.Facilitator.FirstName + " " + d.Student.Facilitator.LastName,
+                FacilitatorNickName = d.Student.Facilitator.NickName,
+                FacilitatorGender = d.Student.Facilitator.Gender,
+                ChapterId = d.ChapterId,
+                StudentIsAtUniversity = d.Student.UniversityStartYear != null
+                    && d.Student.UniversityStartYear <= DateTime.UtcNow,
                 StudentFirstName = d.Student.FirstName,
                 StudentLastName = d.Student.LastName,
                 StudentNickName = d.Student.NickName,
+                StudentGender = d.Student.Gender,
                 DocumentType = d.DocumentType,
                 RejectionReasonDescription = d.RejectedReason != null ? d.RejectedReason.Description : null,
                 RejectionNotes = d.RejectionNotes,
@@ -2549,6 +2561,9 @@ public class DocumentRepository(
                 StudentFirstName = d.Student.FirstName,
                 StudentLastName = d.Student.LastName,
                 StudentNickName = d.Student.NickName,
+                StudentGender = d.Student.Gender,
+                StudentIsAtUniversity = d.Student.UniversityStartYear != null
+                    && d.Student.UniversityStartYear <= DateTime.UtcNow,
                 DocumentType = d.DocumentType,
                 RejectionReasonDescription = d.RejectedReason != null ? d.RejectedReason.Description : null,
                 RejectionNotes = d.RejectionNotes,
