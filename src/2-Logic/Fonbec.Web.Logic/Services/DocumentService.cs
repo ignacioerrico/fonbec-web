@@ -1049,6 +1049,7 @@ public class DocumentService(
                 RejectionReason = item.RejectionReason,
                 RejectedOn = item.RejectedOn,
                 RejectedByName = item.RejectedByName,
+                FacilitatorName = item.FacilitatorName,
                 Sponsors = item.Sponsors.Select(sponsor => new HeldRejectionSponsorViewModel
                 {
                     Name = sponsor.Name,
@@ -1057,6 +1058,11 @@ public class DocumentService(
                 }).ToList(),
                 FileKind = item.FileKind,
                 PageCount = item.PageCount,
+                Pages = item.Pages.Select(page => new ReviewWorkspacePageViewModel
+                {
+                    PageNumber = page.PageNumber,
+                    MimeType = page.MimeType,
+                }).ToList(),
                 TextContent = item.TextContent,
                 YouTubeVideoId = item.YouTubeVideoId,
                 RowVersion = item.RowVersion,

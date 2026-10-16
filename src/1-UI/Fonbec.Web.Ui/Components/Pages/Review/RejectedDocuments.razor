@@ -1,7 +1,7 @@
 @attribute [Route(NavRoutes.RejectedDocuments)]
 @attribute [Authorize(Policy = nameof(RejectedDocuments))]
-@using Fonbec.Web.DataAccess.Entities.Enums
 @using Fonbec.Web.Logic.Models.Documents
+@using Fonbec.Web.Ui.Components.NonPages.Review
 @inherits AuthenticationRequiredComponentBase
 
 <PageHeader Title="Documentos rechazados" />
@@ -18,124 +18,89 @@
         }
         else
         {
-            <MudTable T="HeldRejectionItemViewModel"
-                      Items="_page.Items"
-                      Dense="true"
-                      Hover="true"
-                      Striped="true"
-                      Bordered="true"
-                      RowsPerPage="10">
-                <HeaderContent>
-                    <MudTh>Para becario</MudTh>
-                    <MudTh>@SponsorColumnHeader</MudTh>
-                    <MudTh>Tipo de documento</MudTh>
-                    <MudTh>Rechazado el</MudTh>
-                    <MudTh>Rechazado por</MudTh>
-                    <MudTh>Motivo de rechazo</MudTh>
-                    <MudTh>Acciones</MudTh>
-                </HeaderContent>
-                <RowTemplate>
-                    <MudTd DataLabel="Para becario">@context.StudentName</MudTd>
-                    <MudTd DataLabel="@SponsorColumnLabel(context)">@SponsorNames(context)</MudTd>
-                    <MudTd DataLabel="Tipo de documento">@TypeLabel(context.DocumentType)</MudTd>
-                    <MudTd DataLabel="Rechazado el">@FormatRejectedOn(context)</MudTd>
-                    <MudTd DataLabel="Rechazado por">@(string.IsNullOrWhiteSpace(context.RejectedByName) ? "—" : context.RejectedByName)</MudTd>
-                    <MudTd DataLabel="Motivo de rechazo">@(string.IsNullOrWhiteSpace(context.RejectionReason) ? "—" : context.RejectionReason)</MudTd>
-                    <MudTd DataLabel="Acciones">
-                        <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
-                            <MudTooltip Text="@ApproveTooltip(context)">
-                                <MudButton Variant="Variant.Filled"
-                                           Color="Color.Success"
-                                           Size="Size.Small"
-                                           Disabled="_busyDocumentId is not null"
-                                           OnClick="@(() => ShareAsync(context))">
-                                    Aprobar
-                                </MudButton>
-                            </MudTooltip>
-                            <MudTooltip Text="Le indica al mediador que debe subir un nuevo documento">
-                                <MudButton Variant="Variant.Outlined"
-                                           Color="Color.Error"
-                                           Size="Size.Small"
-                                           Disabled="_busyDocumentId is not null"
-                                           OnClick="@(() => ReturnAsync(context))">
-                                    Rechazar
-                                </MudButton>
-                            </MudTooltip>
-                            @if (context.FileKind is FileKind.Text or FileKind.YouTube)
-                            {
-                                <MudButton Variant="Variant.Text"
-                                           Color="Color.Primary"
-                                           Size="Size.Small"
-                                           OnClick="@(() => TogglePreview(context.DocumentId))">
-                                    @(IsPreviewOpen(context.DocumentId) ? "Ocultar" : "Ver")
-                                </MudButton>
-                            }
-                            else if (context.CanViewFile && context.PageCount <= 1)
-                            {
-                                <MudButton Variant="Variant.Text"
-                                           Color="Color.Primary"
-                                           Size="Size.Small"
-                                           Href="@ViewUrl(context, 1)"
-                                           Target="_blank"
-                                           UserAttributes="NoEnhance">
-                                    Ver
-                                </MudButton>
-                            }
-                            else if (context.CanViewFile)
-                            {
-                                <MudMenu Dense="true">
-                                    <ActivatorContent>
-                                        <MudButton Variant="Variant.Text"
-                                                   Color="Color.Primary"
-                                                   Size="Size.Small"
-                                                   EndIcon="@Icons.Material.Filled.ArrowDropDown">
-                                            Ver
-                                        </MudButton>
-                                    </ActivatorContent>
-                                    <ChildContent>
-                                        @for (var page = 1; page <= context.PageCount; page++)
-                                        {
-                                            var pageNumber = page;
-                                            <MudMenuItem Href="@ViewUrl(context, pageNumber)"
-                                                         Target="_blank"
-                                                         UserAttributes="NoEnhance">
-                                                Página @pageNumber
-                                            </MudMenuItem>
-                                        }
-                                    </ChildContent>
-                                </MudMenu>
-                            }
-                        </MudStack>
-                        @if (IsPreviewOpen(context.DocumentId))
-                        {
-                            <MudPaper Class="pa-3 mt-2" Elevation="0" Outlined="true">
-                                @if (context.FileKind == FileKind.Text)
-                                {
-                                    <MudText Typo="Typo.body2" Style="white-space: pre-wrap;">
-                                        @(string.IsNullOrWhiteSpace(context.TextContent) ? "Contenido no disponible." : context.TextContent)
-                                    </MudText>
-                                }
-                                else if (context.FileKind == FileKind.YouTube && !string.IsNullOrWhiteSpace(context.YouTubeVideoId))
-                                {
-                                    <iframe src="@($"https://www.youtube.com/embed/{context.YouTubeVideoId}")"
-                                            title="@context.StudentName"
-                                            style="width: 100%; max-width: 480px; height: 270px; border: 0;"
-                                            allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture"
-                                            allowfullscreen>
-                                    </iframe>
-                                }
-                                else
-                                {
-                                    <MudText Typo="Typo.body2">Contenido no disponible.</MudText>
-                                }
-                            </MudPaper>
-                        }
-                    </MudTd>
-                </RowTemplate>
+            <MudDataGrid T="HeldRejectionItemViewModel"
+                         Items="_page.Items"
+                         Dense="true"
+                         Hover="true"
+                         Striped="true"
+                         Bordered="true"
+                         ReadOnly="true"
+                         RowsPerPage="10">
+                <Columns>
+                    <HierarchyColumn T="HeldRejectionItemViewModel" EnableHeaderToggle="true" />
+                    <TemplateColumn Title="Tipo de documento" Sortable="false">
+                        <CellTemplate>
+                            <MudText>@TypeLabel(context.Item)</MudText>
+                        </CellTemplate>
+                    </TemplateColumn>
+                    <TemplateColumn Title="De becario" Sortable="false">
+                        <CellTemplate>
+                            <MudText>@context.Item.StudentName</MudText>
+                        </CellTemplate>
+                    </TemplateColumn>
+                    <TemplateColumn Title="@SponsorColumnHeader" Sortable="false">
+                        <CellTemplate>
+                            <MudText>@SponsorNames(context.Item)</MudText>
+                        </CellTemplate>
+                    </TemplateColumn>
+                    <TemplateColumn Title="Mediador" Sortable="false">
+                        <CellTemplate>
+                            <MudText>@(string.IsNullOrWhiteSpace(context.Item.FacilitatorName) ? "—" : context.Item.FacilitatorName)</MudText>
+                        </CellTemplate>
+                    </TemplateColumn>
+                    <TemplateColumn Title="Acciones" Sortable="false">
+                        <CellTemplate>
+                            <MudStack Row="true" Spacing="1" AlignItems="AlignItems.Center">
+                                <MudTooltip Text="@ApproveTooltip(context.Item)">
+                                    <MudButton Variant="Variant.Filled"
+                                               Color="Color.Success"
+                                               Size="Size.Small"
+                                               Disabled="_busyDocumentId is not null"
+                                               OnClick="@(() => ShareAsync(context.Item))">
+                                        Aprobar
+                                    </MudButton>
+                                </MudTooltip>
+                                <MudTooltip Text="Le indica al mediador que debe subir un nuevo documento">
+                                    <MudButton Variant="Variant.Outlined"
+                                               Color="Color.Error"
+                                               Size="Size.Small"
+                                               Disabled="_busyDocumentId is not null"
+                                               OnClick="@(() => ReturnAsync(context.Item))">
+                                        Rechazar
+                                    </MudButton>
+                                </MudTooltip>
+                            </MudStack>
+                        </CellTemplate>
+                    </TemplateColumn>
+                </Columns>
+                <ChildRowContent>
+                    <MudStack Spacing="3" Class="pa-4">
+                        <MudGrid Spacing="2">
+                            <MudItem xs="12" sm="4">
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">Rechazado por</MudText>
+                                <MudText Typo="Typo.body2">@(string.IsNullOrWhiteSpace(context.Item.RejectedByName) ? "—" : context.Item.RejectedByName)</MudText>
+                            </MudItem>
+                            <MudItem xs="12" sm="4">
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">Rechazado el</MudText>
+                                <MudText Typo="Typo.body2">@FormatRejectedOn(context.Item)</MudText>
+                            </MudItem>
+                            <MudItem xs="12">
+                                <MudText Typo="Typo.caption" Class="mud-text-secondary">Motivo de rechazo</MudText>
+                                <MudText Typo="Typo.body2" Style="white-space: pre-wrap;">@(string.IsNullOrWhiteSpace(context.Item.RejectionReason) ? "—" : context.Item.RejectionReason)</MudText>
+                            </MudItem>
+                        </MudGrid>
+                        <ReviewDocumentViewer DocumentId="context.Item.DocumentId"
+                                              FileKind="context.Item.FileKind"
+                                              TextContent="@context.Item.TextContent"
+                                              YouTubeVideoId="@context.Item.YouTubeVideoId"
+                                              Pages="context.Item.Pages"
+                                              PageUrlFactory="@(pageNumber => ViewUrl(context.Item, pageNumber))" />
+                    </MudStack>
+                </ChildRowContent>
                 <PagerContent>
-                    <MudTablePager />
+                    <MudDataGridPager T="HeldRejectionItemViewModel" RowsPerPageString="Filas por página:" />
                 </PagerContent>
-            </MudTable>
+            </MudDataGrid>
         }
     </MudPaper>
 }

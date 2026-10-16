@@ -397,11 +397,15 @@ public class HeldRejectionDataModel
 
     public string? RejectedByName { get; init; }
 
+    public string? FacilitatorName { get; init; }
+
     public List<HeldRejectionSponsorDataModel> Sponsors { get; init; } = [];
 
     public FileKind FileKind { get; init; }
 
     public int PageCount { get; init; }
+
+    public List<ReviewWorkspacePageDataModel> Pages { get; init; } = [];
 
     public string? TextContent { get; init; }
 

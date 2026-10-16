@@ -16,12 +16,6 @@ public partial class RejectedDocuments : AuthenticationRequiredComponentBase
 {
     private HeldRejectionsPageViewModel? _page;
     private long? _busyDocumentId;
-    private readonly HashSet<long> _openPreviews = [];
-
-    private static readonly Dictionary<string, object> NoEnhance = new()
-    {
-        ["data-enhance-nav"] = "false",
-    };
 
     [Inject]
     public IDocumentService DocumentService { get; set; } = null!;
@@ -119,7 +113,10 @@ public partial class RejectedDocuments : AuthenticationRequiredComponentBase
     private HeldRejectionDecisionInputModel Decision(HeldRejectionItemViewModel item, int chapterId) =>
         new(item.DocumentId, FonbecClaim.UserId, UserRole, chapterId, item.RowVersion);
 
-    private static string TypeLabel(DocumentType documentType) => documentType switch
+    private static string TypeLabel(HeldRejectionItemViewModel item) =>
+        $"{DocumentTypeLabel(item.DocumentType)} ({FormatLabel(item)})";
+
+    private static string DocumentTypeLabel(DocumentType documentType) => documentType switch
     {
         DocumentType.Letter => "Carta",
         DocumentType.ReportCard => "Boletín",
@@ -127,9 +124,26 @@ public partial class RejectedDocuments : AuthenticationRequiredComponentBase
         _ => documentType.ToString(),
     };
 
+    private static string FormatLabel(HeldRejectionItemViewModel item) => item.FileKind switch
+    {
+        FileKind.YouTube => "YouTube",
+        FileKind.Text => "Texto",
+        FileKind.Blob => BlobFormatLabel(item.Pages.FirstOrDefault()?.MimeType),
+        _ => "Archivo",
+    };
+
+    private static string BlobFormatLabel(string? mimeType) => mimeType?.ToLowerInvariant() switch
+    {
+        "application/pdf" => "PDF",
+        "image/jpeg" => "JPG",
+        "image/png" => "PNG",
+        "text/plain" => "TXT",
+        _ => "Archivo",
+    };
+
     private string SponsorColumnHeader =>
         _page is null || _page.Items.Count == 0
-            ? "De padrino"
+            ? "Para padrino"
             : SingleSponsorColumnLabel(_page.Items.Select(SponsorColumnLabel));
 
     private static string SponsorColumnLabel(HeldRejectionItemViewModel item)
@@ -137,22 +151,22 @@ public partial class RejectedDocuments : AuthenticationRequiredComponentBase
         var people = item.Sponsors.Where(sponsor => !sponsor.IsCompany).ToList();
         if (people.Count > 0 && people.All(sponsor => sponsor.Gender == Gender.Female))
         {
-            return "De madrina";
+            return "Para madrina";
         }
 
         if (people.Any(sponsor => sponsor.Gender == Gender.Female)
             && people.Any(sponsor => sponsor.Gender != Gender.Female))
         {
-            return "De padrino/madrina";
+            return "Para padrino/madrina";
         }
 
-        return "De padrino";
+        return "Para padrino";
     }
 
     private static string SingleSponsorColumnLabel(IEnumerable<string> labels)
     {
         var distinct = labels.Distinct().ToList();
-        return distinct.Count == 1 ? distinct[0] : "De padrino/madrina";
+        return distinct.Count == 1 ? distinct[0] : "Para padrino/madrina";
     }
 
     private static string SponsorNames(HeldRejectionItemViewModel item)
@@ -224,14 +238,4 @@ public partial class RejectedDocuments : AuthenticationRequiredComponentBase
 
     private string ViewUrl(HeldRejectionItemViewModel item, int pageNumber) =>
         NavRoutes.ManagerStudentDocumentPage(item.StudentId, item.DocumentId, pageNumber);
-
-    private void TogglePreview(long documentId)
-    {
-        if (!_openPreviews.Add(documentId))
-        {
-            _openPreviews.Remove(documentId);
-        }
-    }
-
-    private bool IsPreviewOpen(long documentId) => _openPreviews.Contains(documentId);
 }

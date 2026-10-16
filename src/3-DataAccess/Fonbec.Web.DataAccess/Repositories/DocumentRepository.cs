@@ -2353,6 +2353,7 @@ public class DocumentRepository(
         var documents = await db.Documents
             .AsNoTracking()
             .Include(d => d.Student)
+            .ThenInclude(s => s.Facilitator)
             .Include(d => d.Sponsor)
             .Include(d => d.RejectedReason)
             .Include(d => d.RejectedBy)
@@ -2371,14 +2372,7 @@ public class DocumentRepository(
                 .ToDictionaryAsync(l => l.DocumentId, l => l.Name);
 
         var documentIds = documents.Select(d => d.DocumentId).ToList();
-        var pageCounts = documentIds.Count == 0
-            ? new Dictionary<long, int>()
-            : await db.Set<DocumentPage>()
-                .AsNoTracking()
-                .Where(p => documentIds.Contains(p.DocumentId))
-                .GroupBy(p => p.DocumentId)
-                .Select(g => new { g.Key, Count = g.Count() })
-                .ToDictionaryAsync(x => x.Key, x => x.Count);
+        var pagesByDocument = await LoadHeldRejectionPagesAsync(db, documentIds);
 
         var studentIds = documents.Where(d => d is not Letter).Select(d => d.StudentId).Distinct().ToList();
         var sponsorsByStudent = await LoadActiveSponsorLabelsAsync(db, studentIds);
@@ -2395,11 +2389,13 @@ public class DocumentRepository(
             RejectedByName = document.RejectedBy is null
                 ? null
                 : document.RejectedBy.FirstName + " " + document.RejectedBy.LastName,
+            FacilitatorName = document.Student.Facilitator.FirstName + " " + document.Student.Facilitator.LastName,
             Sponsors = document is Letter
                 ? LetterSponsorLabels(document, companyNames)
                 : sponsorsByStudent.GetValueOrDefault(document.StudentId) ?? [],
             FileKind = document.FileKind,
-            PageCount = pageCounts.GetValueOrDefault(document.DocumentId),
+            Pages = pagesByDocument.GetValueOrDefault(document.DocumentId) ?? [],
+            PageCount = pagesByDocument.GetValueOrDefault(document.DocumentId)?.Count ?? 0,
             TextContent = document.FileKind == FileKind.Text ? document.TextContent : null,
             YouTubeVideoId = document.FileKind == FileKind.YouTube ? document.YouTubeVideoId : null,
             RowVersion = document.RowVersion,
@@ -2578,6 +2574,39 @@ public class DocumentRepository(
 
         document.ManagersNotifiedOfHeldRejectionOn = notifiedOn;
         await db.SaveChangesAsync();
+    }
+
+    private static async Task<Dictionary<long, List<ReviewWorkspacePageDataModel>>> LoadHeldRejectionPagesAsync(
+        FonbecWebDbContext db, List<long> documentIds)
+    {
+        if (documentIds.Count == 0)
+        {
+            return [];
+        }
+
+        var pages = await db.Set<DocumentPage>()
+            .AsNoTracking()
+            .Where(page => documentIds.Contains(page.DocumentId))
+            .OrderBy(page => page.PageNumber)
+            .Select(page => new
+            {
+                page.DocumentId,
+                page.PageNumber,
+                MimeType = page.ImprovedBlobPath != null
+                    ? page.ImprovedBlobPath.MimeType
+                    : page.OriginalBlobPath.MimeType,
+            })
+            .ToListAsync();
+
+        return pages
+            .GroupBy(page => page.DocumentId)
+            .ToDictionary(
+                group => group.Key,
+                group => group.Select(page => new ReviewWorkspacePageDataModel
+                {
+                    PageNumber = page.PageNumber,
+                    MimeType = page.MimeType,
+                }).ToList());
     }
 
     private static List<HeldRejectionSponsorDataModel> LetterSponsorLabels(
