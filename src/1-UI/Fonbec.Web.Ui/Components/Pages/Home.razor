@@ -27,6 +27,9 @@ else if (_home is not null)
                 <MudLink Href="@NavRoutes.Students" Underline="Underline.None">
                     <MudText Typo="Typo.subtitle1">Becarios</MudText>
                     <MudText Typo="Typo.h3" Color="Color.Primary">@_home.StudentCount</MudText>
+                    <MudText Typo="Typo.body2" Color="@UnmatchedColor(_home.StudentsWithoutSponsor)">
+                        @Unmatched(_home.StudentsWithoutSponsor, "sin padrino", "sin padrinos")
+                    </MudText>
                 </MudLink>
             </MudPaper>
         </MudItem>
@@ -35,6 +38,9 @@ else if (_home is not null)
                 <MudLink Href="@NavRoutes.Sponsors" Underline="Underline.None">
                     <MudText Typo="Typo.subtitle1">Padrinos</MudText>
                     <MudText Typo="Typo.h3" Color="Color.Primary">@_home.SponsorCount</MudText>
+                    <MudText Typo="Typo.body2" Color="@UnmatchedColor(_home.SponsorsWithoutStudent)">
+                        @Unmatched(_home.SponsorsWithoutStudent, "sin becario", "sin becarios")
+                    </MudText>
                 </MudLink>
             </MudPaper>
         </MudItem>

@@ -16,16 +16,26 @@ public sealed class ChapterHomeService(
     IStudentRepository studentRepository,
     ISponsorRepository sponsorRepository,
     IPlannedDeliveryService plannedDeliveryService,
-    ILetterPlanProgressService letterPlanProgressService) : IChapterHomeService
+    ILetterPlanProgressService letterPlanProgressService,
+    TimeProvider timeProvider) : IChapterHomeService
 {
     public async Task<ChapterHomeViewModel> GetAsync(int chapterId, int currentUserId)
     {
+        var asOf = timeProvider.GetUtcNow().UtcDateTime;
         var usersTask = userService.GetAllUsersAsync(chapterId);
         var studentsTask = studentRepository.CountStudentsAsync(chapterId);
+        var studentsWithoutSponsorTask = studentRepository.CountStudentsWithoutSponsorAsync(chapterId, asOf);
         var sponsorsTask = sponsorRepository.CountSponsorsAsync(chapterId);
+        var sponsorsWithoutStudentTask = sponsorRepository.CountSponsorsWithoutStudentAsync(chapterId, asOf);
         var planTask = plannedDeliveryService.GetCurrentPlanAsync(chapterId);
 
-        await Task.WhenAll(usersTask, studentsTask, sponsorsTask, planTask);
+        await Task.WhenAll(
+            usersTask,
+            studentsTask,
+            studentsWithoutSponsorTask,
+            sponsorsTask,
+            sponsorsWithoutStudentTask,
+            planTask);
 
         var users = await usersTask;
         var plan = await planTask;
@@ -39,7 +49,9 @@ public sealed class ChapterHomeService(
             Facilitators = People(users, FonbecRole.Uploader, currentUserId),
             Reviewers = People(users, FonbecRole.Reviewer, currentUserId),
             StudentCount = await studentsTask,
+            StudentsWithoutSponsor = await studentsWithoutSponsorTask,
             SponsorCount = await sponsorsTask,
+            SponsorsWithoutStudent = await sponsorsWithoutStudentTask,
             Campaign = plan is null
                 ? null
                 : new ChapterHomeCampaignViewModel

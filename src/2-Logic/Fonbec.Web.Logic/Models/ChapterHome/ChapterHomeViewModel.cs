@@ -12,7 +12,13 @@ public class ChapterHomeViewModel
 
     public int StudentCount { get; init; }
 
+    /// <summary>Active becarios with no current or upcoming padrino or empresa.</summary>
+    public int StudentsWithoutSponsor { get; init; }
+
     public int SponsorCount { get; init; }
+
+    /// <summary>Padrinos with no current or upcoming becario.</summary>
+    public int SponsorsWithoutStudent { get; init; }
 
     public ChapterHomeCampaignViewModel? Campaign { get; init; }
 }

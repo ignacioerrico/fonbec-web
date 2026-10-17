@@ -20,6 +20,12 @@ public interface ISponsorRepository
     /// </summary>
     Task<int> CountSponsorsAsync(int? chapterId);
 
+    /// <summary>
+    /// Sponsors in the same set as <see cref="CountSponsorsAsync"/> who have no current or upcoming
+    /// sponsorship of an active becario. A finished sponsorship does not count.
+    /// </summary>
+    Task<int> CountSponsorsWithoutStudentAsync(int? chapterId, DateTime asOf);
+
     Task<int> CreateSponsorAsync(CreateSponsorInputDataModel dataModel);
 
     Task<int> UpdateSponsorAsync(UpdateSponsorInputDataModel dataModel);
@@ -118,6 +124,21 @@ public class SponsorRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             .AsNoTracking()
             .CountAsync(s => !s.IsDeleted
                              && (!chapterId.HasValue || s.ChapterId == chapterId));
+    }
+
+    public async Task<int> CountSponsorsWithoutStudentAsync(int? chapterId, DateTime asOf)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        return await db.Sponsors
+            .AsNoTracking()
+            .CountAsync(s => !s.IsDeleted
+                             && (!chapterId.HasValue || s.ChapterId == chapterId)
+                             && !s.Sponsorships.Any(sp =>
+                                 sp.IsActive
+                                 && (sp.EndDate == null || sp.EndDate >= asOf)
+                                 && sp.Student.IsActive
+                                 && !sp.Student.IsDeleted));
     }
 
     public async Task<int> CreateSponsorAsync(CreateSponsorInputDataModel dataModel)

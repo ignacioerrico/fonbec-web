@@ -25,10 +25,12 @@ public class ChapterHomeServiceTests
     {
         _users.GetAllUsersAsync(Arg.Any<int?>()).Returns([]);
         _students.CountStudentsAsync(Arg.Any<int?>()).Returns(0);
+        _students.CountStudentsWithoutSponsorAsync(Arg.Any<int?>(), Arg.Any<DateTime>()).Returns(0);
         _sponsors.CountSponsorsAsync(Arg.Any<int?>()).Returns(0);
+        _sponsors.CountSponsorsWithoutStudentAsync(Arg.Any<int?>(), Arg.Any<DateTime>()).Returns(0);
         _plans.GetCurrentPlanAsync(Arg.Any<int>()).Returns((CurrentPlannedDeliveryViewModel?)null);
 
-        _service = new ChapterHomeService(_users, _students, _sponsors, _plans, _progress);
+        _service = new ChapterHomeService(_users, _students, _sponsors, _plans, _progress, TimeProvider.System);
     }
 
     [Fact]
@@ -45,12 +47,16 @@ public class ChapterHomeServiceTests
             Person(41, FonbecRole.Admin, "Global", "Admin", "admin@fonbec.org", "666"),
         ]);
         _students.CountStudentsAsync(ChapterId).Returns(18);
+        _students.CountStudentsWithoutSponsorAsync(ChapterId, Arg.Any<DateTime>()).Returns(4);
         _sponsors.CountSponsorsAsync(ChapterId).Returns(9);
+        _sponsors.CountSponsorsWithoutStudentAsync(ChapterId, Arg.Any<DateTime>()).Returns(2);
 
         var home = await _service.GetAsync(ChapterId, CurrentUserId);
 
         home.StudentCount.Should().Be(18);
+        home.StudentsWithoutSponsor.Should().Be(4);
         home.SponsorCount.Should().Be(9);
+        home.SponsorsWithoutStudent.Should().Be(2);
         home.Campaign.Should().BeNull();
 
         home.Managers.Select(person => person.UserId).Should().Equal(CurrentUserId, 11);

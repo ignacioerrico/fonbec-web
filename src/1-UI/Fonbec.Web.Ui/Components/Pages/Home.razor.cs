@@ -4,6 +4,7 @@ using Fonbec.Web.Logic.Models.ChapterHome;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Ui.Constants;
 using Microsoft.AspNetCore.Components;
+using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.Pages;
 
@@ -18,6 +19,12 @@ public partial class Home : AuthenticationRequiredComponentBase
 
     [Inject]
     public IChapterHomeService ChapterHomeService { get; set; } = null!;
+
+    private static string Unmatched(int count, string one, string many) =>
+        count == 1 ? $"1 {one}" : $"{count} {many}";
+
+    private static Color UnmatchedColor(int count) =>
+        count > 0 ? Color.Warning : Color.Secondary;
 
     private IReadOnlyList<TeamSection> Teams => _home is null
         ? []

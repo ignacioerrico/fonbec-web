@@ -24,6 +24,13 @@ public interface IStudentRepository
     /// </summary>
     Task<int> CountStudentsAsync(int? chapterId);
 
+    /// <summary>
+    /// Active students in the same set as <see cref="CountStudentsAsync"/> who would show
+    /// "Sin padrino": no current or upcoming sponsorship with an active padrino or empresa.
+    /// A finished sponsorship does not count.
+    /// </summary>
+    Task<int> CountStudentsWithoutSponsorAsync(int? chapterId, DateTime asOf);
+
     Task<int?> GetStudentChapterIdAsync(int studentId);
     Task<int> CreateStudentAsync(CreateStudentInputDataModel inputDataModel);
     Task<int> UpdateStudentAsync(UpdateStudentInputDataModel dataModel);
@@ -150,6 +157,26 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext,
             .AsNoTracking()
             .CountAsync(s => s.IsActive
                              && (chapterId == null || chapterId == s.ChapterId));
+    }
+
+    public async Task<int> CountStudentsWithoutSponsorAsync(int? chapterId, DateTime asOf)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        return await db.Students
+            .AsNoTracking()
+            .CountAsync(s => s.IsActive
+                             && (chapterId == null || chapterId == s.ChapterId)
+                             && !s.Sponsorships.Any(sp =>
+                                 sp.IsActive
+                                 && (sp.EndDate == null || sp.EndDate >= asOf)
+                                 && ((sp.SponsorId != null
+                                      && sp.Sponsor != null
+                                      && sp.Sponsor.IsActive
+                                      && !sp.Sponsor.IsDeleted)
+                                     || (sp.CompanyId != null
+                                         && sp.Company != null
+                                         && sp.Company.IsActive))));
     }
 
     public async Task<int?> GetStudentChapterIdAsync(int studentId)
