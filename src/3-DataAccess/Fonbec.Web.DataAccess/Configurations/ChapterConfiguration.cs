@@ -20,6 +20,9 @@ internal class ChapterConfiguration : AuditableEntityTypeConfiguration<Chapter>
         builder.Property(ch => ch.DocumentRejectionBehavior)
             .HasDefaultValue(DocumentRejectionBehavior.ReturnToFacilitator);
 
+        builder.Property(ch => ch.ShareApprovedReportCardsWithSponsors)
+            .HasDefaultValue(true);
+
         builder.Property(ch => ch.EmailSubjectPrefix)
             .IsRequired()
             .HasMaxLength(MaxLength.Chapter.EmailSubjectPrefix)

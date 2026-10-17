@@ -140,6 +140,10 @@ public interface IDocumentRepository
 
     Task<bool> SetChapterRejectionBehaviorAsync(int chapterId, DocumentRejectionBehavior behavior, int updatedById);
 
+    Task<bool?> GetShareApprovedReportCardsWithSponsorsAsync(int chapterId);
+
+    Task<bool> SetShareApprovedReportCardsWithSponsorsAsync(int chapterId, bool share, int updatedById);
+
     Task<List<HeldRejectionDataModel>> ListHeldRejectionsAsync(int chapterId);
 
     Task<int> CountHeldRejectionsAsync(int chapterId);
@@ -1037,7 +1041,7 @@ public class DocumentRepository(
         };
         db.ReportCardReviews.Add(review);
 
-        var targets = await ResolveStudentShareTargetsAsync(db, reportCard.StudentId);
+        var targets = await ResolveApprovalTargetsAsync(db, reportCard);
         return await FinalizeApprovalAsync(db, reportCard, input.ReviewerId, targets);
     }
 
@@ -2146,6 +2150,41 @@ public class DocumentRepository(
     }
 
     /// <summary>
+    /// Recipients for an approval. A report card uses an empty set when the chapter does not share them.
+    /// A letter goes to its addressee. Every other document goes to the student's active sponsorships.
+    /// </summary>
+    private static async Task<ShareTargets> ResolveApprovalTargetsAsync(FonbecWebDbContext db, Document document)
+    {
+        if (document is ReportCard && !await SharesApprovedReportCardsAsync(db, document.ChapterId))
+        {
+            return new ShareTargets([], []);
+        }
+
+        if (document is Letter letter)
+        {
+            return await ResolveShareTargetsAsync(
+                db,
+                letter.SponsorId.HasValue ? [letter.SponsorId.Value] : [],
+                letter.CompanyId.HasValue ? [letter.CompanyId.Value] : []);
+        }
+
+        return await ResolveStudentShareTargetsAsync(db, document.StudentId);
+    }
+
+    /// <summary>
+    /// Missing chapters keep the historical default of sharing approved report cards.
+    /// </summary>
+    private static async Task<bool> SharesApprovedReportCardsAsync(FonbecWebDbContext db, int chapterId)
+    {
+        var share = await db.Chapters
+            .AsNoTracking()
+            .Where(c => c.Id == chapterId)
+            .Select(c => (bool?)c.ShareApprovedReportCardsWithSponsors)
+            .FirstOrDefaultAsync();
+        return share ?? true;
+    }
+
+    /// <summary>
     /// The set of recipients a document should be shared with for the student's active sponsorships.
     /// Each sponsorship recipient is a person-sponsor or a company; a company additionally fans out
     /// to the person-sponsors linked to it.
@@ -2361,6 +2400,32 @@ public class DocumentRepository(
         return true;
     }
 
+    public async Task<bool?> GetShareApprovedReportCardsWithSponsorsAsync(int chapterId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+        return await db.Chapters
+            .AsNoTracking()
+            .Where(c => c.Id == chapterId)
+            .Select(c => (bool?)c.ShareApprovedReportCardsWithSponsors)
+            .FirstOrDefaultAsync();
+    }
+
+    public async Task<bool> SetShareApprovedReportCardsWithSponsorsAsync(
+        int chapterId, bool share, int updatedById)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+        var chapter = await db.Chapters.FirstOrDefaultAsync(c => c.Id == chapterId && c.IsActive);
+        if (chapter is null)
+        {
+            return false;
+        }
+
+        chapter.ShareApprovedReportCardsWithSponsors = share;
+        chapter.LastUpdatedById = updatedById;
+        await db.SaveChangesAsync();
+        return true;
+    }
+
     public async Task<List<HeldRejectionDataModel>> ListHeldRejectionsAsync(int chapterId)
     {
         await using var db = await dbContext.CreateDbContextAsync();
@@ -2442,12 +2507,7 @@ public class DocumentRepository(
 
         db.Entry(document).Property(d => d.RowVersion).OriginalValue = rowVersion;
 
-        ShareTargets targets = document is Letter letter
-            ? await ResolveShareTargetsAsync(
-                db,
-                letter.SponsorId.HasValue ? [letter.SponsorId.Value] : [],
-                letter.CompanyId.HasValue ? [letter.CompanyId.Value] : [])
-            : await ResolveStudentShareTargetsAsync(db, document.StudentId);
+        var targets = await ResolveApprovalTargetsAsync(db, document);
 
         var utcNow = DateTime.UtcNow;
         document.Status = DocumentStatus.Approved;

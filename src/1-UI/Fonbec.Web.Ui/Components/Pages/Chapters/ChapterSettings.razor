@@ -11,6 +11,31 @@
 @if (!Loading && _behavior is DocumentRejectionBehavior behavior)
 {
     <MudStack Spacing="4">
+        @if (_shareReportCards is bool shareReportCards)
+        {
+            <MudPaper Class="pa-4" Elevation="2">
+                <MudText Typo="Typo.h6" GutterBottom="true">Boletines y libretas universitarias</MudText>
+                <MudRadioGroup T="bool" Value="shareReportCards" ValueChanged="OnShareReportCardsChanged" Disabled="_savingReportCards">
+                    <MudRadio Value="true" Color="Color.Primary">
+                        <MudStack Spacing="1">
+                            <MudText>Compartirlos con los padrinos al aprobarlos</MudText>
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                                Aparecen en el historial y se envía un correo.
+                            </MudText>
+                        </MudStack>
+                    </MudRadio>
+                    <MudRadio Value="false" Color="Color.Primary">
+                        <MudStack Spacing="1">
+                            <MudText>No compartirlos al aprobarlos</MudText>
+                            <MudText Typo="Typo.body2" Class="mud-text-secondary">
+                                El documento queda aprobado para la filial. Los padrinos y las empresas no lo ven ni reciben un correo, sin importar quién lo apruebe.
+                            </MudText>
+                        </MudStack>
+                    </MudRadio>
+                </MudRadioGroup>
+            </MudPaper>
+        }
+
         <MudPaper Class="pa-4" Elevation="2">
             <MudText Typo="Typo.h6" GutterBottom="true">Cuando se rechaza un documento</MudText>
             <MudRadioGroup T="DocumentRejectionBehavior" Value="behavior" ValueChanged="OnBehaviorChanged" Disabled="_saving">

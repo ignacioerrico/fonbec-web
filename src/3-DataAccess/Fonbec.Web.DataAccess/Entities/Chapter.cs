@@ -15,6 +15,12 @@ public class Chapter : Auditable
     public DocumentRejectionBehavior DocumentRejectionBehavior { get; set; }
 
     /// <summary>
+    /// When false, an approved report card is not shared with sponsors or companies.
+    /// Existing approvals are left as they are.
+    /// </summary>
+    public bool ShareApprovedReportCardsWithSponsors { get; set; } = true;
+
+    /// <summary>
     /// Text placed before every email subject for this chapter. A space is added before the subject.
     /// </summary>
     public string EmailSubjectPrefix { get; set; } = "FONBEC |";

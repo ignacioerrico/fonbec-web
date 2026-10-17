@@ -168,6 +168,11 @@ namespace Fonbec.Web.DataAccess.Migrations
                     b.Property<DateTime?>("ReenabledOnUtc")
                         .HasColumnType("datetime2");
 
+                    b.Property<bool>("ShareApprovedReportCardsWithSponsors")
+                        .ValueGeneratedOnAdd()
+                        .HasColumnType("bit")
+                        .HasDefaultValue(true);
+
                     b.HasKey("Id");
 
                     b.HasIndex("CreatedById");

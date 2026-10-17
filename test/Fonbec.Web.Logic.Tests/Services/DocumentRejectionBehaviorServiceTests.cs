@@ -99,6 +99,18 @@ public class DocumentRejectionBehaviorServiceTests
     }
 
     [Fact]
+    public async Task SetShareApprovedReportCards_Reviewer_Is_Not_Authorized()
+    {
+        var result = await CreateService().SetShareApprovedReportCardsWithSponsorsAsync(
+            ChapterId, FonbecRole.Reviewer, ManagerId, false);
+
+        result.IsSuccess.Should().BeFalse();
+        result.Errors.Should().Contain(DocumentMessages.NotAuthorizedToDecideRejection);
+        await _repository.DidNotReceive().SetShareApprovedReportCardsWithSponsorsAsync(
+            Arg.Any<int>(), Arg.Any<bool>(), Arg.Any<int>());
+    }
+
+    [Fact]
     public async Task ShareHeldRejection_Reviewer_Is_Not_Authorized()
     {
         var result = await CreateService().ShareHeldRejectionAsync(Decision(FonbecRole.Reviewer));

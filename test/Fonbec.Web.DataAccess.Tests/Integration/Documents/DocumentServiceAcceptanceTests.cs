@@ -412,6 +412,83 @@ public class DocumentServiceAcceptanceTests
     }
 
     [Fact]
+    public async Task Scenario13c_ApproveReportCard_WhenSharingIsOff_DoesNotShareWithSponsors()
+    {
+        await _fixture.InitializeAsync();
+        (await _fixture.DocumentRepository.SetShareApprovedReportCardsWithSponsorsAsync(
+            _fixture.ChapterId, false, _fixture.ManagerId)).Should().BeTrue();
+
+        await _fixture.DocumentService.CreateReportCardAsync(new CreateReportCardInputModel(
+            _fixture.StudentId, _fixture.UploaderContext,
+            FileKind.Blob, Period: new DateOnly(2026, 6, 1), Description: "Boletín 2º trimestre",
+            Blob: new CreateBlobPathInputModel("r.pdf", "application/pdf")));
+
+        var locked = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer")!;
+
+        var approve = await _fixture.DocumentService.ApproveReportCardAsync(new ApproveReportCardInputModel(
+            locked!.DocumentId, _fixture.ReviewerId, "Reviewer", locked.RowVersion,
+            ConfirmedIsReportCardOrTranscript: true, ConfirmedPeriodMatches: true,
+            ConfirmedStudentNameCorrect: true, ReportCardAssessment.Green, Absences: 3));
+
+        approve.IsSuccess.Should().BeTrue();
+        (await _fixture.GetDocumentAsync(locked.DocumentId)).Status.Should().Be(DocumentStatus.Approved);
+
+        await using var db = await _fixture.Factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        (await db.Set<DocumentShare>().CountAsync(TestContext.Current.CancellationToken)).Should().Be(0);
+        await _fixture.EmailSender.DidNotReceive().SendEmailAsync(
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<string>(),
+            Arg.Any<string>());
+
+        var history = await _fixture.DocumentService.GetSharedDocumentsAsync(_fixture.SponsorAToken, _fixture.StudentId);
+        history.IsAuthorized.Should().BeTrue();
+        history.Documents.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task Scenario13d_ApproveReportCard_WhenSharingIsOff_DoesNotShareWithCompany()
+    {
+        await _fixture.InitializeAsync();
+        (await _fixture.DocumentRepository.SetShareApprovedReportCardsWithSponsorsAsync(
+            _fixture.ChapterId, false, _fixture.ManagerId)).Should().BeTrue();
+
+        await _fixture.DocumentService.CreateReportCardAsync(new CreateReportCardInputModel(
+            _fixture.CompanyStudentId, _fixture.UploaderContext,
+            FileKind.Blob, Period: new DateOnly(2026, 6, 1), Description: "Boletín 2º trimestre",
+            Blob: new CreateBlobPathInputModel("r.pdf", "application/pdf")));
+
+        var locked = await _fixture.DocumentService.TakeNextForReviewAsync(_fixture.ReviewerId, "Reviewer")!;
+
+        var approve = await _fixture.DocumentService.ApproveReportCardAsync(new ApproveReportCardInputModel(
+            locked!.DocumentId, _fixture.ReviewerId, "Reviewer", locked.RowVersion,
+            ConfirmedIsReportCardOrTranscript: true, ConfirmedPeriodMatches: true,
+            ConfirmedStudentNameCorrect: true, ReportCardAssessment.Green, Absences: 0));
+
+        approve.IsSuccess.Should().BeTrue();
+
+        await using var db = await _fixture.Factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        (await db.Set<DocumentShare>().CountAsync(TestContext.Current.CancellationToken)).Should().Be(0);
+        await _fixture.EmailSender.DidNotReceive().SendEmailAsync(
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<string>(),
+            Arg.Any<string>());
+
+        var companyHistory = await _fixture.DocumentService.GetSharedDocumentsForCompanyAsync(
+            _fixture.CompanyToken, _fixture.CompanyStudentId);
+        companyHistory.IsAuthorized.Should().BeTrue();
+        companyHistory.Documents.Should().BeEmpty();
+
+        var sponsorHistory = await _fixture.DocumentService.GetSharedDocumentsAsync(
+            _fixture.CompanyLinkedSponsorToken, _fixture.CompanyStudentId);
+        sponsorHistory.IsAuthorized.Should().BeTrue();
+        sponsorHistory.Documents.Should().BeEmpty();
+    }
+
+    [Fact]
     public async Task Scenario14_ApproveOtherDocument_SharesWithAllActiveSponsors()
     {
         await _fixture.InitializeAsync();

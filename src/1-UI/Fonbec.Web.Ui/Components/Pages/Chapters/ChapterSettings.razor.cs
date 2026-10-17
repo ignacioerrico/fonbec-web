@@ -14,8 +14,10 @@ namespace Fonbec.Web.Ui.Components.Pages.Chapters;
 public partial class ChapterSettings : AuthenticationRequiredComponentBase
 {
     private DocumentRejectionBehavior? _behavior;
+    private bool? _shareReportCards;
     private ChapterEmailSettingsEditor? _emailSettings;
     private bool _saving;
+    private bool _savingReportCards;
     private bool _savingMessages;
 
     [Inject]
@@ -44,6 +46,7 @@ public partial class ChapterSettings : AuthenticationRequiredComponentBase
 
         Loading = true;
         _behavior = await DocumentService.GetChapterRejectionBehaviorAsync(chapterId, UserRole);
+        _shareReportCards = await DocumentService.GetShareApprovedReportCardsWithSponsorsAsync(chapterId, UserRole);
         _emailSettings = await ChapterEmailSettingsService.GetEditorAsync(chapterId);
         Loading = false;
 
@@ -75,6 +78,28 @@ public partial class ChapterSettings : AuthenticationRequiredComponentBase
         _behavior = behavior;
         NavMenuRefresh.NotifyChanged();
         Snackbar.Add("Se guardó el comportamiento.", Severity.Success);
+    }
+
+    private async Task OnShareReportCardsChanged(bool share)
+    {
+        if (_shareReportCards is null || _savingReportCards || share == _shareReportCards || FonbecClaim.ChapterId is not int chapterId)
+        {
+            return;
+        }
+
+        _savingReportCards = true;
+        var result = await DocumentService.SetShareApprovedReportCardsWithSponsorsAsync(
+            chapterId, UserRole, FonbecClaim.UserId, share);
+        _savingReportCards = false;
+
+        if (result.Errors is { Count: > 0 })
+        {
+            Snackbar.Add(result.Errors[0], Severity.Error);
+            return;
+        }
+
+        _shareReportCards = share;
+        Snackbar.Add("Se guardó la configuración.", Severity.Success);
     }
 
     private void RestoreDefault(ChapterEmailTemplateEditor message)

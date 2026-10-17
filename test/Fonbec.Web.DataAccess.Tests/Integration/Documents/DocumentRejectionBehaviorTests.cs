@@ -167,6 +167,85 @@ public class DocumentRejectionBehaviorTests
         sponsorIds.Should().BeEquivalentTo([fixture.SponsorAId, fixture.SponsorBId]);
     }
 
+    [Fact]
+    public async Task HoldMode_Share_ReportCard_WhenSharingIsOff_ApprovesWithoutNotifyingSponsors()
+    {
+        var fixture = new DocumentTestFixture();
+        await fixture.InitializeAsync();
+        await fixture.DocumentRepository.SetChapterRejectionBehaviorAsync(
+            fixture.ChapterId, DocumentRejectionBehavior.HoldForManager, fixture.ManagerId);
+        (await fixture.DocumentRepository.SetShareApprovedReportCardsWithSponsorsAsync(
+            fixture.ChapterId, false, fixture.ManagerId)).Should().BeTrue();
+        var documentId = await CreateAndRejectAsync(fixture, DocumentType.ReportCard);
+        var held = await fixture.GetDocumentAsync(documentId);
+        fixture.EmailSender.ClearReceivedCalls();
+
+        var result = await fixture.DocumentService.ShareHeldRejectionAsync(new HeldRejectionDecisionInputModel(
+            documentId, fixture.ManagerId, "Manager", fixture.ChapterId, held.RowVersion));
+
+        result.IsSuccess.Should().BeTrue();
+        (await fixture.GetDocumentAsync(documentId)).Status.Should().Be(DocumentStatus.Approved);
+
+        await using var db = await fixture.Factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        (await db.Set<DocumentShare>().CountAsync(s => s.DocumentId == documentId, TestContext.Current.CancellationToken))
+            .Should().Be(0);
+        await fixture.EmailSender.DidNotReceive().SendEmailAsync(
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<string>(),
+            Arg.Any<string>());
+
+        var history = await fixture.DocumentService.GetSharedDocumentsAsync(fixture.SponsorAToken, fixture.StudentId);
+        history.IsAuthorized.Should().BeTrue();
+        history.Documents.Should().BeEmpty();
+    }
+
+    [Fact]
+    public async Task HoldMode_Share_CompanyReportCard_WhenSharingIsOff_ApprovesWithoutNotifying()
+    {
+        var fixture = new DocumentTestFixture();
+        await fixture.InitializeAsync();
+        await fixture.DocumentRepository.SetChapterRejectionBehaviorAsync(
+            fixture.ChapterId, DocumentRejectionBehavior.HoldForManager, fixture.ManagerId);
+        (await fixture.DocumentRepository.SetShareApprovedReportCardsWithSponsorsAsync(
+            fixture.ChapterId, false, fixture.ManagerId)).Should().BeTrue();
+
+        var created = await fixture.DocumentService.CreateReportCardAsync(new CreateReportCardInputModel(
+            fixture.CompanyStudentId, fixture.UploaderContext, FileKind.Blob,
+            Period: new DateOnly(2026, 6, 1),
+            Description: "Boletín",
+            Blob: new CreateBlobPathInputModel("path/report.pdf", "application/pdf")));
+        created.IsSuccess.Should().BeTrue();
+        var locked = await fixture.DocumentService.TakeNextForReviewAsync(fixture.ReviewerId, "Reviewer");
+        locked.Should().NotBeNull();
+        var rejected = await fixture.DocumentService.RejectReportCardAsync(new RejectReportCardInputModel(
+            locked!.DocumentId, fixture.ReviewerId, "Reviewer", locked.RowVersion, RejectedReasonIds.Unreadable, null));
+        rejected.IsSuccess.Should().BeTrue();
+        var held = await fixture.GetDocumentAsync(locked.DocumentId);
+        fixture.EmailSender.ClearReceivedCalls();
+
+        var result = await fixture.DocumentService.ShareHeldRejectionAsync(new HeldRejectionDecisionInputModel(
+            locked.DocumentId, fixture.ManagerId, "Manager", fixture.ChapterId, held.RowVersion));
+
+        result.IsSuccess.Should().BeTrue();
+        (await fixture.GetDocumentAsync(locked.DocumentId)).Status.Should().Be(DocumentStatus.Approved);
+
+        await using var db = await fixture.Factory.CreateDbContextAsync(TestContext.Current.CancellationToken);
+        (await db.Set<DocumentShare>().CountAsync(TestContext.Current.CancellationToken)).Should().Be(0);
+        await fixture.EmailSender.DidNotReceive().SendEmailAsync(
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<IReadOnlyList<Recipient>>(),
+            Arg.Any<string>(),
+            Arg.Any<string>());
+
+        var companyHistory = await fixture.DocumentService.GetSharedDocumentsForCompanyAsync(
+            fixture.CompanyToken, fixture.CompanyStudentId);
+        companyHistory.IsAuthorized.Should().BeTrue();
+        companyHistory.Documents.Should().BeEmpty();
+    }
+
     private static async Task<long> CreateAndRejectAsync(DocumentTestFixture fixture, DocumentType documentType)
     {
         var created = documentType switch

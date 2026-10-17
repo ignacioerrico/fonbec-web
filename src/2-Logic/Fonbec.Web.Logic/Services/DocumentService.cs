@@ -110,6 +110,11 @@ public interface IDocumentService
     Task<CrudResult> SetChapterRejectionBehaviorAsync(
         int chapterId, string userRole, int userId, DocumentRejectionBehavior behavior);
 
+    Task<bool?> GetShareApprovedReportCardsWithSponsorsAsync(int chapterId, string userRole);
+
+    Task<CrudResult> SetShareApprovedReportCardsWithSponsorsAsync(
+        int chapterId, string userRole, int userId, bool share);
+
     Task<ReviewResult> ShareHeldRejectionAsync(HeldRejectionDecisionInputModel input);
 
     Task<ReviewResult> ReturnHeldRejectionAsync(HeldRejectionDecisionInputModel input);
@@ -1094,6 +1099,30 @@ public class DocumentService(
         }
 
         var updated = await documentRepository.SetChapterRejectionBehaviorAsync(chapterId, behavior, userId);
+        return updated
+            ? new CrudResult()
+            : new CrudResult(Errors: [DocumentMessages.ChapterNotFound]);
+    }
+
+    public async Task<bool?> GetShareApprovedReportCardsWithSponsorsAsync(int chapterId, string userRole)
+    {
+        if (!CanDecideRejection(userRole))
+        {
+            return null;
+        }
+
+        return await documentRepository.GetShareApprovedReportCardsWithSponsorsAsync(chapterId);
+    }
+
+    public async Task<CrudResult> SetShareApprovedReportCardsWithSponsorsAsync(
+        int chapterId, string userRole, int userId, bool share)
+    {
+        if (!CanDecideRejection(userRole))
+        {
+            return new CrudResult(Errors: [DocumentMessages.NotAuthorizedToDecideRejection]);
+        }
+
+        var updated = await documentRepository.SetShareApprovedReportCardsWithSponsorsAsync(chapterId, share, userId);
         return updated
             ? new CrudResult()
             : new CrudResult(Errors: [DocumentMessages.ChapterNotFound]);

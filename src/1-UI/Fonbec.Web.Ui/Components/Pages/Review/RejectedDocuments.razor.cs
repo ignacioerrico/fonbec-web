@@ -15,6 +15,7 @@ namespace Fonbec.Web.Ui.Components.Pages.Review;
 public partial class RejectedDocuments : AuthenticationRequiredComponentBase
 {
     private HeldRejectionsPageViewModel? _page;
+    private bool _shareApprovedReportCards = true;
     private long? _busyDocumentId;
 
     [Inject]
@@ -43,6 +44,7 @@ public partial class RejectedDocuments : AuthenticationRequiredComponentBase
 
         Loading = true;
         _page = await DocumentService.GetHeldRejectionsPageAsync(chapterId, UserRole);
+        _shareApprovedReportCards = await DocumentService.GetShareApprovedReportCardsWithSponsorsAsync(chapterId, UserRole) ?? true;
         Loading = false;
 
         if (_page is null)
@@ -54,10 +56,13 @@ public partial class RejectedDocuments : AuthenticationRequiredComponentBase
 
     private async Task ShareAsync(HeldRejectionItemViewModel item)
     {
+        var shares = SharesReportCard(item);
         var with = ShareWithPhrase(item);
         var confirmed = await DialogService.ShowMessageBox(
             "Aprobar documento",
-            $"¿Aprobar el documento de {item.StudentName}? Se cancela el rechazo y se comparte con {with}.",
+            shares
+                ? $"¿Aprobar el documento de {item.StudentName}? Se cancela el rechazo y se comparte con {with}."
+                : $"¿Aprobar el documento de {item.StudentName}? Se cancela el rechazo.",
             yesText: "Aprobar",
             cancelText: "Cancelar");
         if (confirmed is not true || FonbecClaim.ChapterId is not int chapterId)
@@ -68,7 +73,9 @@ public partial class RejectedDocuments : AuthenticationRequiredComponentBase
         await DecideAsync(
             item,
             () => DocumentService.ShareHeldRejectionAsync(Decision(item, chapterId)),
-            $"Se aprobó el documento y se compartió con {with}.");
+            shares
+                ? $"Se aprobó el documento y se compartió con {with}."
+                : "Se aprobó el documento.");
     }
 
     private async Task ReturnAsync(HeldRejectionItemViewModel item)
@@ -176,8 +183,13 @@ public partial class RejectedDocuments : AuthenticationRequiredComponentBase
         return string.IsNullOrWhiteSpace(text) ? "—" : text;
     }
 
-    private static string ApproveTooltip(HeldRejectionItemViewModel item) =>
-        $"Cancela el rechazo y comparte el documento con {ShareWithPhrase(item)}";
+    private bool SharesReportCard(HeldRejectionItemViewModel item) =>
+        item.DocumentType != DocumentType.ReportCard || _shareApprovedReportCards;
+
+    private string ApproveTooltip(HeldRejectionItemViewModel item) =>
+        SharesReportCard(item)
+            ? $"Cancela el rechazo y comparte el documento con {ShareWithPhrase(item)}"
+            : "Cancela el rechazo y aprueba el documento";
 
     private static string ShareWithPhrase(HeldRejectionItemViewModel item)
     {
