@@ -3,6 +3,7 @@
 @inherits AuthenticationRequiredComponentBase
 
 @using Fonbec.Web.DataAccess.Entities.Enums
+@using Fonbec.Web.Ui.Constants
 
 <PageTitle>@PageTitleText</PageTitle>
 
@@ -34,6 +35,7 @@
                     <th>Tipo</th>
                     <th>Detalle</th>
                     <th>Formato</th>
+                    <th>Evaluación</th>
                     <th>Estado</th>
                     <th>Acciones</th>
                 </tr>
@@ -46,6 +48,21 @@
                         <td>@TypeLabel(item.DocumentType)</td>
                         <td>@(string.IsNullOrWhiteSpace(item.Detail) ? "—" : item.Detail)</td>
                         <td>@FileKindLabel(item.FileKind)</td>
+                        <td>
+                            @if (item.ReportCardAssessment is { } assessment)
+                            {
+                                <MudChip T="string"
+                                         Size="Size.Small"
+                                         Variant="Variant.Filled"
+                                         Color="@assessment.Color()">
+                                    @assessment.Label()
+                                </MudChip>
+                            }
+                            else
+                            {
+                                <MudText Typo="Typo.body2">—</MudText>
+                            }
+                        </td>
                         <td>
                             <div class="d-flex align-center gap-2">
                                 <MudIcon Icon="@item.Status.Icon()" Color="@item.Status.Color()" Size="Size.Small" />
@@ -131,7 +148,7 @@
                     @if (IsExpanded(item.DocumentId))
                     {
                         <tr>
-                            <td colspan="6">
+                            <td colspan="7">
                                 @if (item.FileKind == FileKind.Text)
                                 {
                                     <div class="mud-typography mud-typography-body1" style="white-space: pre-wrap;">

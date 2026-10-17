@@ -20,6 +20,12 @@ public interface IStudentRepository
     Task<List<StudentLetterScoreDataModel>> GetApprovedLetterScoresAsync(int? chapterId);
 
     /// <summary>
+    /// Latest approved, reviewed report card per student.
+    /// <paramref name="chapterId"/> null includes every chapter.
+    /// </summary>
+    Task<List<StudentReportCardAssessmentDataModel>> GetLatestReportCardAssessmentsAsync(int? chapterId);
+
+    /// <summary>
     /// Active students visible on the students list. <paramref name="chapterId"/> null counts every chapter.
     /// </summary>
     Task<int> CountStudentsAsync(int? chapterId);
@@ -147,6 +153,32 @@ public class StudentRepository(IDbContextFactory<FonbecWebDbContext> dbContext,
                 ContentScore = letter.Review.Assessment.ContentScore,
             })
             .ToListAsync();
+    }
+
+    public async Task<List<StudentReportCardAssessmentDataModel>> GetLatestReportCardAssessmentsAsync(int? chapterId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var assessments = await db.Set<ReportCard>()
+            .AsNoTracking()
+            .Where(reportCard => reportCard.Status == DocumentStatus.Approved
+                                 && reportCard.Review != null
+                                 && (chapterId == null || reportCard.ChapterId == chapterId))
+            .OrderByDescending(reportCard => reportCard.Period)
+            .ThenByDescending(reportCard => reportCard.UploadedOn)
+            .ThenByDescending(reportCard => reportCard.DocumentId)
+            .Select(reportCard => new StudentReportCardAssessmentDataModel
+            {
+                StudentId = reportCard.StudentId,
+                Period = reportCard.Period,
+                Description = reportCard.Description,
+                Assessment = reportCard.Review!.OverallAssessment,
+            })
+            .ToListAsync();
+
+        return assessments
+            .DistinctBy(assessment => assessment.StudentId)
+            .ToList();
     }
 
     public async Task<int> CountStudentsAsync(int? chapterId)

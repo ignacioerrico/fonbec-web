@@ -380,6 +380,9 @@ public class StudentDocumentHistoryItemDataModel
 
     public DocumentStatus Status { get; init; }
 
+    /// <summary>Reviewer traffic-light assessment. Only populated for approved report cards.</summary>
+    public ReportCardAssessment? ReportCardAssessment { get; init; }
+
     public string? RejectionReason { get; init; }
 
     public DateTime? RejectionOverriddenOn { get; init; }

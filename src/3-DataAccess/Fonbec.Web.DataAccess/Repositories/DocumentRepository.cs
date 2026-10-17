@@ -1991,6 +1991,7 @@ public class DocumentRepository(
             .Include(d => d.RejectedReason)
             .Include(d => d.RejectionOverriddenBy)
             .Include(d => d.Pages)
+            .Include(d => d.Review)
             .Where(d => d.StudentId == studentId)
             .ToListAsync();
 
@@ -2013,7 +2014,10 @@ public class DocumentRepository(
                 d,
                 d.Description,
                 d.Period,
-                recipientName: null)))
+                recipientName: null,
+                reportCardAssessment: d.Status == DocumentStatus.Approved
+                    ? d.Review?.OverallAssessment
+                    : null)))
             .Concat(others.Select(d => ToHistoryItem(
                 d,
                 d.Description,
@@ -2057,7 +2061,8 @@ public class DocumentRepository(
         Document document,
         string? description,
         DateOnly? reportCardPeriod,
-        string? recipientName) =>
+        string? recipientName,
+        ReportCardAssessment? reportCardAssessment = null) =>
         new()
         {
             DocumentId = document.DocumentId,
@@ -2068,6 +2073,7 @@ public class DocumentRepository(
             RecipientName = recipientName,
             FileKind = document.FileKind,
             Status = document.Status,
+            ReportCardAssessment = reportCardAssessment,
             RejectionReason = FormatRejectionReason(document.RejectedReason, document.RejectionNotes),
             RejectionOverriddenOn = document.RejectionOverriddenOn,
             RejectionOverriddenByName = document.RejectionOverriddenBy is null

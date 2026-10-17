@@ -92,6 +92,15 @@ public class ManagerStudentDocumentHistoryRepositoryTests
                 UploadedById = 1,
                 YouTubeVideoId = "abc123",
                 RowVersion = [1],
+                Review = new ReportCardReview
+                {
+                    ConfirmedIsReportCardOrTranscript = true,
+                    ConfirmedPeriodMatches = true,
+                    ConfirmedStudentNameCorrect = true,
+                    OverallAssessment = ReportCardAssessment.Yellow,
+                    ReviewedById = 1,
+                    ReviewedOn = sameInstant,
+                },
             });
 
             AddOther(db, documentId: 4, studentId: 10, uploadedOn: new DateTime(2026, 5, 3),
@@ -118,6 +127,7 @@ public class ManagerStudentDocumentHistoryRepositoryTests
         letter.RecipientName.Should().Be("Ana Pérez");
         letter.TextContent.Should().Be("Querido padrino");
         letter.Description.Should().BeNull();
+        letter.ReportCardAssessment.Should().BeNull();
 
         var companyLetter = result.Items.Single(i => i.DocumentId == 2);
         companyLetter.RecipientName.Should().Be("Acme SA");
@@ -127,12 +137,14 @@ public class ManagerStudentDocumentHistoryRepositoryTests
         reportCard.DocumentType.Should().Be(DocumentType.ReportCard);
         reportCard.Description.Should().Be("Boletín 1º trimestre");
         reportCard.ReportCardPeriod.Should().Be(new DateOnly(2026, 6, 1));
+        reportCard.ReportCardAssessment.Should().Be(ReportCardAssessment.Yellow);
         reportCard.YouTubeVideoId.Should().Be("abc123");
 
         var rejected = result.Items.Single(i => i.DocumentId == 4);
         rejected.DocumentType.Should().Be(DocumentType.Other);
         rejected.RejectionReason.Should().Be("Imagen borrosa: falta el sello");
         rejected.PageCount.Should().Be(2);
+        rejected.ReportCardAssessment.Should().BeNull();
     }
 
     [Fact]

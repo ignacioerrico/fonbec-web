@@ -28,10 +28,17 @@ public class StudentsListViewModel : AuditableViewModel, IDetectChanges<Students
 
     public LetterAssessmentSummaryViewModel? LetterAssessment { get; set; }
 
+    public LatestReportCardAssessmentViewModel? LatestReportCardAssessment { get; set; }
+
     public bool HasLetterAssessment => LetterAssessment is not null;
 
-    /// <summary>Becarios without scores sort after those who have one.</summary>
-    public double LetterAssessmentSortKey => LetterAssessment?.OverallAverage ?? double.PositiveInfinity;
+    public string LatestReportCardAssessmentLabel =>
+        LatestReportCardAssessment?.Assessment.EnumToString() ?? NoReportCardAssessmentLabel;
+
+    public const string NoReportCardAssessmentLabel = "Sin notas";
+
+    /// <summary>Becarios without scores sort as zero.</summary>
+    public double LetterAssessmentSortKey => LetterAssessment?.OverallAverage ?? 0;
 
     public bool HasActiveSponsors => ActiveSponsors.Any(s => s.IsCurrentlyActive);
 
@@ -45,6 +52,15 @@ public class StudentsListViewModel : AuditableViewModel, IDetectChanges<Students
         && StudentEmail == other.StudentEmail.Trim().ToLower()
         && StudentPhoneNumber == other.StudentPhoneNumber.NullOrTrimmed()
         && Notes == other.Notes.NullOrTrimmed();
+}
+
+public class LatestReportCardAssessmentViewModel
+{
+    public DateOnly Period { get; init; }
+
+    public string Description { get; init; } = string.Empty;
+
+    public ReportCardAssessment Assessment { get; init; }
 }
 
 public class StudentActiveSponsorViewModel

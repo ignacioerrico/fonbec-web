@@ -263,6 +263,8 @@ public class StudentDocumentHistoryItemViewModel
 
     public DocumentStatus Status { get; init; }
 
+    public ReportCardAssessment? ReportCardAssessment { get; init; }
+
     public string? RejectionReason { get; init; }
 
     public DateTime? RejectionOverriddenOn { get; init; }

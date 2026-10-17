@@ -2,6 +2,7 @@ using FluentAssertions;
 using Fonbec.Web.DataAccess.DataModels.Students;
 using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.DataAccess.Entities.Abstract;
+using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Models.Students;
 using Fonbec.Web.Logic.Services;
@@ -85,6 +86,7 @@ public class StudentServiceTests
                 ContentScore = 4,
             },
         ]);
+        _studentRepository.GetLatestReportCardAssessmentsAsync(ChapterId).Returns([]);
 
         var students = await _service.GetAllStudentsAsync(ChapterId);
 
@@ -99,10 +101,39 @@ public class StudentServiceTests
     {
         _studentRepository.GetAllStudentsAsync(ChapterId).Returns([Student()]);
         _studentRepository.GetApprovedLetterScoresAsync(ChapterId).Returns([]);
+        _studentRepository.GetLatestReportCardAssessmentsAsync(ChapterId).Returns([]);
 
         var students = await _service.GetAllStudentsAsync(ChapterId);
 
-        students.Single().LetterAssessment.Should().BeNull();
+        var student = students.Single();
+        student.LetterAssessment.Should().BeNull();
+        student.LatestReportCardAssessmentLabel.Should().Be(StudentsListViewModel.NoReportCardAssessmentLabel);
+    }
+
+    [Fact]
+    public async Task GetAllStudentsAsync_Attaches_Latest_Report_Card_Assessment()
+    {
+        _studentRepository.GetAllStudentsAsync(ChapterId).Returns([Student()]);
+        _studentRepository.GetApprovedLetterScoresAsync(ChapterId).Returns([]);
+        _studentRepository.GetLatestReportCardAssessmentsAsync(ChapterId).Returns(
+        [
+            new StudentReportCardAssessmentDataModel
+            {
+                StudentId = StudentId,
+                Period = new DateOnly(2026, 6, 1),
+                Description = "Boletín 2º trimestre",
+                Assessment = ReportCardAssessment.Yellow,
+            },
+        ]);
+
+        var students = await _service.GetAllStudentsAsync(ChapterId);
+
+        students.Should().ContainSingle(student =>
+            student.LatestReportCardAssessment != null
+            && student.LatestReportCardAssessment.Period == new DateOnly(2026, 6, 1)
+            && student.LatestReportCardAssessment.Description == "Boletín 2º trimestre"
+            && student.LatestReportCardAssessment.Assessment == ReportCardAssessment.Yellow
+            && student.LatestReportCardAssessmentLabel == "Amarillo");
     }
 
     private static AllStudentsDataModel Student()

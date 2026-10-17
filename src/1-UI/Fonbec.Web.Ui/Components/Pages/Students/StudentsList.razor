@@ -7,10 +7,11 @@
 @using Fonbec.Web.Logic.Models.Students
 @using Fonbec.Web.Ui.Components.Pages.Managers
 @using Fonbec.Web.Ui.Components.Pages.Sponsorships
+@using Fonbec.Web.Ui.Constants
 
 <PageHeader Title="Becarios" />
 
-<MudStack StretchItems="StretchItems.Middle" Row="true">
+<MudStack Row="true" AlignItems="AlignItems.Center">
     <AuthorizeView Policy="@nameof(StudentCreate)">
         <MudTooltip Text="Alta de becario"
                     Arrow="true" Placement="Placement.Right"
@@ -21,9 +22,18 @@
         </MudTooltip>
     </AuthorizeView>
     <MudSpacer />
-    <MudSwitch @bind-Value="_sortByLastName" LabelPlacement="Placement.Left">
-        @(_sortByLastName ? "Apellido, Nombre" : "Nombre Apellido")
-    </MudSwitch>
+    <MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1" Wrap="Wrap.Wrap">
+        <MudTooltip Text="Muestra nivel, notas y evaluación"
+                    Arrow="true" Placement="Placement.Bottom">
+            <MudSwitch @bind-Value="_fullView" Color="Color.Primary" LabelPlacement="Placement.Start">
+                Vista completa
+            </MudSwitch>
+        </MudTooltip>
+        <MudDivider Vertical="true" FlexItem="true" Class="mx-2 my-2" />
+        <MudSwitch @bind-Value="_sortByLastName" LabelPlacement="Placement.Start">
+            @(_sortByLastName ? "Apellido, Nombre" : "Nombre Apellido")
+        </MudSwitch>
+    </MudStack>
 </MudStack>
 
 <LoadingIndicator Loading="Loading"
@@ -63,7 +73,8 @@
             {
                 <HierarchyColumn T="StudentsListViewModel"
                                  ButtonDisabledFunc="@(vm => !vm.HasLetterAssessment)"
-                                 EnableHeaderToggle="false" />
+                                 EnableHeaderToggle="false"
+                                 Hidden="@(!_fullView)" />
             }
             <PropertyColumn Property="@(vm => $"{vm.StudentFirstName} {vm.StudentLastName} {vm.StudentNickName} {vm.StudentLastName}")" Title="Nombre">
                 <CellTemplate>
@@ -117,35 +128,6 @@
                 </FilterTemplate>
             </PropertyColumn>
 
-            <PropertyColumn Property="vm => vm.StudentCurrentEducationLevel" Title="Nivel">
-                <EditTemplate>
-                    <EducationLevelSelector @bind-SecondarySchoolStartYear="context.Item.StudentSecondarySchoolStartYear"
-                                            @bind-UniversityStartYear="context.Item.StudentUniversityStartYear" />
-                </EditTemplate>
-                <FilterTemplate>
-                    <FilterByList T="StudentsListViewModel"
-                                  AllItems="_allEducationLevels"
-                                  FilterContext="context"
-                                  FilterBy="@(vm => vm.StudentCurrentEducationLevel)" />
-                </FilterTemplate>
-            </PropertyColumn>
-
-            @if (ShowLetterAssessments)
-            {
-                <TemplateColumn Title="Evaluación"
-                                Filterable="false"
-                                SortBy="@(vm => vm.LetterAssessmentSortKey)">
-                    <CellTemplate>
-                        @if (context.Item.LetterAssessment is { } assessment)
-                        {
-                            <MudTooltip Text="Promedio de ortografía, legibilidad y contenido" Arrow="true">
-                                <MudText Typo="Typo.body2">@assessment.OverallText</MudText>
-                            </MudTooltip>
-                        }
-                    </CellTemplate>
-                </TemplateColumn>
-            }
-
             <PropertyColumn Property="@(vm => string.Join(", ", vm.ActiveSponsors.Select(s => s.Name)))"
                             Title="Padrinos" Editable="false" Sortable="false">
                 <CellTemplate>
@@ -164,6 +146,63 @@
                 <EditTemplate>
                 </EditTemplate>
             </PropertyColumn>
+
+            <PropertyColumn Property="vm => vm.StudentCurrentEducationLevel" Title="Nivel" Hidden="@(!_fullView)">
+                <EditTemplate>
+                    <EducationLevelSelector @bind-SecondarySchoolStartYear="context.Item.StudentSecondarySchoolStartYear"
+                                            @bind-UniversityStartYear="context.Item.StudentUniversityStartYear" />
+                </EditTemplate>
+                <FilterTemplate>
+                    <FilterByList T="StudentsListViewModel"
+                                  AllItems="_allEducationLevels"
+                                  FilterContext="context"
+                                  FilterBy="@(vm => vm.StudentCurrentEducationLevel)" />
+                </FilterTemplate>
+            </PropertyColumn>
+
+            <PropertyColumn Property="vm => vm.LatestReportCardAssessmentLabel" Title="Notas" Editable="false" Hidden="@(!_fullView)">
+                <CellTemplate>
+                    @if (context.Item.LatestReportCardAssessment is { } assessment)
+                    {
+                        <MudTooltip Text="@ReportCardAssessmentTooltip(assessment)" Arrow="true">
+                            <MudChip T="string"
+                                     Size="Size.Small"
+                                     Variant="Variant.Filled"
+                                     Color="@assessment.Assessment.Color()">
+                                @assessment.Assessment.Label()
+                            </MudChip>
+                        </MudTooltip>
+                    }
+                    else
+                    {
+                        <MudText Typo="Typo.body2">—</MudText>
+                    }
+                </CellTemplate>
+                <FilterTemplate>
+                    <FilterByList T="StudentsListViewModel"
+                                  AllItems="_allReportCardAssessments"
+                                  FilterContext="context"
+                                  FilterBy="@(vm => vm.LatestReportCardAssessmentLabel)" />
+                </FilterTemplate>
+            </PropertyColumn>
+
+            @if (ShowLetterAssessments)
+            {
+                <TemplateColumn Title="Evaluación"
+                                Filterable="false"
+                                Sortable="true"
+                                Hidden="@(!_fullView)"
+                                SortBy="@(vm => vm.LetterAssessmentSortKey)">
+                    <CellTemplate>
+                        @if (context.Item.LetterAssessment is { } assessment)
+                        {
+                            <MudTooltip Text="Promedio de ortografía, legibilidad y contenido" Arrow="true">
+                                <MudText Typo="Typo.body2">@assessment.OverallText</MudText>
+                            </MudTooltip>
+                        }
+                    </CellTemplate>
+                </TemplateColumn>
+            }
 
             <PropertyColumn Property="vm => vm.Notes" Title="Información adicional" Hidden="true" Required="false">
                 <EditTemplate>

@@ -34,7 +34,8 @@ public class StudentDocumentHistoryMappingTests : MappingTestBase
                     Description = "Boletín 1º trimestre",
                     ReportCardPeriod = new DateOnly(2026, 6, 1),
                     FileKind = FileKind.Blob,
-                    Status = DocumentStatus.ReviewPending,
+                    Status = DocumentStatus.Approved,
+                    ReportCardAssessment = ReportCardAssessment.Green,
                     PageCount = 2,
                 },
                 new StudentDocumentHistoryItemDataModel
@@ -62,6 +63,7 @@ public class StudentDocumentHistoryMappingTests : MappingTestBase
 
         var reportCard = viewModel.Items.Single(i => i.DocumentId == 2);
         reportCard.Detail.Should().Be("junio de 2026 — Boletín 1º trimestre");
+        reportCard.ReportCardAssessment.Should().Be(ReportCardAssessment.Green);
         reportCard.CanDownload.Should().BeTrue();
 
         var other = viewModel.Items.Single(i => i.DocumentId == 3);

@@ -21,11 +21,15 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
 
     private IEnumerable<string> _allEducationLevels = [];
 
+    private IEnumerable<string> _allReportCardAssessments = [];
+
     private IEnumerable<string> _allFacilitators = [];
 
     private IEnumerable<string> _allChapters = [];
 
     private string _searchString = string.Empty;
+
+    private bool _fullView = true;
 
     private bool _sortByLastName;
 
@@ -49,6 +53,10 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
 
         _allEducationLevels = Enum.GetValues<EducationLevel>()
             .Select(el => el.EnumToString());
+
+        _allReportCardAssessments = Enum.GetValues<ReportCardAssessment>()
+            .Select(assessment => assessment.EnumToString())
+            .Append(StudentsListViewModel.NoReportCardAssessmentLabel);
 
         _allFacilitators = _viewModels.Select(vm => vm.FacilitatorFullName)
             .Distinct()
@@ -150,6 +158,14 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
         new() { Name = "Legibilidad", Data = assessment.PenmanshipByPlan },
         new() { Name = "Contenido", Data = assessment.ContentByPlan },
     ];
+
+    private static string ReportCardAssessmentTooltip(LatestReportCardAssessmentViewModel assessment)
+    {
+        var period = assessment.Period.ToDateTime(TimeOnly.MinValue).ToSpanishMonthYear();
+        return string.IsNullOrWhiteSpace(assessment.Description)
+            ? period
+            : $"{period} — {assessment.Description}";
+    }
 
     private string StudentFullName(StudentsListViewModel viewModel) =>
         _sortByLastName

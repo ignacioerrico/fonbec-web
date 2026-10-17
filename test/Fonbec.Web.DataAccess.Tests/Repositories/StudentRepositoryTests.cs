@@ -2,6 +2,7 @@
 using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.DataModels.Students.Input;
 using Fonbec.Web.DataAccess.Entities;
+using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Repositories;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -379,6 +380,113 @@ public class StudentRepositoryTests
             && s.EndDate == futureEnd);
     }
 
+    [Fact]
+    public async Task GetLatestReportCardAssessmentsAsync_Returns_Latest_Approved_Reviewed_Card_Per_Student()
+    {
+        await using var fixture = await CreateFixtureAsync();
+        var studentId = await fixture.CreateStudentAsync();
+
+        await using (var db = await fixture.DbContextFactory.CreateDbContextAsync(TestContext.Current.CancellationToken))
+        {
+            db.Set<ReportCard>().AddRange(
+                CreateReportCard(501, studentId, 1, new DateOnly(2026, 3, 1), new DateTime(2026, 3, 10),
+                    DocumentStatus.Approved, ReportCardAssessment.Green, fixture.ManagerId),
+                CreateReportCard(502, studentId, 1, new DateOnly(2026, 6, 1), new DateTime(2026, 6, 10),
+                    DocumentStatus.Approved, ReportCardAssessment.Yellow, fixture.ManagerId),
+                CreateReportCard(503, studentId, 1, new DateOnly(2026, 6, 1), new DateTime(2026, 6, 11),
+                    DocumentStatus.Approved, ReportCardAssessment.Red, fixture.ManagerId),
+                CreateReportCard(504, studentId, 1, new DateOnly(2026, 9, 1), new DateTime(2026, 9, 10),
+                    DocumentStatus.Rejected, ReportCardAssessment.Red, fixture.ManagerId),
+                new ReportCard
+                {
+                    DocumentId = 505,
+                    StudentId = studentId,
+                    ChapterId = 1,
+                    Period = new DateOnly(2026, 12, 1),
+                    Description = "Sin revisión",
+                    FileKind = FileKind.Blob,
+                    Status = DocumentStatus.Approved,
+                    UploadedOn = new DateTime(2026, 12, 10),
+                    UploadedById = fixture.ManagerId,
+                    RowVersion = [1],
+                });
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        var result = await fixture.Repository.GetLatestReportCardAssessmentsAsync(chapterId: 1);
+
+        var assessment = result.Should().ContainSingle().Which;
+        assessment.StudentId.Should().Be(studentId);
+        assessment.Period.Should().Be(new DateOnly(2026, 6, 1));
+        assessment.Description.Should().Be("Boletín 503");
+        assessment.Assessment.Should().Be(ReportCardAssessment.Red);
+    }
+
+    [Fact]
+    public async Task GetLatestReportCardAssessmentsAsync_Respects_Chapter_And_Omits_Students_Without_Assessments()
+    {
+        await using var fixture = await CreateFixtureAsync();
+        var chapterOneStudentId = await fixture.CreateStudentAsync();
+        _ = await fixture.CreateStudentAsync(fixture.CreateStudentInput(
+            studentFirstName: "Sin",
+            studentLastName: "Boletín"));
+        var chapterTwoStudentId = await fixture.CreateStudentAsync(fixture.CreateStudentInput(
+            fixture.OtherChapterFacilitatorId,
+            chapterId: 2,
+            createdById: fixture.AdminId,
+            studentFirstName: "Otra",
+            studentLastName: "Filial"));
+
+        await using (var db = await fixture.DbContextFactory.CreateDbContextAsync(TestContext.Current.CancellationToken))
+        {
+            db.Set<ReportCard>().AddRange(
+                CreateReportCard(601, chapterOneStudentId, 1, new DateOnly(2026, 6, 1), new DateTime(2026, 6, 10),
+                    DocumentStatus.Approved, ReportCardAssessment.Green, fixture.ManagerId),
+                CreateReportCard(602, chapterTwoStudentId, 2, new DateOnly(2026, 6, 1), new DateTime(2026, 6, 10),
+                    DocumentStatus.Approved, ReportCardAssessment.Red, fixture.AdminId));
+            await db.SaveChangesAsync(TestContext.Current.CancellationToken);
+        }
+
+        var chapterResult = await fixture.Repository.GetLatestReportCardAssessmentsAsync(chapterId: 1);
+        var allChaptersResult = await fixture.Repository.GetLatestReportCardAssessmentsAsync(chapterId: null);
+
+        chapterResult.Should().ContainSingle(item => item.StudentId == chapterOneStudentId);
+        allChaptersResult.Select(item => item.StudentId)
+            .Should().BeEquivalentTo([chapterOneStudentId, chapterTwoStudentId]);
+    }
+
+    private static ReportCard CreateReportCard(
+        long documentId,
+        int studentId,
+        int chapterId,
+        DateOnly period,
+        DateTime uploadedOn,
+        DocumentStatus status,
+        ReportCardAssessment assessment,
+        int userId) =>
+        new()
+        {
+            DocumentId = documentId,
+            StudentId = studentId,
+            ChapterId = chapterId,
+            Period = period,
+            Description = $"Boletín {documentId}",
+            FileKind = FileKind.Blob,
+            Status = status,
+            UploadedOn = uploadedOn,
+            UploadedById = userId,
+            RowVersion = [1],
+            Review = new ReportCardReview
+            {
+                ConfirmedIsReportCardOrTranscript = true,
+                ConfirmedPeriodMatches = true,
+                ConfirmedStudentNameCorrect = true,
+                OverallAssessment = assessment,
+                ReviewedById = userId,
+                ReviewedOn = uploadedOn,
+            },
+        };
+
     private static async Task<StudentRepositoryFixture> CreateFixtureAsync()
     {
         var services = new ServiceCollection();
@@ -508,13 +616,15 @@ public class StudentRepositoryTests
         public CreateStudentInputDataModel CreateStudentInput(
             int? facilitatorId = null,
             int chapterId = 1,
-            int? createdById = null) =>
+            int? createdById = null,
+            string studentFirstName = "Test",
+            string studentLastName = "Student") =>
             new()
             {
                 ChapterId = chapterId,
                 FacilitatorId = facilitatorId ?? FacilitatorId,
-                StudentFirstName = "Test",
-                StudentLastName = "Student",
+                StudentFirstName = studentFirstName,
+                StudentLastName = studentLastName,
                 CreatedById = createdById ?? ManagerId,
             };
 

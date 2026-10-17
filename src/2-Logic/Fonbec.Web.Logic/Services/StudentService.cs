@@ -26,11 +26,23 @@ public class StudentService(IStudentRepository studentRepository) : IStudentServ
         var studentsListViewModel = allStudentsDataModel.Adapt<List<StudentsListViewModel>>();
         var scores = await studentRepository.GetApprovedLetterScoresAsync(chapterId) ?? [];
         var summaries = LetterAssessmentSummaries.FromScores(scores);
+        var reportCardAssessments = await studentRepository.GetLatestReportCardAssessmentsAsync(chapterId) ?? [];
+        var latestReportCardAssessments = reportCardAssessments.ToDictionary(assessment => assessment.StudentId);
         foreach (var student in studentsListViewModel)
         {
             if (summaries.TryGetValue(student.StudentId, out var summary))
             {
                 student.LetterAssessment = summary;
+            }
+
+            if (latestReportCardAssessments.TryGetValue(student.StudentId, out var assessment))
+            {
+                student.LatestReportCardAssessment = new LatestReportCardAssessmentViewModel
+                {
+                    Period = assessment.Period,
+                    Description = assessment.Description,
+                    Assessment = assessment.Assessment,
+                };
             }
         }
 
