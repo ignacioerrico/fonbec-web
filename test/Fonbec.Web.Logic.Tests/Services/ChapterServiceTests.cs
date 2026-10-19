@@ -5,7 +5,6 @@ using Fonbec.Web.DataAccess.Entities;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Constants;
 using Fonbec.Web.Logic.Services;
-using Mapster;
 using NSubstitute;
 
 namespace Fonbec.Web.Logic.Tests.Services;
@@ -17,7 +16,6 @@ public class ChapterServiceTests
 
     public ChapterServiceTests()
     {
-        TypeAdapterConfig.GlobalSettings.Scan(typeof(ChapterService).Assembly);
         _chapterRepository = Substitute.For<IChapterRepository>();
         var userRepository = Substitute.For<IUserRepository>();
         userRepository.GetUserClaimsOfTypeAsync(Arg.Any<string>())

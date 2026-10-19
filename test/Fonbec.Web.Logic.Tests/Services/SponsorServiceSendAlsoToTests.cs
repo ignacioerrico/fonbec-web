@@ -6,7 +6,6 @@ using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Models.Sponsors;
 using Fonbec.Web.Logic.Models.Sponsors.Input;
 using Fonbec.Web.Logic.Services;
-using Mapster;
 using NSubstitute;
 
 namespace Fonbec.Web.Logic.Tests.Services;
@@ -20,7 +19,6 @@ public class SponsorServiceSendAlsoToTests
     {
         _sponsorRepository = Substitute.For<ISponsorRepository>();
         _sponsorService = new SponsorService(_sponsorRepository);
-        TypeAdapterConfig.GlobalSettings.Scan(typeof(CreateSponsorInputModel).Assembly);
     }
 
     [Fact]

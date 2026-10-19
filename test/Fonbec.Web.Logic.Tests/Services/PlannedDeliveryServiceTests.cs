@@ -4,7 +4,6 @@ using Fonbec.Web.DataAccess.DataModels.PlannedDelivery.Input;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Models.PlannedDeliveries.Input;
 using Fonbec.Web.Logic.Services;
-using Mapster;
 using NSubstitute;
 
 namespace Fonbec.Web.Logic.Tests.Services;
@@ -17,7 +16,6 @@ public class PlannedDeliveryServiceTests
 
     public PlannedDeliveryServiceTests()
     {
-        TypeAdapterConfig.GlobalSettings.Scan(typeof(PlannedDeliveryService).Assembly);
         _service = new PlannedDeliveryService(_repository, _progressRepository);
     }
 

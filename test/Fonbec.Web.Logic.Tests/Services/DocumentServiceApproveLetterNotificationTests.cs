@@ -8,7 +8,6 @@ using Fonbec.Web.Logic.Models.Documents.Input;
 using Fonbec.Web.Logic.Models.PlannedDeliveries;
 using Fonbec.Web.Logic.Options;
 using Fonbec.Web.Logic.Services;
-using Mapster;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 
@@ -25,11 +24,6 @@ public class DocumentServiceApproveLetterNotificationTests
     private readonly IDocumentRepository _repository = Substitute.For<IDocumentRepository>();
     private readonly IDocumentNotificationQueue _notificationQueue = Substitute.For<IDocumentNotificationQueue>();
     private readonly IPlanCompletionService _planCompletionService = Substitute.For<IPlanCompletionService>();
-
-    public DocumentServiceApproveLetterNotificationTests()
-    {
-        TypeAdapterConfig.GlobalSettings.Scan(typeof(DocumentService).Assembly);
-    }
 
     [Fact]
     public async Task ApproveLetter_Emails_Managers_When_Plan_Becomes_Ready()

@@ -4,7 +4,6 @@ using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Logic.Tests.Models;
-using Mapster;
 using NSubstitute;
 
 namespace Fonbec.Web.Logic.Tests.Services;
@@ -16,8 +15,6 @@ public class FacilitatorServiceOtherDocumentsTests : MappingTestBase
 
     public FacilitatorServiceOtherDocumentsTests()
     {
-        TypeAdapterConfig.GlobalSettings.Scan(typeof(FacilitatorService).Assembly);
-
         _facilitatorRepository = Substitute.For<IFacilitatorRepository>();
         var letterExemptionService = Substitute.For<ILetterExemptionService>();
         letterExemptionService

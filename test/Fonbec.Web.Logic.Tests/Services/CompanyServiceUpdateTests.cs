@@ -3,7 +3,6 @@ using Fonbec.Web.DataAccess.DataModels.Companies.Input;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Models.Companies.Input;
 using Fonbec.Web.Logic.Services;
-using Mapster;
 using NSubstitute;
 
 namespace Fonbec.Web.Logic.Tests.Services;
@@ -17,7 +16,6 @@ public class CompanyServiceUpdateTests
     {
         _companyRepository = Substitute.For<ICompanyRepository>();
         _companyService = new CompanyService(_companyRepository);
-        TypeAdapterConfig.GlobalSettings.Scan(typeof(UpdateCompanyInputModel).Assembly);
     }
 
     [Fact]
