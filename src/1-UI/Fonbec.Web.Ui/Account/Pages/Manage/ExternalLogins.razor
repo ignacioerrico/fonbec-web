@@ -89,12 +89,15 @@
     [SupplyParameterFromQuery]
     private string? RemoteError { get; set; }
 
+    [SupplyParameterFromQuery]
+    private string? Provider { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         if (RemoteError is not null)
         {
             await HttpContext.SignOutAsync(IdentityConstants.ExternalScheme);
-            RedirectManager.RedirectToCurrentPageWithStatus(ExternalLoginCopy.RemoteErrorMessage(RemoteError), HttpContext);
+            RedirectManager.RedirectToCurrentPageWithStatus(ExternalLoginCopy.RemoteErrorMessage(RemoteError, Provider), HttpContext);
         }
 
         _user = await UserAccessor.GetRequiredUserAsync(HttpContext);

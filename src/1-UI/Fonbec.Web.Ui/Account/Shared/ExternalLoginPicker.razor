@@ -28,6 +28,10 @@
                             {
                                 <MudIcon Icon="@Icons.Custom.Brands.Google" Class="mr-2" />
                             }
+                            else if (ExternalLoginCopy.IsFacebook(provider.Name))
+                            {
+                                <MudIcon Icon="@Icons.Custom.Brands.Facebook" Class="mr-2" />
+                            }
                             @ExternalLoginCopy.SignInButtonText(provider.Name, provider.DisplayName)
                         </span>
                     </button>
