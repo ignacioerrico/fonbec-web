@@ -1,0 +1,31 @@
+@inject NavigationManager NavigationManager
+
+<div class="pa-6">
+    <MudText Typo="Typo.h4" Color="Color.Error" GutterBottom="true">Algo salió mal</MudText>
+
+    <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mb-4">
+        Ocurrió un error inesperado. Podés reintentar o volver al inicio.
+    </MudAlert>
+
+    @if (!string.IsNullOrEmpty(ErrorReference))
+    {
+        <MudText Typo="Typo.body2" Class="mb-4">
+            <strong>Código:</strong> <code>@ErrorReference</code>
+        </MudText>
+    }
+
+    <MudButton Variant="Variant.Filled" Color="Color.Primary" OnClick="Retry">Reintentar</MudButton>
+    <MudButton Variant="Variant.Outlined" Color="Color.Primary" Class="ml-2" OnClick="GoHome">Volver al inicio</MudButton>
+</div>
+
+@code {
+    [Parameter]
+    public string? ErrorReference { get; set; }
+
+    [Parameter]
+    public EventCallback OnRetry { get; set; }
+
+    private Task Retry() => OnRetry.InvokeAsync();
+
+    private void GoHome() => NavigationManager.NavigateTo("/", forceLoad: true);
+}
