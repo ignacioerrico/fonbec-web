@@ -41,7 +41,7 @@ public partial class CompanyRelations : AuthenticationRequiredComponentBase
     [Inject]
     private ICompanyService CompanyService { get; set; } = null!;
 
-    private bool SaveButtonDisabled => Loading || _saving;
+    private bool SaveButtonDisabled => Loading || _saving || !ContactsAreValid;
 
     private bool ContactsAreValid =>
         _contacts.All(contact =>
