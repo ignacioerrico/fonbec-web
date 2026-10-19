@@ -7,7 +7,6 @@ using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models.Documents;
 using Fonbec.Web.Logic.Options;
 using Fonbec.Web.Logic.Services;
-using Mapster;
 using Microsoft.Extensions.Logging.Abstractions;
 using NSubstitute;
 using NSubstitute.ExceptionExtensions;
@@ -26,8 +25,6 @@ public class RecipientMessageServiceTests
 
     public RecipientMessageServiceTests()
     {
-        TypeAdapterConfig.GlobalSettings.Scan(typeof(DocumentService).Assembly);
-
         _service = new DocumentService(
             _repository,
             Substitute.For<IDocumentNotificationQueue>(),

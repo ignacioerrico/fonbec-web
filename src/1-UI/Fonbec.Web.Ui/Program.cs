@@ -8,8 +8,10 @@ using Fonbec.Web.Ui.Configuration;
 using Fonbec.Web.Ui.Constants;
 using Google.Apis.Auth.AspNetCore3;
 using Mapster;
+using Microsoft.AspNetCore.Authentication.Facebook;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
 using Microsoft.AspNetCore.Components.Authorization;
+using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
@@ -63,9 +65,40 @@ if (googleSignInConfigured)
             // redirect URI for this app is /signin-google.
             googleOptions.CallbackPath = "/signin-google";
             googleOptions.Events ??= new OpenIdConnectEvents();
-            googleOptions.Events.OnRemoteFailure = GoogleSignInFailure.Handle;
+            googleOptions.Events.OnRemoteFailure =
+                ExternalSignInFailure.For(GoogleOpenIdConnectDefaults.AuthenticationScheme);
         });
 }
+
+var facebookAppId = builder.Configuration["Authentication:Facebook:AppId"];
+var facebookAppSecret = builder.Configuration["Authentication:Facebook:AppSecret"];
+var facebookSignInConfigured = !string.IsNullOrWhiteSpace(facebookAppId)
+                               && !string.IsNullOrWhiteSpace(facebookAppSecret);
+if (facebookSignInConfigured)
+{
+    builder.Services.AddAuthentication().AddFacebook(
+        FacebookDefaults.AuthenticationScheme,
+        "Facebook",
+        facebookOptions =>
+        {
+            facebookOptions.AppId = facebookAppId;
+            facebookOptions.AppSecret = facebookAppSecret;
+            // CallbackPath defaults to /signin-facebook. FacebookOptions already requests
+            // the email scope and the email field. Cancellation is handled here so the
+            // login page can show a Spanish message; AccessDeniedPath would skip that.
+            facebookOptions.Events.OnRemoteFailure =
+                ExternalSignInFailure.For(FacebookDefaults.AuthenticationScheme);
+        });
+}
+
+// Azure App Service terminates TLS and forwards the request as HTTP. Without these
+// headers, Facebook's redirect URI is built with http and the provider rejects it.
+builder.Services.Configure<ForwardedHeadersOptions>(options =>
+{
+    options.ForwardedHeaders = ForwardedHeaders.XForwardedFor | ForwardedHeaders.XForwardedProto;
+    options.KnownIPNetworks.Clear();
+    options.KnownProxies.Clear();
+});
 
 var defaultLockoutTimeSpanInMinutes = builder.Configuration.GetValue<int>("Identity:Lockout:DefaultLockoutTimeSpanInMinutes");
 
@@ -119,11 +152,26 @@ else
     app.Logger.LogInformation("Google sign-in is disabled because credentials are not configured.");
 }
 
+if (facebookSignInConfigured)
+{
+    app.Logger.LogInformation("Facebook sign-in is enabled.");
+}
+else if (!string.IsNullOrWhiteSpace(facebookAppId) || !string.IsNullOrWhiteSpace(facebookAppSecret))
+{
+    app.Logger.LogWarning("Facebook sign-in is disabled because AppId and AppSecret must both be configured.");
+}
+else
+{
+    app.Logger.LogInformation("Facebook sign-in is disabled because credentials are not configured.");
+}
+
 // Configure the HTTP request pipeline.
 
 await ConfigureMiddleware.ApplyMigrationsAndSeedingAsync(app, applySeeding: false);
 
 await ConfigureMiddleware.SeedRolesAndAdminUserAsync(app);
+
+app.UseForwardedHeaders();
 
 if (app.Environment.IsDevelopment())
 {

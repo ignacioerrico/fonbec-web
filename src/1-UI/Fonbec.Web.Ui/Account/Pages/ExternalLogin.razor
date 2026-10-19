@@ -28,6 +28,9 @@
     [SupplyParameterFromQuery]
     private string? Action { get; set; }
 
+    [SupplyParameterFromQuery]
+    private string? Provider { get; set; }
+
     protected override async Task OnInitializedAsync()
     {
         if (RemoteError is not null)
@@ -35,7 +38,7 @@
             Logger.LogWarning("External login failed with remote error {RemoteError}.", RemoteError);
             RedirectManager.RedirectToWithStatus(
                 "Account/Login",
-                ExternalLoginCopy.RemoteErrorMessage(RemoteError),
+                ExternalLoginCopy.RemoteErrorMessage(RemoteError, Provider),
                 HttpContext);
         }
 
@@ -62,6 +65,17 @@
             bypassTwoFactor: true);
 
         var email = ExternalLoginPolicy.ReadEmail(info.Principal);
+        if (!result.Succeeded && !result.IsLockedOut && !result.IsNotAllowed && email is null)
+        {
+            Logger.LogInformation(
+                "External sign-in with {LoginProvider} was denied because the provider did not return an email.",
+                info.LoginProvider);
+            RedirectManager.RedirectToWithStatus(
+                "Account/Login",
+                ExternalLoginCopy.MissingEmailMessage(info.LoginProvider),
+                HttpContext);
+        }
+
         FonbecWebUser? user = null;
         if (!result.Succeeded && !result.IsLockedOut && !result.IsNotAllowed && email is not null)
         {

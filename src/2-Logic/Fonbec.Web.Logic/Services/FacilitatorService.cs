@@ -1,4 +1,5 @@
 using Fonbec.Web.DataAccess.DataModels.Facilitators;
+using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Models.Facilitators;
 using Fonbec.Web.Logic.Models.Students;
@@ -42,6 +43,10 @@ public class FacilitatorService(
             student.ReportCards = reportCards
                 .Where(r => r.StudentId == student.StudentId)
                 .Adapt<List<ReportCardChipViewModel>>();
+            foreach (var reportCard in student.ReportCards)
+            {
+                reportCard.RejectionReason = VisibleRejectionReason(reportCard.Status, reportCard.RejectionReason);
+            }
 
             student.OtherDocuments = new OtherDocumentsColumnViewModel
             {
@@ -121,13 +126,27 @@ public class FacilitatorService(
             return null;
         }
 
-        return new OtherDocumentsHistoryViewModel
+        var result = new OtherDocumentsHistoryViewModel
         {
             StudentId = history.StudentId,
             StudentName = history.StudentName,
             Items = history.Items.Adapt<List<OtherDocumentHistoryItemViewModel>>(),
         };
+
+        foreach (var item in result.Items)
+        {
+            item.RejectionReason = VisibleRejectionReason(item.Status, item.RejectionReason);
+        }
+
+        return result;
     }
+
+    /// <summary>
+    /// The facilitator sees a rejection reason only after the document is returned.
+    /// A decision still waiting on the manager stays hidden.
+    /// </summary>
+    private static string? VisibleRejectionReason(DocumentStatus status, string? reason) =>
+        status == DocumentStatus.Rejected ? reason : null;
 
     private static List<SponsorLetterStatusViewModel> BuildLetterStatuses(int studentId, List<DashboardSponsorViewModel> sponsors, List<SponsorLetterStatusDataModel> letterStatuses)
     {

@@ -6,7 +6,6 @@ using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Repositories;
 using Fonbec.Web.Logic.Models.Students;
 using Fonbec.Web.Logic.Services;
-using Mapster;
 using NSubstitute;
 
 namespace Fonbec.Web.Logic.Tests.Services;
@@ -21,7 +20,6 @@ public class StudentServiceTests
 
     public StudentServiceTests()
     {
-        TypeAdapterConfig.GlobalSettings.Scan(typeof(StudentService).Assembly);
         _service = new StudentService(_studentRepository);
     }
 
