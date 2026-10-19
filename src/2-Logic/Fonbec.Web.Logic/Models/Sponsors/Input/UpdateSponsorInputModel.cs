@@ -14,6 +14,7 @@ public record UpdateSponsorInputModel(
     string SponsorPhoneNumber,
     string SponsorEmail,
     int? SponsorCompanyId,
+    string SponsorNotes,
     int UpdatedById
 );
 
@@ -31,6 +32,7 @@ public class UpdateSponsorInputModelMappingDefinitions : IRegister
             .Map(dest => dest.SponsorPhoneNumber, src => src.SponsorPhoneNumber.NullOrTrimmed())
             .Map(dest => dest.SponsorEmail, src => src.SponsorEmail.Trim().ToLower())
             .Map(dest => dest.SponsorCompanyId, src => src.SponsorCompanyId)
+            .Map(dest => dest.SponsorNotes, src => src.SponsorNotes.NullOrTrimmed())
             .Map(dest => dest.UpdatedById, src => src.UpdatedById);
     }
 }

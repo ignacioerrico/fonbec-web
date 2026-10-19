@@ -6,6 +6,30 @@ namespace Fonbec.Web.Logic.Tests.Models.Sponsors;
 
 public class SponsorsListViewModelTests
 {
+    [Theory]
+    [InlineData("Original", "Updated")]
+    [InlineData("Original", "")]
+    [InlineData("", "New notes")]
+    public void IsIdenticalTo_DetectsNotesOnlyChanges(string originalNotes, string editedNotes)
+    {
+        var original = new SponsorsListViewModel { Notes = originalNotes };
+        var edited = new SponsorsListViewModel { Notes = editedNotes };
+
+        original.IsIdenticalTo(edited).Should().BeFalse();
+    }
+
+    [Theory]
+    [InlineData("A note", "  A note  ")]
+    [InlineData("", "   ")]
+    [InlineData("Line one\nLine two", "Line one\nLine two")]
+    public void IsIdenticalTo_IgnoresOnlyOuterWhitespaceInNotes(string originalNotes, string editedNotes)
+    {
+        var original = new SponsorsListViewModel { Notes = originalNotes };
+        var edited = new SponsorsListViewModel { Notes = editedNotes };
+
+        original.IsIdenticalTo(edited).Should().BeTrue();
+    }
+
     [Fact]
     public void IsIdenticalTo_ReturnsTrue_WhenAllValuesAreEqual_AfterBeingNormalized()
     {

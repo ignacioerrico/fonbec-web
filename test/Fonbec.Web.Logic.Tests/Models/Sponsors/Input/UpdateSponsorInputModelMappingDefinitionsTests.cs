@@ -8,6 +8,21 @@ namespace Fonbec.Web.Logic.Tests.Models.Sponsors.Input;
 
 public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
 {
+    [Theory]
+    [InlineData("  Updated notes  ", "Updated notes")]
+    [InlineData("Line one\nLine two", "Line one\nLine two")]
+    [InlineData("", null)]
+    [InlineData("   ", null)]
+    public void Maps_Notes_WithTheSameNormalizationAsCreation(string notes, string? expected)
+    {
+        var input = new UpdateSponsorInputModel(1, "First", "Last", "", Gender.Unknown,
+            "", "sponsor@example.test", null, notes, 2);
+
+        var result = input.Adapt<UpdateSponsorInputDataModel>(Config);
+
+        result.SponsorNotes.Should().Be(expected);
+    }
+
     [Fact]
     public void Maps_All_Fields_Correctly_When_All_Values_Present()
     {
@@ -20,6 +35,7 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorPhoneNumber: "555-1234",
             SponsorEmail: "john@example.com",
             SponsorCompanyId: 10,
+            SponsorNotes: "",
             UpdatedById: 2
         );
 
@@ -48,6 +64,7 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorPhoneNumber: "555-1234",
             SponsorEmail: "john@example.com",
             SponsorCompanyId: 10,
+            SponsorNotes: "",
             UpdatedById: 2
         );
 
@@ -69,6 +86,7 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorPhoneNumber: "555-1234",
             SponsorEmail: "john@example.com",
             SponsorCompanyId: 10,
+            SponsorNotes: "",
             UpdatedById: 2
         );
 
@@ -89,6 +107,7 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorPhoneNumber: "555-1234",
             SponsorEmail: "john@example.com",
             SponsorCompanyId: 10,
+            SponsorNotes: "",
             UpdatedById: 2
         );
 
@@ -110,6 +129,7 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorPhoneNumber: "555-1234",
             SponsorEmail: "john@example.com",
             SponsorCompanyId: 10,
+            SponsorNotes: "",
             UpdatedById: 2
         );
 
@@ -132,6 +152,7 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorPhoneNumber: "555-1234",
             SponsorEmail: "john@example.com",
             SponsorCompanyId: 10,
+            SponsorNotes: "",
             UpdatedById: 2
         );
 
@@ -152,6 +173,7 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorPhoneNumber: "555-1234",
             SponsorEmail: "john@example.com",
             SponsorCompanyId: 10,
+            SponsorNotes: "",
             UpdatedById: 2
         );
 
@@ -172,6 +194,7 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorPhoneNumber: "555-1234",
             SponsorEmail: "john@example.com",
             SponsorCompanyId: 10,
+            SponsorNotes: "",
             UpdatedById: 2
         );
 
@@ -192,6 +215,7 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorPhoneNumber: "555-1234",
             SponsorEmail: "  JOHn@Example.Com   ",
             SponsorCompanyId: 10,
+            SponsorNotes: "",
             UpdatedById: 2
         );
 
@@ -214,6 +238,7 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorPhoneNumber: phone,
             SponsorEmail: "john@example.com",
             SponsorCompanyId: 10,
+            SponsorNotes: "",
             UpdatedById: 2
         );
 
@@ -234,6 +259,7 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorPhoneNumber: "  555-1234   ",
             SponsorEmail: "john@example.com",
             SponsorCompanyId: 10,
+            SponsorNotes: "",
             UpdatedById: 2
         );
 
@@ -254,6 +280,7 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorPhoneNumber: "555-1234",
             SponsorEmail: "john@example.com",
             SponsorCompanyId: 10,
+            SponsorNotes: "",
             UpdatedById: 99
         );
 
@@ -274,6 +301,7 @@ public class UpdateSponsorInputModelMappingDefinitionsTests : MappingTestBase
             SponsorPhoneNumber: "555-1234",
             SponsorEmail: "john@example.com",
             SponsorCompanyId: null,
+            SponsorNotes: "",
             UpdatedById: 99
         );
 

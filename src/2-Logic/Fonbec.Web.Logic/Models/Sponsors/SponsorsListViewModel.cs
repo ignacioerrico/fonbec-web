@@ -42,7 +42,8 @@ public class SponsorsListViewModel : AuditableViewModel, IDetectChanges<Sponsors
                && SponsorGender == other.SponsorGender
                && SponsorEmail == other.SponsorEmail.Trim().ToLower()
                && SponsorPhoneNumber == other.SponsorPhoneNumber.Trim()
-               && SponsorCompanyId == other.SponsorCompanyId;
+               && SponsorCompanyId == other.SponsorCompanyId
+               && Notes.NullOrTrimmed() == other.Notes.NullOrTrimmed();
     }
 }
 

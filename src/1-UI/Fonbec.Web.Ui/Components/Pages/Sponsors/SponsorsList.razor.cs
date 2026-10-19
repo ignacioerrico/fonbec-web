@@ -96,6 +96,7 @@ public partial class SponsorsList : AuthenticationRequiredComponentBase
             modifiedViewModel.SponsorPhoneNumber,
             modifiedViewModel.SponsorEmail,
             modifiedViewModel.SponsorCompanyId,
+            modifiedViewModel.Notes,
             FonbecClaim.UserId
         );
 
