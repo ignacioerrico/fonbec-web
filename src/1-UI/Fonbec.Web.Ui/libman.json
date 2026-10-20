@@ -8,6 +8,13 @@
       "files": [
         "dist/confetti.browser.min.js"
       ]
+    },
+    {
+      "library": "filerobot-image-editor@4.8.1",
+      "destination": "wwwroot/lib/filerobot-image-editor/",
+      "files": [
+        "filerobot-image-editor.min.js"
+      ]
     }
   ]
 }

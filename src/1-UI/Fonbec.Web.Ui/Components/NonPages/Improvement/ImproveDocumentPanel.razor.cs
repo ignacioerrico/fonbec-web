@@ -2,9 +2,11 @@ using Fonbec.Web.Logic.Constants;
 using Fonbec.Web.Logic.Models.Documents.Input;
 using Fonbec.Web.Logic.Options;
 using Fonbec.Web.Logic.Services;
+using Fonbec.Web.Ui.Constants;
 using Microsoft.AspNetCore.Components;
 using Microsoft.AspNetCore.Components.Forms;
 using Microsoft.Extensions.Options;
+using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.NonPages.Improvement;
@@ -17,9 +19,10 @@ public partial class ImproveDocumentPanel : ComponentBase
         ".jpeg",
     };
 
-    private IBrowserFile?[] _files = [];
+    private PageReplacement?[] _pages = [];
     private long _maxFileSizeBytes;
     private bool _saving;
+    private bool _editing;
 
     [Parameter, EditorRequired]
     public long DocumentId { get; set; }
@@ -60,9 +63,15 @@ public partial class ImproveDocumentPanel : ComponentBase
     [Inject]
     public IOptions<BlobStorageOptions> BlobStorageOptions { get; set; } = null!;
 
-    private bool ActionsDisabled => Disabled || _saving;
+    [Inject]
+    public IJSRuntime JsRuntime { get; set; } = null!;
 
-    private bool HasAnyUpload => _files.Any(f => f is not null);
+    [Inject]
+    public NavigationManager NavigationManager { get; set; } = null!;
+
+    private bool ActionsDisabled => Disabled || _saving || _editing;
+
+    private bool HasAnyUpload => _pages.Any(page => page is not null);
 
     private bool SubmitDisabled => ActionsDisabled || FirstValidationError() is not null;
 
@@ -70,20 +79,20 @@ public partial class ImproveDocumentPanel : ComponentBase
     {
         _maxFileSizeBytes = BlobStorageOptions.Value.MaxFileSizeBytes;
 
-        if (_files.Length != PageCount)
+        if (_pages.Length != PageCount)
         {
-            var previous = _files;
-            _files = new IBrowserFile?[PageCount];
+            var previous = _pages;
+            _pages = new PageReplacement?[PageCount];
             for (var i = 0; i < Math.Min(previous.Length, PageCount); i++)
             {
-                _files[i] = previous[i];
+                _pages[i] = previous[i];
             }
         }
     }
 
     private Task FocusPageAsync(int pageNumber) => OnPageFocused.InvokeAsync(pageNumber);
 
-    private void OnPageFileSelected(int pageIndex, IBrowserFile? file)
+    private async Task OnPageFileSelected(int pageIndex, IBrowserFile? file)
     {
         if (file is null)
         {
@@ -97,10 +106,84 @@ public partial class ImproveDocumentPanel : ComponentBase
             return;
         }
 
-        _files[pageIndex] = file;
+        await ClearEditedImageAsync(pageIndex);
+        _pages[pageIndex] = new PageReplacement(file.Name, file.Size, file);
     }
 
-    private void ClearPage(int pageIndex) => _files[pageIndex] = null;
+    private async Task EditPageAsync(int pageIndex)
+    {
+        if (_editing)
+        {
+            return;
+        }
+
+        _editing = true;
+        try
+        {
+            await FocusPageAsync(pageIndex + 1);
+
+            if (_pages[pageIndex]?.File is not null)
+            {
+                var replaceUpload = await DialogService.ShowMessageBox(
+                    "¿Reemplazar el JPG?",
+                    "La imagen editada va a reemplazar el JPG que subiste para esta página.",
+                    yesText: "Editar",
+                    cancelText: "Cancelar");
+                if (replaceUpload != true)
+                {
+                    return;
+                }
+            }
+
+            var parameters = new DialogParameters<ImageEditorDialog>
+            {
+                { dialog => dialog.DocumentId, DocumentId },
+                { dialog => dialog.PageIndex, pageIndex },
+                { dialog => dialog.SourceUrl, PageSourceUrl(pageIndex) },
+            };
+
+            var dialog = await DialogService.ShowAsync<ImageEditorDialog>(
+                string.Empty,
+                parameters,
+                new DialogOptions
+                {
+                    FullScreen = true,
+                    CloseButton = false,
+                    NoHeader = true,
+                    BackdropClick = false,
+                    CloseOnEscapeKey = false,
+                });
+            var result = await dialog.Result;
+            if (result is { Canceled: false, Data: ImageEditorResult saved })
+            {
+                _pages[pageIndex] = new PageReplacement(saved.Name, saved.Size, file: null);
+            }
+        }
+        finally
+        {
+            _editing = false;
+        }
+    }
+
+    private async Task ClearPageAsync(int pageIndex)
+    {
+        _pages[pageIndex] = null;
+        await ClearEditedImageAsync(pageIndex);
+    }
+
+    private async Task ClearEditedImageAsync(int pageIndex)
+    {
+        try
+        {
+            await JsRuntime.InvokeVoidAsync("fonbecImageEditor.clear", DocumentId, pageIndex);
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+    }
+
+    private string PageSourceUrl(int pageIndex) =>
+        NavigationManager.ToAbsoluteUri(NavRoutes.ImproveDocumentPage(DocumentId, pageIndex + 1)).AbsoluteUri;
 
     private string? FirstValidationError()
     {
@@ -110,20 +193,20 @@ public partial class ImproveDocumentPanel : ComponentBase
         }
 
         long totalSize = 0;
-        foreach (var file in _files)
+        foreach (var page in _pages)
         {
-            if (file is null)
+            if (page is null)
             {
                 continue;
             }
 
-            var extension = Path.GetExtension(file.Name);
+            var extension = Path.GetExtension(page.Name);
             if (!JpegExtensions.Contains(extension))
             {
                 return "La versión mejorada debe ser una imagen JPG.";
             }
 
-            totalSize += file.Size;
+            totalSize += page.Size;
         }
 
         if (totalSize > _maxFileSizeBytes)
@@ -146,7 +229,7 @@ public partial class ImproveDocumentPanel : ComponentBase
         }
 
         var originalPages = Enumerable.Range(1, PageCount)
-            .Where(n => _files[n - 1] is null)
+            .Where(n => _pages[n - 1] is null)
             .ToList();
 
         if (originalPages.Count > 0 && !await ConfirmKeepOriginalsAsync(originalPages))
@@ -156,14 +239,36 @@ public partial class ImproveDocumentPanel : ComponentBase
 
         _saving = true;
 
-        var uploads = _files
-            .Select(f => f is null
-                ? null
-                : new UploadFileInputModel(f.OpenReadStream(_maxFileSizeBytes), DocumentMimeTypes.Jpeg))
-            .ToList();
+        var uploads = new List<UploadFileInputModel?>(PageCount);
+        var streamRefs = new List<IJSStreamReference>();
 
         try
         {
+            for (var i = 0; i < PageCount; i++)
+            {
+                var page = _pages[i];
+                if (page is null)
+                {
+                    uploads.Add(null);
+                    continue;
+                }
+
+                Stream content;
+                if (page.File is not null)
+                {
+                    content = page.File.OpenReadStream(_maxFileSizeBytes);
+                }
+                else
+                {
+                    var streamRef = await JsRuntime.InvokeAsync<IJSStreamReference>(
+                        "fonbecImageEditor.take", DocumentId, i);
+                    streamRefs.Add(streamRef);
+                    content = await streamRef.OpenReadStreamAsync(_maxFileSizeBytes);
+                }
+
+                uploads.Add(new UploadFileInputModel(content, DocumentMimeTypes.Jpeg));
+            }
+
             var result = await DocumentService.SubmitDigitalImprovementWithBlobAsync(
                 new SubmitDigitalImprovementWithBlobInputModel(
                     DocumentId,
@@ -183,12 +288,30 @@ public partial class ImproveDocumentPanel : ComponentBase
                 return;
             }
 
+            try
+            {
+                await JsRuntime.InvokeVoidAsync("fonbecImageEditor.clearDocument", DocumentId);
+            }
+            catch (JSDisconnectedException)
+            {
+            }
+            catch (JSException)
+            {
+            }
+
             Snackbar.Add(
                 HasAnyUpload
                     ? "Imágenes mejoradas subidas."
                     : "El documento pasó a revisión con las fotos originales.",
                 Severity.Success);
             await OnCompleted.InvokeAsync();
+        }
+        catch (JSDisconnectedException)
+        {
+        }
+        catch (JSException)
+        {
+            Snackbar.Add("No se pudo leer una imagen editada. Volvé a editarla.", Severity.Error);
         }
         finally
         {
@@ -198,6 +321,11 @@ public partial class ImproveDocumentPanel : ComponentBase
                 {
                     await upload.Content.DisposeAsync();
                 }
+            }
+
+            foreach (var streamRef in streamRefs)
+            {
+                await streamRef.DisposeAsync();
             }
 
             _saving = false;
@@ -242,5 +370,14 @@ public partial class ImproveDocumentPanel : ComponentBase
         return bytes >= megabyte
             ? $"{bytes / (double)megabyte:0.#} MB"
             : $"{bytes / (double)kilobyte:0.#} KB";
+    }
+
+    private sealed class PageReplacement(string name, long size, IBrowserFile? file)
+    {
+        public string Name { get; } = name;
+
+        public long Size { get; } = size;
+
+        public IBrowserFile? File { get; } = file;
     }
 }
