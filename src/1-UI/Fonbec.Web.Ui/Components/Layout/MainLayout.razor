@@ -27,6 +27,22 @@
         </AuthorizeView>
         <MudSpacer />
         <AuthorizeView>
+            <MudMenu Dense="true"
+                     AnchorOrigin="Origin.BottomRight"
+                     TransformOrigin="Origin.TopRight"
+                     AriaLabel="Información">
+                <ActivatorContent>
+                    <MudIconButton Icon="@Icons.Material.Filled.Info"
+                                   Color="Color.Inherit"
+                                   title="Información"
+                                   aria-label="Información" />
+                </ActivatorContent>
+                <ChildContent>
+                    <MudMenuItem Href="@NavRoutes.About">Acerca</MudMenuItem>
+                    <MudMenuItem Href="@NavRoutes.Privacy">Privacidad</MudMenuItem>
+                    <MudMenuItem Href="@NavRoutes.DataDeletion">Eliminación de datos</MudMenuItem>
+                </ChildContent>
+            </MudMenu>
             <MudTooltip Text="@ThemeTooltip">
                 @if (IsStaticRender)
                 {

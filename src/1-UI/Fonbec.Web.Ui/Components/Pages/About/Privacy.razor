@@ -1,0 +1,61 @@
+@using Fonbec.Web.Ui.Components.Layout
+
+@attribute [Route(NavRoutes.Privacy)]
+@attribute [AllowAnonymous]
+@layout PublicLayout
+
+<PageTitle>Privacidad</PageTitle>
+
+<InfoPageHeader Title="Privacidad" Current="InfoPageHeader.InfoPage.Privacy" />
+
+<MudText Typo="Typo.body1" Class="mb-4">
+    FONBEC Web es una herramienta pensada para simplificar la operatoria de FONBEC.
+    No es una red social y no publica contenido a tu nombre.
+</MudText>
+
+<MudText Typo="Typo.h6" Class="mb-2">Cuentas</MudText>
+<MudText Typo="Typo.body1" Class="mb-4">
+    Las cuentas son creadas exclusivamente por un administrador o un coordinador.
+    Iniciar sesión con Facebook o con Google no crea una cuenta, no asigna un rol y no asigna una filial.
+</MudText>
+
+<MudText Typo="Typo.h6" Class="mb-2">Facebook</MudText>
+<MudText Typo="Typo.body1" Class="mb-4">
+    Si iniciás sesión con Facebook, recibimos tu correo y el identificador de tu usuario de Facebook.
+    El correo sirve para encontrar una cuenta de FONBEC Web que ya exista.
+    El identificador queda guardado para vincular ese inicio de sesión.
+    No pedimos otros permisos, no guardamos el token de acceso y no publicamos en Facebook.
+</MudText>
+
+<MudText Typo="Typo.h6" Class="mb-2">Google</MudText>
+<MudText Typo="Typo.body1" Class="mb-4">
+    El inicio de sesión con Google funciona de la misma manera:
+    el correo para reconocer la cuenta y el identificador del proveedor para vincularla.
+</MudText>
+
+<MudText Typo="Typo.h6" Class="mb-2">Datos de la cuenta</MudText>
+<MudText Typo="Typo.body1" Class="mb-4">
+    El nombre, el apellido, el apodo, el género, el correo, la filial y el rol los carga FONBEC (típicamente un coordinador de una filial).
+    No los tomamos del perfil de Facebook ni de Google.
+</MudText>
+
+<MudText Typo="Typo.h6" Class="mb-2">Datos de la filial</MudText>
+<MudText Typo="Typo.body1" Class="mb-4">
+    Los legajos de becarios y padrinos, las cartas y los demás documentos son información de la fundación.
+    No provienen del perfil de Facebook.
+</MudText>
+
+<MudText Typo="Typo.h6" Class="mb-2">Sesión</MudText>
+<MudText Typo="Typo.body1" Class="mb-4">
+    La aplicación usa una cookie de autenticación para mantener la sesión iniciada.
+</MudText>
+
+<MudText Typo="Typo.h6" Class="mb-2">Eliminación</MudText>
+<MudText Typo="Typo.body1">
+    Podés quitar la vinculación con Facebook o eliminar la cuenta. El procedimiento lo podés ver en la página de
+    <MudLink Href="@NavRoutes.DataDeletion">Eliminación de datos</MudLink>.
+</MudText>
+
+<MudText Typo="Typo.body1" Class="mt-4">
+    No vendemos datos personales.
+</MudText>

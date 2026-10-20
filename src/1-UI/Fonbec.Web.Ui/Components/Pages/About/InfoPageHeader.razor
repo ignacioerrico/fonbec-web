@@ -1,0 +1,61 @@
+<MudButton Href="@_backHref"
+           Variant="Variant.Text"
+           Color="Color.Default"
+           StartIcon="@Icons.Material.Filled.ArrowBack"
+           Class="mb-2"
+           UserAttributes="_backLinkAttributes">
+    Volver a la aplicación
+</MudButton>
+
+<MudText Typo="Typo.h4" Class="mb-6">@Title</MudText>
+
+<nav class="info-page-nav" aria-label="Información">
+    <a href="@NavRoutes.About" class="@LinkClass(InfoPage.About)">Acerca</a>
+    <a href="@NavRoutes.Privacy" class="@LinkClass(InfoPage.Privacy)">Privacidad</a>
+    <a href="@NavRoutes.DataDeletion" class="@LinkClass(InfoPage.DataDeletion)">Eliminación de datos</a>
+</nav>
+
+@code {
+    private const string LoginPath = "Account/Login";
+
+    private string _backHref = LoginPath;
+
+    private Dictionary<string, object> _backLinkAttributes = new()
+    {
+        ["data-enhance-nav"] = "false"
+    };
+
+    [CascadingParameter]
+    private Task<AuthenticationState>? AuthenticationState { get; set; }
+
+    [Parameter]
+    public string Title { get; set; } = string.Empty;
+
+    [Parameter]
+    public InfoPage Current { get; set; }
+
+    protected override async Task OnInitializedAsync()
+    {
+        if (AuthenticationState is null)
+        {
+            return;
+        }
+
+        var state = await AuthenticationState;
+        if (state.User.Identity?.IsAuthenticated == true)
+        {
+            _backHref = NavRoutes.Home;
+            _backLinkAttributes = [];
+        }
+    }
+
+    private string LinkClass(InfoPage page) =>
+        Current == page ? "info-page-nav__link info-page-nav__link--active" : "info-page-nav__link";
+
+    public enum InfoPage
+    {
+        About,
+        Privacy,
+        DataDeletion
+    }
+}

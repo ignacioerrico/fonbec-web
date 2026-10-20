@@ -4,6 +4,12 @@ public static class NavRoutes
 {
     public const string Home = "/";
 
+    public const string About = "/acerca";
+
+    public const string Privacy = "/privacidad";
+
+    public const string DataDeletion = "/eliminacion-de-datos";
+
     public const string Chapters = "/filiales";
 
     public const string ChapterCreate = $"{Chapters}/alta";

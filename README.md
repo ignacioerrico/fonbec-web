@@ -237,17 +237,6 @@ create accounts, and it does not assign a role, chapter, or permissions. An
 Admin or Coordinador still creates the user in **Alta de usuario**. The Google
 account email must match that user's email.
 
-If `ClientId` and `ClientSecret` are missing, the app starts normally and the
-login page does not show a Google button.
-
-Create a **Web application** OAuth client in [Google API &
-Services](https://console.cloud.google.com/apis) and add this authorized
-redirect URI for local HTTPS (`launchSettings.json`, profile `https`):
-
-`https://localhost:7038/signin-google`
-
-For each deployed host add `https://{host}/signin-google` as well.
-
 Store the credentials outside source control. For local development, in the UI
 project:
 
@@ -256,8 +245,8 @@ dotnet user-secrets set "Authentication:Google:ClientId" "{CLIENT_ID}" --project
 dotnet user-secrets set "Authentication:Google:ClientSecret" "{CLIENT_SECRET}" --project src/1-UI/Fonbec.Web.Ui
 ```
 
-In production, set `Authentication__Google__ClientId` and
-`Authentication__Google__ClientSecret`. Do not commit the values.
+If those values are missing, the app starts normally and the login page does
+not show the Google button.
 
 ### Sign in with Facebook
 
@@ -268,16 +257,6 @@ in **Alta de usuario**. FONBEC matches the Facebook account by **email**, not
 by name or Facebook user id. That email must be the same as the provisioned
 FONBEC user (comparison ignores case and surrounding spaces).
 
-If `AppId` or `AppSecret` is missing, the app starts normally and the login
-page does not show a Facebook button.
-
-The local HTTPS callback (`launchSettings.json`, profile `https`) is:
-
-`https://localhost:7038/signin-facebook`
-
-For each deployed host add `https://{host}/signin-facebook`. The path is
-fixed; Facebook rejects the login when the URI does not match exactly.
-
 Store the credentials outside source control. For local development, in the UI
 project:
 
@@ -286,11 +265,11 @@ dotnet user-secrets set "Authentication:Facebook:AppId" "{APP_ID}" --project src
 dotnet user-secrets set "Authentication:Facebook:AppSecret" "{APP_SECRET}" --project src/1-UI/Fonbec.Web.Ui
 ```
 
-In production, set `Authentication__Facebook__AppId` and
-`Authentication__Facebook__AppSecret` as application settings. Do not commit
-the values. Rotate the App Secret when the app is published.
+If those values are missing, the app starts normally and the login page does
+not show a Facebook button.
 
-The Facebook app must request the `email` permission. A Facebook account with
-no email, or a user who declines that permission, cannot be matched and is
-sent back to the login page. While the Facebook app is in Development mode,
-only people with a role on that app (admin, developer, or tester) can sign in.
+### About page
+
+The about page lists people from `src/1-UI/Fonbec.Web.Ui/Content/people.csv`.
+If you contributed to the project and want to be listed as a contributor, add
+a line with your data.
