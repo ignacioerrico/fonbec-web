@@ -4,9 +4,6 @@
 
 @using Fonbec.Web.DataAccess.Entities.Enums
 @using Fonbec.Web.Logic.Models.Facilitators
-@using Fonbec.Web.Logic.Models.Students
-@using Fonbec.Web.Ui.Components.NonPages.Letters
-@using Fonbec.Web.Ui.Components.NonPages.ReportCards
 
 <PageHeader Title="Mis becarios" />
 
@@ -59,53 +56,127 @@ else
             </PropertyColumn>
             <TemplateColumn Title="@LetterColumnTitle" Filterable="false" Sortable="false">
                 <CellTemplate>
-                    <div class="mt-2 d-flex align-center gap-2">
+                    <div class="mt-2 d-flex align-center gap-1">
                         <MudTooltip Text="@context.Item.LetterAggregate.Label()" Arrow="true" Placement="Placement.Right">
                             @if (context.Item.ShowLetterCountBadge)
                             {
                                 <MudBadge Content="@($"{context.Item.UploadedLetterCount}/{context.Item.SponsorLetterCount}")"
                                           Color="@context.Item.LetterAggregate.Color()" Overlap="true" Bordered="true">
-                                    <MudIcon Icon="@context.Item.LetterAggregate.Icon()" Color="@context.Item.LetterAggregate.Color()" />
+                                    <MudIconButton Icon="@context.Item.LetterAggregate.Icon()"
+                                                   Color="@context.Item.LetterAggregate.Color()"
+                                                   Size="Size.Small"
+                                                   OnClick="@(() => ShowLetterDetailsAsync(context.Item))"
+                                                   aria-label="@LetterDetailsAriaLabel(context.Item)" />
                                 </MudBadge>
                             }
                             else
                             {
-                                <MudIcon Icon="@context.Item.LetterAggregate.Icon()" Color="@context.Item.LetterAggregate.Color()" />
+                                <MudIconButton Icon="@context.Item.LetterAggregate.Icon()"
+                                               Color="@context.Item.LetterAggregate.Color()"
+                                               Size="Size.Small"
+                                               OnClick="@(() => ShowLetterDetailsAsync(context.Item))"
+                                               aria-label="@LetterDetailsAriaLabel(context.Item)" />
                             }
+                        </MudTooltip>
+                        @if (ShowLetterUpload(context.Item))
+                        {
+                            @if (context.Item.SponsorsNeedingLetter.Count == 1)
+                            {
+                                <MudTooltip Text="Subir carta" Arrow="true" Placement="Placement.Right">
+                                    <MudIconButton Icon="@Icons.Material.Filled.Upload"
+                                                   Color="Color.Primary"
+                                                   Size="Size.Small"
+                                                   Href="@LetterUploadUrl(context.Item, context.Item.SponsorsNeedingLetter[0])"
+                                                   aria-label="Subir carta" />
+                                </MudTooltip>
+                            }
+                            else
+                            {
+                                <MudMenu Dense="true" AnchorOrigin="Origin.BottomCenter">
+                                    <ActivatorContent>
+                                        <MudTooltip Text="Subir carta" Arrow="true" Placement="Placement.Right">
+                                            <MudIconButton Icon="@Icons.Material.Filled.Upload"
+                                                           Color="Color.Primary"
+                                                           Size="Size.Small"
+                                                           aria-label="Subir carta" />
+                                        </MudTooltip>
+                                    </ActivatorContent>
+                                    <ChildContent>
+                                        @foreach (var sponsor in context.Item.SponsorsNeedingLetter)
+                                        {
+                                            <MudMenuItem Href="@LetterUploadUrl(context.Item, sponsor)"
+                                                         Icon="@(sponsor.IsCompany ? Icons.Material.Filled.Factory : Icons.Material.Filled.Person)">
+                                                @sponsor.RecipientName
+                                            </MudMenuItem>
+                                        }
+                                    </ChildContent>
+                                </MudMenu>
+                            }
+                        }
+                        <MudTooltip Text="Ver historial de cartas" Arrow="true" Placement="Placement.Right">
+                            <MudIconButton Icon="@Icons.Material.Filled.History"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           Href="@NavRoutes.FacilitatorLetters(context.Item.StudentId)"
+                                           aria-label="Ver historial de cartas" />
                         </MudTooltip>
                     </div>
                 </CellTemplate>
             </TemplateColumn>
             <TemplateColumn Title="Calificaciones" Filterable="false" Sortable="false">
                 <CellTemplate>
-                    @if (context.Item.ReportCards.Count > 0)
-                    {
-                        @foreach (var report in context.Item.ReportCards)
+                    <div class="mt-2 d-flex align-center gap-1">
+                        @if (context.Item.ReportCards.Count > 0)
                         {
-                            <MudTooltip Text="@ReportChipStatusText(report)" Arrow="true">
-                                <MudChip T="string"
-                                         Size="Size.Small"
-                                         Icon="@report.Status.Icon()"
-                                         IconColor="@report.Status.Color()"
-                                         Class="me-1">
-                                    @report.PeriodLabel
+                            <div>
+                                @foreach (var report in context.Item.ReportCards)
+                                {
+                                    <MudTooltip Text="@ReportChipStatusText(report)" Arrow="true">
+                                        <MudChip T="string"
+                                                 Size="Size.Small"
+                                                 Icon="@report.Status.Icon()"
+                                                 IconColor="@report.Status.Color()"
+                                                 Class="me-1">
+                                            @report.PeriodLabel
+                                        </MudChip>
+                                    </MudTooltip>
+                                }
+                            </div>
+                        }
+                        else
+                        {
+                            <MudTooltip Text="@ReportCardMissingTooltip(context.Item)" Arrow="true" Placement="Placement.Right">
+                                <MudChip T="string" Size="Size.Small" aria-label="@ReportCardMissingTooltip(context.Item)">
+                                    <MudIcon Icon="@Icons.Material.Filled.Close" Size="Size.Small" Color="Color.Error" />
                                 </MudChip>
                             </MudTooltip>
                         }
-                    }
-                    else
-                    {
-                        <MudText Typo="Typo.body2">@ReportCardEmptyLabel(context.Item)</MudText>
-                    }
+                        <MudTooltip Text="@ReportCardUploadLabel(context.Item)" Arrow="true" Placement="Placement.Right">
+                            <MudIconButton Icon="@Icons.Material.Filled.Upload"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           Href="@NavRoutes.FacilitatorUploadReportCard(context.Item.StudentId)"
+                                           aria-label="@ReportCardUploadLabel(context.Item)" />
+                        </MudTooltip>
+                        @if (context.Item.ReportCards.Count > 0)
+                        {
+                            <MudTooltip Text="@ReportCardHistoryLabel(context.Item)" Arrow="true" Placement="Placement.Right">
+                                <MudIconButton Icon="@Icons.Material.Filled.History"
+                                               Color="Color.Primary"
+                                               Size="Size.Small"
+                                               Href="@NavRoutes.FacilitatorReportCards(context.Item.StudentId)"
+                                               aria-label="@ReportCardHistoryLabel(context.Item)" />
+                            </MudTooltip>
+                        }
+                    </div>
                 </CellTemplate>
             </TemplateColumn>
             <TemplateColumn Title="Otros" Filterable="false" Sortable="false">
                 <CellTemplate>
-                    <div class="mt-2 d-flex align-center">
-                        <MudTooltip Text="@(context.Item.OtherDocuments.HasAny ? "Ver otros documentos" : "Sin otros documentos")"
-                                    Arrow="true" Placement="Placement.Right">
-                            @if (context.Item.OtherDocuments.HasAny)
-                            {
+                    <div class="mt-2 d-flex align-center gap-1">
+                        @if (context.Item.OtherDocuments.HasAny)
+                        {
+                            <MudTooltip Text="Ver otros documentos" Arrow="true" Placement="Placement.Right">
                                 <MudBadge Content="@context.Item.OtherDocuments.Count" Color="Color.Primary" Overlap="true" Bordered="true">
                                     <MudIconButton Icon="@Icons.Material.Filled.History"
                                                    Color="Color.Primary"
@@ -113,16 +184,22 @@ else
                                                    Href="@NavRoutes.FacilitatorOtherDocuments(context.Item.StudentId)"
                                                    aria-label="@($"Otros documentos: {context.Item.OtherDocuments.Count}")" />
                                 </MudBadge>
-                            }
-                            else
-                            {
-                                <MudIconButton Icon="@Icons.Material.Filled.History"
-                                               Color="Color.Default"
-                                               Size="Size.Small"
-                                               Style="opacity: 0.45"
-                                               Href="@NavRoutes.FacilitatorOtherDocuments(context.Item.StudentId)"
-                                               aria-label="Sin otros documentos" />
-                            }
+                            </MudTooltip>
+                        }
+                        else
+                        {
+                            <MudTooltip Text="Sin otros documentos" Arrow="true" Placement="Placement.Right">
+                                <MudChip T="string" Size="Size.Small" aria-label="Sin otros documentos">
+                                    <MudIcon Icon="@Icons.Material.Filled.Close" Size="Size.Small" Color="Color.Error" />
+                                </MudChip>
+                            </MudTooltip>
+                        }
+                        <MudTooltip Text="Subir otro documento" Arrow="true" Placement="Placement.Right">
+                            <MudIconButton Icon="@Icons.Material.Filled.Upload"
+                                           Color="Color.Primary"
+                                           Size="Size.Small"
+                                           Href="@NavRoutes.FacilitatorUploadOther(context.Item.StudentId)"
+                                           aria-label="Subir otro documento" />
                         </MudTooltip>
                     </div>
                 </CellTemplate>
@@ -130,8 +207,11 @@ else
         </Columns>
         <ChildRowContent>
             <MudPaper Class="pa-4" Elevation="0">
-                <MudStack Row="true" Spacing="12" AlignItems="AlignItems.Start">
-                    <MudStack Spacing="1" Class="mt-2">
+                @{
+                    var rejectedLetters = RejectedLetters(context.Item);
+                }
+                <MudStack Row="true" Spacing="8" AlignItems="AlignItems.Start">
+                    <MudStack Spacing="1" AlignItems="AlignItems.Start">
                         <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
                             <MudIcon Icon="@Icons.Material.Filled.School" Size="Size.Small" />
                             <MudText Typo="Typo.subtitle2">Nivel Académico</MudText>
@@ -140,38 +220,23 @@ else
                             @context.Item.EducationLevel.EnumToString()
                         </MudChip>
                     </MudStack>
-                    @if (context.Item.LetterAggregate is LetterAggregateStatus.Exempt or LetterAggregateStatus.NoPlan)
+                    @if (rejectedLetters.Count > 0)
                     {
-                        <MudStack Spacing="1">
+                        <MudStack Spacing="1" AlignItems="AlignItems.Start">
                             <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
-                                <MudIcon Icon="@Icons.Material.Filled.People" Size="Size.Small" />
-                                <MudText Typo="Typo.subtitle2">Padrinos (@context.Item.Sponsors.Count)</MudText>
+                                <MudIcon Icon="@Icons.Material.Filled.Mail" Color="Color.Error" Size="Size.Small" />
+                                <MudText Typo="Typo.subtitle2">
+                                    @(rejectedLetters.Count == 1 ? "Carta rechazada" : "Cartas rechazadas")
+                                </MudText>
                             </MudStack>
-                            @foreach (var sponsor in context.Item.Sponsors)
+                            @foreach (var letter in rejectedLetters)
                             {
-                                <div class="d-flex align-center gap-2">
-                                    <MudIcon Icon="@(sponsor.IsCompany ? Icons.Material.Filled.Factory : Icons.Material.Filled.Person)" Size="Size.Small" />
-                                    <MudText Typo="Typo.body2">@sponsor.RecipientName</MudText>
-                                </div>
+                                <MudChip T="string" Size="Size.Small" Color="Color.Error">
+                                    @RejectedLetterText(letter, rejectedLetters.Count > 1)
+                                </MudChip>
                             }
                         </MudStack>
-                        <MudStack Spacing="1">
-                            <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
-                                <MudIcon Icon="@Icons.Material.Filled.Mail" Size="Size.Small" />
-                                <MudText Typo="Typo.subtitle2">Carta</MudText>
-                            </MudStack>
-                            <div class="d-flex align-center gap-2">
-                                <MudIcon Icon="@context.Item.LetterAggregate.Icon()" Color="@context.Item.LetterAggregate.Color()" Size="Size.Small" />
-                                <MudText Typo="Typo.body2">@LetterDetailText(context.Item)</MudText>
-                            </div>
-                        </MudStack>
                     }
-                    else
-                    {
-                        <SponsorLetterStatusList Sponsors="@context.Item.LetterStatuses" />
-                    }
-                    <ReportCardList Reports="@context.Item.ReportCards"
-                                    EducationLevel="@context.Item.EducationLevel" />
                 </MudStack>
 
                 <MudDivider Class="my-3" />

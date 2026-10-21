@@ -1,5 +1,6 @@
 using Fonbec.Web.DataAccess.DataModels.Facilitators;
 using Fonbec.Web.DataAccess.Entities;
+using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.DataAccess.Queries;
 using Microsoft.EntityFrameworkCore;
 
@@ -25,6 +26,18 @@ public interface IFacilitatorRepository
     /// Null when the student is missing, inactive, deleted, or assigned to someone else.
     /// </summary>
     Task<FacilitatorOtherDocumentsHistoryDataModel?> GetOtherDocumentsHistoryAsync(int facilitatorId, int studentId);
+
+    /// <summary>
+    /// Every letter uploaded for one of the facilitator's active students, newest first.
+    /// Null when the student is missing, inactive, deleted, or assigned to someone else.
+    /// </summary>
+    Task<FacilitatorLettersHistoryDataModel?> GetLettersHistoryAsync(int facilitatorId, int studentId);
+
+    /// <summary>
+    /// Every report card uploaded for one of the facilitator's active students, newest period first.
+    /// Null when the student is missing, inactive, deleted, or assigned to someone else.
+    /// </summary>
+    Task<FacilitatorReportCardsHistoryDataModel?> GetReportCardsHistoryAsync(int facilitatorId, int studentId);
 }
 
 public class FacilitatorRepository(
@@ -314,4 +327,122 @@ public class FacilitatorRepository(
             Items = items,
         };
     }
+
+    public async Task<FacilitatorLettersHistoryDataModel?> GetLettersHistoryAsync(int facilitatorId, int studentId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var studentName = await OwnedStudentNameAsync(db, facilitatorId, studentId);
+        if (studentName is null)
+        {
+            return null;
+        }
+
+        var items = await db.Set<Letter>()
+            .AsNoTracking()
+            .Where(l => l.StudentId == studentId)
+            .OrderByDescending(l => l.UploadedOn)
+            .ThenByDescending(l => l.DocumentId)
+            .Select(l => new FacilitatorLetterHistoryItemDataModel
+            {
+                DocumentId = l.DocumentId,
+                UploadedOn = l.UploadedOn,
+                PlanStartsOn = l.Plan.StartsOn,
+                RecipientName = l.Company != null
+                    ? l.Company.Name
+                    : l.Sponsor != null
+                        ? l.Sponsor.FirstName + " " + l.Sponsor.LastName
+                        : string.Empty,
+                FileKind = l.FileKind,
+                Status = l.Status,
+                RejectionReason = l.RejectedReason != null
+                    ? l.RejectionNotes != null && l.RejectionNotes != string.Empty
+                        ? l.RejectedReason.Description + ": " + l.RejectionNotes
+                        : l.RejectedReason.Description
+                    : l.RejectionNotes,
+                TextContent = l.TextContent,
+                YouTubeVideoId = l.YouTubeVideoId,
+                PageCount = l.Pages.Count,
+            })
+            .ToListAsync();
+
+        return new FacilitatorLettersHistoryDataModel
+        {
+            StudentId = studentId,
+            StudentName = studentName,
+            Items = items,
+        };
+    }
+
+    public async Task<FacilitatorReportCardsHistoryDataModel?> GetReportCardsHistoryAsync(
+        int facilitatorId, int studentId)
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var now = DateTime.UtcNow;
+        var student = await db.Students
+            .AsNoTracking()
+            .Where(s => s.Id == studentId
+                        && s.FacilitatorId == facilitatorId
+                        && s.IsActive
+                        && !s.IsDeleted)
+            .Select(s => new
+            {
+                Name = s.FirstName + " " + s.LastName,
+                EducationLevel = s.UniversityStartYear <= now
+                    ? EducationLevel.University
+                    : s.SecondarySchoolStartYear <= now
+                        ? EducationLevel.SecondarySchool
+                        : EducationLevel.PrimarySchool,
+            })
+            .FirstOrDefaultAsync();
+
+        if (student is null)
+        {
+            return null;
+        }
+
+        var items = await db.Set<ReportCard>()
+            .AsNoTracking()
+            .Where(r => r.StudentId == studentId)
+            .OrderByDescending(r => r.Period)
+            .ThenByDescending(r => r.DocumentId)
+            .Select(r => new FacilitatorReportCardHistoryItemDataModel
+            {
+                DocumentId = r.DocumentId,
+                Period = r.Period,
+                Description = r.Description,
+                UploadedOn = r.UploadedOn,
+                FileKind = r.FileKind,
+                Status = r.Status,
+                RejectionReason = r.RejectedReason != null
+                    ? r.RejectionNotes != null && r.RejectionNotes != string.Empty
+                        ? r.RejectedReason.Description + ": " + r.RejectionNotes
+                        : r.RejectedReason.Description
+                    : r.RejectionNotes,
+                TextContent = r.TextContent,
+                YouTubeVideoId = r.YouTubeVideoId,
+                PageCount = r.Pages.Count,
+            })
+            .ToListAsync();
+
+        return new FacilitatorReportCardsHistoryDataModel
+        {
+            StudentId = studentId,
+            StudentName = student.Name,
+            EducationLevel = student.EducationLevel,
+            Items = items,
+        };
+    }
+
+    private static async Task<string?> OwnedStudentNameAsync(
+        FonbecWebDbContext db, int facilitatorId, int studentId) =>
+        await db.Students
+            .AsNoTracking()
+            .Where(s => s.Id == studentId
+                        && s.FacilitatorId == facilitatorId
+                        && s.IsActive
+                        && !s.IsDeleted)
+            .Select(s => s.FirstName + " " + s.LastName)
+            .FirstOrDefaultAsync();
 }

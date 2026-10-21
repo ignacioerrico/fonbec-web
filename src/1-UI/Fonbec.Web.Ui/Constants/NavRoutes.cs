@@ -119,6 +119,36 @@ public static class NavRoutes
         return download ? $"{url}?descargar=true" : url;
     }
 
+    public const string FacilitatorLettersTemplate =
+        $"{FacilitatorStudents}/becarios/{{studentId:int}}/cartas";
+
+    public static string FacilitatorLetters(int studentId) =>
+        $"{FacilitatorStudents}/becarios/{studentId}/cartas";
+
+    public const string FacilitatorLetterPageTemplate =
+        $"{FacilitatorStudents}/becarios/{{studentId:int}}/cartas/documentos/{{documentId:long}}/paginas/{{pageNumber:int}}";
+
+    public static string FacilitatorLetterPage(int studentId, long documentId, int pageNumber, bool download = false)
+    {
+        var url = $"{FacilitatorLetters(studentId)}/documentos/{documentId}/paginas/{pageNumber}";
+        return download ? $"{url}?descargar=true" : url;
+    }
+
+    public const string FacilitatorReportCardsTemplate =
+        $"{FacilitatorStudents}/becarios/{{studentId:int}}/calificaciones";
+
+    public static string FacilitatorReportCards(int studentId) =>
+        $"{FacilitatorStudents}/becarios/{studentId}/calificaciones";
+
+    public const string FacilitatorReportCardPageTemplate =
+        $"{FacilitatorStudents}/becarios/{{studentId:int}}/calificaciones/documentos/{{documentId:long}}/paginas/{{pageNumber:int}}";
+
+    public static string FacilitatorReportCardPage(int studentId, long documentId, int pageNumber, bool download = false)
+    {
+        var url = $"{FacilitatorReportCards(studentId)}/documentos/{documentId}/paginas/{pageNumber}";
+        return download ? $"{url}?descargar=true" : url;
+    }
+
     public const string ManagerUploadDocumentTemplate =
         $"{Students}/{{studentId:int}}/subir";
 

@@ -270,6 +270,50 @@ app.MapGet(NavRoutes.FacilitatorOtherDocumentPageTemplate,
     })
     .RequireAuthorization();
 
+app.MapGet(NavRoutes.FacilitatorLetterPageTemplate,
+    async (int studentId, long documentId, int pageNumber, bool? descargar, ClaimsPrincipal user, IDocumentService documentService) =>
+    {
+        var userIdString = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdString, out var userId))
+        {
+            return Results.Unauthorized();
+        }
+
+        var blob = await documentService.DownloadFacilitatorLetterBlobAsync(
+            userId, studentId, documentId, pageNumber);
+        if (blob is null)
+        {
+            return Results.NotFound();
+        }
+
+        return descargar == true
+            ? Results.File(blob.Content, blob.MimeType, fileDownloadName: blob.FileName)
+            : Results.File(blob.Content, blob.MimeType);
+    })
+    .RequireAuthorization();
+
+app.MapGet(NavRoutes.FacilitatorReportCardPageTemplate,
+    async (int studentId, long documentId, int pageNumber, bool? descargar, ClaimsPrincipal user, IDocumentService documentService) =>
+    {
+        var userIdString = user.FindFirstValue(ClaimTypes.NameIdentifier);
+        if (!int.TryParse(userIdString, out var userId))
+        {
+            return Results.Unauthorized();
+        }
+
+        var blob = await documentService.DownloadFacilitatorReportCardBlobAsync(
+            userId, studentId, documentId, pageNumber);
+        if (blob is null)
+        {
+            return Results.NotFound();
+        }
+
+        return descargar == true
+            ? Results.File(blob.Content, blob.MimeType, fileDownloadName: blob.FileName)
+            : Results.File(blob.Content, blob.MimeType);
+    })
+    .RequireAuthorization();
+
 app.MapGet(NavRoutes.ImproveDocumentPageRouteTemplate,
     async (long documentId, int pageNumber, ClaimsPrincipal user, IDocumentService documentService) =>
     {

@@ -18,6 +18,10 @@ public interface IFacilitatorService
     Task<int> CountPendingLettersAsync(int facilitatorId);
 
     Task<OtherDocumentsHistoryViewModel?> GetOtherDocumentsHistoryAsync(int facilitatorId, int studentId);
+
+    Task<LettersHistoryViewModel?> GetLettersHistoryAsync(int facilitatorId, int studentId);
+
+    Task<ReportCardsHistoryViewModel?> GetReportCardsHistoryAsync(int facilitatorId, int studentId);
 }
 
 public class FacilitatorService(
@@ -131,6 +135,53 @@ public class FacilitatorService(
             StudentId = history.StudentId,
             StudentName = history.StudentName,
             Items = history.Items.Adapt<List<OtherDocumentHistoryItemViewModel>>(),
+        };
+
+        foreach (var item in result.Items)
+        {
+            item.RejectionReason = VisibleRejectionReason(item.Status, item.RejectionReason);
+        }
+
+        return result;
+    }
+
+    public async Task<LettersHistoryViewModel?> GetLettersHistoryAsync(int facilitatorId, int studentId)
+    {
+        var history = await facilitatorRepository.GetLettersHistoryAsync(facilitatorId, studentId);
+        if (history is null)
+        {
+            return null;
+        }
+
+        var result = new LettersHistoryViewModel
+        {
+            StudentId = history.StudentId,
+            StudentName = history.StudentName,
+            Items = history.Items.Adapt<List<LetterHistoryItemViewModel>>(),
+        };
+
+        foreach (var item in result.Items)
+        {
+            item.RejectionReason = VisibleRejectionReason(item.Status, item.RejectionReason);
+        }
+
+        return result;
+    }
+
+    public async Task<ReportCardsHistoryViewModel?> GetReportCardsHistoryAsync(int facilitatorId, int studentId)
+    {
+        var history = await facilitatorRepository.GetReportCardsHistoryAsync(facilitatorId, studentId);
+        if (history is null)
+        {
+            return null;
+        }
+
+        var result = new ReportCardsHistoryViewModel
+        {
+            StudentId = history.StudentId,
+            StudentName = history.StudentName,
+            EducationLevel = history.EducationLevel,
+            Items = history.Items.Adapt<List<ReportCardHistoryItemViewModel>>(),
         };
 
         foreach (var item in result.Items)

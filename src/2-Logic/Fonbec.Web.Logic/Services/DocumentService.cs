@@ -36,6 +36,20 @@ public interface IDocumentService
         int facilitatorId, int studentId, long documentId, int pageNumber);
 
     /// <summary>
+    /// Streams one page of a letter when the student belongs to <paramref name="facilitatorId"/>.
+    /// Returns <c>null</c> on any authorization failure (same as not found).
+    /// </summary>
+    Task<DownloadBlobResult?> DownloadFacilitatorLetterBlobAsync(
+        int facilitatorId, int studentId, long documentId, int pageNumber);
+
+    /// <summary>
+    /// Streams one page of a report card when the student belongs to <paramref name="facilitatorId"/>.
+    /// Returns <c>null</c> on any authorization failure (same as not found).
+    /// </summary>
+    Task<DownloadBlobResult?> DownloadFacilitatorReportCardBlobAsync(
+        int facilitatorId, int studentId, long documentId, int pageNumber);
+
+    /// <summary>
     /// Documents of a non-deleted student in the manager's chapter, including inactive students.
     /// Null when the student is missing, deleted, or in another chapter.
     /// </summary>
@@ -412,6 +426,34 @@ public class DocumentService(
         int facilitatorId, int studentId, long documentId, int pageNumber)
     {
         var context = await documentRepository.GetFacilitatorOtherDocumentBlobContextAsync(
+            facilitatorId, studentId, documentId);
+        if (context is null)
+        {
+            return null;
+        }
+
+        var page = context.Pages.FirstOrDefault(p => p.PageNumber == pageNumber);
+        return await DownloadBlobAsync(page?.Active, documentId);
+    }
+
+    public async Task<DownloadBlobResult?> DownloadFacilitatorLetterBlobAsync(
+        int facilitatorId, int studentId, long documentId, int pageNumber)
+    {
+        var context = await documentRepository.GetFacilitatorLetterBlobContextAsync(
+            facilitatorId, studentId, documentId);
+        if (context is null)
+        {
+            return null;
+        }
+
+        var page = context.Pages.FirstOrDefault(p => p.PageNumber == pageNumber);
+        return await DownloadBlobAsync(page?.Active, documentId);
+    }
+
+    public async Task<DownloadBlobResult?> DownloadFacilitatorReportCardBlobAsync(
+        int facilitatorId, int studentId, long documentId, int pageNumber)
+    {
+        var context = await documentRepository.GetFacilitatorReportCardBlobContextAsync(
             facilitatorId, studentId, documentId);
         if (context is null)
         {

@@ -4,8 +4,10 @@ using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models.Facilitators;
 using Fonbec.Web.Logic.Models.Students;
 using Fonbec.Web.Logic.Services;
+using Fonbec.Web.Ui.Components.NonPages.Dialogs;
 using Fonbec.Web.Ui.Constants;
 using Microsoft.AspNetCore.Components;
+using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.Pages.Facilitators;
 
@@ -21,6 +23,9 @@ public partial class FacilitatorStudentsList : AuthenticationRequiredComponentBa
 
     [Inject]
     public IFacilitatorService FacilitatorService { get; set; } = null!;
+
+    [Inject]
+    public IDialogService DialogService { get; set; } = null!;
 
     protected override async Task OnInitializedAsync()
     {
@@ -58,10 +63,21 @@ public partial class FacilitatorStudentsList : AuthenticationRequiredComponentBa
             ? "Subir libreta universitaria"
             : "Subir boletín";
 
-    private static string ReportCardEmptyLabel(FacilitatorStudentsListViewModel viewModel) =>
+    private static string ReportCardMissingTooltip(FacilitatorStudentsListViewModel viewModel) =>
         viewModel.EducationLevel == EducationLevel.University
-            ? "Sin libretas"
-            : "Sin boletines";
+            ? "Aún no hay libreta universitaria"
+            : "Aún no hay boletín";
+
+    private static List<SponsorLetterStatusViewModel> RejectedLetters(FacilitatorStudentsListViewModel viewModel) =>
+        viewModel.LetterStatuses.Where(letter => letter.Status == LetterSlotStatus.Rejected).ToList();
+
+    private static string RejectedLetterText(SponsorLetterStatusViewModel letter, bool showRecipient)
+    {
+        var reason = string.IsNullOrWhiteSpace(letter.RejectionReason)
+            ? "Rechazada"
+            : $"Rechazada: {letter.RejectionReason}";
+        return showRecipient ? $"{letter.RecipientName} — {reason}" : reason;
+    }
 
     private static string ReportChipStatusText(ReportCardChipViewModel report) =>
         report.Status == DocumentStatus.Rejected && !string.IsNullOrWhiteSpace(report.RejectionReason)
@@ -72,11 +88,30 @@ public partial class FacilitatorStudentsList : AuthenticationRequiredComponentBa
         NavRoutes.FacilitatorUploadLetter(
             viewModel.StudentId, _dashboard.CurrentPlanId!.Value, sponsor.SponsorId, sponsor.CompanyId);
 
-    // Detail "Carta" text for students with no letter slots to list (exempt or no active plan).
-    private static string LetterDetailText(FacilitatorStudentsListViewModel viewModel) =>
-        viewModel.LetterAggregate == LetterAggregateStatus.Exempt
-            ? string.IsNullOrWhiteSpace(viewModel.LetterExemptionReason)
-                ? "Eximido"
-                : $"Eximido: {viewModel.LetterExemptionReason}"
-            : "Sin campaña activa";
+    private bool ShowLetterUpload(FacilitatorStudentsListViewModel viewModel) =>
+        _dashboard.CurrentPlanId is not null
+        && !viewModel.IsLetterExemptForCurrentPlan
+        && viewModel.SponsorsNeedingLetter.Count > 0;
+
+    private static string LetterDetailsAriaLabel(FacilitatorStudentsListViewModel viewModel) =>
+        $"Ver detalle de la carta: {viewModel.LetterAggregate.Label()}";
+
+    private static string ReportCardHistoryLabel(FacilitatorStudentsListViewModel viewModel) =>
+        viewModel.EducationLevel == EducationLevel.University
+            ? "Ver historial de libretas universitarias"
+            : "Ver historial de boletines";
+
+    private async Task ShowLetterDetailsAsync(FacilitatorStudentsListViewModel student)
+    {
+        var parameters = new DialogParameters<CurrentLetterDetailsDialog>
+        {
+            { dialog => dialog.Student, student },
+        };
+
+        var title = _dashboard.CurrentPlanLabel is { } label
+            ? $"Carta de {label} — {StudentFullName(student)}"
+            : $"Carta — {StudentFullName(student)}";
+
+        await DialogService.ShowAsync<CurrentLetterDetailsDialog>(title, parameters);
+    }
 }
