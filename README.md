@@ -109,6 +109,22 @@ Assign a value to each field.
 - `NickName` is optional.
 - Not setting `Gender` will set the value `Unknown`.
 
+Do not change the admin user in config after the app has created it.  Startup
+only creates the user when `Username` is not already taken.  There is no
+separate email setting: `Username` is stored as both the username and the
+email.  A later edit is not applied to that account.
+
+- Same `Username`, new `Password`: the existing admin is left as-is.  The app
+still starts.  Sign-in with the new password fails; the original password still
+works.
+- New `Username`: startup creates a second admin with that username, the same
+value as email, the new password, and the Admin role.  The original admin
+remains and can still sign in with the old password.  Startup fails only when
+that second user cannot be created, because the password does not meet the
+Identity rules or the username or email is already taken.
+- A case-only change to `Username` is treated as the same user, so the password
+is left unchanged.
+
 ### Sending emails
 
 ASP.NET Core Identity relies on classes that send emails.  For that purpose,
