@@ -12,6 +12,8 @@ public partial class ImproveDocument : AuthenticationRequiredComponentBase
     private ImprovementWorkspaceViewModel? _workspace;
     private bool _expired;
     private int _focusedPageNumber = 1;
+    private long? _loadedDocumentId;
+    private int _loadVersion;
 
     [Parameter]
     public long DocumentId { get; set; }
@@ -25,9 +27,38 @@ public partial class ImproveDocument : AuthenticationRequiredComponentBase
     protected override async Task OnInitializedAsync()
     {
         await base.OnInitializedAsync();
+        await LoadWorkspaceAsync();
+    }
 
+    protected override async Task OnParametersSetAsync()
+    {
+        await base.OnParametersSetAsync();
+
+        if (_loadedDocumentId != DocumentId)
+        {
+            await LoadWorkspaceAsync();
+        }
+    }
+
+    private async Task LoadWorkspaceAsync()
+    {
+        var documentId = DocumentId;
+        var version = ++_loadVersion;
+        _loadedDocumentId = documentId;
         Loading = true;
-        _workspace = await DocumentService.GetImprovementWorkspaceAsync(DocumentId, FonbecClaim.UserId, UserRole);
+        _expired = false;
+        _focusedPageNumber = 1;
+        _workspace = null;
+        await InvokeAsync(StateHasChanged);
+
+        var workspace = await DocumentService.GetImprovementWorkspaceAsync(documentId, FonbecClaim.UserId, UserRole);
+
+        if (version != _loadVersion)
+        {
+            return;
+        }
+
+        _workspace = workspace;
         Loading = false;
 
         if (_workspace is null)
@@ -48,10 +79,32 @@ public partial class ImproveDocument : AuthenticationRequiredComponentBase
         NavigationManager.NavigateTo(NavRoutes.ImprovementQueue);
     }
 
-    private Task OnImprovementCompleted()
+    private async Task OnImprovementCompleted()
     {
+        var progress = await DocumentService.GetGlobalReviewProgressAsync(FonbecClaim.UserId, UserRole, null);
+
+        if (progress.PendingImprovement > 0)
+        {
+            var continueImproving = await DialogService.ShowMessageBox(
+                "Mejora completada",
+                "¿Querés mejorar la siguiente imagen de la cola?",
+                yesText: "Mejorar siguiente",
+                cancelText: "Volver a la cola");
+
+            if (continueImproving == true)
+            {
+                var next = await DocumentService.TakeNextForDigitalImprovementAsync(FonbecClaim.UserId, UserRole);
+                if (next is not null)
+                {
+                    NavigationManager.NavigateTo(NavRoutes.ImproveDocument(next.DocumentId));
+                    return;
+                }
+
+                Snackbar.Add("No hay imágenes pendientes de mejora.", Severity.Info);
+            }
+        }
+
         NavigationManager.NavigateTo(NavRoutes.ImprovementQueue);
-        return Task.CompletedTask;
     }
 
     private async Task OnCountdownExpired()

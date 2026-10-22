@@ -16,8 +16,6 @@ public class ReportCardReviewDecisionTests
         decision.SilentRejectReasonId.Should().BeNull();
         decision.BlockingErrors.Should().BeEmpty();
         decision.CompletionPercent.Should().Be(100);
-
-        // TODO [silent-reject-notice]: delete this assertion.
         decision.SilentRejectNotice.Should().BeNull();
     }
 
@@ -31,8 +29,6 @@ public class ReportCardReviewDecisionTests
         decision.CanApprove.Should().BeTrue();
         decision.SilentRejectReasonId.Should().Be(RejectedReasonIds.WrongStudentName);
         decision.BlockingErrors.Should().BeEmpty();
-
-        // TODO [silent-reject-notice]: delete this assertion.
         decision.SilentRejectNotice.Should().Be("Juan Pérez no es el becario correcto");
     }
 
@@ -44,8 +40,6 @@ public class ReportCardReviewDecisionTests
         decision.CanApprove.Should().BeTrue();
         decision.SilentRejectReasonId.Should().Be(RejectedReasonIds.WrongStudentName);
         decision.BlockingErrors.Should().BeEmpty();
-
-        // TODO [silent-reject-notice]: delete this assertion.
         decision.SilentRejectNotice.Should().BeNull();
     }
 

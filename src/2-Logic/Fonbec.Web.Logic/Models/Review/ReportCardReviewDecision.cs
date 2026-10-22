@@ -16,13 +16,9 @@ public sealed class ReportCardReviewDecision
     public int? SilentRejectReasonId { get; private init; }
 
     /// <summary>
-    /// Describes the mismatch behind <see cref="SilentRejectReasonId"/> so the behaviour can be
-    /// verified while testing.
+    /// Shown under the student list when the selected name is not the becario.
+    /// The review page renders it only when <c>Review:ShowNameMismatchHints</c> is enabled.
     /// </summary>
-    // TODO [silent-reject-notice]: remove. Reviewers must not learn whether they picked the right
-    // name — that is the whole point of the challenge. Grep for "silent-reject-notice" to find every
-    // piece to delete: this property, its assignment in Evaluate below, the alert in
-    // ReportCardReviewPanel.razor, and the assertion in ReportCardReviewDecisionTests.
     public string? SilentRejectNotice { get; private init; }
 
     public IReadOnlyList<string> BlockingErrors { get; private init; } = [];
@@ -68,7 +64,6 @@ public sealed class ReportCardReviewDecision
             ? RejectedReasonIds.WrongStudentName
             : (int?)null;
 
-        // TODO [silent-reject-notice]: delete this assignment.
         var silentRejectNotice = silentRejectReasonId is RejectedReasonIds.WrongStudentName
                                  && student == CandidateNameSelection.Wrong
                                  && !string.IsNullOrWhiteSpace(selectedStudentName)
@@ -79,7 +74,7 @@ public sealed class ReportCardReviewDecision
         {
             CanApprove = errors.Count == 0,
             SilentRejectReasonId = silentRejectReasonId,
-            SilentRejectNotice = silentRejectNotice, // TODO [silent-reject-notice]: delete this line.
+            SilentRejectNotice = silentRejectNotice,
             BlockingErrors = errors,
             CompletedSteps = completedSteps,
             TotalSteps = totalSteps,

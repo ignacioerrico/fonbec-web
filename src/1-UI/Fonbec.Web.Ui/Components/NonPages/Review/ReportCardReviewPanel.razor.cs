@@ -81,6 +81,11 @@ public partial class ReportCardReviewPanel
     [Inject]
     public ILogger<ReportCardReviewPanel> Logger { get; set; } = null!;
 
+    private bool ShowNameMismatchHints => ReviewOptions.Value.ShowNameMismatchHints;
+
+    private string? StudentHint =>
+        ShowNameMismatchHints ? Decision.SilentRejectNotice : null;
+
     private ReportCardReviewDecision Decision => ReportCardReviewDecision.Evaluate(
         _studentSelection,
         _overallAssessment,
@@ -88,6 +93,8 @@ public partial class ReportCardReviewPanel
         _selectedStudentName);
 
     private bool ActionsDisabled => Disabled || _saving;
+
+    private void ClearAbsences() => _absences = null;
 
     private bool ApproveDisabled => ActionsDisabled || _loading || !Decision.CanApprove;
 

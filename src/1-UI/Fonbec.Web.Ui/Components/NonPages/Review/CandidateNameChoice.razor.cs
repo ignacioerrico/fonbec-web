@@ -37,6 +37,13 @@ public partial class CandidateNameChoice
     [Parameter]
     public bool Disabled { get; set; }
 
+    /// <summary>
+    /// Optional warning shown directly under the name list, for example when the selected person
+    /// does not match our records. Empty hides it.
+    /// </summary>
+    [Parameter]
+    public string? Hint { get; set; }
+
     private CandidateNameKey? _selectedKey;
     private bool _hasUserSelected;
 

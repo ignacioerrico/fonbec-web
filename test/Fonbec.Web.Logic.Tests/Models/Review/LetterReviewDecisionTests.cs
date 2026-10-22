@@ -55,9 +55,8 @@ public class LetterReviewDecisionTests
         decision.AutoRejectReasonId.Should().BeNull();
         decision.SilentRejectReasonId.Should().Be(RejectedReasonIds.WrongAddressee);
         decision.ConfirmedAddressee.Should().BeFalse();
-
-        // TODO [silent-reject-notice]: delete this assertion.
-        decision.SilentRejectNotice.Should().Be("Juan Pérez no es el destinatario correcto");
+        decision.WrongAddresseeNotice.Should().Be("Juan Pérez no es el destinatario correcto");
+        decision.WrongSignerNotice.Should().BeNull();
     }
 
     [Fact]
@@ -70,13 +69,17 @@ public class LetterReviewDecisionTests
     }
 
     [Fact]
-    public void WrongAddresseeAndWrongSigner_RejectsOnTheAddressee()
+    public void WrongAddresseeAndWrongSigner_RejectsOnTheAddresseeAndHintsBoth()
     {
         var decision = Evaluate(
             addressee: CandidateNameSelection.Wrong,
-            signer: CandidateNameSelection.Wrong);
+            signer: CandidateNameSelection.Wrong,
+            selectedAddresseeName: "Juan Pérez",
+            selectedSignerName: "María López");
 
         decision.SilentRejectReasonId.Should().Be(RejectedReasonIds.WrongAddressee);
+        decision.WrongAddresseeNotice.Should().Be("Juan Pérez no es el destinatario correcto");
+        decision.WrongSignerNotice.Should().Be("María López no es el firmante correcto");
     }
 
     [Fact]
@@ -85,9 +88,8 @@ public class LetterReviewDecisionTests
         var decision = Evaluate();
 
         decision.SilentRejectReasonId.Should().BeNull();
-
-        // TODO [silent-reject-notice]: delete this assertion.
-        decision.SilentRejectNotice.Should().BeNull();
+        decision.WrongAddresseeNotice.Should().BeNull();
+        decision.WrongSignerNotice.Should().BeNull();
     }
 
     [Fact]
@@ -109,9 +111,8 @@ public class LetterReviewDecisionTests
         decision.AutoRejectReasonId.Should().BeNull();
         decision.SilentRejectReasonId.Should().Be(RejectedReasonIds.WrongSigner);
         decision.ConfirmedSignerMatchesStudent.Should().BeFalse();
-
-        // TODO [silent-reject-notice]: delete this assertion.
-        decision.SilentRejectNotice.Should().Be("María López no es el firmante correcto");
+        decision.WrongAddresseeNotice.Should().BeNull();
+        decision.WrongSignerNotice.Should().Be("María López no es el firmante correcto");
     }
 
     [Fact]

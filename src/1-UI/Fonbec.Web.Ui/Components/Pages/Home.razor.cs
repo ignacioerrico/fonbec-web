@@ -18,6 +18,9 @@ public partial class Home : AuthenticationRequiredComponentBase
     public IUserService UserService { get; set; } = null!;
 
     [Inject]
+    public IDocumentService DocumentService { get; set; } = null!;
+
+    [Inject]
     public IChapterHomeService ChapterHomeService { get; set; } = null!;
 
     private static string Unmatched(int count, string one, string many) =>
@@ -44,7 +47,15 @@ public partial class Home : AuthenticationRequiredComponentBase
             return;
         }
 
-        var destination = LandingRoutes.For(UserRole, CanImproveImages());
+        var canImproveImages = CanImproveImages();
+        var hasImagesToImprove = false;
+        if (canImproveImages)
+        {
+            var progress = await DocumentService.GetGlobalReviewProgressAsync(FonbecClaim.UserId, UserRole, null);
+            hasImagesToImprove = progress.PendingImprovement + progress.ProcessingImprovement > 0;
+        }
+
+        var destination = LandingRoutes.For(UserRole, canImproveImages, hasImagesToImprove);
         if (destination is not null)
         {
             NavigationManager.NavigateTo(destination, replace: true);

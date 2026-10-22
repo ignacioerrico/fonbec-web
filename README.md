@@ -268,6 +268,12 @@ dotnet user-secrets set "Authentication:Facebook:AppSecret" "{APP_SECRET}" --pro
 If those values are missing, the app starts normally and the login page does
 not show a Facebook button.
 
+### Review name hints
+
+`Review:ShowNameMismatchHints` in `appsettings.json` shows a hint under a name
+list when the reviewer picks the wrong person. Leave it `false` so the review
+does not reveal the correct name.
+
 ### About page
 
 The about page lists people from `src/1-UI/Fonbec.Web.Ui/Content/people.csv`.
