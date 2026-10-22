@@ -80,8 +80,8 @@ public class ChapterServiceTests
             Staff =
             [
                 Member(1, 20, FonbecRole.Uploader, "Nico", "Bazan", "   ", hasLinkedStudents: true),
-                Member(1, 11, FonbecRole.Manager, "Ana", "Zapata", "111"),
-                Member(1, 10, FonbecRole.Manager, "Luis", "Alvarez", null),
+                Member(1, 11, FonbecRole.Manager, "Ana", "Zapata", "111", nickName: "   "),
+                Member(1, 10, FonbecRole.Manager, "Luis", "Alvarez", null, nickName: "Lucho"),
                 Member(1, 40, FonbecRole.Reviewer, "Eva", "Ruiz", "555"),
                 Member(1, 99, FonbecRole.Admin, "No", "Mostrar", null),
                 Member(2, 16, FonbecRole.Manager, "Sur", "Jefe", "777"),
@@ -104,7 +104,9 @@ public class ChapterServiceTests
         north.Managers[0].CanImproveImages.Should().BeTrue();
         north.Managers[1].CanImproveImages.Should().BeFalse();
         north.Managers[0].PhoneNumber.Should().BeNull();
+        north.Managers[0].NickName.Should().Be("Lucho");
         north.Managers[1].PhoneNumber.Should().Be("111");
+        north.Managers[1].NickName.Should().BeNull();
         north.Facilitators.Should().ContainSingle();
         north.Facilitators[0].UserId.Should().Be(20);
         north.Facilitators[0].PhoneNumber.Should().BeNull();
@@ -130,7 +132,8 @@ public class ChapterServiceTests
         string firstName,
         string lastName,
         string? phone,
-        bool hasLinkedStudents = false) =>
+        bool hasLinkedStudents = false,
+        string? nickName = null) =>
         new()
         {
             ChapterId = chapterId,
@@ -138,6 +141,7 @@ public class ChapterServiceTests
             Role = role,
             FirstName = firstName,
             LastName = lastName,
+            NickName = nickName,
             Email = $"{firstName}@fonbec.org",
             PhoneNumber = phone,
             IsActive = true,

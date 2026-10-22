@@ -45,7 +45,7 @@ public class ChapterRepositoryDirectoryTests
                 new Chapter { Id = inactiveChapterId, Name = "Cerrada", CreatedById = managerId });
 
             db.Users.AddRange(
-                User(managerId, activeChapterId, "Ana", "Zapata", "ana@fonbec.org", "111"),
+                User(managerId, activeChapterId, "Ana", "Zapata", "ana@fonbec.org", "111", nickName: "Anita"),
                 User(inactiveManagerId, activeChapterId, "Inactivo", "Perez", "off@fonbec.org", "222", lockedOut: true),
                 User(facilitatorWithStudentId, activeChapterId, "Mara", "Diaz", "mara@fonbec.org", null),
                 User(facilitatorWithoutStudentsId, activeChapterId, "Nico", "Bazan", "nico@fonbec.org", "444"),
@@ -155,11 +155,13 @@ public class ChapterRepositoryDirectoryTests
         activeManager.LastName.Should().Be("Zapata");
         activeManager.Email.Should().Be("ana@fonbec.org");
         activeManager.PhoneNumber.Should().Be("111");
+        activeManager.NickName.Should().Be("Anita");
         activeManager.IsActive.Should().BeTrue();
         activeManager.CanBeLockedOut.Should().BeTrue();
         activeManager.HasLinkedStudents.Should().BeFalse();
 
         var inactiveManager = north.Single(member => member.UserId == inactiveManagerId);
+        inactiveManager.NickName.Should().BeNull();
         inactiveManager.IsActive.Should().BeFalse();
         inactiveManager.CanBeLockedOut.Should().BeTrue();
 
@@ -192,7 +194,8 @@ public class ChapterRepositoryDirectoryTests
         string lastName,
         string email,
         string? phone,
-        bool lockedOut = false) =>
+        bool lockedOut = false,
+        string? nickName = null) =>
         new()
         {
             Id = id,
@@ -200,6 +203,7 @@ public class ChapterRepositoryDirectoryTests
             Email = email,
             FirstName = firstName,
             LastName = lastName,
+            NickName = nickName,
             PhoneNumber = phone,
             ChapterId = chapterId,
             LockoutEnabled = true,

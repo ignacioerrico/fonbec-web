@@ -90,6 +90,7 @@ public class ChapterService(IChapterRepository chapterRepository, IUserRepositor
                 UserId = member.UserId,
                 FirstName = member.FirstName,
                 LastName = member.LastName,
+                NickName = string.IsNullOrWhiteSpace(member.NickName) ? null : member.NickName,
                 Email = member.Email,
                 PhoneNumber = string.IsNullOrWhiteSpace(member.PhoneNumber) ? null : member.PhoneNumber,
                 IsActive = member.IsActive,

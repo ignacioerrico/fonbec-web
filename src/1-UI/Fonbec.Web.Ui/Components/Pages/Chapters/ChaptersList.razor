@@ -98,7 +98,10 @@
 												<div>
 													<MudStack Row="true" AlignItems="AlignItems.Center" Spacing="1">
 														<MudText Typo="Typo.body2">
-															<strong>@person.FirstName @person.LastName</strong>
+															<strong>@person.FirstName @person.LastName</strong>@if (!string.IsNullOrWhiteSpace(person.NickName))
+															{
+																<span> (@person.NickName)</span>
+															}
 														</MudText>
 														@if (person.CanImproveImages)
 														{

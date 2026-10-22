@@ -74,6 +74,7 @@ public class ChapterRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
                 UserId = user.Id,
                 FirstName = user.FirstName,
                 LastName = user.LastName,
+                NickName = user.NickName,
                 Email = user.Email ?? string.Empty,
                 PhoneNumber = user.PhoneNumber,
                 Role = role.Name!,
