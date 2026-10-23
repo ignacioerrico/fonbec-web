@@ -19,7 +19,7 @@ steps:
     displayName: 'Install .NET SDK 10.x'
     inputs:
       packageType: 'sdk'
-      version: '10.0.102'
+      useGlobalJson: true
       performMultiLevelLookup: true
 
   - script: |
@@ -27,19 +27,32 @@ steps:
       dotnet --list-sdks
     displayName: 'Verify SDK'
 
-  - script: dotnet restore
+  - script: dotnet restore Fonbec.Web.sln
     displayName: 'Restore NuGet packages'
 
-  - script: dotnet build --configuration $(buildConfiguration) --no-restore
+  - script: dotnet build Fonbec.Web.sln --configuration $(buildConfiguration) --no-restore
     displayName: 'Build project'
 
-  - script: dotnet test --configuration $(buildConfiguration) --no-build --verbosity normal
+  - script: >
+      dotnet test
+      --solution Fonbec.Web.sln
+      --configuration $(buildConfiguration)
+      --no-build
+      --report-trx
+      --collect:"XPlat Code Coverage"
     displayName: 'Run unit tests'
 
   # Publish test results to Azure DevOps
   - task: PublishTestResults@2
     condition: succeededOrFailed()
     inputs:
-      testResultsFormat: 'JUnit'
-      testResultsFiles: '**/TestResults/*.xml'
+      testResultsFormat: 'VSTest'
+      testResultsFiles: '**/*.trx'
       failTaskOnFailedTests: true
+
+  # Publish coverage to Azure DevOps
+  - task: PublishCodeCoverageResults@2
+    inputs:
+      codeCoverageTool: 'Cobertura'
+      summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.cobertura.xml'
+      failIfCoverageEmpty: true
