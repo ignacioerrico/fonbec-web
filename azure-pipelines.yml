@@ -39,7 +39,8 @@ steps:
       --configuration $(buildConfiguration)
       --no-build
       --report-trx
-      --collect:"XPlat Code Coverage"
+      --coverlet
+      --coverlet-output-format cobertura
     displayName: 'Run unit tests'
 
   # Publish test results to Azure DevOps
@@ -50,9 +51,26 @@ steps:
       testResultsFiles: '**/*.trx'
       failTaskOnFailedTests: true
 
+  - script: |
+      dotnet tool install --global dotnet-reportgenerator-globaltool
+    displayName: 'Install ReportGenerator'
+
+  - script: |
+      export PATH="$PATH:$HOME/.dotnet/tools"
+      reportgenerator -version
+    displayName: 'Verify ReportGenerator'
+
+  - script: |
+      export PATH="$PATH:$HOME/.dotnet/tools"
+      reportgenerator \
+        -reports:"$(System.DefaultWorkingDirectory)/**/coverage.cobertura.*.xml" \
+        -targetdir:"$(System.DefaultWorkingDirectory)/CoverageReport" \
+        -reporttypes:Cobertura
+    displayName: 'Merge coverage reports'
+
   # Publish coverage to Azure DevOps
   - task: PublishCodeCoverageResults@2
     inputs:
       codeCoverageTool: 'Cobertura'
-      summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.cobertura.xml'
+      summaryFileLocation: '$(System.DefaultWorkingDirectory)/CoverageReport/Cobertura.xml'
       failIfCoverageEmpty: true
