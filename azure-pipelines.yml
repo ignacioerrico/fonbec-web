@@ -57,11 +57,6 @@ steps:
 
   - script: |
       export PATH="$PATH:$HOME/.dotnet/tools"
-      reportgenerator -version
-    displayName: 'Verify ReportGenerator'
-
-  - script: |
-      export PATH="$PATH:$HOME/.dotnet/tools"
       reportgenerator \
         -reports:"$(System.DefaultWorkingDirectory)/**/coverage.cobertura.*.xml" \
         -targetdir:"$(System.DefaultWorkingDirectory)/CoverageReport" \
