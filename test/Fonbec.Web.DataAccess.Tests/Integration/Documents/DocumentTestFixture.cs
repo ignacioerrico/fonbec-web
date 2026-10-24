@@ -18,13 +18,15 @@ using Microsoft.EntityFrameworkCore;
 using Microsoft.EntityFrameworkCore.Diagnostics;
 using Microsoft.Extensions.Configuration;
 using Microsoft.Extensions.Logging.Abstractions;
-using Microsoft.Extensions.Options;
 using NSubstitute;
 
 namespace Fonbec.Web.DataAccess.Tests.Integration.Documents;
 
 internal sealed class DocumentTestFixture
 {
+    private static readonly Lock _mappingLock = new();
+    private static bool _mappingsInitialized;
+
     private readonly string _databaseName = Guid.NewGuid().ToString();
 
     public int ChapterId { get; private set; }
@@ -102,7 +104,7 @@ internal sealed class DocumentTestFixture
 
         var blobOptions = Microsoft.Extensions.Options.Options.Create(new BlobStorageOptions());
 
-        TypeAdapterConfig.GlobalSettings.Scan(typeof(DocumentService).Assembly);
+        EnsureMappingsInitialized();
 
         PlannedDeliveryRepository = new PlannedDeliveryRepository(Factory, TimeProvider.System);
         var planCompletionService = new PlanCompletionService(
@@ -118,6 +120,22 @@ internal sealed class DocumentTestFixture
             blobOptions,
             Substitute.For<IRecipientMessageNotificationService>(),
             NullLogger<DocumentService>.Instance);
+    }
+
+    private static void EnsureMappingsInitialized()
+    {
+        if (_mappingsInitialized)
+            return;
+
+        lock (_mappingLock)
+        {
+            if (_mappingsInitialized)
+                return;
+
+            TypeAdapterConfig.GlobalSettings.Scan(typeof(DocumentService).Assembly);
+
+            _mappingsInitialized = true;
+        }
     }
 
     private IUserRepository CreateUserRepositorySubstitute(bool grantDigitalImprovement)
