@@ -81,8 +81,9 @@ if (facebookSignInConfigured)
         "Facebook",
         facebookOptions =>
         {
-            facebookOptions.AppId = facebookAppId;
-            facebookOptions.AppSecret = facebookAppSecret;
+            // Safe: facebookSignInConfigured guarantees both values are non-null.
+            facebookOptions.AppId = facebookAppId!;
+            facebookOptions.AppSecret = facebookAppSecret!;
             // CallbackPath defaults to /signin-facebook. FacebookOptions already requests
             // the email scope and the email field. Cancellation is handled here so the
             // login page can show a Spanish message; AccessDeniedPath would skip that.
