@@ -1,0 +1,45 @@
+@using Fonbec.Web.Ui.Components.Layout
+
+@attribute [Route(NavRoutes.DataDeletion)]
+@attribute [AllowAnonymous]
+@layout PublicLayout
+
+<PageTitle>Eliminación de datos</PageTitle>
+
+<InfoPageHeader Title="Eliminación de datos" Current="InfoPageHeader.InfoPage.DataDeletion" />
+
+<MudText Typo="Typo.body1" Class="mb-4">
+    Si iniciaste sesión con Facebook, FONBEC Web guarda el identificador de ese usuario únicamente para vincularlo con tu cuenta.
+    No guardamos una copia de tu perfil de Facebook.
+</MudText>
+
+<MudText Typo="Typo.h6" Class="mb-2">¿Cómo desvinculo Facebook de FONBEC Web?</MudText>
+<ol class="public-steps mud-typography-body1 mb-4">
+    <li><span><MudLink Href="Account/Login">Iniciá sesión</MudLink>.</span></li>
+    <li><span>Andá a <MudLink Href="Account/Manage">Configuración</MudLink>.</span></li>
+    <li><span>Abrí <MudLink Href="Account/Manage/ExternalLogins">Inicios de sesión externos</MudLink>.</span></li>
+    <li><span>En Facebook, elegí Quitar.</span></li>
+</ol>
+<MudText Typo="Typo.body1" Class="mb-4">
+    Eso elimina el vinculo con Facebook. Tu cuenta de FONBEC Web sigue activa.
+</MudText>
+
+<MudText Typo="Typo.h6" Class="mb-2">¿Cómo elimino mi cuenta de FONBEC Web?</MudText>
+<ol class="public-steps mud-typography-body1 mb-4">
+    <li><span><MudLink Href="Account/Login">Iniciá sesión</MudLink>.</span></li>
+    <li><span>Andá a <MudLink Href="Account/Manage">Configuración</MudLink>.</span></li>
+    <li><span>Abrí <MudLink Href="Account/Manage/PersonalData">Datos personales</MudLink>.</span></li>
+    <li><span>Elegí <MudLink Href="Account/Manage/DeletePersonalData">Eliminar</MudLink>.</span></li>
+    <li><span>Confirmá tu contraseña.</span></li>
+</ol>
+<MudText Typo="Typo.body1" Class="mb-4">
+    Eso elimina tanto tu cuenta de FONBEC Web como el identificador de Facebook guardado para el inicio de sesión, si es que lo seteaste.
+    Esta acción no se puede deshacer.
+</MudText>
+<MudText Typo="Typo.body1" Class="mb-4">
+    Si la cuenta está asociada a registros de la filial, la eliminación puede fallar. En ese caso, un coordinador tiene que resolverlo.
+    (Por ejemplo, si sos un mediador y tenés asignados becarios, primero un coordinador tiene que desasignarte los becarios.)
+</MudText>
+<MudText Typo="Typo.body1">
+    Esa pantalla no borra legajos de becarios, padrinos ni documentos de la filial.
+</MudText>

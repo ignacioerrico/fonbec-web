@@ -32,6 +32,18 @@ public partial class SponsorCreate : AuthenticationRequiredComponentBase
     [Inject]
     public ISponsorService SponsorService { get; set; } = null!;
 
+    protected override async Task OnInitializedAsync()
+    {
+        await base.OnInitializedAsync();
+
+        // Managers have a fixed chapter — pre-set it so the form isn't disabled
+        if (FonbecClaim.ChapterId.HasValue)
+        {
+            _anyChapters = true;
+            _bindModel.ChapterId = FonbecClaim.ChapterId.Value;
+        }
+    }
+
     private async Task OnChaptersLoaded(int chaptersCount) =>
         _anyChapters = chaptersCount > 0;
 

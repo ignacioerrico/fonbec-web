@@ -10,6 +10,11 @@
     </MudStack>
 </MudRadioGroup>
 
+@if (!string.IsNullOrWhiteSpace(Hint))
+{
+    <MudAlert Severity="Severity.Warning" Dense="true" Class="mt-2 mb-2">@Hint</MudAlert>
+}
+
 <MudStack Row="true" Spacing="2" Class="mb-2 flex-wrap">
     <MudButton Variant="Variant.Outlined"
                Color="Color.Error"

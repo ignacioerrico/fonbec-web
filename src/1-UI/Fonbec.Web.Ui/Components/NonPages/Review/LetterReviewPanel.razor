@@ -75,7 +75,8 @@
                                      SelectionChanged="OnAddresseeSelectionChanged"
                                      OnNoneOfTheAbove="RejectWrongAddresseeAsync"
                                      OnNotIndicated="RejectMissingAddresseeAsync"
-                                     Disabled="ActionsDisabled" />
+                                     Disabled="ActionsDisabled"
+                                     Hint="@AddresseeHint" />
             }
 
             @if (_signerChoices is not null)
@@ -87,7 +88,8 @@
                                      SelectionChanged="OnSignerSelectionChanged"
                                      OnNoneOfTheAbove="RejectWrongSignerAsync"
                                      OnNotIndicated="RejectMissingAuthorAsync"
-                                     Disabled="ActionsDisabled" />
+                                     Disabled="ActionsDisabled"
+                                     Hint="@SignerHint" />
             }
 
             <MudDivider />
@@ -167,14 +169,6 @@
                                   Class="mt-2" />
                 }
             </div>
-
-            @* TODO [silent-reject-notice]: delete this whole block. It reveals whether the reviewer
-               picked the right name, which defeats the challenge; it is only here so the silent
-               rejection can be verified while testing. *@
-            @if (_decision.SilentRejectNotice is { } silentRejectNotice)
-            {
-                <MudAlert Severity="Severity.Warning" Dense="true">@silentRejectNotice</MudAlert>
-            }
 
             @if (_decision.AutoRejectReasonId is { } autoReasonId)
             {

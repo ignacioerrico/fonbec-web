@@ -68,18 +68,11 @@
                                      SelectionChanged="OnStudentSelectionChanged"
                                      OnNoneOfTheAbove="RejectWrongStudentNameAsync"
                                      OnNotIndicated="RejectMissingStudentNameAsync"
-                                     Disabled="ActionsDisabled" />
+                                     Disabled="ActionsDisabled"
+                                     Hint="@StudentHint" />
             }
 
             <MudDivider />
-
-            @* TODO [silent-reject-notice]: delete this whole block. It reveals whether the reviewer
-               picked the right name, which defeats the challenge; it is only here so the silent
-               rejection can be verified while testing. *@
-            @if (decision.SilentRejectNotice is { } silentRejectNotice)
-            {
-                <MudAlert Severity="Severity.Warning" Dense="true">@silentRejectNotice</MudAlert>
-            }
 
             <div>
                 <MudText Typo="Typo.subtitle2" Class="mb-1">Evaluación general</MudText>
@@ -100,15 +93,29 @@
 
             @if (EducationLevel != EducationLevel.University)
             {
-                <MudNumericField T="int?"
-                                 @bind-Value="_absences"
-                                 Label="Inasistencias"
-                                 HelperText="Opcional. Días de clase perdidos, si figuran en el boletín."
-                                 Min="0"
-                                 Immediate="true"
-                                 Variant="Variant.Outlined"
-                                 Disabled="ActionsDisabled"
-                                 Style="max-width: 18rem;" />
+                <MudStack Spacing="1">
+                    <MudStack Row="true" Spacing="2" AlignItems="AlignItems.Center">
+                        <MudNumericField T="int?"
+                                         @bind-Value="_absences"
+                                         Label="Inasistencias"
+                                         Min="0"
+                                         Immediate="true"
+                                         Variant="Variant.Outlined"
+                                         Disabled="ActionsDisabled"
+                                         Class="flex-grow-0"
+                                         Style="width: 11rem;" />
+                        <MudButton Variant="Variant.Outlined"
+                                   Color="Color.Default"
+                                   Class="flex-grow-0"
+                                   Disabled="@(ActionsDisabled || _absences is null)"
+                                   OnClick="ClearAbsences">
+                            Limpiar
+                        </MudButton>
+                    </MudStack>
+                    <MudText Typo="Typo.caption" Class="mud-text-secondary">
+                        Opcional. Días de clase perdidos, si figuran en el boletín.
+                    </MudText>
+                </MudStack>
             }
 
             @if (_showManualRejectReason)

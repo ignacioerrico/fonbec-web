@@ -1,7 +1,7 @@
 <MudPaper Class="pa-4 mb-4" Outlined="true">
     <MudText Typo="Typo.h6" Class="mb-2">Versión mejorada</MudText>
     <MudText Typo="Typo.body2" Class="mud-text-secondary mb-4">
-        Por cada página, presioná «Usar original» si la imagen ya se ve bien, o subí una versión mejorada como JPG.
+        Por cada página, presioná «Usar original» si la imagen ya se ve bien, editala acá, o subí una versión mejorada como JPG.
     </MudText>
 
     <MudStack Spacing="3">
@@ -9,21 +9,31 @@
         {
             var pageIndex = i;
             var pageNumber = i + 1;
-            var file = _files[pageIndex];
+            var page = _pages[pageIndex];
             <MudPaper Class="pa-3" Outlined="true" Style="cursor: pointer;"
                       @onclick="@(() => FocusPageAsync(pageNumber))">
                 <MudStack Row="true" AlignItems="AlignItems.Center" Class="flex-wrap" Spacing="2">
                     <MudText Typo="Typo.subtitle2">Pág. @pageNumber</MudText>
                     <MudSpacer />
-                    @if (file is not null)
+                    @if (page is not null)
                     {
-                        <MudText Typo="Typo.body2">@file.Name (@FormatBytes(file.Size))</MudText>
+                        <MudText Typo="Typo.body2">@(page.Name) (@FormatBytes(page.Size))</MudText>
                         <div @onclick:stopPropagation="true">
                             <MudButton Variant="Variant.Text"
                                        Size="Size.Small"
                                        Disabled="ActionsDisabled"
-                                       OnClick="@(() => ClearPage(pageIndex))">
+                                       OnClick="@(() => ClearPageAsync(pageIndex))">
                                 Usar original
+                            </MudButton>
+                        </div>
+                        <div @onclick:stopPropagation="true">
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Primary"
+                                       Size="Size.Small"
+                                       StartIcon="@Icons.Material.Filled.Edit"
+                                       Disabled="ActionsDisabled"
+                                       OnClick="@(() => EditPageAsync(pageIndex))">
+                                Editar
                             </MudButton>
                         </div>
                     }
@@ -32,6 +42,16 @@
                         <MudChip T="string" Size="Size.Small" Color="Color.Info" Variant="Variant.Filled">
                             Usar original
                         </MudChip>
+                        <div @onclick:stopPropagation="true">
+                            <MudButton Variant="Variant.Outlined"
+                                       Color="Color.Primary"
+                                       Size="Size.Small"
+                                       StartIcon="@Icons.Material.Filled.Edit"
+                                       Disabled="ActionsDisabled"
+                                       OnClick="@(() => EditPageAsync(pageIndex))">
+                                Editar
+                            </MudButton>
+                        </div>
                         <div @onclick:stopPropagation="true">
                             <MudFileUpload T="IBrowserFile"
                                            Accept=".jpg,.jpeg"

@@ -120,6 +120,20 @@ public interface IDocumentRepository
         int facilitatorId, int studentId, long documentId);
 
     /// <summary>
+    /// Blob context for a letter only when it belongs to an active student of
+    /// <paramref name="facilitatorId"/>. Null on any authorization failure.
+    /// </summary>
+    Task<DocumentBlobContextDataModel?> GetFacilitatorLetterBlobContextAsync(
+        int facilitatorId, int studentId, long documentId);
+
+    /// <summary>
+    /// Blob context for a report card only when it belongs to an active student of
+    /// <paramref name="facilitatorId"/>. Null on any authorization failure.
+    /// </summary>
+    Task<DocumentBlobContextDataModel?> GetFacilitatorReportCardBlobContextAsync(
+        int facilitatorId, int studentId, long documentId);
+
+    /// <summary>
     /// Every document for a student in <paramref name="chapterId"/> who is not deleted,
     /// newest first. Includes inactive students. Null when the student is missing, deleted,
     /// or in another chapter.
@@ -1948,6 +1962,36 @@ public class DocumentRepository(
         await using var db = await dbContext.CreateDbContextAsync();
 
         var isOwned = await db.Set<OtherDocument>()
+            .AsNoTracking()
+            .AnyAsync(d => d.DocumentId == documentId
+                           && d.StudentId == studentId
+                           && d.Student.FacilitatorId == facilitatorId
+                           && d.Student.IsActive
+                           && !d.Student.IsDeleted);
+
+        if (!isOwned)
+        {
+            return null;
+        }
+
+        return await GetDocumentBlobContextAsync(documentId);
+    }
+
+    public Task<DocumentBlobContextDataModel?> GetFacilitatorLetterBlobContextAsync(
+        int facilitatorId, int studentId, long documentId) =>
+        GetFacilitatorOwnedBlobContextAsync<Letter>(facilitatorId, studentId, documentId);
+
+    public Task<DocumentBlobContextDataModel?> GetFacilitatorReportCardBlobContextAsync(
+        int facilitatorId, int studentId, long documentId) =>
+        GetFacilitatorOwnedBlobContextAsync<ReportCard>(facilitatorId, studentId, documentId);
+
+    private async Task<DocumentBlobContextDataModel?> GetFacilitatorOwnedBlobContextAsync<TDocument>(
+        int facilitatorId, int studentId, long documentId)
+        where TDocument : Document
+    {
+        await using var db = await dbContext.CreateDbContextAsync();
+
+        var isOwned = await db.Set<TDocument>()
             .AsNoTracking()
             .AnyAsync(d => d.DocumentId == documentId
                            && d.StudentId == studentId

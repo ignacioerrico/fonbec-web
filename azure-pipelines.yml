@@ -19,7 +19,7 @@ steps:
     displayName: 'Install .NET SDK 10.x'
     inputs:
       packageType: 'sdk'
-      version: '10.0.102'
+      useGlobalJson: true
       performMultiLevelLookup: true
 
   - script: |
@@ -27,19 +27,45 @@ steps:
       dotnet --list-sdks
     displayName: 'Verify SDK'
 
-  - script: dotnet restore
+  - script: dotnet restore Fonbec.Web.sln
     displayName: 'Restore NuGet packages'
 
-  - script: dotnet build --configuration $(buildConfiguration) --no-restore
+  - script: dotnet build Fonbec.Web.sln --configuration $(buildConfiguration) --no-restore
     displayName: 'Build project'
 
-  - script: dotnet test --configuration $(buildConfiguration) --no-build --verbosity normal
+  - script: >
+      dotnet test
+      --solution Fonbec.Web.sln
+      --configuration $(buildConfiguration)
+      --no-build
+      --report-trx
+      --coverlet
+      --coverlet-output-format cobertura
     displayName: 'Run unit tests'
 
   # Publish test results to Azure DevOps
   - task: PublishTestResults@2
     condition: succeededOrFailed()
     inputs:
-      testResultsFormat: 'JUnit'
-      testResultsFiles: '**/TestResults/*.xml'
+      testResultsFormat: 'VSTest'
+      testResultsFiles: '**/*.trx'
       failTaskOnFailedTests: true
+
+  - script: |
+      dotnet tool install --global dotnet-reportgenerator-globaltool
+    displayName: 'Install ReportGenerator'
+
+  - script: |
+      export PATH="$PATH:$HOME/.dotnet/tools"
+      reportgenerator \
+        -reports:"$(System.DefaultWorkingDirectory)/**/coverage.cobertura.*.xml" \
+        -targetdir:"$(System.DefaultWorkingDirectory)/CoverageReport" \
+        -reporttypes:Cobertura
+    displayName: 'Merge coverage reports'
+
+  # Publish coverage to Azure DevOps
+  - task: PublishCodeCoverageResults@2
+    inputs:
+      codeCoverageTool: 'Cobertura'
+      summaryFileLocation: '$(System.DefaultWorkingDirectory)/CoverageReport/Cobertura.xml'
+      failIfCoverageEmpty: true

@@ -109,6 +109,22 @@ Assign a value to each field.
 - `NickName` is optional.
 - Not setting `Gender` will set the value `Unknown`.
 
+Do not change the admin user in config after the app has created it.  Startup
+only creates the user when `Username` is not already taken.  There is no
+separate email setting: `Username` is stored as both the username and the
+email.  A later edit is not applied to that account.
+
+- Same `Username`, new `Password`: the existing admin is left as-is.  The app
+still starts.  Sign-in with the new password fails; the original password still
+works.
+- New `Username`: startup creates a second admin with that username, the same
+value as email, the new password, and the Admin role.  The original admin
+remains and can still sign in with the old password.  Startup fails only when
+that second user cannot be created, because the password does not meet the
+Identity rules or the username or email is already taken.
+- A case-only change to `Username` is treated as the same user, so the password
+is left unchanged.
+
 ### Sending emails
 
 ASP.NET Core Identity relies on classes that send emails.  For that purpose,
@@ -237,17 +253,6 @@ create accounts, and it does not assign a role, chapter, or permissions. An
 Admin or Coordinador still creates the user in **Alta de usuario**. The Google
 account email must match that user's email.
 
-If `ClientId` and `ClientSecret` are missing, the app starts normally and the
-login page does not show a Google button.
-
-Create a **Web application** OAuth client in [Google API &
-Services](https://console.cloud.google.com/apis) and add this authorized
-redirect URI for local HTTPS (`launchSettings.json`, profile `https`):
-
-`https://localhost:7038/signin-google`
-
-For each deployed host add `https://{host}/signin-google` as well.
-
 Store the credentials outside source control. For local development, in the UI
 project:
 
@@ -256,8 +261,8 @@ dotnet user-secrets set "Authentication:Google:ClientId" "{CLIENT_ID}" --project
 dotnet user-secrets set "Authentication:Google:ClientSecret" "{CLIENT_SECRET}" --project src/1-UI/Fonbec.Web.Ui
 ```
 
-In production, set `Authentication__Google__ClientId` and
-`Authentication__Google__ClientSecret`. Do not commit the values.
+If those values are missing, the app starts normally and the login page does
+not show the Google button.
 
 ### Sign in with Facebook
 
@@ -268,16 +273,6 @@ in **Alta de usuario**. FONBEC matches the Facebook account by **email**, not
 by name or Facebook user id. That email must be the same as the provisioned
 FONBEC user (comparison ignores case and surrounding spaces).
 
-If `AppId` or `AppSecret` is missing, the app starts normally and the login
-page does not show a Facebook button.
-
-The local HTTPS callback (`launchSettings.json`, profile `https`) is:
-
-`https://localhost:7038/signin-facebook`
-
-For each deployed host add `https://{host}/signin-facebook`. The path is
-fixed; Facebook rejects the login when the URI does not match exactly.
-
 Store the credentials outside source control. For local development, in the UI
 project:
 
@@ -286,11 +281,17 @@ dotnet user-secrets set "Authentication:Facebook:AppId" "{APP_ID}" --project src
 dotnet user-secrets set "Authentication:Facebook:AppSecret" "{APP_SECRET}" --project src/1-UI/Fonbec.Web.Ui
 ```
 
-In production, set `Authentication__Facebook__AppId` and
-`Authentication__Facebook__AppSecret` as application settings. Do not commit
-the values. Rotate the App Secret when the app is published.
+If those values are missing, the app starts normally and the login page does
+not show a Facebook button.
 
-The Facebook app must request the `email` permission. A Facebook account with
-no email, or a user who declines that permission, cannot be matched and is
-sent back to the login page. While the Facebook app is in Development mode,
-only people with a role on that app (admin, developer, or tester) can sign in.
+### Review name hints
+
+`Review:ShowNameMismatchHints` in `appsettings.json` shows a hint under a name
+list when the reviewer picks the wrong person. Leave it `false` so the review
+does not reveal the correct name.
+
+### About page
+
+The about page lists people from `src/1-UI/Fonbec.Web.Ui/Content/people.csv`.
+If you contributed to the project and want to be listed as a contributor, add
+a line with your data.

@@ -10,4 +10,11 @@ public class ReviewOptions
     /// deterministic for a given document.
     /// </summary>
     public int CandidateNameCount { get; set; } = 5;
+
+    /// <summary>
+    /// When true, a wrong name choice on the review page shows a hint under that list
+    /// ("no es el destinatario correcto", "no es el firmante correcto", or the report-card
+    /// equivalent). Off by default so the challenge does not reveal the correct person.
+    /// </summary>
+    public bool ShowNameMismatchHints { get; set; }
 }

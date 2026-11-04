@@ -38,14 +38,17 @@ public sealed class LetterReviewDecision
     public int? SilentRejectReasonId { get; private init; }
 
     /// <summary>
-    /// Describes the mismatch behind <see cref="SilentRejectReasonId"/> so the behaviour can be
-    /// verified while testing.
+    /// Shown under the sponsor list when the selected name is not the addressee.
+    /// The review page renders it only when <c>Review:ShowNameMismatchHints</c> is enabled.
     /// </summary>
-    // TODO [silent-reject-notice]: remove. Reviewers must not learn whether they picked the right
-    // name — that is the whole point of the challenge. Grep for "silent-reject-notice" to find every
-    // piece to delete: this property, its assignment in Evaluate below, the alert in
-    // LetterReviewPanel.razor, and the assertion in LetterReviewDecisionTests.
-    public string? SilentRejectNotice { get; private init; }
+    public string? WrongAddresseeNotice { get; private init; }
+
+    /// <summary>
+    /// Shown under the student list when the selected name is not the signer.
+    /// The review page renders it only when <c>Review:ShowNameMismatchHints</c> is enabled.
+    /// Independent of <see cref="WrongAddresseeNotice"/>: both can be set at once.
+    /// </summary>
+    public string? WrongSignerNotice { get; private init; }
 
     public bool ConfirmedAddressee { get; private init; }
     public bool ConfirmedSignerMatchesStudent { get; private init; }
@@ -162,15 +165,17 @@ public sealed class LetterReviewDecision
                 ? RejectedReasonIds.WrongSigner
                 : (int?)null;
 
-        // TODO [silent-reject-notice]: delete this assignment.
-        var silentRejectNotice = silentRejectReasonId switch
-        {
-            RejectedReasonIds.WrongAddressee when !string.IsNullOrWhiteSpace(selectedAddresseeName) =>
-                $"{selectedAddresseeName} no es el destinatario correcto",
-            RejectedReasonIds.WrongSigner when !string.IsNullOrWhiteSpace(selectedSignerName) =>
-                $"{selectedSignerName} no es el firmante correcto",
-            _ => (string?)null,
-        };
+        // Each list gets its own hint. A wrong sponsor and a wrong student are reported separately,
+        // even though the rejection itself keeps a single reason (the addressee, when both are wrong).
+        var wrongAddresseeNotice = addressee == CandidateNameSelection.Wrong
+                                   && !string.IsNullOrWhiteSpace(selectedAddresseeName)
+            ? $"{selectedAddresseeName} no es el destinatario correcto"
+            : null;
+
+        var wrongSignerNotice = signer == CandidateNameSelection.Wrong
+                                && !string.IsNullOrWhiteSpace(selectedSignerName)
+            ? $"{selectedSignerName} no es el firmante correcto"
+            : null;
 
         var canApprove = errors.Count == 0;
 
@@ -179,7 +184,8 @@ public sealed class LetterReviewDecision
             CanApprove = canApprove,
             AutoRejectReasonId = null,
             SilentRejectReasonId = silentRejectReasonId,
-            SilentRejectNotice = silentRejectNotice, // TODO [silent-reject-notice]: delete this line.
+            WrongAddresseeNotice = wrongAddresseeNotice,
+            WrongSignerNotice = wrongSignerNotice,
             ConfirmedAddressee = addressee == CandidateNameSelection.Correct,
             ConfirmedSignerMatchesStudent = signer == CandidateNameSelection.Correct,
             ConfirmedWrittenDate = writtenDate,

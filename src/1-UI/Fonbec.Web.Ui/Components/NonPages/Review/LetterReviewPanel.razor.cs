@@ -118,6 +118,14 @@ public partial class LetterReviewPanel : IAsyncDisposable
 
     private LetterReviewDecision _decision => BuildDecision();
 
+    private bool ShowNameMismatchHints => ReviewOptions.Value.ShowNameMismatchHints;
+
+    private string? AddresseeHint =>
+        ShowNameMismatchHints ? _decision.WrongAddresseeNotice : null;
+
+    private string? SignerHint =>
+        ShowNameMismatchHints ? _decision.WrongSignerNotice : null;
+
     private bool ActionsDisabled => Disabled || _saving;
 
     /// <summary>A letter cannot have been written in the future.</summary>

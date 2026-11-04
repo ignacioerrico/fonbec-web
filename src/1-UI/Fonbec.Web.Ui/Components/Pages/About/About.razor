@@ -1,0 +1,48 @@
+@using Fonbec.Web.Ui.Components.Layout
+@using Fonbec.Web.Ui.Content
+@using Microsoft.AspNetCore.Hosting
+
+@attribute [Route(NavRoutes.About)]
+@attribute [AllowAnonymous]
+@layout PublicLayout
+
+@inject IWebHostEnvironment Environment
+
+<PageTitle>Acerca de esta aplicación</PageTitle>
+
+<InfoPageHeader Title="Acerca de esta aplicación" Current="InfoPageHeader.InfoPage.About" />
+
+<MudText Typo="Typo.body1" Class="mb-4">
+    FONBEC Web es una aplicación desarrollada por un equipo de voluntarios. Automatiza la distribución de
+    cartas entre becarios y padrinos, y permite que coordinadores, mediadores y revisores puedan enfocarse
+    en su rol, simplificándoles el trabajo.
+</MudText>
+
+<MudLink Href="http://www.fonbec.org.ar/" Target="_blank">www.fonbec.org.ar</MudLink>
+
+@if (_people.Count > 0)
+{
+    <MudText Typo="Typo.h5" Class="mt-8 mb-4">El equipo</MudText>
+    <MudStack Spacing="4">
+        @foreach (var person in _people)
+        {
+            <div>
+                <MudText Typo="Typo.subtitle1">@person.Name</MudText>
+                <MudText Typo="Typo.body2">@person.Role</MudText>
+                @if (person.Detail is not null)
+                {
+                    <MudText Typo="Typo.body2" Class="mud-text-secondary">@person.Detail</MudText>
+                }
+            </div>
+        }
+    </MudStack>
+}
+
+@code {
+    private IReadOnlyList<Person> _people = [];
+
+    protected override void OnInitialized()
+    {
+        _people = PeopleFile.Load(Environment.ContentRootPath);
+    }
+}

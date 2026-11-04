@@ -3,6 +3,7 @@
 @inherits AuthenticationRequiredComponentBase
 
 @using Fonbec.Web.DataAccess.Entities.Enums
+@using Fonbec.Web.Logic.ExtensionMethods
 @using Fonbec.Web.Ui.Components.NonPages.Documents
 @using Fonbec.Web.Ui.Components.NonPages.Review
 
@@ -16,6 +17,12 @@
             <MudChip T="string" Color="Color.Primary" Variant="Variant.Filled">
                 Tipo: @DocumentTypeLabel(_workspace.DocumentType)
             </MudChip>
+            @if (_workspace.DocumentType == DocumentType.Letter && _workspace.PlanStartsOn is { } planStartsOn)
+            {
+                <MudChip T="string" Color="Color.Primary" Variant="Variant.Filled">
+                    Campaña: @planStartsOn.ToSpanishMonthYear()
+                </MudChip>
+            }
             <MudSpacer />
             <ReviewLockCountdown ExpiresAtUtc="_workspace.LockExpiresAtUtc" OnExpired="OnCountdownExpired" />
         </MudStack>
