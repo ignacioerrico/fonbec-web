@@ -9,7 +9,7 @@ public class SelectableModelTests
     public void Constructor_Sets_Properties()
     {
         var model = new SelectableModel<int>(42, "Test");
-        
+
         model.Key.Should().Be(42);
         model.DisplayName.Should().Be("Test");
     }

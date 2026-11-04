@@ -120,13 +120,13 @@ public static class EmailNotificationValues
         string? nickName,
         string? firstName,
         string? lastName) => new()
-    {
-        ["becario-apodo"] = NickOrFirst(nickName, firstName),
-        ["becario-nombre"] = (firstName ?? string.Empty).Trim(),
-        ["becario-apellido"] = (lastName ?? string.Empty).Trim(),
-        ["el-becario"] = GenderWords.BecarioWithArticle(gender),
-        ["ahijado"] = GenderWords.Ahijado(gender),
-    };
+        {
+            ["becario-apodo"] = NickOrFirst(nickName, firstName),
+            ["becario-nombre"] = (firstName ?? string.Empty).Trim(),
+            ["becario-apellido"] = (lastName ?? string.Empty).Trim(),
+            ["el-becario"] = GenderWords.BecarioWithArticle(gender),
+            ["ahijado"] = GenderWords.Ahijado(gender),
+        };
 
     private static void AddDocumentWords(Dictionary<string, string?> values, DocumentType documentType, bool university)
     {

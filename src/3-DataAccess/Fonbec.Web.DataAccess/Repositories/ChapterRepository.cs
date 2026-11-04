@@ -20,7 +20,7 @@ public class ChapterRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
     public async Task<string?> GetChapterNameAsync(int chapterId)
     {
         await using var db = await dbContext.CreateDbContextAsync();
-        
+
         return await db.Chapters
             .AsNoTracking()
             .Where(ch => ch.Id == chapterId && ch.IsActive)
@@ -137,7 +137,7 @@ public class ChapterRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             Notes = dataModel.ChapterNotes,
             CreatedById = dataModel.ChapterCreatedById,
         };
-        
+
         db.Chapters.Add(chapter);
         return await db.SaveChangesAsync();
     }

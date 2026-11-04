@@ -355,7 +355,7 @@ public class UserRepository(
             errors.AddRange(identityResult.Errors.Select(e => e.Description));
             return (userId, errors);
         }
-        
+
         // Add role
         identityResult = await userManager.AddToRoleAsync(fonbecUser, model.UserRole);
 
@@ -386,7 +386,7 @@ public class UserRepository(
 
         var oldEmail = fonbecUserDb.Email;
         var newEmail = model.UserEmail;
-        
+
         if (oldEmail != newEmail)
         {
             // Update both user name and email address
@@ -424,7 +424,7 @@ public class UserRepository(
         var lockoutEndsOn = model.DisableUser
             ? DateTimeOffset.MaxValue
             : (DateTimeOffset?)null;
-        
+
         var identityResult = await userManager.SetLockoutEndDateAsync(fonbecUser, lockoutEndsOn);
 
         if (!identityResult.Succeeded)
@@ -457,7 +457,7 @@ public class UserRepository(
         {
             errors.AddRange(identityResult.Errors.Select(e => e.Description));
         }
-        
+
         return errors;
     }
 

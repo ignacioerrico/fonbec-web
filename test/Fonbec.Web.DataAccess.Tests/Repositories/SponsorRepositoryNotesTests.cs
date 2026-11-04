@@ -79,7 +79,11 @@ public class SponsorRepositoryNotesTests
         await db.Database.EnsureCreatedAsync(TestContext.Current.CancellationToken);
         db.Users.Add(new FonbecWebUser
         {
-            Id = 1, UserName = "local-test", FirstName = "Test", LastName = "Admin", CreatedOnUtc = DateTime.UtcNow,
+            Id = 1,
+            UserName = "local-test",
+            FirstName = "Test",
+            LastName = "Admin",
+            CreatedOnUtc = DateTime.UtcNow,
         });
         db.Set<Chapter>().Add(new Chapter { Id = 1, Name = "Test", CreatedById = 1 });
         await db.SaveChangesAsync(TestContext.Current.CancellationToken);

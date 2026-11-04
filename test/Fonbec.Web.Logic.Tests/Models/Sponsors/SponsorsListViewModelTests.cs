@@ -180,7 +180,7 @@ public class SponsorsListViewModelTests
         result.Should().BeFalse();
     }
 
-   [Fact]
+    [Fact]
     public void IsIdenticalTo_PhoneNumberMismatch_ReturnsFalse()
     {
         var thisViewModel = new SponsorsListViewModel

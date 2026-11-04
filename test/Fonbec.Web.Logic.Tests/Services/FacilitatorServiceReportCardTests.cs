@@ -25,7 +25,7 @@ public class FacilitatorServiceReportCardTests : MappingTestBase
 
         _facilitatorRepository
             .GetLatestReportCardsAsync(
-                 Arg.Any<List<int>>(),Arg.Any<int>())
+                 Arg.Any<List<int>>(), Arg.Any<int>())
                 .Returns([]);
 
         _facilitatorService = new FacilitatorService(

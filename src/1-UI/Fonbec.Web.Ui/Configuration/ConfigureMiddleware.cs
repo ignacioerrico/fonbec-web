@@ -72,7 +72,7 @@ public static class ConfigureMiddleware
         // Ensure admin user exists
         var username = adminUserOptions.Username;
         var password = adminUserOptions.Password;
-        
+
         if (username is null || password is null)
         {
             throw new ValidationException("Either username or password has not been set as a secret.");

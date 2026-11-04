@@ -36,11 +36,10 @@ public class Student : UserWithoutAccount
             {
                 return EducationLevel.University;
             }
-            
+
             return SecondarySchoolStartYear <= now
                 ? EducationLevel.SecondarySchool
                 : EducationLevel.PrimarySchool;
         }
     }
-
 }

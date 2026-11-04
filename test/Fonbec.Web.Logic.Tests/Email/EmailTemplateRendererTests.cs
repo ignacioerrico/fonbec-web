@@ -102,17 +102,17 @@ public class EmailTemplateRendererTests
     private static DocumentShareNotificationDataModel LetterShare(
         DocumentType documentType = DocumentType.Letter,
         bool university = false) => new()
-    {
-        IsCompany = false,
-        RecipientName = "ana",
-        RecipientNickName = "ana",
-        RecipientLastName = "perez",
-        RecipientGender = Gender.Female,
-        DocumentType = documentType,
-        StudentIsAtUniversity = university,
-        StudentFirstName = "maría",
-        StudentLastName = "garcía",
-        StudentNickName = "mari",
-        StudentGender = Gender.Female,
-    };
+        {
+            IsCompany = false,
+            RecipientName = "ana",
+            RecipientNickName = "ana",
+            RecipientLastName = "perez",
+            RecipientGender = Gender.Female,
+            DocumentType = documentType,
+            StudentIsAtUniversity = university,
+            StudentFirstName = "maría",
+            StudentLastName = "garcía",
+            StudentNickName = "mari",
+            StudentGender = Gender.Female,
+        };
 }
