@@ -4,7 +4,7 @@
     <!-- UI -->
     <PackageVersion Include="CodeBeam.MudBlazor.Extensions.Qr" Version="1.0.0" />
     <PackageVersion Include="Extensions.MudBlazor.StaticInput" Version="3.2.1" />
-    <PackageVersion Include="Google.Apis.Auth.AspNetCore3" Version="1.77.0" />
+    <PackageVersion Include="Google.Apis.Auth.AspNetCore3" Version="1.78.0" />
     <PackageVersion Include="MudBlazor" Version="8.15.0" />
 
     <!-- ASP.NET / EF -->
