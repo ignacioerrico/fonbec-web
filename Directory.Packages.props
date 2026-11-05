@@ -26,7 +26,7 @@
 
     <!-- General libraries -->
     <PackageVersion Include="ClosedXML" Version="0.105.1" />
-    <PackageVersion Include="CsvHelper" Version="33.1.0" />
+    <PackageVersion Include="CsvHelper" Version="34.0.0" />
     <PackageVersion Include="Mapster" Version="7.4.0" />
     <PackageVersion Include="MlkPwgen" Version="0.3.0" />
 

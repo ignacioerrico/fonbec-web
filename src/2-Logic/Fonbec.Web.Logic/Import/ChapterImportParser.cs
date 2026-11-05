@@ -3,7 +3,6 @@ using System.Text;
 using System.Text.RegularExpressions;
 using ClosedXML.Excel;
 using CsvHelper;
-using CsvHelper.Configuration;
 
 namespace Fonbec.Web.Logic.Import;
 
@@ -154,37 +153,43 @@ public static partial class ChapterImportParser
             return;
         }
 
-        var configuration = new CsvConfiguration(CultureInfo.InvariantCulture)
+        var options = new CsvReaderOptions
         {
-            Delimiter = DetectDelimiter(firstLine),
-            HasHeaderRecord = true,
-            MissingFieldFound = null,
-            BadDataFound = null,
-            HeaderValidated = null,
-            TrimOptions = TrimOptions.Trim,
-            DetectColumnCountChanges = false,
+            Separator = DetectDelimiter(firstLine),
+            HasHeader = true,
+            TrimWhitespace = true,
+            TrackLineNumbers = true,
         };
 
         using var reader = new StringReader(text);
-        using var csv = new CsvReader(reader, configuration);
-        if (!csv.Read() || !csv.ReadHeader() || csv.HeaderRecord is null)
+        using var csv = CsvReader.Create(reader, options);
+
+        var headers = csv.Headers;
+
+        if (headers.Count == 0)
         {
             result.FileErrors.Add($"{DisplayName(file)} no tiene encabezados.");
             return;
         }
 
-        var columns = ReadHeader(index => csv.HeaderRecord.ElementAtOrDefault(index - 1) ?? string.Empty, csv.HeaderRecord.Length);
+        var columns = ReadHeader(
+            index => headers.ElementAtOrDefault(index - 1) ?? string.Empty,
+            headers.Count);
         if (!HasRequiredColumns(columns, requireEmail: !isStudents, sheetName, result.FileErrors))
         {
             return;
         }
 
-        var rows = isStudents ? result.Students : result.Sponsors;
+        var rows = isStudents
+            ? result.Students
+            : result.Sponsors;
         var dataRows = 0;
         var firstAdded = rows.Count;
         while (csv.Read())
         {
-            var values = ReadRow(columns, column => csv.GetField(column - 1) ?? string.Empty);
+            var values = ReadRow(
+                columns,
+                column => csv.GetString(column - 1));
             if (IsBlank(values))
             {
                 continue;
@@ -198,7 +203,11 @@ public static partial class ChapterImportParser
                 return;
             }
 
-            rows.Add(ToParsedRow(sheetName, csv.Context.Parser?.RawRow ?? dataRows + 1, values));
+            rows.Add(
+                ToParsedRow(
+                    sheetName,
+                    csv.LineNumber,
+                    values));
         }
     }
 
@@ -259,7 +268,7 @@ public static partial class ChapterImportParser
         return false;
     }
 
-    private static ChapterImportParsedRow ToParsedRow(string sheetName, int rowNumber, Dictionary<string, string> values) =>
+    private static ChapterImportParsedRow ToParsedRow(string sheetName, long rowNumber, Dictionary<string, string> values) =>
         new()
         {
             Sheet = sheetName,
@@ -371,11 +380,11 @@ public static partial class ChapterImportParser
         return end < 0 ? text : text[..end];
     }
 
-    private static string DetectDelimiter(string headerLine)
+    private static char DetectDelimiter(string headerLine)
     {
         var semicolons = headerLine.Count(character => character == ';');
         var commas = headerLine.Count(character => character == ',');
-        return semicolons > commas ? ";" : ",";
+        return semicolons > commas ? ';' : ',';
     }
 
     private static string DisplayName(ChapterImportUpload file) =>

@@ -30,7 +30,7 @@ public sealed record ChapterImportRequest(
 
 public sealed record ChapterImportRowResult(
     string Sheet,
-    int RowNumber,
+    long RowNumber,
     string Name,
     ChapterImportRowStatus Status,
     string? Detail);
@@ -46,7 +46,7 @@ public sealed class ChapterImportParsedRow
 {
     public required string Sheet { get; init; }
 
-    public required int RowNumber { get; init; }
+    public required long RowNumber { get; init; }
 
     public string FirstName { get; init; } = string.Empty;
 
