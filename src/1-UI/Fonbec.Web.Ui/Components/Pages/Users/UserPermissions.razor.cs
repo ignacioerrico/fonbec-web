@@ -8,6 +8,7 @@ using Microsoft.AspNetCore.Components;
 
 namespace Fonbec.Web.Ui.Components.Pages.Users;
 
+// TODO: Nothing navigates to this page, but it can still be directly accessible (by typing the URL manually).  Consider using it or removing it.
 [PageMetadata(nameof(UserPermissions), "Permisos de usuario", [FonbecRole.Admin])]
 public partial class UserPermissions : AuthenticationRequiredComponentBase
 {
@@ -32,7 +33,14 @@ public partial class UserPermissions : AuthenticationRequiredComponentBase
 
         Loading = true;
 
-        _userData = await UserService.GetUserAsync(UserId);
+        var userData = await UserService.GetUserAsync(UserId);
+        if (userData is null)
+        {
+            NavigationManager.NavigateTo(NavRoutes.Chapters);
+            return;
+        }
+
+        _userData = userData;
 
         var fonbecAuthClaim = await UserService.GetFonbecAuthClaim(UserId);
 
@@ -72,6 +80,6 @@ public partial class UserPermissions : AuthenticationRequiredComponentBase
 
         await UserService.SetFonbecAuthClaim(UserId, deniedPages);
 
-        NavigationManager.NavigateTo(_userData.UserRole == FonbecRole.Admin ? NavRoutes.Admins : NavRoutes.Chapters);
+        NavigationManager.NavigateTo(_userData!.UserRole == FonbecRole.Admin ? NavRoutes.Admins : NavRoutes.Chapters);
     }
 }

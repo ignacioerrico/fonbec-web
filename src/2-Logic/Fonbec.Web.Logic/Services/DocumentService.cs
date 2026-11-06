@@ -1755,7 +1755,7 @@ public class DocumentService(
 
     private async Task<(string Role, int? ChapterId, string? FonbecAuthClaim)?> GetUserAuthContextAsync(int userId)
     {
-        GetUserOutputModel user;
+        GetUserOutputModel? user;
         try
         {
             user = await userService.GetUserAsync(userId);
