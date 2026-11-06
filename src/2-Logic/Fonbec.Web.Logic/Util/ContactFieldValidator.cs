@@ -1,3 +1,4 @@
+using System.Globalization;
 using System.Text.RegularExpressions;
 
 namespace Fonbec.Web.Logic.Util;
@@ -28,10 +29,20 @@ public static partial class ContactFieldValidator
                 continue;
             }
 
-            if (character is not ('+' or '-' or '(' or ')' or ' ' or '.'))
+            // Accept all Unicode dash characters (for example '-', '‑' U+2011 non-breaking hyphen,
+            // '–' U+2013 en dash, '—' U+2014 em dash), which may appear when phone numbers are
+            // copied from Office documents, PDFs, websites, or mobile devices.
+            if (char.GetUnicodeCategory(character) == UnicodeCategory.DashPunctuation)
             {
-                return false;
+                continue;
             }
+
+            if (character is '+' or '(' or ')' or ' ' or '.')
+            {
+                continue;
+            }
+
+            return false;
         }
 
         return digitCount is >= MinimumPhoneDigits and <= MaximumPhoneDigits;

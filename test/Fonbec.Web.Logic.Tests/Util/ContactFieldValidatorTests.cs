@@ -30,6 +30,9 @@ public class ContactFieldValidatorTests
     [InlineData("+541112345678")]
     [InlineData("(+54 9) 351 1234-4321")]
     [InlineData("123-4567")]
+    [InlineData("123‑4567")] // non-breaking hyphen
+    [InlineData("123–4567")] // en dash
+    [InlineData("123—4567")] // em dash
     public void IsValidPhone_Returns_True_When_Phone_Is_Empty_Or_Valid(string? phone)
     {
         ContactFieldValidator.IsValidPhone(phone).Should().BeTrue();
