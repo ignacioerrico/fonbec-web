@@ -68,7 +68,7 @@ public partial class StudentSelector
 
     private async Task OnSelectedValueChanged(int selectedSponsorId) =>
         await SelectedStudentIdChanged.InvokeAsync(selectedSponsorId);
-    
+
     private string? MapKeyToDisplayName(int key) =>
         _students.FirstOrDefault(s => s.Key == key)?.DisplayName;
 }

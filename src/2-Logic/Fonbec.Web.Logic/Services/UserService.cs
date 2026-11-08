@@ -241,7 +241,7 @@ public class UserService(
         var generatedPassword = await passwordGenerator.GeneratePassword();
 
         var resetPasswordInputDataModel = new ResetPasswordInputDataModel
-        { 
+        {
             UserId = userId.Adapt<string>(),
             NewPassword = generatedPassword,
         };

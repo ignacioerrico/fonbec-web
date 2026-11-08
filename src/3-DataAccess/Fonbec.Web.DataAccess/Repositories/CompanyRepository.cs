@@ -119,7 +119,8 @@ public class CompanyRepository(IDbContextFactory<FonbecWebDbContext> dbContext) 
             })
             .ToListAsync();
 
-        return direct.Select(student => new CompanyStudentRow
+        return direct.Select(student =>
+            new CompanyStudentRow
             {
                 DirectCompanyId = student.CompanyId,
                 Name = student.Name,

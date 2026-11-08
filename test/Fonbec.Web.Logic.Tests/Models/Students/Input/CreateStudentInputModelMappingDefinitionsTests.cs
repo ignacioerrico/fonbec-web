@@ -157,7 +157,7 @@ public class CreateStudentInputModelMappingDefinitionsTests : MappingTestBase
         );
 
         var result = input.Adapt<CreateStudentInputDataModel>(Config);
-        
+
         result.StudentNickName.Should().BeNull();
     }
 

@@ -28,7 +28,7 @@ public class UsersListViewModel : IDetectChanges<UsersListViewModel>
     public string UserChapterName { get; set; } = null!;
 
     public bool CanUserBeLockedOut { get; set; }
-    
+
     public bool IsUserActive { get; set; }
 
     public bool HasDigitalImprovementGrant { get; set; }

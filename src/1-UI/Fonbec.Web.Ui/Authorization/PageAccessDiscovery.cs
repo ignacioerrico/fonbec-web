@@ -24,6 +24,6 @@ public static class PageAccessDiscovery
             .ToList();
 
         // Concatenate the results with the list of custom accesses
-        return [..results, ..CustomAccess.List];
+        return [.. results, .. CustomAccess.List];
     }
 }

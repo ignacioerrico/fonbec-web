@@ -31,7 +31,7 @@ public partial class ChapterSelector
     protected override async Task OnInitializedAsync()
     {
         _loading = true;
-        
+
         var chapters = await ChapterService.GetAllChaptersForSelectionAsync();
 
         _loading = false;

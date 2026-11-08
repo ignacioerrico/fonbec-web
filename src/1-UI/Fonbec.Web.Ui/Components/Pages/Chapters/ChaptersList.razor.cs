@@ -128,9 +128,9 @@ public partial class ChaptersList : AuthenticationRequiredComponentBase
         Loading = true;
 
         var result = await ChapterService.UpdateChapterAsync(updateChapterInputModel);
-        
+
         Loading = false;
-        
+
         if (!result.AnyAffectedRows)
         {
             Snackbar.Add("No se pudo actualizar la filial.", Severity.Error);

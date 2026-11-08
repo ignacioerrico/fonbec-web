@@ -20,7 +20,7 @@ public abstract class MappingTestBase
             AllowImplicitDestinationInheritance = true,
         };
         var assembly = System.Reflection.Assembly.Load("Fonbec.Web.Logic");
-        
+
         Config.Scan(assembly);
 
         // Auditable mock

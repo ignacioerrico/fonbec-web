@@ -55,7 +55,7 @@ public partial class EducationLevelSelector
         }
 
         _isSecondarySchoolStartYearKnown = SecondarySchoolStartYear.HasValue;
-        
+
         _isUniversityStartYearKnown = UniversityStartYear.HasValue;
 
         base.OnInitialized();
