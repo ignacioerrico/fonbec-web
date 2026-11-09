@@ -80,14 +80,16 @@ external-login result pages, permission metadata, Logic/DataAccess display strin
 service/Identity error descriptions, and remaining third-party component keys.
 Transactional email translation, stored user content, per-user language settings
 and extra languages remain out of scope. Team review must confirm this split and
-the shared-resource naming convention before the overall story is closed. Publish
-this guide in the team wiki after review; this repository copy is the versioned
-source for that page.
+the shared-resource naming convention before the overall story is closed. This
+repository copy is the versioned source for the team wiki page. Wiki publication
+is pending: both New page and Edit are disabled for the current Azure DevOps
+session. A wiki contributor must publish this guide.
 
 ## Validation
 
 - `dotnet test --solution Fonbec.Web.sln --configuration Release` using SDK 10.0.402
-  and Microsoft.Testing.Platform; Azurite is required for the blob integration test.
+  and Microsoft.Testing.Platform: 1,295 passed, zero skipped. Azurite is required
+  for the blob integration test.
 - Localization tests cover Spanish/English lookup, missing Spanish → neutral
   English → key fallback, Argentine default formatting, unsupported culture,
   culture cookie reuse and MudBlazor/DataAnnotations translations.
