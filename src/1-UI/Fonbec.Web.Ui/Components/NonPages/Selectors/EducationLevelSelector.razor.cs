@@ -1,4 +1,4 @@
-﻿using Fonbec.Web.DataAccess.Entities.Enums;
+using Fonbec.Web.DataAccess.Entities.Enums;
 using Microsoft.AspNetCore.Components;
 using MudBlazor;
 
@@ -101,7 +101,7 @@ public partial class EducationLevelSelector
     {
         if (secondarySchoolStartYear.HasValue && UniversityStartYear.HasValue && secondarySchoolStartYear.Value >= UniversityStartYear.Value.Year)
         {
-            Snackbar.Add("La fecha de inicio del secundario no puede ser igual o posterior a la de la facultad.", Severity.Error);
+            Snackbar.Add(L["SecondaryBeforeUniversity"], Severity.Error);
             return;
         }
 
@@ -127,7 +127,7 @@ public partial class EducationLevelSelector
     {
         if (universityStartYear.HasValue && SecondarySchoolStartYear.HasValue && universityStartYear.Value <= SecondarySchoolStartYear.Value.Year)
         {
-            Snackbar.Add("La fecha de inicio de la facultad no puede ser igual o anterior a la del secundario.", Severity.Error);
+            Snackbar.Add(L["UniversityAfterSecondary"], Severity.Error);
             return;
         }
 

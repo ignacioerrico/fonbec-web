@@ -290,6 +290,13 @@ not show a Facebook button.
 list when the reviewer picks the wrong person. Leave it `false` so the review
 does not reveal the correct name.
 
+### UI localization
+
+Spanish is the default UI language. Open `/?culture=en` for English development
+or `/?culture=es` to return to Spanish, using a full page load. See
+[UI localization](docs/localization.md) for resource conventions, pilot coverage,
+fallback behavior, testing and the phase 2 migration plan.
+
 ### About page
 
 The about page lists people from `src/1-UI/Fonbec.Web.Ui/Content/people.csv`.

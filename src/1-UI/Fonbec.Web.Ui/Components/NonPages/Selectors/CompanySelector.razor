@@ -1,11 +1,13 @@
-﻿<LoadingIndicator Loading="_loading" />
+@inject IStringLocalizer<SharedResources> L
 
-<MudAutocomplete T="int?" Label="Empresa"
+<LoadingIndicator Loading="_loading" />
+
+<MudAutocomplete T="int?" Label="@L["Company"]"
                  SearchFunc="Search"
                  Value="SelectedCompanyId"
                  ValueChanged="OnSelectedValueChanged"
                  ToStringFunc="MapKeyToDisplayName"
                  Disabled="_loading"
                  Clearable="true"
-                 Required="IsRequired" RequiredError="Este es un campo obligatorio."
+                 Required="IsRequired" RequiredError="@L["Required"]"
                  Variant="Variant.Filled" AnchorOrigin="Origin.BottomLeft" />

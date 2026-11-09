@@ -1,10 +1,12 @@
-﻿<LoadingIndicator Loading="_loading" />
+@inject IStringLocalizer<SharedResources> L
 
-<MudAutocomplete T="int" Label="Becario"
+<LoadingIndicator Loading="_loading" />
+
+<MudAutocomplete T="int" Label="@L["Student"]"
                  SearchFunc="Search"
                  Value="SelectedStudentId"
                  ValueChanged="OnSelectedValueChanged"
                  ToStringFunc="MapKeyToDisplayName"
                  Disabled="_loading"
-                 Required="true" RequiredError="Este es un campo obligatorio."
+                 Required="true" RequiredError="@L["Required"]"
                  Variant="Variant.Filled" AnchorOrigin="Origin.BottomLeft" />

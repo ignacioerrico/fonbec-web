@@ -1,8 +1,8 @@
-﻿@using Fonbec.Web.DataAccess.Entities
-@using Fonbec.Web.Ui.Account
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Identity
-
+@using Fonbec.Web.DataAccess.Entities
+@using Fonbec.Web.Ui.Account
+@inject IStringLocalizer<SharedResources> L
 @inject SignInManager<FonbecWebUser> SignInManager
 
 @if (_externalLogins.Length > 0)
@@ -10,7 +10,7 @@
     <div class="@Class">
         <MudDivider Class="mb-4" />
         <MudText Typo="Typo.body2" Align="Align.Center" Class="mb-4 mud-text-secondary">
-            O iniciá sesión con otro servicio
+            @L["OtherSignIn"]
         </MudText>
 
         <form action="Account/PerformExternalLogin" method="post">
@@ -32,7 +32,7 @@
                             {
                                 <MudIcon Icon="@Icons.Custom.Brands.Facebook" Class="mr-2" />
                             }
-                            @ExternalLoginCopy.SignInButtonText(provider.Name, provider.DisplayName)
+                            @L["SignInWith", provider.DisplayName ?? provider.Name]
                         </span>
                     </button>
                 }

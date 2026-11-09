@@ -1,4 +1,6 @@
-﻿@if (Loading)
+@inject IStringLocalizer<SharedResources> L
+
+@if (Loading)
 {
     <MudText Class="mt-4">
         <em>@LoadingText&hellip;</em>

@@ -1,10 +1,10 @@
-﻿@page "/"
+@page "/"
+@using Fonbec.Web.Ui.Components.NonPages.Buttons
 @attribute [Authorize]
 @inherits AuthenticationRequiredComponentBase
+@inject IStringLocalizer<SharedResources> L
 
-@using Fonbec.Web.Ui.Components.NonPages.Buttons
-
-<PageTitle>Inicio</PageTitle>
+<PageTitle>@L["Home"]</PageTitle>
 
 @if (!_resolved)
 {
@@ -13,22 +13,22 @@
 else if (_missingChapter)
 {
     <MudAlert Severity="Severity.Error">
-        Esta página requiere un usuario que pertenezca a una filial.
+        @L["ChapterRequired"]
     </MudAlert>
 }
 else if (_home is not null)
 {
-    <MudText Typo="Typo.h3" GutterBottom="true">Hola, @FonbecClaim.FirstName.</MudText>
-    <MudText Typo="Typo.h6" Class="mb-6">Estás coordinando la filial @FonbecClaim.ChapterName.</MudText>
+    <MudText Typo="Typo.h3" GutterBottom="true">@L["Greeting", FonbecClaim.FirstName]</MudText>
+    <MudText Typo="Typo.h6" Class="mb-6">@L["ChapterGreeting", FonbecClaim.ChapterName ?? string.Empty]</MudText>
 
     <MudGrid Spacing="3">
         <MudItem xs="12" sm="6">
             <MudPaper Class="pa-4" Elevation="2">
                 <MudLink Href="@NavRoutes.Students" Underline="Underline.None">
-                    <MudText Typo="Typo.subtitle1">Becarios</MudText>
+                    <MudText Typo="Typo.subtitle1">@L["Students"]</MudText>
                     <MudText Typo="Typo.h3" Color="Color.Primary">@_home.StudentCount</MudText>
                     <MudText Typo="Typo.body2" Color="@UnmatchedColor(_home.StudentsWithoutSponsor)">
-                        @Unmatched(_home.StudentsWithoutSponsor, "sin padrino", "sin padrinos")
+                        @Unmatched(_home.StudentsWithoutSponsor, L["WithoutSponsor"], L["WithoutSponsors"])
                     </MudText>
                 </MudLink>
             </MudPaper>
@@ -36,20 +36,20 @@ else if (_home is not null)
         <MudItem xs="12" sm="6">
             <MudPaper Class="pa-4" Elevation="2">
                 <MudLink Href="@NavRoutes.Sponsors" Underline="Underline.None">
-                    <MudText Typo="Typo.subtitle1">Padrinos</MudText>
+                    <MudText Typo="Typo.subtitle1">@L["Sponsors"]</MudText>
                     <MudText Typo="Typo.h3" Color="Color.Primary">@_home.SponsorCount</MudText>
                     <MudText Typo="Typo.body2" Color="@UnmatchedColor(_home.SponsorsWithoutStudent)">
-                        @Unmatched(_home.SponsorsWithoutStudent, "sin becario", "sin becarios")
+                        @Unmatched(_home.SponsorsWithoutStudent, L["WithoutStudent"], L["WithoutStudents"])
                     </MudText>
                 </MudLink>
             </MudPaper>
         </MudItem>
     </MudGrid>
 
-    <MudText Typo="Typo.h5" Class="mt-8 mb-3">Campaña</MudText>
+    <MudText Typo="Typo.h5" Class="mt-8 mb-3">@L["Campaign"]</MudText>
     @if (_home.Campaign is null)
     {
-        <MudText Typo="Typo.h6">No hay una campaña activa.</MudText>
+        <MudText Typo="Typo.h6">@L["NoActiveCampaign"]</MudText>
     }
     else
     {
@@ -60,11 +60,11 @@ else if (_home is not null)
                    Class="mt-4"
                    StartIcon="@Icons.Material.Outlined.Assessment"
                    Href="@NavRoutes.LetterPlanProgress(_home.Campaign.PlanId)">
-            Ver detalle
+            @L["ViewDetails"]
         </MudButton>
     }
 
-    <MudText Typo="Typo.h5" Class="mt-8 mb-3">Equipo</MudText>
+    <MudText Typo="Typo.h5" Class="mt-8 mb-3">@L["Team"]</MudText>
     <MudGrid Spacing="3">
         @foreach (var team in Teams)
         {
@@ -106,7 +106,7 @@ else if (_home is not null)
                                                              Variant="Variant.Filled"
                                                              Color="Color.Primary"
                                                              Size="Size.Small">
-                                                        YO
+                                                        @L["Me"]
                                                     </MudChip>
                                                 }
                                             </MudStack>
@@ -131,5 +131,5 @@ else if (_home is not null)
 }
 else
 {
-    <MudText Typo="Typo.h5">No tenés permiso para ver esta página.</MudText>
+    <MudText Typo="Typo.h5">@L["AccessDenied"]</MudText>
 }

@@ -1,4 +1,4 @@
-﻿using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components;
 
 namespace Fonbec.Web.Ui.Components.NonPages;
 
@@ -20,6 +20,6 @@ public partial class LoadingIndicator
     {
         base.OnParametersSet();
 
-        LoadingText ??= "Cargando datos";
+        LoadingText ??= L["Loading"];
     }
 }

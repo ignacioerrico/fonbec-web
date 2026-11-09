@@ -1,20 +1,19 @@
-﻿@page "/Account/Login"
-
+@page "/Account/Login"
 @using System.ComponentModel.DataAnnotations
-@using Fonbec.Web.DataAccess.Entities
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Identity
-
-@inject SignInManager<FonbecWebUser> SignInManager
+@using Fonbec.Web.DataAccess.Entities
 @inject ILogger<Login> Logger
-@inject NavigationManager NavigationManager
+@inject IStringLocalizer<SharedResources> L
 @inject IdentityRedirectManager RedirectManager
+@inject NavigationManager NavigationManager
+@inject SignInManager<FonbecWebUser> SignInManager
 
-<PageTitle>Iniciar sesión</PageTitle>
+<PageTitle>@L["SignIn"]</PageTitle>
 
-<MudText Typo="Typo.h4" Align="Align.Center" GutterBottom="true">Iniciar sesión</MudText>
+<MudText Typo="Typo.h4" Align="Align.Center" GutterBottom="true">@L["SignIn"]</MudText>
 <MudText Typo="Typo.body2" Align="Align.Center" Class="mb-6 mud-text-secondary">
-    Ingresá con tu cuenta de FONBEC
+    @L["SignInIntro"]
 </MudText>
 
 <StatusMessage Message="@_errorMessage" Class="mb-6" />
@@ -24,19 +23,19 @@
 
     <MudStack Spacing="3">
         <MudStaticTextField For="@(() => Input.Email)" @bind-Value="Input.Email"
-                            Label="Correo electrónico" Placeholder="nombre@ejemplo.com" InputId="login-email"
+                            Label="@L["Email"]" Placeholder="@L["EmailPlaceholder"]" InputId="login-email"
                             UserAttributes="@(new() { { "autocomplete", "username" }, { "aria-required", "true" } })" />
         <MudStaticTextField For="@(() => Input.Password)" @bind-Value="Input.Password"
-                            Label="Contraseña" Placeholder="contraseña"
+                            Label="@L["Password"]" Placeholder="@L["PasswordPlaceholder"]"
                             InputType="InputType.Password"
                             Adornment="Adornment.End"
                             AdornmentIcon="@Icons.Material.Outlined.Visibility"
                             AdornmentToggledIcon="@Icons.Material.Outlined.VisibilityOff"
                             AdornmentClickFunction="togglePasswordVisibility"
                             UserAttributes="@(new() { { "autocomplete", "current-password" }, { "aria-required", "true" } })" />
-        <MudStaticCheckBox For="@(() => Input.RememberMe)" @bind-Value="Input.RememberMe">Recordarme</MudStaticCheckBox>
+        <MudStaticCheckBox For="@(() => Input.RememberMe)" @bind-Value="Input.RememberMe">@L["RememberMe"]</MudStaticCheckBox>
         <MudStaticButton Variant="Variant.Filled" Color="Color.Primary" FullWidth="true" FormAction="FormAction.Submit">
-            Iniciar sesión
+            @L["SignIn"]
         </MudStaticButton>
     </MudStack>
 </EditForm>
@@ -45,14 +44,14 @@
     <MudButton Href="Account/ForgotPassword"
                Variant="Variant.Text"
                Color="Color.Default">
-        Olvidé mi contraseña
+        @L["ForgotPassword"]
     </MudButton>
 </div>
 
-<nav class="auth-layout__legal" aria-label="Información">
-    <a href="@NavRoutes.About" data-enhance-nav="false">Acerca</a>
-    <a href="@NavRoutes.Privacy" data-enhance-nav="false">Privacidad</a>
-    <a href="@NavRoutes.DataDeletion" data-enhance-nav="false">Eliminación de datos</a>
+<nav class="auth-layout__legal" aria-label="@L["Information"]">
+    <a href="@NavRoutes.About" data-enhance-nav="false">@L["About"]</a>
+    <a href="@NavRoutes.Privacy" data-enhance-nav="false">@L["Privacy"]</a>
+    <a href="@NavRoutes.DataDeletion" data-enhance-nav="false">@L["DataDeletion"]</a>
 </nav>
 
 <ExternalLoginPicker ReturnUrl="@ReturnUrl" Class="mt-6" />
@@ -123,21 +122,21 @@
         }
         else
         {
-            _errorMessage = "Error: Correo o contraseña incorrectos.";
+            _errorMessage = L["InvalidCredentials"];
         }
     }
 
     private sealed class InputModel
     {
-        [Required]
-        [EmailAddress]
+        [Required(ErrorMessageResourceType = typeof(Fonbec.Web.Ui.Localization.ValidationResources), ErrorMessageResourceName = "Required")]
+        [EmailAddress(ErrorMessageResourceType = typeof(Fonbec.Web.Ui.Localization.ValidationResources), ErrorMessageResourceName = "Email")]
         public string Email { get; set; } = "";
 
-        [Required]
+        [Required(ErrorMessageResourceType = typeof(Fonbec.Web.Ui.Localization.ValidationResources), ErrorMessageResourceName = "Required")]
         [DataType(DataType.Password)]
         public string Password { get; set; } = "";
 
-        [Display(Name = "Recordarme")]
+        [Display(Name = "RememberMe")]
         public bool RememberMe { get; set; }
     }
 }

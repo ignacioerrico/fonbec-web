@@ -1,12 +1,12 @@
-@attribute [Route(NavRoutes.Mediators)]
-@attribute [Authorize(Policy = nameof(MediatorsList))]
-
 @using Fonbec.Web.DataAccess.Constants
+@attribute [Authorize(Policy = nameof(MediatorsList))]
+@attribute [Route(NavRoutes.Mediators)]
+@inject IStringLocalizer<SharedResources> L
 
-<RoleUsersList Title="Mediadores"
+<RoleUsersList Title="@L["Facilitators"]"
                Role="@FonbecRole.Uploader"
-               EmptyMessage="No hay mediadores."
+               EmptyMessage="@L["EmptyFacilitators"]"
                CreateRoute="@NavRoutes.MediatorCreate"
-               CreateTooltip="Alta de mediador"
+               CreateTooltip="@L["CreateFacilitator"]"
                CreatePolicy="@nameof(MediatorCreate)"
                ShowStudents="true" />

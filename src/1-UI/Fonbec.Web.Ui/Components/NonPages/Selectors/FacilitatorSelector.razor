@@ -1,10 +1,12 @@
-﻿<LoadingIndicator Loading="_loading" />
+@inject IStringLocalizer<SharedResources> L
 
-<MudAutocomplete T="int" Label="Mediador"
+<LoadingIndicator Loading="_loading" />
+
+<MudAutocomplete T="int" Label="@L["Facilitator"]"
                  SearchFunc="Search"
                  Value="SelectedFacilitatorId"
                  ValueChanged="OnSelectedValueChanged"
                  ToStringFunc="MapKeyToDisplayName"
                  Disabled="_loading"
-                 Required="true" RequiredError="Este es un campo obligatorio."
+                 Required="true" RequiredError="@L["Required"]"
                  Variant="Variant.Filled" AnchorOrigin="Origin.BottomLeft" />

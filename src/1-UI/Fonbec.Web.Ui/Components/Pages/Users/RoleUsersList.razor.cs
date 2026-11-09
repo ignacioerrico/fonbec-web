@@ -115,8 +115,11 @@ public partial class RoleUsersList : AuthenticationRequiredComponentBase
 
     private string DisableTooltip(UsersListViewModel viewModel) =>
         HasLinkedStudents(viewModel)
-            ? UserMessages.CannotDisableFacilitatorWithStudents
-            : "Deshabilitar";
+            ? L["CannotDisable"]
+            : L["Disable"];
+
+    private string? ValidateEmail(string value) => Fonbec.Web.Logic.Util.ContactFieldValidator.ValidateEmail(value) is null ? null : L["InvalidEmail"].Value;
+    private string? ValidatePhone(string value) => Fonbec.Web.Logic.Util.ContactFieldValidator.ValidatePhone(value) is null ? null : L["InvalidPhone"].Value;
 
     private bool Filter(UsersListViewModel viewModel) =>
         string.IsNullOrWhiteSpace(_searchString)
@@ -158,7 +161,7 @@ public partial class RoleUsersList : AuthenticationRequiredComponentBase
 
         if (!userUpdatedSuccessfully)
         {
-            Snackbar.Add("No se pudo actualizar el usuario.", Severity.Error);
+            Snackbar.Add(L["UpdateUserFailed"], Severity.Error);
             RevertItemChanges(modifiedViewModel.UserId);
         }
     }
@@ -181,14 +184,14 @@ public partial class RoleUsersList : AuthenticationRequiredComponentBase
 
         Loading = true;
 
-        var message = string.Format("Estás por restablecer la contraseña del usuario {0} (ID {1}).  El usuario va a recibir su nueva contraseña por correo electrónico.  ¿Querés continuar?",
+        var message = string.Format(L["ResetConfirm"],
             $"{viewModel.UserFirstName} {viewModel.UserLastName}",
             viewModel.UserId);
         var dialogResult = await DialogService.ShowMessageBox(
-            "¡Atención!",
+            L["Warning"],
             message,
-            yesText: "Sí",
-            cancelText: "No");
+            yesText: L["Yes"],
+            cancelText: L["No"]);
 
         if (dialogResult is null)
         {
@@ -202,7 +205,7 @@ public partial class RoleUsersList : AuthenticationRequiredComponentBase
 
         if (identityResult.Succeeded)
         {
-            Snackbar.Add($"La nueva contraseña fue enviada a {viewModel.UserEmail}", Severity.Success);
+            Snackbar.Add(L["PasswordSent", viewModel.UserEmail], Severity.Success);
         }
         else
         {
@@ -241,8 +244,8 @@ public partial class RoleUsersList : AuthenticationRequiredComponentBase
 
         Snackbar.Add(
             granted
-                ? "Se le dio el permiso para mejorar imágenes."
-                : "Se le sacó el permiso para mejorar imágenes.",
+                ? L["ImagePermissionGranted"]
+                : L["ImagePermissionRemoved"],
             Severity.Success);
     }
 
@@ -255,12 +258,12 @@ public partial class RoleUsersList : AuthenticationRequiredComponentBase
 
         Loading = true;
 
-        var message = $"¿Estás seguro de que querés deshabilitar al usuario {viewModel.UserFirstName} {viewModel.UserLastName}?";
+        var message = L["DisableConfirm", viewModel.UserFirstName, viewModel.UserLastName];
         var dialogResult = await DialogService.ShowMessageBox(
-            "¡Atención!",
+            L["Warning"],
             message,
-            yesText: "Sí",
-            cancelText: "Cancelar");
+            yesText: L["Yes"],
+            cancelText: L["Cancel"]);
 
         if (dialogResult is null)
         {

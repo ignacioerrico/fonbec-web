@@ -36,7 +36,7 @@ public partial class MainLayout
 
     private bool IsStaticRender => RendererInfo.Name == "Static";
 
-    private string ThemeTooltip => _isDarkMode ? "Tema claro" : "Tema oscuro";
+    private string ThemeTooltip => _isDarkMode ? L["LightTheme"] : L["DarkTheme"];
 
     private string ThemeIcon => _isDarkMode
         ? Icons.Material.Filled.LightMode

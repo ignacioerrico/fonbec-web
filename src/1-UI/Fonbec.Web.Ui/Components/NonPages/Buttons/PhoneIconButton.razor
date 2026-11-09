@@ -1,10 +1,12 @@
+@inject IStringLocalizer<SharedResources> L
+
 @if (!string.IsNullOrWhiteSpace(PhoneNumber))
 {
     <MudTooltip Text="@PhoneNumber" Arrow="true" Placement="Placement.Bottom">
         <MudIconButton Href="@TelHref"
                        Icon="@Icons.Material.Outlined.Phone"
                        Size="Size.Small"
-                       aria-label="@($"Llamar a {PhoneNumber}")" />
+                       aria-label="@L["CallPhone", PhoneNumber]" />
     </MudTooltip>
 }
 

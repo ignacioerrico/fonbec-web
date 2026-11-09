@@ -1,4 +1,5 @@
 @inherits LayoutComponentBase
+@inject IStringLocalizer<SharedResources> L
 
 @* Required *@
 <MudThemeProvider IsDarkMode="_isDarkMode" />
@@ -30,17 +31,17 @@
             <MudMenu Dense="true"
                      AnchorOrigin="Origin.BottomRight"
                      TransformOrigin="Origin.TopRight"
-                     AriaLabel="Información">
+                     AriaLabel="@L["Information"]">
                 <ActivatorContent>
                     <MudIconButton Icon="@Icons.Material.Filled.Info"
                                    Color="Color.Inherit"
-                                   title="Información"
-                                   aria-label="Información" />
+                                   title="@L["Information"]"
+                                   aria-label="@L["Information"]" />
                 </ActivatorContent>
                 <ChildContent>
-                    <MudMenuItem Href="@NavRoutes.About">Acerca</MudMenuItem>
-                    <MudMenuItem Href="@NavRoutes.Privacy">Privacidad</MudMenuItem>
-                    <MudMenuItem Href="@NavRoutes.DataDeletion">Eliminación de datos</MudMenuItem>
+                    <MudMenuItem Href="@NavRoutes.About">@L["About"]</MudMenuItem>
+                    <MudMenuItem Href="@NavRoutes.Privacy">@L["Privacy"]</MudMenuItem>
+                    <MudMenuItem Href="@NavRoutes.DataDeletion">@L["DataDeletion"]</MudMenuItem>
                 </ChildContent>
             </MudMenu>
             <MudTooltip Text="@ThemeTooltip">
@@ -81,7 +82,7 @@
 </MudLayout>
 
 <div id="blazor-error-ui" data-nosnippet>
-    Ocurrió un error inesperado.
-    <a href="." class="reload">Recargar</a>
+    @L["UnexpectedError"]
+    <a href="." class="reload">@L["Reload"]</a>
     <span class="dismiss">🗙</span>
 </div>
