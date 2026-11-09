@@ -21,6 +21,7 @@ public class CompanyRelationsTests : BunitContext
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
         Services.AddMudServices();
+        Fonbec.Web.Ui.Localization.LocalizationSetup.AddFonbecLocalization(Services);
         Services.AddSingleton(_companies);
         var auth = this.AddAuthorization();
         auth.SetAuthorized("Manager");

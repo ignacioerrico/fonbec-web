@@ -1,8 +1,9 @@
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Fonbec.Web.Ui.Localization.SharedResources> L
 @attribute [Route(NavRoutes.MediatorCreate)]
 @attribute [Authorize(Policy = nameof(MediatorCreate))]
 
 @using Fonbec.Web.DataAccess.Constants
 
-<RoleUserCreate Title="Alta de mediador"
+<RoleUserCreate Title="@L["CreateFacilitator"]"
                 Role="@FonbecRole.Uploader"
                 CancelRoute="@NavRoutes.Mediators" />

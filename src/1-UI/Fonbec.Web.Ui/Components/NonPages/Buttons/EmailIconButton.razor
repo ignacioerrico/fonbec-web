@@ -1,10 +1,11 @@
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Fonbec.Web.Ui.Localization.SharedResources> L
 ﻿@if (!string.IsNullOrWhiteSpace(EmailAddress))
 {
     <MudTooltip Text="@EmailAddress" Arrow="true" Placement="Placement.Bottom">
         <MudIconButton Href="@($"mailto:{EmailAddress}")"
                        Icon="@Icons.Material.Outlined.Email"
                        Size="Size.Small"
-                       aria-label="@($"Enviar correo a {EmailAddress}")" />
+                       aria-label="@L["SendEmail", EmailAddress]" />
     </MudTooltip>
 }
 

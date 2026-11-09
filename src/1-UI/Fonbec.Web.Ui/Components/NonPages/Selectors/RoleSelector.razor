@@ -1,11 +1,12 @@
-﻿@using Fonbec.Web.DataAccess.Constants
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Fonbec.Web.Ui.Localization.SharedResources> L
+@using Fonbec.Web.DataAccess.Constants
 
-<MudSelect T="string" Label="Rol"
+<MudSelect T="string" Label="@L["Role"]"
            Value="SelectedRole" ValueChanged="OnSelectedValueChanged"
-           Required="true" RequiredError="Este es un campo obligatorio."
+           Required="true" RequiredError="@L["Required"]"
            Variant="Variant.Filled" AnchorOrigin="Origin.BottomLeft">
     @foreach (var role in FonbecRole.AllRoles)
     {
-        <MudSelectItem Value="@role">@FonbecRole.Translator[role]</MudSelectItem>
+        <MudSelectItem Value="@role">@L[$"Role.{role}"]</MudSelectItem>
     }
 </MudSelect>

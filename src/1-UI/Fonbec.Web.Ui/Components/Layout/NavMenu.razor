@@ -1,4 +1,5 @@
-﻿@using Fonbec.Web.DataAccess.Constants
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Fonbec.Web.Ui.Localization.SharedResources> L
+@using Fonbec.Web.DataAccess.Constants
 @using Fonbec.Web.Logic.Constants
 @using Fonbec.Web.Ui.Components.Pages.Chapters
 @using Fonbec.Web.Ui.Components.Pages.Companies
@@ -22,9 +23,8 @@
                 <MudText Typo="Typo.h6" Class="px-4 pt-2">
                     @{
                         var role = outerContext.User.FindFirstValue(ClaimTypes.Role) ?? string.Empty;
-                        FonbecRole.Translator.TryGetValue(role, out var translatedRole);
                     }
-                    @translatedRole
+                    @L[$"Role.{role}"]
                 </MudText>
 
                 <MudText Typo="Typo.body2" Class="px-4 mud-text-secondary">
@@ -35,22 +35,22 @@
 
                 <AuthorizeView Policy="@nameof(ChaptersList)">
                     <MudNavLink Href="@NavRoutes.Chapters" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Place">
-                        Filiales
+                        @L["Chapters"]
                     </MudNavLink>
                 </AuthorizeView>
 
                 <AuthorizeView Policy="@nameof(AdminsList)">
                     <MudNavLink Href="@NavRoutes.Admins" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.AdminPanelSettings">
-                        Administradores
+                        @L["Administrators"]
                     </MudNavLink>
                 </AuthorizeView>
 
                 <AuthorizeView Roles="@FonbecRole.Manager">
-                    <MudNavGroup Title="Usuarios" Icon="@Icons.Material.Filled.AccountBox" Expanded="true">
+                    <MudNavGroup Title="@L["Users"]" Icon="@Icons.Material.Filled.AccountBox" Expanded="true">
                         <AuthorizeView Policy="@nameof(MediatorsList)" Context="mediatorsContext">
                             <MudNavLink Href="@NavRoutes.Mediators" Match="NavLinkMatch.Prefix">
                                 <span class="nav-count">
-                                    <span class="nav-count__label">Mediadores</span>
+                                    <span class="nav-count__label">@L["Facilitators"]</span>
                                     @if (_indicators.MediatorCount is int mediators)
                                     {
                                         <span class="nav-count__note">@NavMenuFormatting.CountNote(mediators)</span>
@@ -62,7 +62,7 @@
                         <AuthorizeView Policy="@nameof(ReviewersList)" Context="reviewersContext">
                             <MudNavLink Href="@NavRoutes.Reviewers" Match="NavLinkMatch.Prefix">
                                 <span class="nav-count">
-                                    <span class="nav-count__label">Revisores</span>
+                                    <span class="nav-count__label">@L["Reviewers"]</span>
                                     @if (_indicators.ReviewerCount is int reviewers)
                                     {
                                         <span class="nav-count__note">@NavMenuFormatting.CountNote(reviewers)</span>
@@ -74,11 +74,11 @@
                 </AuthorizeView>
 
                 <AuthorizeView Roles="@($"{FonbecRole.Admin},{FonbecRole.Manager}")" Context="sponsorshipsContext">
-                    <MudNavGroup Title="Apadrinamientos" Icon="@Icons.Material.Filled.Handshake" Expanded="true">
+                    <MudNavGroup Title="@L["Sponsorships"]" Icon="@Icons.Material.Filled.Handshake" Expanded="true">
                         <AuthorizeView Policy="@nameof(StudentsList)" Context="studentsContext">
                             <MudNavLink Href="@NavRoutes.Students" Match="NavLinkMatch.Prefix">
                                 <span class="nav-count">
-                                    <span class="nav-count__label">Becarios</span>
+                                    <span class="nav-count__label">@L["Students"]</span>
                                     @if (_indicators.StudentCount is int students)
                                     {
                                         <span class="nav-count__note">@NavMenuFormatting.CountNote(students)</span>
@@ -90,7 +90,7 @@
                         <AuthorizeView Policy="@nameof(SponsorsList)" Context="sponsorsContext">
                             <MudNavLink Href="@NavRoutes.Sponsors" Match="NavLinkMatch.Prefix">
                                 <span class="nav-count">
-                                    <span class="nav-count__label">Padrinos</span>
+                                    <span class="nav-count__label">@L["Sponsors"]</span>
                                     @if (_indicators.SponsorCount is int sponsors)
                                     {
                                         <span class="nav-count__note">@NavMenuFormatting.CountNote(sponsors)</span>
@@ -102,7 +102,7 @@
                         <AuthorizeView Policy="@nameof(CompaniesList)" Context="companiesContext">
                             <MudNavLink Href="@NavRoutes.Companies" Match="NavLinkMatch.Prefix">
                                 <span class="nav-count">
-                                    <span class="nav-count__label">Empresas</span>
+                                    <span class="nav-count__label">@L["Companies"]</span>
                                     @if (_indicators.CompanyCount is int companies)
                                     {
                                         <span class="nav-count__note">@NavMenuFormatting.CountNote(companies)</span>
@@ -113,7 +113,7 @@
 
                         <AuthorizeView Policy="@nameof(ChapterImport)" Context="importContext">
                             <MudNavLink Href="@NavRoutes.ChapterImport" Match="NavLinkMatch.Prefix">
-                                Importar
+                                @L["Import"]
                             </MudNavLink>
                         </AuthorizeView>
                     </MudNavGroup>
@@ -124,14 +124,14 @@
                 </AuthorizeView>
 
                 <AuthorizeView Roles="@($"{FonbecRole.Manager},{FonbecRole.Uploader}")" Context="lettersContext">
-                    <MudNavGroup Title="Cartas" Icon="@Icons.Material.Filled.MailOutline" Expanded="true">
+                    <MudNavGroup Title="@L["Letters"]" Icon="@Icons.Material.Filled.MailOutline" Expanded="true">
                         <AuthorizeView Policy="@nameof(PlannedDeliveriesList)" Context="plannedDeliveriesContext">
                             <MudNavLink Href="@NavRoutes.PlannedDeliveries" Match="NavLinkMatch.Prefix">
                                 <span class="nav-count">
-                                    <span class="nav-count__label">Campañas</span>
+                                    <span class="nav-count__label">@L["Campaigns"]</span>
                                     @if (_indicators.CampaignCompletionPercent is int percent)
                                     {
-                                        <span class="nav-count__note" title="Avance de la campaña activa">@NavMenuFormatting.PercentNote(percent)</span>
+                                        <span class="nav-count__note" title="@L["CampaignProgress"]">@NavMenuFormatting.PercentNote(percent)</span>
                                     }
                                 </span>
                             </MudNavLink>
@@ -139,21 +139,21 @@
                         <AuthorizeView Policy="@nameof(LetterFollowUp)" Context="letterFollowUpContext">
                             <MudNavLink Href="@NavRoutes.LetterFollowUp" Match="NavLinkMatch.Prefix">
                                 <span class="nav-count">
-                                    <span class="nav-count__label">Seguimiento</span>
+                                    <span class="nav-count__label">@L["FollowUp"]</span>
                                     @if (_indicators.RedFlags > 0 || _indicators.GreenFlags > 0)
                                     {
                                         <span class="nav-count__badges">
                                             @if (_indicators.RedFlags > 0)
                                             {
                                                 <span class="nav-count__badge"
-                                                      title="@NavMenuFormatting.RedFlags(_indicators.RedFlags)"
-                                                      aria-label="@NavMenuFormatting.RedFlags(_indicators.RedFlags)">@_indicators.RedFlags</span>
+                                                      title="@RedFlags(_indicators.RedFlags)"
+                                                      aria-label="@RedFlags(_indicators.RedFlags)">@_indicators.RedFlags</span>
                                             }
                                             @if (_indicators.GreenFlags > 0)
                                             {
                                                 <span class="nav-count__badge nav-count__badge--success"
-                                                      title="@NavMenuFormatting.GreenFlags(_indicators.GreenFlags)"
-                                                      aria-label="@NavMenuFormatting.GreenFlags(_indicators.GreenFlags)">@_indicators.GreenFlags</span>
+                                                      title="@GreenFlags(_indicators.GreenFlags)"
+                                                      aria-label="@GreenFlags(_indicators.GreenFlags)">@_indicators.GreenFlags</span>
                                             }
                                         </span>
                                     }
@@ -167,17 +167,17 @@
                 </AuthorizeView>
 
                 <AuthorizeView Roles="@($"{FonbecRole.Reviewer},{FonbecRole.Manager}")" Context="reviewContext">
-                    <MudNavGroup Title="Revisión" Icon="@Icons.Material.Filled.RateReview" Expanded="true">
+                    <MudNavGroup Title="@L["Review"]" Icon="@Icons.Material.Filled.RateReview" Expanded="true">
                         <AuthorizeView Policy="@DocumentPermission.DigitalImprovement" Context="improvementContext">
                             <MudNavLink Href="@NavRoutes.ImprovementQueue" Match="NavLinkMatch.Prefix">
                                 <span class="nav-count">
-                                    <span class="nav-count__label">Mejorar imágenes</span>
+                                    <span class="nav-count__label">@L["ImproveImages"]</span>
                                     @if (_indicators.PendingImprovement is int pendingImprovement
                                          && PendingMessageBadge.Format(pendingImprovement) is string improvementBadge)
                                     {
                                         <span class="nav-count__badge"
-                                              title="@NavMenuFormatting.PendingChanges(pendingImprovement)"
-                                              aria-label="@NavMenuFormatting.PendingChanges(pendingImprovement)">@improvementBadge</span>
+                                              title="@PendingChanges(pendingImprovement)"
+                                              aria-label="@PendingChanges(pendingImprovement)">@improvementBadge</span>
                                     }
                                 </span>
                             </MudNavLink>
@@ -186,13 +186,13 @@
                         <AuthorizeView Policy="@nameof(ReviewQueue)" Context="reviewQueueContext">
                             <MudNavLink Href="@NavRoutes.ReviewQueue" Match="NavLinkMatch.Prefix">
                                 <span class="nav-count">
-                                    <span class="nav-count__label">Revisar documentos</span>
+                                    <span class="nav-count__label">@L["ReviewDocuments"]</span>
                                     @if (_indicators.PendingReview is int pendingReview
                                          && PendingMessageBadge.Format(pendingReview) is string reviewBadge)
                                     {
                                         <span class="nav-count__badge"
-                                              title="@NavMenuFormatting.PendingChanges(pendingReview)"
-                                              aria-label="@NavMenuFormatting.PendingChanges(pendingReview)">@reviewBadge</span>
+                                              title="@PendingChanges(pendingReview)"
+                                              aria-label="@PendingChanges(pendingReview)">@reviewBadge</span>
                                     }
                                 </span>
                             </MudNavLink>
@@ -203,13 +203,13 @@
                             <AuthorizeView Policy="@nameof(RejectedDocuments)" Context="rejectedDocumentsContext">
                                 <MudNavLink Href="@NavRoutes.RejectedDocuments" Match="NavLinkMatch.All">
                                     <span class="nav-count">
-                                        <span class="nav-count__label">Documentos rechazados</span>
+                                        <span class="nav-count__label">@L["RejectedDocuments"]</span>
                                         @if (_indicators.PendingHeldRejections is int pendingHeldRejections
                                              && PendingMessageBadge.Format(pendingHeldRejections) is string heldBadge)
                                         {
                                             <span class="nav-count__badge"
-                                                  title="@NavMenuFormatting.PendingChanges(pendingHeldRejections)"
-                                                  aria-label="@NavMenuFormatting.PendingChanges(pendingHeldRejections)">@heldBadge</span>
+                                                  title="@PendingChanges(pendingHeldRejections)"
+                                                  aria-label="@PendingChanges(pendingHeldRejections)">@heldBadge</span>
                                         }
                                     </span>
                                 </MudNavLink>
@@ -218,7 +218,7 @@
 
                         <AuthorizeView Policy="@nameof(QueueContents)" Context="queueContentsContext">
                             <MudNavLink Href="@NavRoutes.QueueContents" Match="NavLinkMatch.All">
-                                Colas
+                                @L["Queues"]
                             </MudNavLink>
                         </AuthorizeView>
                     </MudNavGroup>
@@ -226,7 +226,7 @@
 
                 <AuthorizeView Policy="@nameof(ChapterSettings)">
                     <MudNavLink Href="@NavRoutes.ChapterSettings" Match="NavLinkMatch.All" Icon="@Icons.Material.Filled.Tune">
-                        Configuración de la filial
+                        @L["ChapterSettings"]
                     </MudNavLink>
                 </AuthorizeView>
             </Authorized>
@@ -239,14 +239,14 @@
                 <MudDivider Class="my-2" />
 
                 <MudNavLink Href="Account/Manage" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Settings">
-                    Configuración
+                    @L["Settings"]
                 </MudNavLink>
 
                 <form action="Account/Logout" method="post">
                     <AntiforgeryToken />
                     <input type="hidden" name="ReturnUrl" value="Account/Login" />
                     <button type="submit" class="mud-nav-link mud-ripple">
-                        <MudIcon Icon="@Icons.Material.Filled.Logout" Color="Color.Info" Class="mr-3"></MudIcon> Cerrar sesión
+                        <MudIcon Icon="@Icons.Material.Filled.Logout" Color="Color.Info" Class="mr-3"></MudIcon> @L["SignOut"]
                     </button>
                 </form>
             </div>
@@ -254,7 +254,7 @@
 
         <NotAuthorized>
             <MudNavLink Href="/Account/Login" Match="NavLinkMatch.Prefix" Icon="@Icons.Material.Filled.Password">
-                Ingresar
+                @L["LogIn"]
             </MudNavLink>
         </NotAuthorized>
     </AuthorizeView>

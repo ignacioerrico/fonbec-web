@@ -1,14 +1,15 @@
-﻿@using Fonbec.Web.Logic.Models
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Fonbec.Web.Ui.Localization.SharedResources> L
+@using Fonbec.Web.Logic.Models
 
 <LoadingIndicator Loading="_loading" />
 
 <MudAutocomplete @ref="_autocomplete"
-                 T="SelectableModel<int>" Label="Padrino"
+                 T="SelectableModel<int>" Label="@L["Sponsor"]"
                  SearchFunc="Search"
                  Value="SelectedSponsor"
                  ValueChanged="OnSelectedValueChanged"
                  ToStringFunc="MapKeyToDisplayName"
                  Disabled="_loading"
                  Clearable="true"
-                 Required="IsRequired" RequiredError="Este es un campo obligatorio."
+                 Required="IsRequired" RequiredError="@L["Required"]"
                  Variant="Variant.Filled" AnchorOrigin="Origin.BottomLeft" />

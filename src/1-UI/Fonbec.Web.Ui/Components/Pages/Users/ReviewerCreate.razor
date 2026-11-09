@@ -1,8 +1,9 @@
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Fonbec.Web.Ui.Localization.SharedResources> L
 @attribute [Route(NavRoutes.ReviewerCreate)]
 @attribute [Authorize(Policy = nameof(ReviewerCreate))]
 
 @using Fonbec.Web.DataAccess.Constants
 
-<RoleUserCreate Title="Alta de revisor"
+<RoleUserCreate Title="@L["CreateReviewer"]"
                 Role="@FonbecRole.Reviewer"
                 CancelRoute="@NavRoutes.Reviewers" />

@@ -8,6 +8,9 @@ namespace Fonbec.Web.Ui.Components.Pages.Users;
 
 public partial class RoleUserCreate : AuthenticationRequiredComponentBase
 {
+    private string? ValidateEmail(string value) => Fonbec.Web.Logic.Util.ContactFieldValidator.ValidateEmail(value) is null ? null : L["InvalidEmail"].Value;
+    private string? ValidatePhone(string value) => Fonbec.Web.Logic.Util.ContactFieldValidator.ValidatePhone(value) is null ? null : L["InvalidPhone"].Value;
+
     private readonly UserCreateBindModel _bindModel = new()
     {
         UserFirstName = string.Empty,
@@ -74,13 +77,13 @@ public partial class RoleUserCreate : AuthenticationRequiredComponentBase
         var validateUniqueFullNameOutputModel = await UserService.ValidateUniqueFullNameAsync(_bindModel.UserFirstName, _bindModel.UserLastName);
         if (!validateUniqueFullNameOutputModel.IsFullNameUnique)
         {
-            var message = $"Ya existe un usuario que se llama {_bindModel.UserFirstName} {_bindModel.UserLastName}. ¿Querés crear este de todas formas?";
+            var message = L["DuplicateUser", _bindModel.UserFirstName, _bindModel.UserLastName].Value;
 
             var dialogResult = await DialogService.ShowMessageBox(
-                "¡Atención!",
+                L["Warning"],
                 message,
-                yesText: "Sí",
-                cancelText: "Cancelar");
+                yesText: L["Yes"],
+                cancelText: L["Cancel"]);
 
             if (dialogResult is null)
             {
@@ -117,12 +120,12 @@ public partial class RoleUserCreate : AuthenticationRequiredComponentBase
 
         if (createdUserId <= 0)
         {
-            Snackbar.Add("No se pudo crear el usuario.", Severity.Error);
+            Snackbar.Add(L["CreateUserFailed"], Severity.Error);
             _saving = false;
             return;
         }
 
-        Snackbar.Add($"El usuario {_bindModel.UserFirstName} {_bindModel.UserLastName} (ID: {createdUserId}) se creó exitosamente.", Severity.Success);
+        Snackbar.Add(L["UserCreated", _bindModel.UserFirstName, _bindModel.UserLastName, createdUserId], Severity.Success);
         _saving = false;
 
         NavigationManager.NavigateTo(CancelRoute);

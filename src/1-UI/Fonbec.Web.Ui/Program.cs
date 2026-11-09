@@ -7,6 +7,7 @@ using Fonbec.Web.Ui.Components;
 using Fonbec.Web.Ui.Configuration;
 using Fonbec.Web.Ui.Constants;
 using Google.Apis.Auth.AspNetCore3;
+using Fonbec.Web.Ui.Localization;
 using Mapster;
 using Microsoft.AspNetCore.Authentication.Facebook;
 using Microsoft.AspNetCore.Authentication.OpenIdConnect;
@@ -15,6 +16,7 @@ using Microsoft.AspNetCore.HttpOverrides;
 using Microsoft.AspNetCore.Identity;
 
 var builder = WebApplication.CreateBuilder(args);
+builder.Services.AddFonbecLocalization();
 
 // Add services to the container.
 
@@ -173,6 +175,7 @@ await ConfigureMiddleware.ApplyMigrationsAndSeedingAsync(app, applySeeding: fals
 await ConfigureMiddleware.SeedRolesAndAdminUserAsync(app);
 
 app.UseForwardedHeaders();
+app.UseFonbecLocalization();
 
 if (app.Environment.IsDevelopment())
 {

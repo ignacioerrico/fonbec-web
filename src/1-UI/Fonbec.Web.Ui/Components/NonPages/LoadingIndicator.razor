@@ -1,4 +1,5 @@
-﻿@if (Loading)
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Fonbec.Web.Ui.Localization.SharedResources> L
+@if (Loading)
 {
     <MudText Class="mt-4">
         <em>@LoadingText&hellip;</em>

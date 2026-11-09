@@ -1,9 +1,10 @@
-﻿@using Fonbec.Web.DataAccess.Entities.Enums
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Fonbec.Web.Ui.Localization.SharedResources> L
+@using Fonbec.Web.DataAccess.Entities.Enums
 
-<MudSelect T="Gender" Label="Sexo"
+<MudSelect T="Gender" Label="@L["Gender"]"
            Value="SelectedGender"
            ValueChanged="OnSelectedValueChanged"
            Variant="Variant.Filled" AnchorOrigin="Origin.BottomLeft">
-	<MudSelectItem T="Gender" Value="Gender.Male">Masculino</MudSelectItem>
-	<MudSelectItem T="Gender" Value="Gender.Female">Femenino</MudSelectItem>
+	<MudSelectItem T="Gender" Value="Gender.Male">@L["Male"]</MudSelectItem>
+	<MudSelectItem T="Gender" Value="Gender.Female">@L["Female"]</MudSelectItem>
 </MudSelect>

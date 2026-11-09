@@ -33,9 +33,9 @@ public partial class Home : AuthenticationRequiredComponentBase
         ? []
         :
         [
-            new("Coordinadores", null, "Todavía no hay coordinadores en esta filial.", _home.Managers),
-            new("Mediadores", NavRoutes.Mediators, "Todavía no hay mediadores en esta filial.", _home.Facilitators),
-            new("Revisores", NavRoutes.Reviewers, "Todavía no hay revisores en esta filial.", _home.Reviewers),
+            new(L["Managers"], null, L["NoManagers"], _home.Managers),
+            new(L["Facilitators"], NavRoutes.Mediators, L["NoFacilitators"], _home.Facilitators),
+            new(L["Reviewers"], NavRoutes.Reviewers, L["NoReviewers"], _home.Reviewers),
         ];
 
     protected override async Task OnInitializedAsync()

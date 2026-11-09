@@ -1,0 +1,681 @@
+<?xml version='1.0' encoding='utf-8'?>
+<root>
+  <data name="About" xml:space="preserve">
+    <value>About</value>
+  </data>
+  <data name="AccessDenied" xml:space="preserve">
+    <value>You do not have permission to view this page.</value>
+  </data>
+  <data name="AccountLocked" xml:space="preserve">
+    <value>Account locked</value>
+  </data>
+  <data name="AccountLockedIntro" xml:space="preserve">
+    <value>This account was locked after too many failed attempts. Try again later.</value>
+  </data>
+  <data name="Actions" xml:space="preserve">
+    <value>Actions</value>
+  </data>
+  <data name="AdditionalInformation" xml:space="preserve">
+    <value>Additional information</value>
+  </data>
+  <data name="Administrators" xml:space="preserve">
+    <value>Administrators</value>
+  </data>
+  <data name="BackToSignIn" xml:space="preserve">
+    <value>Back to sign in</value>
+  </data>
+  <data name="Campaign" xml:space="preserve">
+    <value>Campaign</value>
+  </data>
+  <data name="CampaignProgress" xml:space="preserve">
+    <value>Active campaign progress</value>
+  </data>
+  <data name="Campaigns" xml:space="preserve">
+    <value>Campaigns</value>
+  </data>
+  <data name="Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="CannotDisable" xml:space="preserve">
+    <value>Cannot disable a facilitator with linked students.</value>
+  </data>
+  <data name="Chapter" xml:space="preserve">
+    <value>Chapter</value>
+  </data>
+  <data name="ChapterGreeting" xml:space="preserve">
+    <value>You are managing the {0} chapter.</value>
+  </data>
+  <data name="ChapterRequired" xml:space="preserve">
+    <value>This page requires a user who belongs to a chapter.</value>
+  </data>
+  <data name="ChapterSettings" xml:space="preserve">
+    <value>Chapter settings</value>
+  </data>
+  <data name="Chapters" xml:space="preserve">
+    <value>Chapters</value>
+  </data>
+  <data name="CheckEmail" xml:space="preserve">
+    <value>Check your email</value>
+  </data>
+  <data name="Companies" xml:space="preserve">
+    <value>Companies</value>
+  </data>
+  <data name="Company" xml:space="preserve">
+    <value>Company</value>
+  </data>
+  <data name="CreateFacilitator" xml:space="preserve">
+    <value>Add facilitator</value>
+  </data>
+  <data name="CreateReviewer" xml:space="preserve">
+    <value>Add reviewer</value>
+  </data>
+  <data name="DarkTheme" xml:space="preserve">
+    <value>Dark theme</value>
+  </data>
+  <data name="DataDeletion" xml:space="preserve">
+    <value>Data deletion</value>
+  </data>
+  <data name="Disable" xml:space="preserve">
+    <value>Disable</value>
+  </data>
+  <data name="DisableConfirm" xml:space="preserve">
+    <value>Are you sure you want to disable user {0} {1}?</value>
+  </data>
+  <data name="Edit" xml:space="preserve">
+    <value>Edit</value>
+  </data>
+  <data name="EducationLevel" xml:space="preserve">
+    <value>Education level</value>
+  </data>
+  <data name="Email" xml:space="preserve">
+    <value>Email</value>
+  </data>
+  <data name="EmailPlaceholder" xml:space="preserve">
+    <value>name@example.com</value>
+  </data>
+  <data name="EmailSent" xml:space="preserve">
+    <value>Email sent</value>
+  </data>
+  <data name="EmptyFacilitators" xml:space="preserve">
+    <value>There are no facilitators.</value>
+  </data>
+  <data name="EmptyReviewers" xml:space="preserve">
+    <value>There are no reviewers.</value>
+  </data>
+  <data name="Enable" xml:space="preserve">
+    <value>Enable</value>
+  </data>
+  <data name="Facilitator" xml:space="preserve">
+    <value>Facilitator</value>
+  </data>
+  <data name="Facilitators" xml:space="preserve">
+    <value>Facilitators</value>
+  </data>
+  <data name="Female" xml:space="preserve">
+    <value>Female</value>
+  </data>
+  <data name="FirstName" xml:space="preserve">
+    <value>First name</value>
+  </data>
+  <data name="FirstNameFirst" xml:space="preserve">
+    <value>First name Last name</value>
+  </data>
+  <data name="FollowUp" xml:space="preserve">
+    <value>Follow-up</value>
+  </data>
+  <data name="ForgotPassword" xml:space="preserve">
+    <value>Forgot password</value>
+  </data>
+  <data name="Gender" xml:space="preserve">
+    <value>Gender</value>
+  </data>
+  <data name="GrantImagePermission" xml:space="preserve">
+    <value>Grant image improvement permission</value>
+  </data>
+  <data name="Greeting" xml:space="preserve">
+    <value>Hello, {0}.</value>
+  </data>
+  <data name="Home" xml:space="preserve">
+    <value>Home</value>
+  </data>
+  <data name="ImagePermissionGranted" xml:space="preserve">
+    <value>Image improvement permission granted.</value>
+  </data>
+  <data name="ImagePermissionRemoved" xml:space="preserve">
+    <value>Image improvement permission removed.</value>
+  </data>
+  <data name="Import" xml:space="preserve">
+    <value>Import</value>
+  </data>
+  <data name="ImproveImages" xml:space="preserve">
+    <value>Improve images</value>
+  </data>
+  <data name="Information" xml:space="preserve">
+    <value>Information</value>
+  </data>
+  <data name="InvalidCredentials" xml:space="preserve">
+    <value>Error: Incorrect email or password.</value>
+  </data>
+  <data name="InvalidEmail" xml:space="preserve">
+    <value>Invalid email.</value>
+  </data>
+  <data name="InvalidPhone" xml:space="preserve">
+    <value>Invalid phone number.</value>
+  </data>
+  <data name="KnowSecondaryStart" xml:space="preserve">
+    <value>I know when secondary school starts</value>
+  </data>
+  <data name="KnowUniversityStart" xml:space="preserve">
+    <value>I know when university starts</value>
+  </data>
+  <data name="KnownYearRequired" xml:space="preserve">
+    <value>Specify the year if it is known.</value>
+  </data>
+  <data name="LastName" xml:space="preserve">
+    <value>Last name</value>
+  </data>
+  <data name="LastNameFirst" xml:space="preserve">
+    <value>Last name, First name</value>
+  </data>
+  <data name="Letters" xml:space="preserve">
+    <value>Letters</value>
+  </data>
+  <data name="LightTheme" xml:space="preserve">
+    <value>Light theme</value>
+  </data>
+  <data name="Loading" xml:space="preserve">
+    <value>Loading data</value>
+  </data>
+  <data name="LogIn" xml:space="preserve">
+    <value>Sign in</value>
+  </data>
+  <data name="Male" xml:space="preserve">
+    <value>Male</value>
+  </data>
+  <data name="Managers" xml:space="preserve">
+    <value>Managers</value>
+  </data>
+  <data name="Me" xml:space="preserve">
+    <value>ME</value>
+  </data>
+  <data name="MyStudents" xml:space="preserve">
+    <value>My students</value>
+  </data>
+  <data name="Nickname" xml:space="preserve">
+    <value>Nickname</value>
+  </data>
+  <data name="No" xml:space="preserve">
+    <value>No</value>
+  </data>
+  <data name="NoActiveCampaign" xml:space="preserve">
+    <value>There is no active campaign.</value>
+  </data>
+  <data name="NoFacilitators" xml:space="preserve">
+    <value>There are no facilitators in this chapter yet.</value>
+  </data>
+  <data name="NoManagers" xml:space="preserve">
+    <value>There are no managers in this chapter yet.</value>
+  </data>
+  <data name="NoReviewers" xml:space="preserve">
+    <value>There are no reviewers in this chapter yet.</value>
+  </data>
+  <data name="NoStudents" xml:space="preserve">
+    <value>No students.</value>
+  </data>
+  <data name="OtherSignIn" xml:space="preserve">
+    <value>Or sign in with another service</value>
+  </data>
+  <data name="PagerInfo" xml:space="preserve">
+    <value>{first_item}-{last_item} of {all_items}</value>
+  </data>
+  <data name="Password" xml:space="preserve">
+    <value>Password</value>
+  </data>
+  <data name="PasswordPlaceholder" xml:space="preserve">
+    <value>password</value>
+  </data>
+  <data name="PasswordSent" xml:space="preserve">
+    <value>The new password was sent to {0}</value>
+  </data>
+  <data name="Phone" xml:space="preserve">
+    <value>Phone</value>
+  </data>
+  <data name="Primary" xml:space="preserve">
+    <value>Primary school</value>
+  </data>
+  <data name="Privacy" xml:space="preserve">
+    <value>Privacy</value>
+  </data>
+  <data name="Queues" xml:space="preserve">
+    <value>Queues</value>
+  </data>
+  <data name="RecoverPassword" xml:space="preserve">
+    <value>Recover password</value>
+  </data>
+  <data name="RecoverPasswordIntro" xml:space="preserve">
+    <value>Enter your email and we will send you a password reset link.</value>
+  </data>
+  <data name="RecoveryConfirmation" xml:space="preserve">
+    <value>If the email is registered, you will receive a password reset link.</value>
+  </data>
+  <data name="Reload" xml:space="preserve">
+    <value>Reload</value>
+  </data>
+  <data name="RememberMe" xml:space="preserve">
+    <value>Remember me</value>
+  </data>
+  <data name="RemoveImagePermission" xml:space="preserve">
+    <value>Remove image improvement permission</value>
+  </data>
+  <data name="Required" xml:space="preserve">
+    <value>This field is required.</value>
+  </data>
+  <data name="RequiredField" xml:space="preserve">
+    <value>This field is required</value>
+  </data>
+  <data name="ResetConfirm" xml:space="preserve">
+    <value>You are about to reset the password for {0} (ID {1}). The user will receive the new password by email. Continue?</value>
+  </data>
+  <data name="ResetPassword" xml:space="preserve">
+    <value>Reset password</value>
+  </data>
+  <data name="Review" xml:space="preserve">
+    <value>Review</value>
+  </data>
+  <data name="ReviewDocuments" xml:space="preserve">
+    <value>Review documents</value>
+  </data>
+  <data name="Reviewers" xml:space="preserve">
+    <value>Reviewers</value>
+  </data>
+  <data name="Role" xml:space="preserve">
+    <value>Role</value>
+  </data>
+  <data name="Role.Admin" xml:space="preserve">
+    <value>Administrator</value>
+  </data>
+  <data name="Role.Manager" xml:space="preserve">
+    <value>Manager</value>
+  </data>
+  <data name="Role.Reviewer" xml:space="preserve">
+    <value>Reviewer</value>
+  </data>
+  <data name="Role.Uploader" xml:space="preserve">
+    <value>Facilitator</value>
+  </data>
+  <data name="RowsPerPage" xml:space="preserve">
+    <value>Rows per page:</value>
+  </data>
+  <data name="Search" xml:space="preserve">
+    <value>Search</value>
+  </data>
+  <data name="Secondary" xml:space="preserve">
+    <value>Secondary school</value>
+  </data>
+  <data name="SecondaryStart" xml:space="preserve">
+    <value>Secondary school start year</value>
+  </data>
+  <data name="SelectEducationLevel" xml:space="preserve">
+    <value>Select an education level.</value>
+  </data>
+  <data name="SendLink" xml:space="preserve">
+    <value>Send link</value>
+  </data>
+  <data name="Settings" xml:space="preserve">
+    <value>Settings</value>
+  </data>
+  <data name="SignIn" xml:space="preserve">
+    <value>Sign in</value>
+  </data>
+  <data name="SignInIntro" xml:space="preserve">
+    <value>Sign in with your FONBEC account</value>
+  </data>
+  <data name="SignInWith" xml:space="preserve">
+    <value>Sign in with {0}</value>
+  </data>
+  <data name="SignOut" xml:space="preserve">
+    <value>Sign out</value>
+  </data>
+  <data name="Sponsor" xml:space="preserve">
+    <value>Sponsor</value>
+  </data>
+  <data name="Sponsors" xml:space="preserve">
+    <value>Sponsors</value>
+  </data>
+  <data name="Sponsorships" xml:space="preserve">
+    <value>Sponsorships</value>
+  </data>
+  <data name="Student" xml:space="preserve">
+    <value>Student</value>
+  </data>
+  <data name="StudentMessages" xml:space="preserve">
+    <value>Student messages</value>
+  </data>
+  <data name="Students" xml:space="preserve">
+    <value>Students</value>
+  </data>
+  <data name="Team" xml:space="preserve">
+    <value>Team</value>
+  </data>
+  <data name="UnexpectedError" xml:space="preserve">
+    <value>An unexpected error occurred.</value>
+  </data>
+  <data name="University" xml:space="preserve">
+    <value>University</value>
+  </data>
+  <data name="UniversityStart" xml:space="preserve">
+    <value>University start year</value>
+  </data>
+  <data name="UpdateUserFailed" xml:space="preserve">
+    <value>Could not update the user.</value>
+  </data>
+  <data name="Users" xml:space="preserve">
+    <value>Users</value>
+  </data>
+  <data name="ValidationEmail" xml:space="preserve">
+    <value>Enter a valid email address.</value>
+  </data>
+  <data name="ValidationRequired" xml:space="preserve">
+    <value>This field is required.</value>
+  </data>
+  <data name="ViewDetails" xml:space="preserve">
+    <value>View details</value>
+  </data>
+  <data name="Warning" xml:space="preserve">
+    <value>Warning!</value>
+  </data>
+  <data name="WithoutSponsor" xml:space="preserve">
+    <value>without a sponsor</value>
+  </data>
+  <data name="WithoutSponsors" xml:space="preserve">
+    <value>without sponsors</value>
+  </data>
+  <data name="WithoutStudent" xml:space="preserve">
+    <value>without a student</value>
+  </data>
+  <data name="WithoutStudents" xml:space="preserve">
+    <value>without students</value>
+  </data>
+  <data name="Yes" xml:space="preserve">
+    <value>Yes</value>
+  </data>
+  <data name="RedFlags" xml:space="preserve">
+    <value>{0} red flags</value>
+  </data>
+  <data name="GreenFlags" xml:space="preserve">
+    <value>{0} green flags</value>
+  </data>
+  <data name="Pending" xml:space="preserve">
+    <value>{0} pending</value>
+  </data>
+  <data name="ManyPending" xml:space="preserve">
+    <value>More than 10 pending</value>
+  </data>
+  <data name="SendEmail" xml:space="preserve">
+    <value>Email {0}</value>
+  </data>
+  <data name="CallPhone" xml:space="preserve">
+    <value>Call {0}</value>
+  </data>
+  <data name="Created" xml:space="preserve">
+    <value>Created</value>
+  </data>
+  <data name="Updated" xml:space="preserve">
+    <value>Updated</value>
+  </data>
+  <data name="Disabled" xml:space="preserve">
+    <value>Disabled</value>
+  </data>
+  <data name="DisabledPermanently" xml:space="preserve">
+    <value>Permanently disabled.</value>
+  </data>
+  <data name="DisabledUntil" xml:space="preserve">
+    <value>Disabled until</value>
+  </data>
+  <data name="Reenabled" xml:space="preserve">
+    <value>Re-enabled</value>
+  </data>
+  <data name="SystemInitialization" xml:space="preserve">
+    <value>during system initialization</value>
+  </data>
+  <data name="By" xml:space="preserve">
+    <value>by {0}</value>
+  </data>
+  <data name="OnDate" xml:space="preserve">
+    <value>on {0}</value>
+  </data>
+  <data name="MudDataGrid_Apply" xml:space="preserve">
+    <value>Apply</value>
+  </data>
+  <data name="MudDataGrid_Clear" xml:space="preserve">
+    <value>Clear</value>
+  </data>
+  <data name="MudDataGrid_AddFilter" xml:space="preserve">
+    <value>Add filter</value>
+  </data>
+  <data name="MudDataGrid_Cancel" xml:space="preserve">
+    <value>Cancel</value>
+  </data>
+  <data name="MudDataGrid_Loading" xml:space="preserve">
+    <value>Loading...</value>
+  </data>
+  <data name="MudDataGrid_Save" xml:space="preserve">
+    <value>Save</value>
+  </data>
+  <data name="MudDataGrid_HideAll" xml:space="preserve">
+    <value>Hide all</value>
+  </data>
+  <data name="MudDataGrid_ShowAll" xml:space="preserve">
+    <value>Show all</value>
+  </data>
+  <data name="MudDataGrid_Columns" xml:space="preserve">
+    <value>Columns</value>
+  </data>
+  <data name="MudDataGrid_ExpandAllGroups" xml:space="preserve">
+    <value>Expand all groups</value>
+  </data>
+  <data name="MudDataGrid_CollapseAllGroups" xml:space="preserve">
+    <value>Collapse all groups</value>
+  </data>
+  <data name="MudDataGrid_RefreshData" xml:space="preserve">
+    <value>Refresh data</value>
+  </data>
+  <data name="MudDataGrid_True" xml:space="preserve">
+    <value>true</value>
+  </data>
+  <data name="MudDataGrid_False" xml:space="preserve">
+    <value>false</value>
+  </data>
+  <data name="MudDataGrid_Unsort" xml:space="preserve">
+    <value>Unsort</value>
+  </data>
+  <data name="MudDataGrid_Filter" xml:space="preserve">
+    <value>Filter</value>
+  </data>
+  <data name="MudDataGrid_Hide" xml:space="preserve">
+    <value>Hide</value>
+  </data>
+  <data name="MudDataGrid_Ungroup" xml:space="preserve">
+    <value>Ungroup</value>
+  </data>
+  <data name="MudDataGrid_Group" xml:space="preserve">
+    <value>Group</value>
+  </data>
+  <data name="MudDataGrid_FilterValue" xml:space="preserve">
+    <value>Filter value</value>
+  </data>
+  <data name="MudDataGrid_Contains" xml:space="preserve">
+    <value>contains</value>
+  </data>
+  <data name="MudDataGrid_NotContains" xml:space="preserve">
+    <value>not contains</value>
+  </data>
+  <data name="MudDataGrid_Equals" xml:space="preserve">
+    <value>equals</value>
+  </data>
+  <data name="MudDataGrid_NotEquals" xml:space="preserve">
+    <value>not equals</value>
+  </data>
+  <data name="MudDataGrid_StartsWith" xml:space="preserve">
+    <value>starts with</value>
+  </data>
+  <data name="MudDataGrid_EndsWith" xml:space="preserve">
+    <value>ends with</value>
+  </data>
+  <data name="MudDataGrid_IsEmpty" xml:space="preserve">
+    <value>is empty</value>
+  </data>
+  <data name="MudDataGrid_IsNotEmpty" xml:space="preserve">
+    <value>is not empty</value>
+  </data>
+  <data name="MudDataGrid_EqualSign" xml:space="preserve">
+    <value>=</value>
+  </data>
+  <data name="MudDataGrid_NotEqualSign" xml:space="preserve">
+    <value>!=</value>
+  </data>
+  <data name="MudDataGrid_GreaterThanSign" xml:space="preserve">
+    <value>&gt;</value>
+  </data>
+  <data name="MudDataGrid_GreaterThanOrEqualSign" xml:space="preserve">
+    <value>&gt;=</value>
+  </data>
+  <data name="MudDataGrid_LessThanSign" xml:space="preserve">
+    <value>&lt;</value>
+  </data>
+  <data name="MudDataGrid_LessThanOrEqualSign" xml:space="preserve">
+    <value>&lt;=</value>
+  </data>
+  <data name="MudDataGrid_Is" xml:space="preserve">
+    <value>is</value>
+  </data>
+  <data name="MudDataGrid_IsNot" xml:space="preserve">
+    <value>is not</value>
+  </data>
+  <data name="MudDataGrid_IsAfter" xml:space="preserve">
+    <value>is after</value>
+  </data>
+  <data name="MudDataGrid_IsOnOrAfter" xml:space="preserve">
+    <value>is on or after</value>
+  </data>
+  <data name="MudDataGrid_IsBefore" xml:space="preserve">
+    <value>is before</value>
+  </data>
+  <data name="MudDataGrid_IsOnOrBefore" xml:space="preserve">
+    <value>is on or before</value>
+  </data>
+  <data name="MudDataGrid_Column" xml:space="preserve">
+    <value>Column</value>
+  </data>
+  <data name="MudDataGrid_Operator" xml:space="preserve">
+    <value>Operator</value>
+  </data>
+  <data name="MudDataGrid_Value" xml:space="preserve">
+    <value>Value</value>
+  </data>
+  <data name="MudDataGrid_MoveDown" xml:space="preserve">
+    <value>Move down</value>
+  </data>
+  <data name="MudDataGrid_MoveUp" xml:space="preserve">
+    <value>Move up</value>
+  </data>
+  <data name="MudDataGrid_Sort" xml:space="preserve">
+    <value>Sort</value>
+  </data>
+  <data name="MudTablePager_FirstPage" xml:space="preserve">
+    <value>First page</value>
+  </data>
+  <data name="MudTablePager_LastPage" xml:space="preserve">
+    <value>Last page</value>
+  </data>
+  <data name="MudTablePager_NextPage" xml:space="preserve">
+    <value>Next page</value>
+  </data>
+  <data name="MudTablePager_PreviousPage" xml:space="preserve">
+    <value>Previous page</value>
+  </data>
+  <data name="MudDataGridPager_RowsPerPage" xml:space="preserve">
+    <value>Rows per page:</value>
+  </data>
+  <data name="MudDataGridPager_AllItems" xml:space="preserve">
+    <value>All</value>
+  </data>
+  <data name="MudDataGridPager_InfoFormat" xml:space="preserve">
+    <value>{0}-{1} of {2}</value>
+  </data>
+  <data name="MudDataGrid_ClearFilter" xml:space="preserve">
+    <value>Clear filter</value>
+  </data>
+  <data name="MudDataGrid_OpenFilters" xml:space="preserve">
+    <value>Open filters</value>
+  </data>
+  <data name="MudDataGrid_ToggleGroupExpansion" xml:space="preserve">
+    <value>Toggle group</value>
+  </data>
+  <data name="MudDataGrid_RemoveFilter" xml:space="preserve">
+    <value>Remove filter</value>
+  </data>
+  <data name="MudDataGridPager_FirstPage" xml:space="preserve">
+    <value>First page</value>
+  </data>
+  <data name="MudDataGridPager_PreviousPage" xml:space="preserve">
+    <value>Previous page</value>
+  </data>
+  <data name="MudDataGridPager_NextPage" xml:space="preserve">
+    <value>Next page</value>
+  </data>
+  <data name="MudDataGridPager_LastPage" xml:space="preserve">
+    <value>Last page</value>
+  </data>
+  <data name="MudDataGrid_ShowColumnOptions" xml:space="preserve">
+    <value>Column options</value>
+  </data>
+  <data name="RejectedDocuments" xml:space="preserve">
+    <value>Rejected documents</value>
+  </data>
+  <data name="SecondaryBeforeUniversity" xml:space="preserve">
+    <value>Secondary school must start before university.</value>
+  </data>
+  <data name="UniversityAfterSecondary" xml:space="preserve">
+    <value>University must start after secondary school.</value>
+  </data>
+  <data name="SentCount" xml:space="preserve">
+    <value>Sent: {0}</value>
+  </data>
+  <data name="PendingCount" xml:space="preserve">
+    <value>Pending: {0}</value>
+  </data>
+  <data name="MissingCount" xml:space="preserve">
+    <value>Missing: {0}</value>
+  </data>
+  <data name="ProgressTooltip" xml:space="preserve">
+    <value>Sent: {0}; Pending: {1}</value>
+  </data>
+  <data name="Create" xml:space="preserve">
+    <value>Create</value>
+  </data>
+  <data name="Saving" xml:space="preserve">
+    <value>Saving data</value>
+  </data>
+  <data name="NoAssignedChapter" xml:space="preserve">
+    <value>No chapter is assigned. The user cannot be created.</value>
+  </data>
+  <data name="CreateUserFailed" xml:space="preserve">
+    <value>Could not create the user.</value>
+  </data>
+  <data name="DuplicateUser" xml:space="preserve">
+    <value>A user named {0} {1} already exists. Create this user anyway?</value>
+  </data>
+  <data name="UserCreated" xml:space="preserve">
+    <value>User {0} {1} (ID: {2}) was created successfully.</value>
+  </data>
+  <data name="RedFlag" xml:space="preserve">
+    <value>{0} red flag</value>
+  </data>
+  <data name="GreenFlag" xml:space="preserve">
+    <value>{0} green flag</value>
+  </data>
+  <data name="OnePending" xml:space="preserve">
+    <value>{0} pending</value>
+  </data>
+</root>

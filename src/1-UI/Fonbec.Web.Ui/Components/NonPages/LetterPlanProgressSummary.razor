@@ -1,3 +1,4 @@
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Fonbec.Web.Ui.Localization.SharedResources> L
 @using Fonbec.Web.Logic.ExtensionMethods
 
 <MudPaper Class="pa-4" Elevation="2">
@@ -12,7 +13,7 @@
             </MudText>
         </MudStack>
 
-        <MudTooltip Text="@($"Enviadas: {Summary.Approved}; Pendientes: {Summary.InProgress}")"
+        <MudTooltip Text="@L["ProgressTooltip", Summary.Approved, Summary.InProgress]"
                     Arrow="true" Placement="Placement.Top" Delay="100">
             <MudProgressLinear Color="Color.Success" Size="Size.Large" Rounded="true" Buffer="true"
                                Max="@(Summary.TotalRequired > 0 ? Summary.TotalRequired : 1)"
@@ -23,18 +24,18 @@
         <MudStack Row Wrap="Wrap.Wrap" Spacing="2" Justify="Justify.Center">
             <MudChip T="string" Icon="@Icons.Material.Filled.CheckCircle"
                      Color="Color.Success" Variant="Variant.Text">
-                Enviadas: @Summary.Approved
+                @L["SentCount", Summary.Approved]
             </MudChip>
 
             <MudChip T="string" Icon="@Icons.Material.Filled.HourglassTop"
                      Color="Color.Info" Variant="Variant.Text">
-                Pendientes: @Summary.InProgress
+                @L["PendingCount", Summary.InProgress]
             </MudChip>
 
             <MudChip T="string" Icon="@Icons.Material.Filled.Warning"
                      Color="Color.Error"
                      Variant="@(Summary.MissingOrRejected > 0 ? Variant.Filled : Variant.Text)">
-                Faltantes: @Summary.MissingOrRejected
+                @L["MissingCount", Summary.MissingOrRejected]
             </MudChip>
         </MudStack>
     </MudStack>

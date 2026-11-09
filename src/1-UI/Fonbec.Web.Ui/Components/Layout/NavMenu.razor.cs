@@ -11,6 +11,11 @@ namespace Fonbec.Web.Ui.Components.Layout;
 
 public sealed partial class NavMenu : ComponentBase, IDisposable
 {
+    private string RedFlags(int count) => L[count == 1 ? "RedFlag" : "RedFlags", count];
+    private string GreenFlags(int count) => L[count == 1 ? "GreenFlag" : "GreenFlags", count];
+    private string PendingChanges(int count) => count > 10
+        ? L["ManyPending"] : L[count == 1 ? "OnePending" : "Pending", count];
+
     private NavMenuIndicators _indicators = NavMenuIndicators.Empty;
     private int _reloadVersion;
     private bool _disposed;

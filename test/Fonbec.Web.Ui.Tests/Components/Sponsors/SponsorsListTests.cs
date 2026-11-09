@@ -27,6 +27,7 @@ public class SponsorsListTests : BunitContext
     {
         JSInterop.Mode = JSRuntimeMode.Loose;
         Services.AddMudServices();
+        Fonbec.Web.Ui.Localization.LocalizationSetup.AddFonbecLocalization(Services);
         var auth = this.AddAuthorization();
         auth.SetAuthorized(role);
         auth.SetRoles(role);
@@ -64,7 +65,8 @@ public class SponsorsListTests : BunitContext
             dialogs.FindComponents<MudTextField<string>>()
                 .Single(field => field.Instance.Label == "Apellido").Find("input").Input("Changed");
         }
-        await dialogs.FindAll("button").Single(button => button.TextContent.Trim() == "Save")
+        var saveText = Services.GetRequiredService<MudLocalizer>()["MudDataGrid_Save"].Value;
+        await dialogs.FindAll("button").Single(button => button.TextContent.Trim() == saveText)
             .ClickAsync(new Microsoft.AspNetCore.Components.Web.MouseEventArgs());
 
         await sponsors.Received(1).UpdateSponsorAsync(Arg.Is<UpdateSponsorInputModel>(

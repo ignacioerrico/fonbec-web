@@ -1,3 +1,4 @@
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Fonbec.Web.Ui.Localization.SharedResources> L
 @inherits AuthenticationRequiredComponentBase
 
 @using Fonbec.Web.DataAccess.Constants
@@ -7,47 +8,47 @@
 
 @if (!_hasChapter)
 {
-    <MudAlert Severity="Severity.Error">No hay una filial asignada. No se puede dar de alta el usuario.</MudAlert>
+    <MudAlert Severity="Severity.Error">@L["NoAssignedChapter"]</MudAlert>
 }
 
 <LoadingIndicator Loading="Loading" />
 
 <MudForm @bind-IsValid="@_formValidationSucceeded" Disabled="!_hasChapter">
-    <MudTextField T="string" Label="Nombre" @bind-Value="_bindModel.UserFirstName" Immediate="true" AutoFocus="_hasChapter"
-                  Required="true" RequiredError="Este es un campo obligatorio."
+    <MudTextField T="string" Label="@L["FirstName"]" @bind-Value="_bindModel.UserFirstName" Immediate="true" AutoFocus="_hasChapter"
+                  Required="true" RequiredError="@L["Required"]"
                   MaxLength="MaxLength.FonbecWebUser.FirstName" />
 
-    <MudTextField T="string" Label="Apellido" @bind-Value="_bindModel.UserLastName" Immediate="true"
-                  Required="true" RequiredError="Este es un campo obligatorio."
+    <MudTextField T="string" Label="@L["LastName"]" @bind-Value="_bindModel.UserLastName" Immediate="true"
+                  Required="true" RequiredError="@L["Required"]"
                   MaxLength="MaxLength.FonbecWebUser.LastName" />
 
-    <MudTextField T="string" Label="Apodo" @bind-Value="_bindModel.UserNickName" Immediate="true"
+    <MudTextField T="string" Label="@L["Nickname"]" @bind-Value="_bindModel.UserNickName" Immediate="true"
                   MaxLength="MaxLength.FonbecWebUser.NickName" />
 
     <GenderSelector @bind-SelectedGender="_bindModel.UserGender" />
 
-    <MudTextField T="string" Label="Correo electrónico" @bind-Value="_bindModel.UserEmail" Immediate="true"
-                  Required="true" RequiredError="Este es un campo obligatorio."
+    <MudTextField T="string" Label="@L["Email"]" @bind-Value="_bindModel.UserEmail" Immediate="true"
+                  Required="true" RequiredError="@L["Required"]"
                   MaxLength="MaxLength.FonbecWebUser.Email"
-                  Validation="@(new Func<string, string?>(ContactFieldValidator.ValidateEmail))" />
+                  Validation="@(new Func<string, string?>(ValidateEmail))" />
 
-    <MudTextField T="string" Label="Teléfono" @bind-Value="_bindModel.UserPhoneNumber" Immediate="true"
+    <MudTextField T="string" Label="@L["Phone"]" @bind-Value="_bindModel.UserPhoneNumber" Immediate="true"
                   MaxLength="MaxLength.FonbecWebUser.PhoneNumber"
-                  Validation="@(new Func<string, string?>(ContactFieldValidator.ValidatePhone))" />
+                  Validation="@(new Func<string, string?>(ValidatePhone))" />
 
-    <MudTextField T="string" Label="Información adicional" @bind-Value="_bindModel.UserNotes" Immediate="true"
+    <MudTextField T="string" Label="@L["AdditionalInformation"]" @bind-Value="_bindModel.UserNotes" Immediate="true"
                   MaxLength="MaxLength.Auditable.Notes" />
 </MudForm>
 
 <MudStack Row="true" Class="pt-4">
     <MudButton OnClick="SaveAsync" Disabled="SaveButtonDisabled"
                Variant="Variant.Filled" Color="Color.Primary">
-        Crear
+        @L["Create"]
     </MudButton>
     <MudButton Href="@CancelRoute"
                Variant="Variant.Filled" Color="Color.Default" Class="ms-4">
-        Cancelar
+        @L["Cancel"]
     </MudButton>
 </MudStack>
 
-<LoadingIndicator Loading="_saving" LoadingText="Guardando los datos" />
+<LoadingIndicator Loading="_saving" LoadingText="@L["Saving"]" />

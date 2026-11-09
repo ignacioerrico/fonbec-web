@@ -1,6 +1,7 @@
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Fonbec.Web.Ui.Localization.SharedResources> L
 <MudNavLink Href="@NavRoutes.StudentMessages" Match="NavLinkMatch.Prefix">
     <span class="nav-count">
-        <span class="nav-count__label">Mensajes para becarios</span>
+        <span class="nav-count__label">@L["StudentMessages"]</span>
         @if (_badge is not null)
         {
             <span class="nav-count__badge">@_badge</span>

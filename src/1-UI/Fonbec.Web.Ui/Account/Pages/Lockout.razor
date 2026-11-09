@@ -1,10 +1,11 @@
-﻿@page "/Account/Lockout"
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Fonbec.Web.Ui.Localization.SharedResources> L
+@page "/Account/Lockout"
 
-<PageTitle>Cuenta bloqueada</PageTitle>
+<PageTitle>@L["AccountLocked"]</PageTitle>
 
-<MudText Typo="Typo.h4" Align="Align.Center" GutterBottom="true">Cuenta bloqueada</MudText>
+<MudText Typo="Typo.h4" Align="Align.Center" GutterBottom="true">@L["AccountLocked"]</MudText>
 <MudAlert Severity="Severity.Error" Variant="Variant.Outlined" Class="mt-4">
-    Esta cuenta fue bloqueada por demasiados intentos fallidos. Intentá de nuevo más tarde.
+    @L["AccountLockedIntro"]
 </MudAlert>
 
 <div class="auth-layout__links mt-6">
@@ -12,6 +13,6 @@
                StartIcon="@Icons.Material.Filled.ArrowBack"
                Variant="Variant.Text"
                Color="Color.Default">
-        Volver al inicio de sesión
+        @L["BackToSignIn"]
     </MudButton>
 </div>

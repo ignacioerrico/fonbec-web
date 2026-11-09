@@ -1,12 +1,13 @@
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Fonbec.Web.Ui.Localization.SharedResources> L
 @attribute [Route(NavRoutes.Reviewers)]
 @attribute [Authorize(Policy = nameof(ReviewersList))]
 
 @using Fonbec.Web.DataAccess.Constants
 
-<RoleUsersList Title="Revisores"
+<RoleUsersList Title="@L["Reviewers"]"
                Role="@FonbecRole.Reviewer"
-               EmptyMessage="No hay revisores."
+               EmptyMessage="@L["EmptyReviewers"]"
                CreateRoute="@NavRoutes.ReviewerCreate"
-               CreateTooltip="Alta de revisor"
+               CreateTooltip="@L["CreateReviewer"]"
                CreatePolicy="@nameof(ReviewerCreate)"
                ShowDigitalImprovement="true" />

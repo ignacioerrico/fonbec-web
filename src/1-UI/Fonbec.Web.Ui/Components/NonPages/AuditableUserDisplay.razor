@@ -1,3 +1,4 @@
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Fonbec.Web.Ui.Localization.SharedResources> L
 ﻿@using Fonbec.Web.Logic.ExtensionMethods
 @using Fonbec.Web.Ui.Components.NonPages.Buttons
 
@@ -16,7 +17,7 @@
                     @if (UsersListViewModel.UserId == CurrentUserId)
                     {
                         <MudChip T="string" Variant="Variant.Filled" Color="Color.Primary" Size="Size.Small" Class="ml-3">
-                            YO
+                            @L["Me"]
                         </MudChip>
                     }
                 </MudText>
@@ -39,7 +40,7 @@
             @if (!string.IsNullOrWhiteSpace(UsersListViewModel.UserNickName))
             {
                 <MudText Align="Align.Left" Typo="Typo.body2">
-                    <strong>Apodo</strong>: @UsersListViewModel.UserNickName
+                    <strong>@L["Nickname"]</strong>: @UsersListViewModel.UserNickName
                 </MudText>
             }
             <MudText Align="Align.Left" Typo="Typo.body2">
@@ -48,34 +49,34 @@
             <MudText Align="Align.Left" Typo="Typo.body2">
                 <span>
                     <span>
-                        <strong>Creado</strong>:
+                        <strong>@L["Created"]</strong>:
                         @if (@UsersListViewModel.CreatedByFullName is null)
                         {
-                            <span>durante la inicialización del sistema</span>
+                            <span>@L["SystemInitialization"]</span>
                         }
                         else
                         {
-                            <span>por @UsersListViewModel.CreatedByFullName</span>
+                            <span>@L["By", UsersListViewModel.CreatedByFullName]</span>
                         }
                     </span>
 
-                    <span>el @UsersListViewModel.CreatedOnUtc.ToLocalizedDateTime()</span>
+                    <span>@L["OnDate", UsersListViewModel.CreatedOnUtc.ToLocalizedDateTime()]</span>
                 </span>
             </MudText>
             @if (UsersListViewModel.LastUpdatedByFullName is not null && UsersListViewModel.LastUpdatedOnUtc is not null)
             {
                 <MudText Align="Align.Left" Typo="Typo.body2">
-                    <strong>Actualizado</strong>:
-                    por @UsersListViewModel.LastUpdatedByFullName
-                    el @UsersListViewModel.LastUpdatedOnUtc.Value.ToLocalizedDateTime()
+                    <strong>@L["Updated"]</strong>:
+                    @L["By", UsersListViewModel.LastUpdatedByFullName]
+                    @L["OnDate", UsersListViewModel.LastUpdatedOnUtc.Value.ToLocalizedDateTime()]
                 </MudText>
             }
             @if (UsersListViewModel.DisabledByFullName is not null && UsersListViewModel.DisabledOnUtc is not null)
             {
                 <MudText Align="Align.Left" Typo="Typo.body2">
-                    <strong>Deshabilitado</strong>:
-                    por @UsersListViewModel.DisabledByFullName
-                    el @UsersListViewModel.DisabledOnUtc.Value.ToLocalizedDateTime()
+                    <strong>@L["Disabled"]</strong>:
+                    @L["By", UsersListViewModel.DisabledByFullName]
+                    @L["OnDate", UsersListViewModel.DisabledOnUtc.Value.ToLocalizedDateTime()]
                 </MudText>
             }
             @if (UsersListViewModel.DisabledUntilUtc is not null)
@@ -83,12 +84,12 @@
                 <MudText Align="Align.Left" Typo="Typo.body2">
                     @if (UsersListViewModel.DisabledUntilUtc.Value == DateTime.MaxValue)
                     {
-                        <strong>Deshabilitado de forma permanente.</strong>
+                        <strong>@L["DisabledPermanently"]</strong>
                     }
                     else
                     {
                         <span>
-                            <strong>Deshabilitado hasta</strong>:
+                            <strong>@L["DisabledUntil"]</strong>:
                             @UsersListViewModel.DisabledUntilUtc.Value.ToLocalizedDateTime()
                         </span>
                     }
@@ -97,9 +98,9 @@
             @if (UsersListViewModel.ReenabledByFullName is not null && UsersListViewModel.ReenabledOnUtc is not null)
             {
                 <MudText Align="Align.Left" Typo="Typo.body2">
-                    <strong>Rehabilitado</strong>:
-                    por @UsersListViewModel.ReenabledByFullName
-                    el @UsersListViewModel.ReenabledOnUtc.Value.ToLocalizedDateTime()
+                    <strong>@L["Reenabled"]</strong>:
+                    @L["By", UsersListViewModel.ReenabledByFullName]
+                    @L["OnDate", UsersListViewModel.ReenabledOnUtc.Value.ToLocalizedDateTime()]
                 </MudText>
             }
         </TooltipContent>

@@ -1,11 +1,12 @@
-﻿<LoadingIndicator Loading="_loading" />
+@inject Microsoft.Extensions.Localization.IStringLocalizer<Fonbec.Web.Ui.Localization.SharedResources> L
+<LoadingIndicator Loading="_loading" />
 
-<MudAutocomplete T="int?" Label="Empresa"
+<MudAutocomplete T="int?" Label="@L["Company"]"
                  SearchFunc="Search"
                  Value="SelectedCompanyId"
                  ValueChanged="OnSelectedValueChanged"
                  ToStringFunc="MapKeyToDisplayName"
                  Disabled="_loading"
                  Clearable="true"
-                 Required="IsRequired" RequiredError="Este es un campo obligatorio."
+                 Required="IsRequired" RequiredError="@L["Required"]"
                  Variant="Variant.Filled" AnchorOrigin="Origin.BottomLeft" />
