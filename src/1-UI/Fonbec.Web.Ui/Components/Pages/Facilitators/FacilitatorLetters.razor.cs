@@ -27,13 +27,33 @@ public partial class FacilitatorLetters : AuthenticationRequiredComponentBase
     [Inject]
     public IFacilitatorService FacilitatorService { get; set; } = null!;
 
-    protected override async Task OnInitializedAsync()
+    private int? _requestedStudentId;
+
+    private int _historyRequest;
+
+    protected override async Task OnParametersSetAsync()
     {
-        await base.OnInitializedAsync();
+        await base.OnParametersSetAsync();
+
+        if (_requestedStudentId == StudentId)
+        {
+            return;
+        }
+
+        _requestedStudentId = StudentId;
+        var request = ++_historyRequest;
 
         Loading = true;
+        _history = null;
+        _expandedDocumentIds.Clear();
 
-        _history = await FacilitatorService.GetLettersHistoryAsync(FonbecClaim.UserId, StudentId);
+        var history = await FacilitatorService.GetLettersHistoryAsync(FonbecClaim.UserId, StudentId);
+        if (request != _historyRequest)
+        {
+            return;
+        }
+
+        _history = history;
         if (_history is null)
         {
             Snackbar.Add("No se pueden ver las cartas de este becario.", Severity.Error);
