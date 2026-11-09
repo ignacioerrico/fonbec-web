@@ -36,6 +36,7 @@ remove the `.AspNetCore.Culture` session cookie.
 - `ValidationResources` provides static resource properties for DataAnnotations
   on the Login and ForgotPassword form models; static SSR form handling is retained.
 - `FonbecMudLocalizer` supplies grid, filter, editing and pager translations.
+  It is a stateless singleton: each lookup uses the caller's active UI culture.
   Unmapped MudBlazor keys retain the library's built-in English fallback.
 - `App.razor` sets `html lang` from the active UI culture.
 
@@ -88,11 +89,13 @@ session. A wiki contributor must publish this guide.
 ## Validation
 
 - `dotnet test --solution Fonbec.Web.sln --configuration Release` using SDK 10.0.402
-  and Microsoft.Testing.Platform: 1,295 passed, zero skipped. Azurite is required
+  and Microsoft.Testing.Platform: 1,296 passed, zero skipped. Azurite is required
   for the blob integration test.
 - Localization tests cover Spanish/English lookup, missing Spanish → neutral
   English → key fallback, Argentine default formatting, unsupported culture,
-  culture cookie reuse and MudBlazor/DataAnnotations translations.
+  culture cookie reuse and MudBlazor/DataAnnotations translations. A shared-instance
+  concurrency test verifies that the singleton Mud localizer keeps Spanish and
+  English lookups independent across asynchronous execution contexts.
 - Local browser checks with synthetic Manager/facilitator data: English Home,
   navigation without query parameters, user editing and persistence after reload,
   Spanish grid/filter/pager copy, English create form, sign-out, empty Login POST

@@ -1,8 +1,7 @@
-@inject Microsoft.Extensions.Localization.IStringLocalizer<Fonbec.Web.Ui.Localization.SharedResources> L
-@inherits AuthenticationRequiredComponentBase
-
 @using Fonbec.Web.DataAccess.Constants
 @using Fonbec.Web.Logic.Util
+@inherits AuthenticationRequiredComponentBase
+@inject IStringLocalizer<SharedResources> L
 
 <PageHeader Title="@Title" />
 

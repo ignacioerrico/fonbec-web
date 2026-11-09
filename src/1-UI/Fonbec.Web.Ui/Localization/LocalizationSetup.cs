@@ -9,7 +9,8 @@ public static class LocalizationSetup
     public static IServiceCollection AddFonbecLocalization(this IServiceCollection services)
     {
         services.AddLocalization(o => o.ResourcesPath = "Resources");
-        services.AddTransient<MudLocalizer, FonbecMudLocalizer>();
+        // Stateless: translations read CurrentUICulture at lookup time, not registration time.
+        services.AddSingleton<MudLocalizer, FonbecMudLocalizer>();
         services.Configure<RequestLocalizationOptions>(options =>
         {
             options.DefaultRequestCulture = new RequestCulture("es-AR", "es");

@@ -1,5 +1,5 @@
-@inject Microsoft.Extensions.Localization.IStringLocalizer<Fonbec.Web.Ui.Localization.SharedResources> L
 @using Fonbec.Web.DataAccess.Entities.Enums
+@inject IStringLocalizer<SharedResources> L
 
 <MudSelect T="Gender" Label="@L["Gender"]"
            Value="SelectedGender"

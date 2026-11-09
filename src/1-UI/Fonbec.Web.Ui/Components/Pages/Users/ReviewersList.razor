@@ -1,8 +1,7 @@
-@inject Microsoft.Extensions.Localization.IStringLocalizer<Fonbec.Web.Ui.Localization.SharedResources> L
-@attribute [Route(NavRoutes.Reviewers)]
-@attribute [Authorize(Policy = nameof(ReviewersList))]
-
 @using Fonbec.Web.DataAccess.Constants
+@attribute [Authorize(Policy = nameof(ReviewersList))]
+@attribute [Route(NavRoutes.Reviewers)]
+@inject IStringLocalizer<SharedResources> L
 
 <RoleUsersList Title="@L["Reviewers"]"
                Role="@FonbecRole.Reviewer"

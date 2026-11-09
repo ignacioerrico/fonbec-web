@@ -1,20 +1,20 @@
-@inject Microsoft.Extensions.Localization.IStringLocalizer<Fonbec.Web.Ui.Localization.SharedResources> L
+@using System.Security.Claims
 @using Fonbec.Web.DataAccess.Constants
 @using Fonbec.Web.Logic.Constants
+@using Fonbec.Web.Logic.Models.Navigation
+@using Fonbec.Web.Logic.Models.RecipientMessages
 @using Fonbec.Web.Ui.Components.Pages.Chapters
 @using Fonbec.Web.Ui.Components.Pages.Companies
+@using Fonbec.Web.Ui.Components.Pages.Facilitators
+@using Fonbec.Web.Ui.Components.Pages.Import
 @using Fonbec.Web.Ui.Components.Pages.LetterFollowUp
 @using Fonbec.Web.Ui.Components.Pages.PlannedDeliveries
 @using Fonbec.Web.Ui.Components.Pages.Review
 @using Fonbec.Web.Ui.Components.Pages.Sponsors
-@using Fonbec.Web.Ui.Components.Pages.Facilitators
-@using Fonbec.Web.Ui.Components.Pages.Import
 @using Fonbec.Web.Ui.Components.Pages.StudentMessages
 @using Fonbec.Web.Ui.Components.Pages.Students
 @using Fonbec.Web.Ui.Components.Pages.Users
-@using Fonbec.Web.Logic.Models.Navigation
-@using Fonbec.Web.Logic.Models.RecipientMessages
-@using System.Security.Claims
+@inject IStringLocalizer<SharedResources> L
 
 <MudNavMenu Class="d-flex flex-column" Style="height: 100%;">
     <div class="flex-grow-1" data-enhance-nav="@EnhancedNav">

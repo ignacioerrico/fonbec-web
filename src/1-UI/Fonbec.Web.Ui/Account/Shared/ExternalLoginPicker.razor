@@ -1,9 +1,8 @@
-@inject Microsoft.Extensions.Localization.IStringLocalizer<Fonbec.Web.Ui.Localization.SharedResources> L
-@using Fonbec.Web.DataAccess.Entities
-@using Fonbec.Web.Ui.Account
 @using Microsoft.AspNetCore.Authentication
 @using Microsoft.AspNetCore.Identity
-
+@using Fonbec.Web.DataAccess.Entities
+@using Fonbec.Web.Ui.Account
+@inject IStringLocalizer<SharedResources> L
 @inject SignInManager<FonbecWebUser> SignInManager
 
 @if (_externalLogins.Length > 0)

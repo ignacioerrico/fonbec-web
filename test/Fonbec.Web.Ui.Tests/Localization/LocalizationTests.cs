@@ -11,6 +11,36 @@ namespace Fonbec.Web.Ui.Tests.Localization;
 public sealed class LocalizationTests
 {
     [Fact]
+    public async Task Singleton_mud_localizer_keeps_concurrent_cultures_independent()
+    {
+        using var services = Services();
+        var localizer = services.GetRequiredService<MudLocalizer>();
+        using var scope = services.CreateScope();
+        Assert.Same(localizer, scope.ServiceProvider.GetRequiredService<MudLocalizer>());
+
+        var ready = new TaskCompletionSource(TaskCreationOptions.RunContinuationsAsynchronously);
+        var started = 0;
+        async Task Lookup(string culture, string expected)
+        {
+            var previous = CultureInfo.CurrentUICulture;
+            try
+            {
+                CultureInfo.CurrentUICulture = new(culture);
+                if (Interlocked.Increment(ref started) == 2) ready.SetResult();
+                await ready.Task;
+                for (var i = 0; i < 20; i++)
+                {
+                    await Task.Yield();
+                    Assert.Equal(expected, localizer["MudDataGrid_Save"].Value);
+                }
+            }
+            finally { CultureInfo.CurrentUICulture = previous; }
+        }
+
+        await Task.WhenAll(Lookup("es", "Guardar"), Lookup("en", "Save"));
+    }
+
+    [Fact]
     public void English_fallback_matches_english_catalog_and_spanish_placeholders()
     {
         var manager = new System.Resources.ResourceManager(

@@ -1,5 +1,5 @@
-@inject Microsoft.Extensions.Localization.IStringLocalizer<Fonbec.Web.Ui.Localization.SharedResources> L
 @using Fonbec.Web.DataAccess.Constants
+@inject IStringLocalizer<SharedResources> L
 
 <MudSelect T="string" Label="@L["Role"]"
            Value="SelectedRole" ValueChanged="OnSelectedValueChanged"
