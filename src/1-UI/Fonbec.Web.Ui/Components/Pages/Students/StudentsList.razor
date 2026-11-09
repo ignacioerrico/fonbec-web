@@ -1,13 +1,13 @@
-﻿@attribute [Route(NavRoutes.Students)]
-@attribute [Authorize(Policy = nameof(StudentsList))]
-@inherits AuthenticationRequiredComponentBase
-
-@using Fonbec.Web.DataAccess.Constants
+﻿@using Fonbec.Web.DataAccess.Constants
 @using Fonbec.Web.DataAccess.Entities.Enums
 @using Fonbec.Web.Logic.Models.Students
 @using Fonbec.Web.Ui.Components.Pages.Managers
 @using Fonbec.Web.Ui.Components.Pages.Sponsorships
 @using Fonbec.Web.Ui.Constants
+
+@attribute [Route(NavRoutes.Students)]
+@attribute [Authorize(Policy = nameof(StudentsList))]
+@inherits AuthenticationRequiredComponentBase
 
 <PageHeader Title="Becarios" />
 
@@ -178,6 +178,8 @@
                         <MudText Typo="Typo.body2">—</MudText>
                     }
                 </CellTemplate>
+                <EditTemplate>
+                </EditTemplate>
                 <FilterTemplate>
                     <FilterByList T="StudentsListViewModel"
                                   AllItems="_allReportCardAssessments"
