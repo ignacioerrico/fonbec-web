@@ -1,13 +1,13 @@
-﻿@attribute [Route(NavRoutes.Students)]
-@attribute [Authorize(Policy = nameof(StudentsList))]
-@inherits AuthenticationRequiredComponentBase
-
-@using Fonbec.Web.DataAccess.Constants
+﻿@using Fonbec.Web.DataAccess.Constants
 @using Fonbec.Web.DataAccess.Entities.Enums
 @using Fonbec.Web.Logic.Models.Students
 @using Fonbec.Web.Ui.Components.Pages.Managers
 @using Fonbec.Web.Ui.Components.Pages.Sponsorships
 @using Fonbec.Web.Ui.Constants
+
+@attribute [Authorize(Policy = nameof(StudentsList))]
+@attribute [Route(NavRoutes.Students)]
+@inherits AuthenticationRequiredComponentBase
 
 <PageHeader Title="Becarios" />
 
@@ -36,19 +36,21 @@
     </MudStack>
 </MudStack>
 
-<LoadingIndicator Loading="Loading"
+<LoadingIndicator Loading="@(Loading || !_filtersLoaded)"
                   If="!_viewModels.Any()"
                   ThenDisplay="No hay becarios." />
 
-@if (_viewModels.Any())
+@if (_filtersLoaded && _viewModels.Any())
 {
     <RelatedCountFilter Class="mt-4"
                         Caption="Padrinos"
                         Noun="padrino"
                         Hint="Cuenta padrinos vigentes o por comenzar. Los finalizados no se incluyen."
-                        @bind-Value="_sponsorCountFilter" />
+                        @bind-Value="_sponsorCountFilter" @bind-Value:after="SaveFiltersAsync" />
 
-    <MudDataGrid T="StudentsListViewModel"
+    <StudentFilterDataGrid T="StudentsListViewModel"
+                 SavedFilters="_columnFilters"
+                 SavedFiltersChanged="SaveColumnFiltersAsync"
                  Items="_viewModels"
                  Dense="true" Hover="true" Striped="true" Bordered="true"
                  ReadOnly="false"
@@ -63,7 +65,7 @@
                  SortMode="SortMode.Multiple"
                  Class="mt-2">
         <ToolBarContent>
-            <MudTextField T="string" @bind-Value="_searchString"
+            <MudTextField T="string" @bind-Value="_searchString" @bind-Value:after="SaveFiltersAsync"
                           Placeholder="Buscar"
                           Clearable="true" Immediate="true"
                           Adornment="Adornment.Start" AdornmentIcon="@Icons.Material.Filled.Search" IconSize="Size.Medium" />
@@ -76,7 +78,7 @@
                                  EnableHeaderToggle="false"
                                  Hidden="@(!_fullView)" />
             }
-            <PropertyColumn Property="@(vm => $"{vm.StudentFirstName} {vm.StudentLastName} {vm.StudentNickName} {vm.StudentLastName}")" Title="Nombre">
+            <PropertyColumn Property="@(vm => $"{vm.StudentFirstName} {vm.StudentLastName} {vm.StudentNickName} {vm.StudentLastName}")" Title="Nombre" Tag="@("name")">
                 <CellTemplate>
                     <AuditableItemDisplay Id="@context.Item.StudentId"
                                           ItemName="@StudentFullName(context.Item)"
@@ -124,12 +126,13 @@
                     <FilterByList T="StudentsListViewModel"
                                   AllItems="_allFacilitators"
                                   FilterContext="context"
-                                  FilterBy="@(vm => vm.FacilitatorFullName)" />
+                                  AppliedItems="_facilitatorFilter"
+                                  AppliedItemsChanged="SaveFacilitatorFilterAsync" />
                 </FilterTemplate>
             </PropertyColumn>
 
             <PropertyColumn Property="@(vm => string.Join(", ", vm.ActiveSponsors.Select(s => s.Name)))"
-                            Title="Padrinos" Editable="false" Sortable="false">
+                            Title="Padrinos" Tag="@("sponsors")" Editable="false" Sortable="false">
                 <CellTemplate>
                     <AuthorizeView Policy="@nameof(SponsorshipsList)" Context="sponsorshipsContext">
                         <Authorized>
@@ -156,7 +159,8 @@
                     <FilterByList T="StudentsListViewModel"
                                   AllItems="_allEducationLevels"
                                   FilterContext="context"
-                                  FilterBy="@(vm => vm.StudentCurrentEducationLevel)" />
+                                  AppliedItems="_educationFilter"
+                                  AppliedItemsChanged="SaveEducationFilterAsync" />
                 </FilterTemplate>
             </PropertyColumn>
 
@@ -182,7 +186,8 @@
                     <FilterByList T="StudentsListViewModel"
                                   AllItems="_allReportCardAssessments"
                                   FilterContext="context"
-                                  FilterBy="@(vm => vm.LatestReportCardAssessmentLabel)" />
+                                  AppliedItems="_reportCardFilter"
+                                  AppliedItemsChanged="SaveReportCardFilterAsync" />
                 </FilterTemplate>
             </PropertyColumn>
 
@@ -220,7 +225,8 @@
                     <FilterByList T="StudentsListViewModel"
                                   AllItems="_allChapters"
                                   FilterContext="context"
-                                  FilterBy="@(vm => vm.StudentChapterName)" />
+                                  AppliedItems="_chapterFilter"
+                                  AppliedItemsChanged="SaveChapterFilterAsync" />
                 </FilterTemplate>
             </PropertyColumn>
 
@@ -299,5 +305,5 @@
         <PagerContent>
             <MudDataGridPager T="StudentsListViewModel" RowsPerPageString="Filas por página:" InfoFormat="{first_item}-{last_item} of {all_items}" />
         </PagerContent>
-    </MudDataGrid>
+    </StudentFilterDataGrid>
 }

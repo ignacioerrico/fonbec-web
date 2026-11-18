@@ -1,6 +1,6 @@
 ﻿@typeparam T
 
-<MudIconButton OnClick="@(() => _isFilterOpen = true)" Icon="@_filterIcon" Size="@Size.Small" />
+<MudIconButton OnClick="OpenFilter" Icon="@FilterIcon" Size="@Size.Small" />
 <MudOverlay OnClick="@(() => _isFilterOpen = false)" Visible="@_isFilterOpen" />
 <MudPopover Open="@_isFilterOpen" AnchorOrigin="Origin.BottomCenter" TransformOrigin="Origin.TopCenter"
             Style="width:200px">

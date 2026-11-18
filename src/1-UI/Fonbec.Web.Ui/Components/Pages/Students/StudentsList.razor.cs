@@ -1,4 +1,6 @@
-﻿using Fonbec.Web.DataAccess.Constants;
+﻿using System.Security.Cryptography;
+using System.Text.Json;
+using Fonbec.Web.DataAccess.Constants;
 using Fonbec.Web.DataAccess.Entities.Enums;
 using Fonbec.Web.Logic.ExtensionMethods;
 using Fonbec.Web.Logic.Models.Sponsorships;
@@ -8,6 +10,8 @@ using Fonbec.Web.Logic.Services;
 using Fonbec.Web.Logic.Util;
 using Fonbec.Web.Ui.Components.NonPages.Dialogs;
 using Microsoft.AspNetCore.Components;
+using Microsoft.AspNetCore.Components.Server.ProtectedBrowserStorage;
+using Microsoft.JSInterop;
 using MudBlazor;
 
 namespace Fonbec.Web.Ui.Components.Pages.Students;
@@ -35,6 +39,16 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
 
     private RelatedCount _sponsorCountFilter = RelatedCount.Any;
 
+    private bool _restoringFilters;
+    private bool _filtersLoaded;
+    private string[]? _facilitatorFilter;
+    private string[]? _educationFilter;
+    private string[]? _reportCardFilter;
+    private string[]? _chapterFilter;
+    private StudentColumnFilter[] _columnFilters = [];
+
+    private string FilterStorageKey => $"students-filters:v1:{FonbecClaim.UserId}:{FonbecClaim.ChapterId}";
+
     private bool ShowLetterAssessments => _viewModels.Any(vm => vm.HasLetterAssessment);
 
     [Inject]
@@ -43,11 +57,14 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
     [Inject]
     public IDialogService DialogService { get; set; } = null!;
 
+    [Inject]
+    private ProtectedSessionStorage FilterStorage { get; set; } = null!;
+
     protected override async Task OnInitializedAsync()
     {
+        Loading = true;
         await base.OnInitializedAsync();
 
-        Loading = true;
 
         _viewModels = await StudentService.GetAllStudentsAsync(FonbecClaim.ChapterId);
 
@@ -69,6 +86,101 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
         Loading = false;
     }
 
+    protected override async Task OnAfterRenderAsync(bool firstRender)
+    {
+        if (Loading || _restoringFilters || _filtersLoaded)
+        {
+            return;
+        }
+
+        _restoringFilters = true;
+        try
+        {
+            var stored = await FilterStorage.GetAsync<StudentListFilters>(FilterStorageKey);
+            if (stored.Success && stored.Value is { } filters)
+            {
+                _searchString = filters.Search ?? string.Empty;
+                _sponsorCountFilter = Enum.IsDefined(filters.SponsorCount) ? filters.SponsorCount : RelatedCount.Any;
+                _facilitatorFilter = AvailableSelection(filters.Facilitators, _allFacilitators);
+                _educationFilter = AvailableSelection(filters.EducationLevels, _allEducationLevels);
+                _reportCardFilter = AvailableSelection(filters.ReportCards, _allReportCardAssessments);
+                _chapterFilter = AvailableSelection(filters.Chapters, _allChapters);
+                _columnFilters = filters.Columns ?? [];
+            }
+        }
+        catch (Exception exception) when (exception is JSException or JSDisconnectedException or CryptographicException or JsonException)
+        {
+            // Storage may be unavailable or contain data from a previous data protection key.
+        }
+
+        _filtersLoaded = true;
+        StateHasChanged();
+    }
+
+    private static string[]? AvailableSelection(string[]? selected, IEnumerable<string> available)
+    {
+        if (selected is not { Length: > 0 })
+        {
+            return selected;
+        }
+
+        var remaining = selected.Intersect(available).ToArray();
+        return remaining.Length == 0 ? null : remaining;
+    }
+
+    private Task SaveFacilitatorFilterAsync(string[]? selected)
+    {
+        _facilitatorFilter = selected;
+        return SaveFiltersAsync();
+    }
+
+    private Task SaveEducationFilterAsync(string[]? selected)
+    {
+        _educationFilter = selected;
+        return SaveFiltersAsync();
+    }
+
+    private Task SaveReportCardFilterAsync(string[]? selected)
+    {
+        _reportCardFilter = selected;
+        return SaveFiltersAsync();
+    }
+
+    private Task SaveChapterFilterAsync(string[]? selected)
+    {
+        _chapterFilter = selected;
+        return SaveFiltersAsync();
+    }
+
+    private Task SaveColumnFiltersAsync(StudentColumnFilter[] filters)
+    {
+        _columnFilters = filters;
+        return SaveFiltersAsync();
+    }
+
+    private async Task SaveFiltersAsync()
+    {
+        var filters = new StudentListFilters(
+            _searchString, _sponsorCountFilter, _facilitatorFilter, _educationFilter,
+            _reportCardFilter, _chapterFilter, _columnFilters);
+
+        try
+        {
+            if (filters.IsEmpty)
+            {
+                await FilterStorage.DeleteAsync(FilterStorageKey);
+            }
+            else
+            {
+                await FilterStorage.SetAsync(FilterStorageKey, filters);
+            }
+        }
+        catch (Exception exception) when (exception is JSException or JSDisconnectedException)
+        {
+            // Keep filtering the current grid when browser storage cannot be written.
+        }
+    }
+
     /// <summary>
     /// Called by MudTable to determine if a row should be displayed
     /// </summary>
@@ -76,6 +188,10 @@ public partial class StudentsList : AuthenticationRequiredComponentBase
     /// <returns>true if the student matches the search string in any of the relevant fields; otherwise, false.</returns>
     private bool Filter(StudentsListViewModel viewModel) =>
         _sponsorCountFilter.Matches(ActiveOrUpcomingSponsorCount(viewModel))
+        && (_facilitatorFilter?.Contains(viewModel.FacilitatorFullName) ?? true)
+        && (_educationFilter?.Contains(viewModel.StudentCurrentEducationLevel) ?? true)
+        && (_reportCardFilter?.Contains(viewModel.LatestReportCardAssessmentLabel) ?? true)
+        && (_chapterFilter?.Contains(viewModel.StudentChapterName) ?? true)
         && (string.IsNullOrWhiteSpace(_searchString)
             || $"{viewModel.StudentFirstName} {viewModel.StudentLastName}".ContainsIgnoringAccents(_searchString)
             || (!string.IsNullOrEmpty(viewModel.StudentNickName)

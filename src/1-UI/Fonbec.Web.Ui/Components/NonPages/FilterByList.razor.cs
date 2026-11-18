@@ -18,11 +18,21 @@ public partial class FilterByList<T>
     [Parameter, EditorRequired]
     public FilterContext<T> FilterContext { get; set; } = null!;
 
-    [Parameter, EditorRequired]
+    [Parameter]
     public Func<T, string> FilterBy { get; set; } = null!;
 
     [Parameter]
     public Func<string, string> TranslateUsing { get; set; } = s => s;
+
+    [Parameter]
+    public string[]? AppliedItems { get; set; }
+
+    [Parameter]
+    public EventCallback<string[]?> AppliedItemsChanged { get; set; }
+
+    private string FilterIcon => AppliedItemsChanged.HasDelegate
+        ? AppliedItems is null ? Icons.Material.Outlined.FilterAlt : Icons.Material.Filled.FilterAlt
+        : _filterIcon;
 
     protected override void OnInitialized()
     {
@@ -34,6 +44,17 @@ public partial class FilterByList<T>
         };
 
         base.OnInitialized();
+    }
+
+    private void OpenFilter()
+    {
+        if (AppliedItemsChanged.HasDelegate)
+        {
+            _selectedItems = AppliedItems?.ToHashSet() ?? AllItems.ToHashSet();
+            _areAllItemsSelected = AppliedItems is null;
+        }
+
+        _isFilterOpen = true;
     }
 
     private void OnSelectAllItemsChanged(bool areAllChaptersSelected)
@@ -70,7 +91,14 @@ public partial class FilterByList<T>
         _selectedItems = AllItems.ToHashSet();
         _selectedItemsBeforeFilter = _selectedItems.ToHashSet();
         _filterIcon = Icons.Material.Outlined.FilterAlt;
-        await context.Actions.ClearFilterAsync(_filterItemsDefinition);
+        if (AppliedItemsChanged.HasDelegate)
+        {
+            await AppliedItemsChanged.InvokeAsync(null);
+        }
+        else
+        {
+            await context.Actions.ClearFilterAsync(_filterItemsDefinition);
+        }
         _isFilterOpen = false;
     }
 
@@ -80,7 +108,14 @@ public partial class FilterByList<T>
         _filterIcon = _selectedItemsBeforeFilter.Count == AllItems.Count()
             ? Icons.Material.Outlined.FilterAlt
             : Icons.Material.Filled.FilterAlt;
-        await context.Actions.ApplyFilterAsync(_filterItemsDefinition);
+        if (AppliedItemsChanged.HasDelegate)
+        {
+            await AppliedItemsChanged.InvokeAsync(_areAllItemsSelected ? null : _selectedItems.ToArray());
+        }
+        else
+        {
+            await context.Actions.ApplyFilterAsync(_filterItemsDefinition);
+        }
         _isFilterOpen = false;
     }
 }
